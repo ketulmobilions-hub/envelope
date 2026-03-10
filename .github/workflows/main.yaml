@@ -8,22 +8,25 @@ on:
   push:
     branches:
       - main
+      - dev
   pull_request:
     branches:
       - main
+      - dev
 
 jobs:
   semantic-pull-request:
-    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/semantic_pull_request.yml@v1
+    if: github.event_name == 'pull_request'
+    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/semantic_pull_request.yml@de560438c6e09fae90fd4e9dd7ddcb6d4f2f816d # v1
 
   build:
-    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@v1
+    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@de560438c6e09fae90fd4e9dd7ddcb6d4f2f816d # v1
     with:
       flutter_version: "3.41.x"
       run_bloc_lint: true
 
   spell-check:
-    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/spell_check.yml@v1
+    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/spell_check.yml@de560438c6e09fae90fd4e9dd7ddcb6d4f2f816d # v1
     with:
       includes: |
         **/*.md

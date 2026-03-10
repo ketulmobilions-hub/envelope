@@ -1,0 +1,80 @@
+name: packages
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - "packages/**"
+  pull_request:
+    branches:
+      - main
+      - dev
+    paths:
+      - "packages/**"
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
+        id: filter
+        with:
+          filters: |
+            envelope_api_client:
+              - 'packages/envelope_api_client/**'
+            envelope_local_storage:
+              - 'packages/envelope_local_storage/**'
+            account_repository:
+              - 'packages/account_repository/**'
+            auth_repository:
+              - 'packages/auth_repository/**'
+            budget_repository:
+              - 'packages/budget_repository/**'
+            envelope_repository:
+              - 'packages/envelope_repository/**'
+            goal_repository:
+              - 'packages/goal_repository/**'
+            notification_repository:
+              - 'packages/notification_repository/**'
+            report_repository:
+              - 'packages/report_repository/**'
+            sharing_repository:
+              - 'packages/sharing_repository/**'
+            subscription_repository:
+              - 'packages/subscription_repository/**'
+            sync_repository:
+              - 'packages/sync_repository/**'
+            transaction_repository:
+              - 'packages/transaction_repository/**'
+
+  build-packages:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.packages != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJson(needs.detect-changes.outputs.packages) }}
+    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@de560438c6e09fae90fd4e9dd7ddcb6d4f2f816d # v1
+    with:
+      flutter_version: "3.41.x"
+      working_directory: packages/${{ matrix.package }}
+
+  packages-check:
+    if: always()
+    needs: [detect-changes, build-packages]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify package builds
+        run: |
+          if [[ "${{ needs.build-packages.result }}" == "failure" ]]; then
+            exit 1
+          fi
