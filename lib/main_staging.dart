@@ -1,6 +1,8 @@
-import 'package:envelope/app/app.dart';
 import 'package:envelope/bootstrap.dart';
 
 Future<void> main() async {
-  await bootstrap(() => const App());
+  await bootstrap(
+    supabaseUrl: const String.fromEnvironment('SUPABASE_URL'),
+    supabaseAnonKey: const String.fromEnvironment('SUPABASE_ANON_KEY'),
+  );
 }

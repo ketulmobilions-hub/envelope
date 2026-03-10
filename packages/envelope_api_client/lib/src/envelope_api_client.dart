@@ -3,8 +3,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Facade that provides access to all Envelope API sub-clients.
 class EnvelopeApiClient {
-  /// Creates an [EnvelopeApiClient] with the given [SupabaseClient].
-  EnvelopeApiClient({required SupabaseClient supabaseClient})
+  /// Creates an [EnvelopeApiClient] with the given Supabase credentials.
+  EnvelopeApiClient({
+    required String supabaseUrl,
+    required String supabaseAnonKey,
+  }) : this._(
+          supabaseClient: SupabaseClient(supabaseUrl, supabaseAnonKey),
+        );
+
+  EnvelopeApiClient._({required SupabaseClient supabaseClient})
       : users = UsersApiClient(supabaseClient: supabaseClient),
         budgets = BudgetsApiClient(supabaseClient: supabaseClient),
         accounts = AccountsApiClient(supabaseClient: supabaseClient),
