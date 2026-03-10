@@ -1,0 +1,77 @@
+import 'package:envelope_api_client/src/exceptions.dart';
+import 'package:envelope_api_client/src/models/models.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+/// API client for goal-related operations.
+class GoalsApiClient {
+  /// Creates a [GoalsApiClient] with the given [SupabaseClient].
+  const GoalsApiClient({required SupabaseClient supabaseClient})
+      : _supabaseClient = supabaseClient;
+
+  final SupabaseClient _supabaseClient;
+
+  /// Fetches a goal by [id].
+  Future<GoalDto> getGoal(String id) async {
+    try {
+      final response = await _supabaseClient
+          .from('goals')
+          .select()
+          .eq('id', id)
+          .single();
+      return GoalDto.fromJson(response);
+    } catch (error) {
+      throw EnvelopeApiException.fromPostgrestException(error);
+    }
+  }
+
+  /// Fetches all goals for a budget.
+  Future<List<GoalDto>> getGoalsByBudget(String budgetId) async {
+    try {
+      final response = await _supabaseClient
+          .from('goals')
+          .select()
+          .eq('budget_id', budgetId);
+      return response.map(GoalDto.fromJson).toList();
+    } catch (error) {
+      throw EnvelopeApiException.fromPostgrestException(error);
+    }
+  }
+
+  /// Creates a new goal.
+  Future<GoalDto> createGoal(GoalDto goal) async {
+    try {
+      final response = await _supabaseClient
+          .from('goals')
+          .insert(goal.toJson())
+          .select()
+          .single();
+      return GoalDto.fromJson(response);
+    } catch (error) {
+      throw EnvelopeApiException.fromPostgrestException(error);
+    }
+  }
+
+  /// Updates an existing goal.
+  Future<GoalDto> updateGoal(GoalDto goal) async {
+    try {
+      final response = await _supabaseClient
+          .from('goals')
+          .update(goal.toJson())
+          .eq('id', goal.id)
+          .select()
+          .single();
+      return GoalDto.fromJson(response);
+    } catch (error) {
+      throw EnvelopeApiException.fromPostgrestException(error);
+    }
+  }
+
+  /// Deletes a goal by [id].
+  Future<void> deleteGoal(String id) async {
+    try {
+      await _supabaseClient.from('goals').delete().eq('id', id);
+    } catch (error) {
+      throw EnvelopeApiException.fromPostgrestException(error);
+    }
+  }
+}
