@@ -1,0 +1,72 @@
+import 'package:drift/drift.dart';
+import 'package:envelope_local_storage/src/database/app_database.dart';
+import 'package:envelope_local_storage/src/database/tables/tables.dart';
+
+part 'budgets_dao.g.dart';
+
+@DriftAccessor(tables: [Budgets, BudgetMembers, BudgetPeriods])
+class BudgetsDao extends DatabaseAccessor<AppDatabase>
+    with _$BudgetsDaoMixin {
+  BudgetsDao(super.attachedDatabase);
+
+  // Budgets CRUD
+  Future<List<Budget>> getAllBudgets() => select(budgets).get();
+
+  Stream<List<Budget>> watchAllBudgets() => select(budgets).watch();
+
+  Future<Budget?> getBudget(String id) =>
+      (select(budgets)..where((t) => t.id.equals(id))).getSingleOrNull();
+
+  Stream<Budget> watchBudget(String id) =>
+      (select(budgets)..where((t) => t.id.equals(id))).watchSingle();
+
+  Future<List<Budget>> getBudgetsByOwnerId(String ownerId) =>
+      (select(budgets)..where((t) => t.ownerId.equals(ownerId))).get();
+
+  Future<int> insertBudget(BudgetsCompanion budget) =>
+      into(budgets).insert(budget);
+
+  Future<bool> updateBudget(BudgetsCompanion budget) =>
+      update(budgets).replace(budget);
+
+  Future<int> deleteBudget(String id) =>
+      (delete(budgets)..where((t) => t.id.equals(id))).go();
+
+  // Budget Members CRUD
+  Future<List<BudgetMember>> getMembersByBudgetId(String budgetId) =>
+      (select(budgetMembers)..where((t) => t.budgetId.equals(budgetId))).get();
+
+  Stream<List<BudgetMember>> watchMembersByBudgetId(String budgetId) =>
+      (select(budgetMembers)..where((t) => t.budgetId.equals(budgetId)))
+          .watch();
+
+  Future<int> insertBudgetMember(BudgetMembersCompanion member) =>
+      into(budgetMembers).insert(member);
+
+  Future<bool> updateBudgetMember(BudgetMembersCompanion member) =>
+      update(budgetMembers).replace(member);
+
+  Future<int> deleteBudgetMember(String id) =>
+      (delete(budgetMembers)..where((t) => t.id.equals(id))).go();
+
+  // Budget Periods CRUD
+  Future<List<BudgetPeriod>> getPeriodsByBudgetId(String budgetId) =>
+      (select(budgetPeriods)..where((t) => t.budgetId.equals(budgetId))).get();
+
+  Stream<List<BudgetPeriod>> watchPeriodsByBudgetId(String budgetId) =>
+      (select(budgetPeriods)..where((t) => t.budgetId.equals(budgetId)))
+          .watch();
+
+  Future<BudgetPeriod?> getBudgetPeriod(String id) =>
+      (select(budgetPeriods)..where((t) => t.id.equals(id)))
+          .getSingleOrNull();
+
+  Future<int> insertBudgetPeriod(BudgetPeriodsCompanion period) =>
+      into(budgetPeriods).insert(period);
+
+  Future<bool> updateBudgetPeriod(BudgetPeriodsCompanion period) =>
+      update(budgetPeriods).replace(period);
+
+  Future<int> deleteBudgetPeriod(String id) =>
+      (delete(budgetPeriods)..where((t) => t.id.equals(id))).go();
+}
