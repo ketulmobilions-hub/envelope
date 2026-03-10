@@ -1,0 +1,57 @@
+name: envelope
+description: Envelope - A zero-based budgeting app
+version: 1.0.0+1
+publish_to: none
+
+environment:
+  sdk: ^3.11.0
+  flutter: ^3.41.0
+
+dependencies:
+  account_repository:
+    path: packages/account_repository
+  auth_repository:
+    path: packages/auth_repository
+  bloc: ^9.2.0
+  budget_repository:
+    path: packages/budget_repository
+  envelope_api_client:
+    path: packages/envelope_api_client
+  envelope_local_storage:
+    path: packages/envelope_local_storage
+  envelope_repository:
+    path: packages/envelope_repository
+  flutter:
+    sdk: flutter
+  flutter_bloc: ^9.1.1
+  flutter_localizations:
+    sdk: flutter
+  go_router: ^15.1.2
+  goal_repository:
+    path: packages/goal_repository
+  intl: ^0.20.2
+  notification_repository:
+    path: packages/notification_repository
+  report_repository:
+    path: packages/report_repository
+  sharing_repository:
+    path: packages/sharing_repository
+  subscription_repository:
+    path: packages/subscription_repository
+  sync_repository:
+    path: packages/sync_repository
+  transaction_repository:
+    path: packages/transaction_repository
+
+dev_dependencies:
+  bloc_lint: ^0.3.7
+  bloc_test: ^10.0.0
+  bloc_tools: ^0.1.0-dev.22
+  flutter_test:
+    sdk: flutter
+  mocktail: ^1.0.4
+  very_good_analysis: ^10.2.0
+
+flutter:
+  generate: true
+  uses-material-design: true

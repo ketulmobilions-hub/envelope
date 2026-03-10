@@ -1,0 +1,22 @@
+name: sharing_repository
+description: Domain layer repository for budget sharing and activity logging.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  envelope_api_client:
+    path: ../envelope_api_client
+  envelope_local_storage:
+    path: ../envelope_local_storage
+  freezed_annotation: ^3.0.0
+  json_annotation: ^4.9.0
+
+dev_dependencies:
+  build_runner: ^2.4.0
+  freezed: ^3.0.0
+  json_serializable: ^6.9.0
+  test: ^1.25.0
+  very_good_analysis: ^10.2.0

@@ -1,0 +1,15 @@
+{
+    "@@locale": "en",
+    "appTitle": "Envelope",
+    "@appTitle": {
+        "description": "The title of the application"
+    },
+    "loginTitle": "Sign In",
+    "@loginTitle": {
+        "description": "Title for the login page"
+    },
+    "homeTitle": "Home",
+    "@homeTitle": {
+        "description": "Title for the home/dashboard page"
+    }
+}
