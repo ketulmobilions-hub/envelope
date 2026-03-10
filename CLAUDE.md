@@ -77,9 +77,15 @@ Uses `very_good_analysis` + `bloc_lint`. Config in `analysis_options.yaml`. Gene
 **Steps for every issue:**
 1. `git checkout dev && git pull`
 2. `git checkout -b feature/issue-<number>-<short-description>`
-3. Do all work on the feature branch, commit as needed
-4. When done, merge feature branch into `dev` with `--no-ff`
-5. Only after an entire phase is complete, merge `dev` into `main`
+3. Do all work on the feature branch
+4. **Run code review**: Launch a code-reviewer agent to analyze all changes. Present the issues found to the user. Fix only the issues the user asks to fix.
+5. **Present review summary** to the user listing:
+   - All changes made (files created/modified)
+   - Data flow explanation (how data moves through the layers)
+   - Key decisions and patterns used
+6. **Wait for user approval** before committing. Do NOT commit until the user explicitly clears it.
+7. After approval, commit and merge feature branch into `dev` with `--no-ff`
+8. Only after an entire phase is complete, merge `dev` into `main`
 
 ## Testing
 
