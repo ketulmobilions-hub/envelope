@@ -1,4 +1,5 @@
 export 'accounts_api_client.dart';
+export 'auth_api_client.dart';
 export 'budgets_api_client.dart';
 export 'envelopes_api_client.dart';
 export 'goals_api_client.dart';

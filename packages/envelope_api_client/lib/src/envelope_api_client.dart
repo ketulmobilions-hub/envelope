@@ -12,7 +12,8 @@ class EnvelopeApiClient {
         );
 
   EnvelopeApiClient._({required SupabaseClient supabaseClient})
-      : users = UsersApiClient(supabaseClient: supabaseClient),
+      : auth = AuthApiClient(supabaseClient: supabaseClient),
+        users = UsersApiClient(supabaseClient: supabaseClient),
         budgets = BudgetsApiClient(supabaseClient: supabaseClient),
         accounts = AccountsApiClient(supabaseClient: supabaseClient),
         envelopes = EnvelopesApiClient(supabaseClient: supabaseClient),
@@ -21,6 +22,9 @@ class EnvelopeApiClient {
         goals = GoalsApiClient(supabaseClient: supabaseClient),
         reports = ReportsApiClient(supabaseClient: supabaseClient),
         sync = SyncApiClient(supabaseClient: supabaseClient);
+
+  /// API client for authentication operations.
+  final AuthApiClient auth;
 
   /// API client for user operations.
   final UsersApiClient users;
