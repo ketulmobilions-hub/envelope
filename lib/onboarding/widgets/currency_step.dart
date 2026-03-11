@@ -82,6 +82,9 @@ class _CurrencyStepState extends State<CurrencyStep> {
                   ),
                   subtitle: Text(currency.symbol),
                   leading: Radio<String>(value: currency.code),
+                  onTap: () => context
+                      .read<OnboardingCubit>()
+                      .selectCurrency(currency.code),
                 );
               },
             ),

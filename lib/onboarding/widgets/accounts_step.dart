@@ -153,6 +153,11 @@ class AccountsStep extends StatelessWidget {
                         const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
+                    onTap: () {
+                      if (balanceController.text == '0') {
+                        balanceController.clear();
+                      }
+                    },
                   ),
                   const SizedBox(height: 16),
                   FilledButton(
@@ -178,10 +183,7 @@ class AccountsStep extends StatelessWidget {
           },
         );
       },
-    ).then((_) {
-      nameController.dispose();
-      balanceController.dispose();
-    }));
+    ));
   }
 
   static String _localizedAccountTypeStatic(

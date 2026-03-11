@@ -107,7 +107,7 @@ class EnvelopesStep extends StatelessWidget {
           ],
         );
       },
-    ).then((_) => controller.dispose()));
+    ));
   }
 }
 
@@ -209,6 +209,6 @@ class _CategoryGroupCard extends StatelessWidget {
           ],
         );
       },
-    ).then((_) => controller.dispose()));
+    ));
   }
 }

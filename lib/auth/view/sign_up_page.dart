@@ -179,7 +179,8 @@ class _SignUpViewState extends State<SignUpView> {
                         buildWhen: (p, c) => p.status != c.status,
                         builder: (context, state) {
                           final isSubmitting =
-                              state.status == SignUpStatus.submitting;
+                              state.status == SignUpStatus.submitting ||
+                              state.status == SignUpStatus.success;
                           return SizedBox(
                             width: double.infinity,
                             child: FilledButton(
