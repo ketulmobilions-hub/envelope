@@ -144,7 +144,8 @@ class _LoginViewState extends State<LoginView> {
                         buildWhen: (p, c) => p.status != c.status,
                         builder: (context, state) {
                           final isSubmitting =
-                              state.status == LoginStatus.submitting;
+                              state.status == LoginStatus.submitting ||
+                              state.status == LoginStatus.success;
                           return SizedBox(
                             width: double.infinity,
                             child: FilledButton(
