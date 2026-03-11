@@ -21,6 +21,7 @@ dependencies:
     path: packages/envelope_local_storage
   envelope_repository:
     path: packages/envelope_repository
+  equatable: ^2.0.7
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.1

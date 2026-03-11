@@ -9,66 +9,50 @@ import 'package:mocktail/mocktail.dart';
 class MockAuthRepository extends Mock implements AuthRepository {}
 
 void main() {
-  group('LoginPage', () {
+  group('SignUpPage', () {
     late MockAuthRepository authRepository;
 
     setUp(() {
       authRepository = MockAuthRepository();
     });
 
-    testWidgets('renders email and password fields', (tester) async {
+    testWidgets('renders all form fields', (tester) async {
       await tester.pumpWidget(
         RepositoryProvider<AuthRepository>.value(
           value: authRepository,
           child: const MaterialApp(
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            home: LoginPage(),
+            home: SignUpPage(),
           ),
         ),
       );
       await tester.pump();
 
+      expect(find.text('Display Name'), findsOneWidget);
       expect(find.text('Email'), findsOneWidget);
       expect(find.text('Password'), findsOneWidget);
-      expect(find.text('Sign In'), findsOneWidget);
+      expect(find.text('Confirm Password'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Create Account'), findsOneWidget);
     });
 
-    testWidgets('renders social sign-in buttons', (tester) async {
+    testWidgets('renders back to login link', (tester) async {
       await tester.pumpWidget(
         RepositoryProvider<AuthRepository>.value(
           value: authRepository,
           child: const MaterialApp(
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            home: LoginPage(),
-          ),
-        ),
-      );
-      await tester.pump();
-
-      expect(find.text('Continue with Google'), findsOneWidget);
-      expect(find.text('Continue with Apple'), findsOneWidget);
-    });
-
-    testWidgets('renders sign up and forgot password links', (tester) async {
-      await tester.pumpWidget(
-        RepositoryProvider<AuthRepository>.value(
-          value: authRepository,
-          child: const MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: LoginPage(),
+            home: SignUpPage(),
           ),
         ),
       );
       await tester.pump();
 
       expect(
-        find.text("Don't have an account? Sign up"),
+        find.text('Already have an account? Sign in'),
         findsOneWidget,
       );
-      expect(find.text('Forgot password?'), findsOneWidget);
     });
   });
 }

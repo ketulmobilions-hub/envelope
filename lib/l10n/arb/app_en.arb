@@ -11,5 +11,101 @@
     "homeTitle": "Home",
     "@homeTitle": {
         "description": "Title for the home/dashboard page"
+    },
+    "signUpTitle": "Create Account",
+    "@signUpTitle": {
+        "description": "Title for the sign up page"
+    },
+    "forgotPasswordTitle": "Reset Password",
+    "@forgotPasswordTitle": {
+        "description": "Title for the forgot password page"
+    },
+    "emailLabel": "Email",
+    "@emailLabel": {
+        "description": "Label for email input field"
+    },
+    "passwordLabel": "Password",
+    "@passwordLabel": {
+        "description": "Label for password input field"
+    },
+    "confirmPasswordLabel": "Confirm Password",
+    "@confirmPasswordLabel": {
+        "description": "Label for confirm password input field"
+    },
+    "displayNameLabel": "Display Name",
+    "@displayNameLabel": {
+        "description": "Label for display name input field"
+    },
+    "signInButton": "Sign In",
+    "@signInButton": {
+        "description": "Text for sign in button"
+    },
+    "signUpButton": "Create Account",
+    "@signUpButton": {
+        "description": "Text for sign up button"
+    },
+    "signInWithGoogle": "Continue with Google",
+    "@signInWithGoogle": {
+        "description": "Text for Google sign in button"
+    },
+    "signInWithApple": "Continue with Apple",
+    "@signInWithApple": {
+        "description": "Text for Apple sign in button"
+    },
+    "forgotPasswordLink": "Forgot password?",
+    "@forgotPasswordLink": {
+        "description": "Text for forgot password link"
+    },
+    "noAccountLink": "Don't have an account? Sign up",
+    "@noAccountLink": {
+        "description": "Text for link to sign up page"
+    },
+    "hasAccountLink": "Already have an account? Sign in",
+    "@hasAccountLink": {
+        "description": "Text for link to sign in page"
+    },
+    "sendResetEmailButton": "Send Reset Email",
+    "@sendResetEmailButton": {
+        "description": "Text for send password reset email button"
+    },
+    "forgotPasswordInstructions": "Enter your email address and we'll send you a link to reset your password.",
+    "@forgotPasswordInstructions": {
+        "description": "Instructions on the forgot password page"
+    },
+    "resetEmailSent": "Password reset email sent. Check your inbox.",
+    "@resetEmailSent": {
+        "description": "Message shown after password reset email is sent"
+    },
+    "emailRequired": "Please enter your email",
+    "@emailRequired": {
+        "description": "Validation message for empty email"
+    },
+    "emailInvalid": "Please enter a valid email",
+    "@emailInvalid": {
+        "description": "Validation message for invalid email"
+    },
+    "passwordRequired": "Please enter your password",
+    "@passwordRequired": {
+        "description": "Validation message for empty password"
+    },
+    "passwordTooShort": "Password must be at least 8 characters",
+    "@passwordTooShort": {
+        "description": "Validation message for short password"
+    },
+    "passwordsDoNotMatch": "Passwords do not match",
+    "@passwordsDoNotMatch": {
+        "description": "Validation message when passwords don't match"
+    },
+    "displayNameRequired": "Please enter your name",
+    "@displayNameRequired": {
+        "description": "Validation message for empty display name"
+    },
+    "or": "or",
+    "@or": {
+        "description": "Separator text between sign in methods"
+    },
+    "signOutButton": "Sign Out",
+    "@signOutButton": {
+        "description": "Text for sign out button"
     }
 }

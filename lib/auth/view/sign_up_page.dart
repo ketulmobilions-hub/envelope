@@ -1,47 +1,49 @@
 import 'package:auth_repository/auth_repository.dart';
 import 'package:envelope/app/app.dart';
 import 'package:envelope/auth/cubit/cubit.dart';
-import 'package:envelope/auth/view/forgot_password_page.dart';
-import 'package:envelope/auth/view/sign_up_page.dart';
-import 'package:envelope/auth/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
+class SignUpPage extends StatelessWidget {
+  const SignUpPage({super.key});
 
-  static String routeName = AppRoutes.login;
+  static String routeName = AppRoutes.signUp;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => LoginCubit(
+      create: (_) => SignUpCubit(
         authRepository: context.read<AuthRepository>(),
       ),
-      child: const LoginView(),
+      child: const SignUpView(),
     );
   }
 }
 
-class LoginView extends StatefulWidget {
-  const LoginView({super.key});
+class SignUpView extends StatefulWidget {
+  const SignUpView({super.key});
 
   @override
-  State<LoginView> createState() => _LoginViewState();
+  State<SignUpView> createState() => _SignUpViewState();
 }
 
-class _LoginViewState extends State<LoginView> {
+class _SignUpViewState extends State<SignUpView> {
   final _formKey = GlobalKey<FormState>();
+  final _displayNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _obscureConfirm = true;
 
   @override
   void dispose() {
+    _displayNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -49,18 +51,22 @@ class _LoginViewState extends State<LoginView> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
 
-    return BlocListener<LoginCubit, LoginState>(
+    return BlocListener<SignUpCubit, SignUpState>(
       listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
-        if (state.status == LoginStatus.failure) {
+        if (state.status == SignUpStatus.failure) {
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
             ..showSnackBar(
               SnackBar(content: Text(state.errorMessage ?? '')),
             );
         }
+        if (state.status == SignUpStatus.success) {
+          context.pop();
+        }
       },
       child: Scaffold(
+        appBar: AppBar(title: Text(l10n.signUpTitle)),
         body: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -72,17 +78,23 @@ class _LoginViewState extends State<LoginView> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.mail_outlined,
-                        size: 64,
-                        color: Theme.of(context).colorScheme.primary,
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _displayNameController,
+                        decoration: InputDecoration(
+                          labelText: l10n.displayNameLabel,
+                          prefixIcon: const Icon(Icons.person_outlined),
+                        ),
+                        textInputAction: TextInputAction.next,
+                        textCapitalization: TextCapitalization.words,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return l10n.displayNameRequired;
+                          }
+                          return null;
+                        },
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n.appTitle,
-                        style: Theme.of(context).textTheme.headlineMedium,
-                      ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 16),
                       TextFormField(
                         controller: _emailController,
                         decoration: InputDecoration(
@@ -122,29 +134,52 @@ class _LoginViewState extends State<LoginView> {
                           ),
                         ),
                         obscureText: _obscurePassword,
-                        textInputAction: TextInputAction.done,
+                        textInputAction: TextInputAction.next,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return l10n.passwordRequired;
+                          }
+                          if (value.length < 8) {
+                            return l10n.passwordTooShort;
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _confirmPasswordController,
+                        decoration: InputDecoration(
+                          labelText: l10n.confirmPasswordLabel,
+                          prefixIcon: const Icon(Icons.lock_outlined),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureConfirm
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscureConfirm = !_obscureConfirm;
+                              });
+                            },
+                          ),
+                        ),
+                        obscureText: _obscureConfirm,
+                        textInputAction: TextInputAction.done,
+                        validator: (value) {
+                          if (value != _passwordController.text) {
+                            return l10n.passwordsDoNotMatch;
                           }
                           return null;
                         },
                         onFieldSubmitted: (_) => _submit(),
                       ),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () =>
-                              context.pushNamed(ForgotPasswordPage.routeName),
-                          child: Text(l10n.forgotPasswordLink),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      BlocBuilder<LoginCubit, LoginState>(
+                      const SizedBox(height: 24),
+                      BlocBuilder<SignUpCubit, SignUpState>(
                         buildWhen: (p, c) => p.status != c.status,
                         builder: (context, state) {
                           final isSubmitting =
-                              state.status == LoginStatus.submitting;
+                              state.status == SignUpStatus.submitting;
                           return SizedBox(
                             width: double.infinity,
                             child: FilledButton(
@@ -156,20 +191,15 @@ class _LoginViewState extends State<LoginView> {
                                         strokeWidth: 2,
                                       ),
                                     )
-                                  : Text(l10n.signInButton),
+                                  : Text(l10n.signUpButton),
                             ),
                           );
                         },
                       ),
-                      const SizedBox(height: 24),
-                      const SocialSignInDivider(),
                       const SizedBox(height: 16),
-                      const SocialSignInButtons(),
-                      const SizedBox(height: 24),
                       TextButton(
-                        onPressed: () =>
-                            context.pushNamed(SignUpPage.routeName),
-                        child: Text(l10n.noAccountLink),
+                        onPressed: () => context.pop(),
+                        child: Text(l10n.hasAccountLink),
                       ),
                     ],
                   ),
@@ -184,9 +214,10 @@ class _LoginViewState extends State<LoginView> {
 
   Future<void> _submit() async {
     if (_formKey.currentState?.validate() ?? false) {
-      await context.read<LoginCubit>().signInWithEmailAndPassword(
+      await context.read<SignUpCubit>().signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
+        displayName: _displayNameController.text.trim(),
       );
     }
   }
