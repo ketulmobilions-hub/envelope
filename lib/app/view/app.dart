@@ -13,6 +13,7 @@ import 'package:go_router/go_router.dart';
 import 'package:goal_repository/goal_repository.dart';
 import 'package:notification_repository/notification_repository.dart';
 import 'package:report_repository/report_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sharing_repository/sharing_repository.dart';
 import 'package:subscription_repository/subscription_repository.dart';
 import 'package:sync_repository/sync_repository.dart';
@@ -31,6 +32,7 @@ class App extends StatelessWidget {
     required this.sharingRepository,
     required this.subscriptionRepository,
     required this.syncRepository,
+    required this.sharedPreferences,
     super.key,
   });
 
@@ -45,6 +47,7 @@ class App extends StatelessWidget {
   final SharingRepository sharingRepository;
   final SubscriptionRepository subscriptionRepository;
   final SyncRepository syncRepository;
+  final SharedPreferences sharedPreferences;
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +64,7 @@ class App extends StatelessWidget {
         RepositoryProvider.value(value: sharingRepository),
         RepositoryProvider.value(value: subscriptionRepository),
         RepositoryProvider.value(value: syncRepository),
+        RepositoryProvider<SharedPreferences>.value(value: sharedPreferences),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -72,14 +76,16 @@ class App extends StatelessWidget {
               ..add(const SyncStarted()),
           ),
         ],
-        child: const AppView(),
+        child: AppView(sharedPreferences: sharedPreferences),
       ),
     );
   }
 }
 
 class AppView extends StatefulWidget {
-  const AppView({super.key});
+  const AppView({required this.sharedPreferences, super.key});
+
+  final SharedPreferences sharedPreferences;
 
   @override
   State<AppView> createState() => _AppViewState();
@@ -92,7 +98,10 @@ class _AppViewState extends State<AppView> {
   void initState() {
     super.initState();
     final authBloc = context.read<AuthBloc>();
-    _router = createRouter(authBloc: authBloc);
+    _router = createRouter(
+      authBloc: authBloc,
+      sharedPreferences: widget.sharedPreferences,
+    );
   }
 
   @override

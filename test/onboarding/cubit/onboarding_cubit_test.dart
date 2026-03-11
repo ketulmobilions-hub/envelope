@@ -1,0 +1,471 @@
+import 'package:bloc_test/bloc_test.dart';
+import 'package:envelope/onboarding/cubit/cubit.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+void main() {
+  group('OnboardingCubit', () {
+    late SharedPreferences prefs;
+
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+      prefs = await SharedPreferences.getInstance();
+    });
+
+    OnboardingCubit buildCubit() =>
+        OnboardingCubit(sharedPreferences: prefs);
+
+    test('initial state is correct', () {
+      final cubit = buildCubit();
+      expect(cubit.state, const OnboardingState());
+      expect(
+        cubit.state.currentStep,
+        OnboardingStep.welcome,
+      );
+      expect(cubit.state.status, OnboardingStatus.initial);
+      expect(cubit.state.baseCurrency, 'USD');
+      expect(cubit.state.accounts, isEmpty);
+      expect(cubit.state.expectedIncome, 0);
+      expect(cubit.state.categoryGroups, defaultCategoryGroups);
+      expect(cubit.state.allocations, isEmpty);
+    });
+
+    group('step navigation', () {
+      blocTest<OnboardingCubit, OnboardingState>(
+        'nextStep advances from welcome to currency',
+        build: buildCubit,
+        act: (cubit) => cubit.nextStep(),
+        expect: () => [
+          const OnboardingState(
+            currentStep: OnboardingStep.currency,
+          ),
+        ],
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'previousStep goes from currency to welcome',
+        build: buildCubit,
+        seed: () => const OnboardingState(
+          currentStep: OnboardingStep.currency,
+        ),
+        act: (cubit) => cubit.previousStep(),
+        expect: () => [
+          const OnboardingState(),
+        ],
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'previousStep does nothing on welcome step',
+        build: buildCubit,
+        act: (cubit) => cubit.previousStep(),
+        expect: () => <OnboardingState>[],
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'nextStep does not advance past allocation',
+        build: buildCubit,
+        seed: () => const OnboardingState(
+          currentStep: OnboardingStep.allocation,
+        ),
+        act: (cubit) => cubit.nextStep(),
+        expect: () => <OnboardingState>[],
+      );
+    });
+
+    group('accounts validation', () {
+      blocTest<OnboardingCubit, OnboardingState>(
+        'nextStep fails on accounts step with no accounts',
+        build: buildCubit,
+        seed: () => const OnboardingState(
+          currentStep: OnboardingStep.accounts,
+        ),
+        act: (cubit) => cubit.nextStep(),
+        expect: () => [
+          isA<OnboardingState>()
+              .having(
+                (s) => s.status,
+                'status',
+                OnboardingStatus.failure,
+              )
+              .having(
+                (s) => s.error,
+                'error',
+                OnboardingError.accountRequired,
+              ),
+        ],
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'nextStep advances on accounts step with accounts',
+        build: buildCubit,
+        seed: () => const OnboardingState(
+          currentStep: OnboardingStep.accounts,
+          accounts: [
+            OnboardingAccount(
+              name: 'Checking',
+              type: 'checking',
+              currency: 'USD',
+            ),
+          ],
+        ),
+        act: (cubit) => cubit.nextStep(),
+        expect: () => [
+          isA<OnboardingState>().having(
+            (s) => s.currentStep,
+            'currentStep',
+            OnboardingStep.income,
+          ),
+        ],
+      );
+    });
+
+    group('income validation', () {
+      blocTest<OnboardingCubit, OnboardingState>(
+        'nextStep fails on income step with zero income',
+        build: buildCubit,
+        seed: () => const OnboardingState(
+          currentStep: OnboardingStep.income,
+        ),
+        act: (cubit) => cubit.nextStep(),
+        expect: () => [
+          isA<OnboardingState>()
+              .having(
+                (s) => s.status,
+                'status',
+                OnboardingStatus.failure,
+              )
+              .having(
+                (s) => s.error,
+                'error',
+                OnboardingError.incomeRequired,
+              ),
+        ],
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'nextStep advances on income step with income set',
+        build: buildCubit,
+        seed: () => const OnboardingState(
+          currentStep: OnboardingStep.income,
+          expectedIncome: 5000,
+        ),
+        act: (cubit) => cubit.nextStep(),
+        expect: () => [
+          isA<OnboardingState>().having(
+            (s) => s.currentStep,
+            'currentStep',
+            OnboardingStep.envelopes,
+          ),
+        ],
+      );
+    });
+
+    group('envelope validation', () {
+      blocTest<OnboardingCubit, OnboardingState>(
+        'nextStep fails on envelopes step with no envelopes',
+        build: buildCubit,
+        seed: () => const OnboardingState(
+          currentStep: OnboardingStep.envelopes,
+          categoryGroups: [
+            OnboardingCategoryGroup(
+              name: 'Empty',
+              envelopes: <String>[],
+            ),
+          ],
+        ),
+        act: (cubit) => cubit.nextStep(),
+        expect: () => [
+          isA<OnboardingState>()
+              .having(
+                (s) => s.status,
+                'status',
+                OnboardingStatus.failure,
+              )
+              .having(
+                (s) => s.error,
+                'error',
+                OnboardingError.envelopeRequired,
+              ),
+        ],
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'nextStep advances on envelopes step with envelopes',
+        build: buildCubit,
+        seed: () => const OnboardingState(
+          currentStep: OnboardingStep.envelopes,
+          categoryGroups: [
+            OnboardingCategoryGroup(
+              name: 'Needs',
+              envelopes: ['Rent'],
+            ),
+          ],
+        ),
+        act: (cubit) => cubit.nextStep(),
+        expect: () => [
+          isA<OnboardingState>().having(
+            (s) => s.currentStep,
+            'currentStep',
+            OnboardingStep.allocation,
+          ),
+        ],
+      );
+    });
+
+    group('currency selection', () {
+      blocTest<OnboardingCubit, OnboardingState>(
+        'selectCurrency updates baseCurrency',
+        build: buildCubit,
+        act: (cubit) => cubit.selectCurrency('EUR'),
+        expect: () => [
+          const OnboardingState(baseCurrency: 'EUR'),
+        ],
+      );
+    });
+
+    group('account CRUD', () {
+      const account = OnboardingAccount(
+        name: 'Checking',
+        type: 'checking',
+        currency: 'USD',
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'addAccount adds to list',
+        build: buildCubit,
+        act: (cubit) => cubit.addAccount(account),
+        expect: () => [
+          const OnboardingState(accounts: [account]),
+        ],
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'removeAccount removes by index',
+        build: buildCubit,
+        seed: () => const OnboardingState(accounts: [account]),
+        act: (cubit) => cubit.removeAccount(0),
+        expect: () => [
+          const OnboardingState(),
+        ],
+      );
+    });
+
+    group('income', () {
+      blocTest<OnboardingCubit, OnboardingState>(
+        'setExpectedIncome updates income',
+        build: buildCubit,
+        act: (cubit) => cubit.setExpectedIncome(5000),
+        expect: () => [
+          const OnboardingState(expectedIncome: 5000),
+        ],
+      );
+    });
+
+    group('category group CRUD', () {
+      blocTest<OnboardingCubit, OnboardingState>(
+        'addCategoryGroup adds a new group',
+        build: buildCubit,
+        act: (cubit) => cubit.addCategoryGroup('Custom'),
+        expect: () => [
+          isA<OnboardingState>().having(
+            (s) => s.categoryGroups.length,
+            'length',
+            defaultCategoryGroups.length + 1,
+          ).having(
+            (s) => s.categoryGroups.last.name,
+            'last group name',
+            'Custom',
+          ),
+        ],
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'removeCategoryGroup removes by index',
+        build: buildCubit,
+        seed: () => const OnboardingState(
+          categoryGroups: [
+            OnboardingCategoryGroup(
+              name: 'A',
+              envelopes: ['a1'],
+            ),
+            OnboardingCategoryGroup(
+              name: 'B',
+              envelopes: ['b1'],
+            ),
+          ],
+        ),
+        act: (cubit) => cubit.removeCategoryGroup(0),
+        expect: () => [
+          const OnboardingState(
+            categoryGroups: [
+              OnboardingCategoryGroup(
+                name: 'B',
+                envelopes: ['b1'],
+              ),
+            ],
+          ),
+        ],
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'renameCategoryGroup renames by index',
+        build: buildCubit,
+        seed: () => const OnboardingState(
+          categoryGroups: [
+            OnboardingCategoryGroup(
+              name: 'Old',
+              envelopes: [],
+            ),
+          ],
+        ),
+        act: (cubit) => cubit.renameCategoryGroup(0, 'New'),
+        expect: () => [
+          const OnboardingState(
+            categoryGroups: [
+              OnboardingCategoryGroup(
+                name: 'New',
+                envelopes: [],
+              ),
+            ],
+          ),
+        ],
+      );
+    });
+
+    group('envelope CRUD', () {
+      blocTest<OnboardingCubit, OnboardingState>(
+        'addEnvelope adds to group',
+        build: buildCubit,
+        seed: () => const OnboardingState(
+          categoryGroups: [
+            OnboardingCategoryGroup(
+              name: 'Group',
+              envelopes: [],
+            ),
+          ],
+        ),
+        act: (cubit) => cubit.addEnvelope(0, 'Rent'),
+        expect: () => [
+          const OnboardingState(
+            categoryGroups: [
+              OnboardingCategoryGroup(
+                name: 'Group',
+                envelopes: ['Rent'],
+              ),
+            ],
+          ),
+        ],
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'removeEnvelope removes from group',
+        build: buildCubit,
+        seed: () => const OnboardingState(
+          categoryGroups: [
+            OnboardingCategoryGroup(
+              name: 'Group',
+              envelopes: ['Rent', 'Food'],
+            ),
+          ],
+        ),
+        act: (cubit) => cubit.removeEnvelope(0, 0),
+        expect: () => [
+          const OnboardingState(
+            categoryGroups: [
+              OnboardingCategoryGroup(
+                name: 'Group',
+                envelopes: ['Food'],
+              ),
+            ],
+          ),
+        ],
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'renameEnvelope renames in group',
+        build: buildCubit,
+        seed: () => const OnboardingState(
+          categoryGroups: [
+            OnboardingCategoryGroup(
+              name: 'Group',
+              envelopes: ['Old'],
+            ),
+          ],
+        ),
+        act: (cubit) => cubit.renameEnvelope(0, 0, 'New'),
+        expect: () => [
+          const OnboardingState(
+            categoryGroups: [
+              OnboardingCategoryGroup(
+                name: 'Group',
+                envelopes: ['New'],
+              ),
+            ],
+          ),
+        ],
+      );
+    });
+
+    group('allocation', () {
+      blocTest<OnboardingCubit, OnboardingState>(
+        'setAllocation updates allocation map with composite key',
+        build: buildCubit,
+        act: (cubit) => cubit.setAllocation(0, 'Rent', 1500),
+        expect: () => [
+          const OnboardingState(
+            allocations: {'0:Rent': 1500},
+          ),
+        ],
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'getAllocation returns value for composite key',
+        build: buildCubit,
+        seed: () => const OnboardingState(
+          allocations: {'0:Rent': 1500},
+        ),
+        verify: (cubit) {
+          expect(cubit.getAllocation(0, 'Rent'), 1500);
+          expect(cubit.getAllocation(1, 'Rent'), 0);
+        },
+      );
+    });
+
+    group('completeOnboarding', () {
+      blocTest<OnboardingCubit, OnboardingState>(
+        'emits submitting then success and persists flag',
+        build: buildCubit,
+        act: (cubit) => cubit.completeOnboarding(),
+        expect: () => [
+          const OnboardingState(
+            status: OnboardingStatus.submitting,
+          ),
+          const OnboardingState(
+            status: OnboardingStatus.success,
+          ),
+        ],
+        verify: (_) {
+          expect(
+            prefs.getBool('onboarding_complete'),
+            isTrue,
+          );
+        },
+      );
+    });
+
+    group('isOnboardingComplete', () {
+      test('returns false when not set', () async {
+        final result =
+            await OnboardingCubit.isOnboardingComplete(prefs);
+        expect(result, isFalse);
+      });
+
+      test('returns true when flag is set', () async {
+        await prefs.setBool('onboarding_complete', true);
+        final result =
+            await OnboardingCubit.isOnboardingComplete(prefs);
+        expect(result, isTrue);
+      });
+    });
+  });
+}

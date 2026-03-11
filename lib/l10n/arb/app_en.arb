@@ -132,5 +132,177 @@
                 "type": "int"
             }
         }
+    },
+    "onboardingTitle": "Set Up Your Budget",
+    "@onboardingTitle": {
+        "description": "Title for the onboarding page app bar"
+    },
+    "onboardingStepOf": "Step {current} of {total}",
+    "@onboardingStepOf": {
+        "description": "Progress indicator text",
+        "placeholders": {
+            "current": { "type": "int" },
+            "total": { "type": "int" }
+        }
+    },
+    "onboardingContinue": "Continue",
+    "@onboardingContinue": {
+        "description": "Continue button text"
+    },
+    "onboardingBack": "Back",
+    "@onboardingBack": {
+        "description": "Back button text"
+    },
+    "onboardingGetStarted": "Get Started",
+    "@onboardingGetStarted": {
+        "description": "Get started button on welcome step"
+    },
+    "onboardingComplete": "Complete Setup",
+    "@onboardingComplete": {
+        "description": "Complete onboarding button"
+    },
+    "onboardingWelcomeTitle": "Welcome to Envelope",
+    "@onboardingWelcomeTitle": {
+        "description": "Welcome step title"
+    },
+    "onboardingWelcomeDescription": "Envelope uses the envelope budgeting method to help you take control of your money. Assign every dollar a job by allocating your income into spending categories — your envelopes.",
+    "@onboardingWelcomeDescription": {
+        "description": "Welcome step description"
+    },
+    "onboardingCurrencyTitle": "Choose Your Currency",
+    "@onboardingCurrencyTitle": {
+        "description": "Currency step title"
+    },
+    "onboardingCurrencyDescription": "Select the base currency for your budget.",
+    "@onboardingCurrencyDescription": {
+        "description": "Currency step description"
+    },
+    "onboardingCurrencySearch": "Search currencies",
+    "@onboardingCurrencySearch": {
+        "description": "Currency search placeholder"
+    },
+    "onboardingAccountsTitle": "Add Your Accounts",
+    "@onboardingAccountsTitle": {
+        "description": "Accounts step title"
+    },
+    "onboardingAccountsDescription": "Add the bank accounts, credit cards, or cash you want to track.",
+    "@onboardingAccountsDescription": {
+        "description": "Accounts step description"
+    },
+    "onboardingAddAccount": "Add Account",
+    "@onboardingAddAccount": {
+        "description": "Add account button"
+    },
+    "onboardingAccountName": "Account Name",
+    "@onboardingAccountName": {
+        "description": "Account name field label"
+    },
+    "onboardingAccountType": "Account Type",
+    "@onboardingAccountType": {
+        "description": "Account type field label"
+    },
+    "onboardingStartingBalance": "Starting Balance",
+    "@onboardingStartingBalance": {
+        "description": "Starting balance field label"
+    },
+    "onboardingAccountRequired": "Please add at least one account to continue.",
+    "@onboardingAccountRequired": {
+        "description": "Validation message when no accounts added"
+    },
+    "onboardingAccountTypeChecking": "Checking",
+    "@onboardingAccountTypeChecking": {
+        "description": "Checking account type"
+    },
+    "onboardingAccountTypeSavings": "Savings",
+    "@onboardingAccountTypeSavings": {
+        "description": "Savings account type"
+    },
+    "onboardingAccountTypeCreditCard": "Credit Card",
+    "@onboardingAccountTypeCreditCard": {
+        "description": "Credit card account type"
+    },
+    "onboardingAccountTypeCash": "Cash",
+    "@onboardingAccountTypeCash": {
+        "description": "Cash account type"
+    },
+    "onboardingAccountTypeInvestment": "Investment",
+    "@onboardingAccountTypeInvestment": {
+        "description": "Investment account type"
+    },
+    "onboardingAccountTypeOther": "Other",
+    "@onboardingAccountTypeOther": {
+        "description": "Other account type"
+    },
+    "onboardingIncomeTitle": "Expected Monthly Income",
+    "@onboardingIncomeTitle": {
+        "description": "Income step title"
+    },
+    "onboardingIncomeDescription": "How much do you expect to earn each month? This helps pre-fill your envelope allocations.",
+    "@onboardingIncomeDescription": {
+        "description": "Income step description"
+    },
+    "onboardingIncomeLabel": "Monthly Income",
+    "@onboardingIncomeLabel": {
+        "description": "Income input label"
+    },
+    "onboardingEnvelopesTitle": "Set Up Your Envelopes",
+    "@onboardingEnvelopesTitle": {
+        "description": "Envelopes step title"
+    },
+    "onboardingEnvelopesDescription": "Organize your spending into category groups and envelopes. We've added some defaults to get you started.",
+    "@onboardingEnvelopesDescription": {
+        "description": "Envelopes step description"
+    },
+    "onboardingAddGroup": "Add Group",
+    "@onboardingAddGroup": {
+        "description": "Add category group button"
+    },
+    "onboardingAddEnvelope": "Add Envelope",
+    "@onboardingAddEnvelope": {
+        "description": "Add envelope button"
+    },
+    "onboardingGroupNeeds": "Needs",
+    "@onboardingGroupNeeds": {
+        "description": "Default needs category group"
+    },
+    "onboardingGroupWants": "Wants",
+    "@onboardingGroupWants": {
+        "description": "Default wants category group"
+    },
+    "onboardingGroupSavings": "Savings/Investments",
+    "@onboardingGroupSavings": {
+        "description": "Default savings category group"
+    },
+    "onboardingAllocationTitle": "Allocate Your Income",
+    "@onboardingAllocationTitle": {
+        "description": "Allocation step title"
+    },
+    "onboardingAllocationDescription": "Assign your income to each envelope. The goal is to allocate every dollar.",
+    "@onboardingAllocationDescription": {
+        "description": "Allocation step description"
+    },
+    "onboardingIncomeToAllocate": "Income to Allocate",
+    "@onboardingIncomeToAllocate": {
+        "description": "Label for total income to allocate"
+    },
+    "onboardingRemainingToAllocate": "Remaining",
+    "@onboardingRemainingToAllocate": {
+        "description": "Label for remaining amount to allocate"
+    },
+    "onboardingErrorAccountRequired": "Please add at least one account to continue.",
+    "@onboardingErrorAccountRequired": {
+        "description": "Error when no accounts added"
+    },
+    "onboardingErrorIncomeRequired": "Please enter your expected monthly income.",
+    "@onboardingErrorIncomeRequired": {
+        "description": "Error when income is zero"
+    },
+    "onboardingErrorEnvelopeRequired": "Please add at least one envelope to continue.",
+    "@onboardingErrorEnvelopeRequired": {
+        "description": "Error when no envelopes exist"
+    },
+    "onboardingErrorCompletionFailed": "Failed to complete onboarding. Please try again.",
+    "@onboardingErrorCompletionFailed": {
+        "description": "Error when onboarding completion fails"
     }
 }
