@@ -15,6 +15,7 @@ dependencies:
   bloc: ^9.2.0
   budget_repository:
     path: packages/budget_repository
+  connectivity_plus: ^6.1.4
   envelope_api_client:
     path: packages/envelope_api_client
   envelope_local_storage:
