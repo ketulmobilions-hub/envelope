@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/dashboard/dashboard.dart';
+import 'package:envelope/onboarding/onboarding.dart';
 import 'package:envelope/splash/splash.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Route path constants.
 abstract final class AppRoutes {
@@ -13,10 +15,14 @@ abstract final class AppRoutes {
   static const String home = '/home';
   static const String signUp = '/signUp';
   static const String forgotPassword = '/forgotPassword';
+  static const String onboarding = '/onboarding';
 }
 
 /// Creates the application [GoRouter] with auth-based redirects.
-GoRouter createRouter({required AuthBloc authBloc}) {
+GoRouter createRouter({
+  required AuthBloc authBloc,
+  required SharedPreferences sharedPreferences,
+}) {
   return GoRouter(
     initialLocation: AppRoutes.splash,
     refreshListenable: _AuthBlocListenable(authBloc),
@@ -26,7 +32,9 @@ GoRouter createRouter({required AuthBloc authBloc}) {
 
       // While auth status is unknown, stay on splash.
       if (authStatus == AuthStatus.unknown) {
-        return currentPath == AppRoutes.splash ? null : AppRoutes.splash;
+        return currentPath == AppRoutes.splash
+            ? null
+            : AppRoutes.splash;
       }
 
       // If unauthenticated, allow login, signUp, and forgotPassword.
@@ -41,8 +49,26 @@ GoRouter createRouter({required AuthBloc authBloc}) {
             : AppRoutes.login;
       }
 
-      // If authenticated but on splash or login, redirect to home.
-      if (currentPath == AppRoutes.splash || currentPath == AppRoutes.login) {
+      // Authenticated: read onboarding status live from prefs.
+      final onboarded = sharedPreferences
+              .getBool('onboarding_complete') ??
+          false;
+
+      if (!onboarded) {
+        // Allow staying on onboarding page.
+        if (currentPath == AppRoutes.onboarding) return null;
+        return AppRoutes.onboarding;
+      }
+
+      // Authenticated + onboarded: redirect away from
+      // auth/splash/onboarding.
+      const redirectToHome = [
+        AppRoutes.splash,
+        AppRoutes.login,
+        AppRoutes.signUp,
+        AppRoutes.onboarding,
+      ];
+      if (redirectToHome.contains(currentPath)) {
         return AppRoutes.home;
       }
 
@@ -68,6 +94,11 @@ GoRouter createRouter({required AuthBloc authBloc}) {
         name: AppRoutes.forgotPassword,
         path: AppRoutes.forgotPassword,
         builder: (context, state) => const ForgotPasswordPage(),
+      ),
+      GoRoute(
+        name: AppRoutes.onboarding,
+        path: AppRoutes.onboarding,
+        builder: (context, state) => const OnboardingPage(),
       ),
       GoRoute(
         name: AppRoutes.home,

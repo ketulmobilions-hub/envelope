@@ -10,6 +10,7 @@ import 'package:goal_repository/goal_repository.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:notification_repository/notification_repository.dart';
 import 'package:report_repository/report_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sharing_repository/sharing_repository.dart';
 import 'package:subscription_repository/subscription_repository.dart';
 import 'package:sync_repository/sync_repository.dart';
@@ -44,8 +45,9 @@ void main() {
   group('App', () {
     late MockAuthRepository authRepository;
     late MockSyncRepository syncRepository;
+    late SharedPreferences prefs;
 
-    setUp(() {
+    setUp(() async {
       authRepository = MockAuthRepository();
       syncRepository = MockSyncRepository();
       when(() => authRepository.user).thenAnswer(
@@ -55,6 +57,8 @@ void main() {
       when(() => syncRepository.syncStatus).thenAnswer(
         (_) => const Stream<SyncStatus>.empty(),
       );
+      SharedPreferences.setMockInitialValues({});
+      prefs = await SharedPreferences.getInstance();
     });
 
     testWidgets('renders AppView', (tester) async {
@@ -71,6 +75,7 @@ void main() {
           sharingRepository: MockSharingRepository(),
           subscriptionRepository: MockSubscriptionRepository(),
           syncRepository: syncRepository,
+          sharedPreferences: prefs,
         ),
       );
       await tester.pump();

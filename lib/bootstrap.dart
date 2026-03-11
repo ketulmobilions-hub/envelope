@@ -121,6 +121,7 @@ Future<void> bootstrap({
       sharingRepository: sharingRepository,
       subscriptionRepository: subscriptionRepository,
       syncRepository: syncRepository,
+      sharedPreferences: prefs,
     ),
   );
 }

@@ -1,0 +1,36 @@
+/// Static list of common ISO 4217 currencies.
+typedef CurrencyInfo = ({String code, String name, String symbol});
+
+/// ~30 commonly used world currencies.
+const List<CurrencyInfo> supportedCurrencies = [
+  (code: 'USD', name: 'US Dollar', symbol: r'$'),
+  (code: 'EUR', name: 'Euro', symbol: '€'),
+  (code: 'GBP', name: 'British Pound', symbol: '£'),
+  (code: 'JPY', name: 'Japanese Yen', symbol: '¥'),
+  (code: 'CAD', name: 'Canadian Dollar', symbol: r'CA$'),
+  (code: 'AUD', name: 'Australian Dollar', symbol: r'A$'),
+  (code: 'CHF', name: 'Swiss Franc', symbol: 'CHF'),
+  (code: 'CNY', name: 'Chinese Yuan', symbol: '¥'),
+  (code: 'INR', name: 'Indian Rupee', symbol: '₹'),
+  (code: 'KRW', name: 'South Korean Won', symbol: '₩'),
+  (code: 'BRL', name: 'Brazilian Real', symbol: r'R$'),
+  (code: 'MXN', name: 'Mexican Peso', symbol: r'MX$'),
+  (code: 'SGD', name: 'Singapore Dollar', symbol: r'S$'),
+  (code: 'HKD', name: 'Hong Kong Dollar', symbol: r'HK$'),
+  (code: 'NOK', name: 'Norwegian Krone', symbol: 'kr'),
+  (code: 'SEK', name: 'Swedish Krona', symbol: 'kr'),
+  (code: 'DKK', name: 'Danish Krone', symbol: 'kr'),
+  (code: 'NZD', name: 'New Zealand Dollar', symbol: r'NZ$'),
+  (code: 'ZAR', name: 'South African Rand', symbol: 'R'),
+  (code: 'RUB', name: 'Russian Ruble', symbol: '₽'),
+  (code: 'TRY', name: 'Turkish Lira', symbol: '₺'),
+  (code: 'PLN', name: 'Polish Zloty', symbol: 'zł'),
+  (code: 'THB', name: 'Thai Baht', symbol: '฿'),
+  (code: 'IDR', name: 'Indonesian Rupiah', symbol: 'Rp'),
+  (code: 'MYR', name: 'Malaysian Ringgit', symbol: 'RM'),
+  (code: 'PHP', name: 'Philippine Peso', symbol: '₱'),
+  (code: 'CZK', name: 'Czech Koruna', symbol: 'Kč'),
+  (code: 'ILS', name: 'Israeli Shekel', symbol: '₪'),
+  (code: 'AED', name: 'UAE Dirham', symbol: 'د.إ'),
+  (code: 'SAR', name: 'Saudi Riyal', symbol: '﷼'),
+];
