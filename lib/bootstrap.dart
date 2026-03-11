@@ -16,6 +16,7 @@ import 'package:report_repository/report_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sharing_repository/sharing_repository.dart';
 import 'package:subscription_repository/subscription_repository.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sync_repository/sync_repository.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 import 'package:uuid/uuid.dart';
@@ -48,9 +49,13 @@ Future<void> bootstrap({
 
   Bloc.observer = const AppBlocObserver();
 
+  await Supabase.initialize(
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
+  );
+
   final apiClient = EnvelopeApiClient(
-    supabaseUrl: supabaseUrl,
-    supabaseAnonKey: supabaseAnonKey,
+    supabaseClient: Supabase.instance.client,
   );
   final localDatabase = AppDatabase();
 
