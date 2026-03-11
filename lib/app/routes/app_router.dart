@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/dashboard/dashboard.dart';
 import 'package:envelope/splash/splash.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 /// Route path constants.
@@ -8,28 +11,85 @@ abstract final class AppRoutes {
   static const String splash = '/';
   static const String login = '/login';
   static const String home = '/home';
+  static const String signUp = '/signUp';
+  static const String forgotPassword = '/forgotPassword';
 }
 
-/// Creates the application [GoRouter].
-///
-/// The initial location is the splash screen. Auth-based redirects
-/// will be added when the auth bloc is implemented.
-GoRouter createRouter() {
+/// Creates the application [GoRouter] with auth-based redirects.
+GoRouter createRouter({required AuthBloc authBloc}) {
   return GoRouter(
     initialLocation: AppRoutes.splash,
+    refreshListenable: _AuthBlocListenable(authBloc),
+    redirect: (context, state) {
+      final authStatus = authBloc.state.status;
+      final currentPath = state.matchedLocation;
+
+      // While auth status is unknown, stay on splash.
+      if (authStatus == AuthStatus.unknown) {
+        return currentPath == AppRoutes.splash ? null : AppRoutes.splash;
+      }
+
+      // If unauthenticated, allow login, signUp, and forgotPassword.
+      if (authStatus == AuthStatus.unauthenticated) {
+        const publicRoutes = [
+          AppRoutes.login,
+          AppRoutes.signUp,
+          AppRoutes.forgotPassword,
+        ];
+        return publicRoutes.contains(currentPath)
+            ? null
+            : AppRoutes.login;
+      }
+
+      // If authenticated but on splash or login, redirect to home.
+      if (currentPath == AppRoutes.splash || currentPath == AppRoutes.login) {
+        return AppRoutes.home;
+      }
+
+      return null;
+    },
     routes: [
       GoRoute(
+        name: AppRoutes.splash,
         path: AppRoutes.splash,
         builder: (context, state) => const SplashPage(),
       ),
       GoRoute(
+        name: AppRoutes.login,
         path: AppRoutes.login,
         builder: (context, state) => const LoginPage(),
       ),
       GoRoute(
+        name: AppRoutes.signUp,
+        path: AppRoutes.signUp,
+        builder: (context, state) => const SignUpPage(),
+      ),
+      GoRoute(
+        name: AppRoutes.forgotPassword,
+        path: AppRoutes.forgotPassword,
+        builder: (context, state) => const ForgotPasswordPage(),
+      ),
+      GoRoute(
+        name: AppRoutes.home,
         path: AppRoutes.home,
         builder: (context, state) => const HomePage(),
       ),
     ],
   );
+}
+
+/// Adapts [AuthBloc] stream to a [ChangeNotifier] for GoRouter's
+/// `refreshListenable`.
+class _AuthBlocListenable extends ChangeNotifier {
+  _AuthBlocListenable(AuthBloc authBloc) {
+    _subscription = authBloc.stream.listen((_) => notifyListeners());
+  }
+
+  late final StreamSubscription<AuthState> _subscription;
+
+  @override
+  void dispose() {
+    unawaited(_subscription.cancel());
+    super.dispose();
+  }
 }

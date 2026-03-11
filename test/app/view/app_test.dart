@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:account_repository/account_repository.dart';
 import 'package:auth_repository/auth_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
@@ -21,7 +23,8 @@ class MockBudgetRepository extends Mock implements BudgetRepository {}
 
 class MockEnvelopeRepository extends Mock implements EnvelopeRepository {}
 
-class MockTransactionRepository extends Mock implements TransactionRepository {}
+class MockTransactionRepository extends Mock
+    implements TransactionRepository {}
 
 class MockGoalRepository extends Mock implements GoalRepository {}
 
@@ -39,10 +42,20 @@ class MockSyncRepository extends Mock implements SyncRepository {}
 
 void main() {
   group('App', () {
+    late MockAuthRepository authRepository;
+
+    setUp(() {
+      authRepository = MockAuthRepository();
+      when(() => authRepository.user).thenAnswer(
+        (_) => const Stream<User>.empty(),
+      );
+      when(() => authRepository.currentUser).thenReturn(User.empty);
+    });
+
     testWidgets('renders AppView', (tester) async {
       await tester.pumpWidget(
         App(
-          authRepository: MockAuthRepository(),
+          authRepository: authRepository,
           accountRepository: MockAccountRepository(),
           budgetRepository: MockBudgetRepository(),
           envelopeRepository: MockEnvelopeRepository(),

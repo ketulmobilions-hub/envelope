@@ -9,66 +9,50 @@ import 'package:mocktail/mocktail.dart';
 class MockAuthRepository extends Mock implements AuthRepository {}
 
 void main() {
-  group('LoginPage', () {
+  group('ForgotPasswordPage', () {
     late MockAuthRepository authRepository;
 
     setUp(() {
       authRepository = MockAuthRepository();
     });
 
-    testWidgets('renders email and password fields', (tester) async {
+    testWidgets('renders email field and submit button', (tester) async {
       await tester.pumpWidget(
         RepositoryProvider<AuthRepository>.value(
           value: authRepository,
           child: const MaterialApp(
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            home: LoginPage(),
+            home: ForgotPasswordPage(),
           ),
         ),
       );
       await tester.pump();
 
       expect(find.text('Email'), findsOneWidget);
-      expect(find.text('Password'), findsOneWidget);
-      expect(find.text('Sign In'), findsOneWidget);
+      expect(find.text('Send Reset Email'), findsOneWidget);
     });
 
-    testWidgets('renders social sign-in buttons', (tester) async {
+    testWidgets('renders instruction text', (tester) async {
       await tester.pumpWidget(
         RepositoryProvider<AuthRepository>.value(
           value: authRepository,
           child: const MaterialApp(
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            home: LoginPage(),
-          ),
-        ),
-      );
-      await tester.pump();
-
-      expect(find.text('Continue with Google'), findsOneWidget);
-      expect(find.text('Continue with Apple'), findsOneWidget);
-    });
-
-    testWidgets('renders sign up and forgot password links', (tester) async {
-      await tester.pumpWidget(
-        RepositoryProvider<AuthRepository>.value(
-          value: authRepository,
-          child: const MaterialApp(
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: LoginPage(),
+            home: ForgotPasswordPage(),
           ),
         ),
       );
       await tester.pump();
 
       expect(
-        find.text("Don't have an account? Sign up"),
+        find.text(
+          "Enter your email address and we'll send you a link to "
+          'reset your password.',
+        ),
         findsOneWidget,
       );
-      expect(find.text('Forgot password?'), findsOneWidget);
     });
   });
 }

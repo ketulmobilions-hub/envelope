@@ -2,6 +2,7 @@ import 'package:account_repository/account_repository.dart';
 import 'package:auth_repository/auth_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/app/routes/routes.dart';
+import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/theme/theme.dart';
 import 'package:envelope_repository/envelope_repository.dart';
@@ -60,7 +61,10 @@ class App extends StatelessWidget {
         RepositoryProvider.value(value: subscriptionRepository),
         RepositoryProvider.value(value: syncRepository),
       ],
-      child: const AppView(),
+      child: BlocProvider(
+        create: (_) => AuthBloc(authRepository: authRepository),
+        child: const AppView(),
+      ),
     );
   }
 }
@@ -78,7 +82,8 @@ class _AppViewState extends State<AppView> {
   @override
   void initState() {
     super.initState();
-    _router = createRouter();
+    final authBloc = context.read<AuthBloc>();
+    _router = createRouter(authBloc: authBloc);
   }
 
   @override
