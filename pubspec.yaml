@@ -35,6 +35,7 @@ dependencies:
     path: packages/notification_repository
   report_repository:
     path: packages/report_repository
+  shared_preferences: ^2.5.0
   sharing_repository:
     path: packages/sharing_repository
   subscription_repository:
@@ -43,6 +44,7 @@ dependencies:
     path: packages/sync_repository
   transaction_repository:
     path: packages/transaction_repository
+  uuid: ^4.5.1
 
 dev_dependencies:
   bloc_lint: ^0.3.7

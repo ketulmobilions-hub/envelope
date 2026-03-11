@@ -27,5 +27,6 @@ Map<String, dynamic> _$SyncStatusToJson(_SyncStatus instance) =>
 const _$SyncStateEnumMap = {
   SyncState.idle: 'idle',
   SyncState.syncing: 'syncing',
+  SyncState.synced: 'synced',
   SyncState.error: 'error',
 };
