@@ -5,6 +5,7 @@ import 'package:envelope/auth/auth.dart';
 import 'package:envelope/dashboard/dashboard.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/splash/splash.dart';
+import 'package:envelope/sync/bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,22 +17,31 @@ class MockAuthBloc extends MockBloc<AuthEvent, AuthState>
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 
+class MockSyncBloc extends MockBloc<SyncEvent, SyncBlocState>
+    implements SyncBloc {}
+
 void main() {
   group('AppRouter', () {
     late MockAuthBloc authBloc;
     late MockAuthRepository authRepository;
+    late MockSyncBloc syncBloc;
     late GoRouter router;
 
     setUp(() {
       authBloc = MockAuthBloc();
       authRepository = MockAuthRepository();
+      syncBloc = MockSyncBloc();
+      when(() => syncBloc.state).thenReturn(const SyncBlocState());
     });
 
     Widget buildApp() {
       return RepositoryProvider<AuthRepository>.value(
         value: authRepository,
-        child: BlocProvider<AuthBloc>.value(
-          value: authBloc,
+        child: MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthBloc>.value(value: authBloc),
+            BlocProvider<SyncBloc>.value(value: syncBloc),
+          ],
           child: MaterialApp.router(
             routerConfig: router,
             localizationsDelegates: AppLocalizations.localizationsDelegates,

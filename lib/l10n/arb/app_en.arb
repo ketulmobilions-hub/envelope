@@ -107,5 +107,30 @@
     "signOutButton": "Sign Out",
     "@signOutButton": {
         "description": "Text for sign out button"
+    },
+    "syncStatusSyncing": "Syncing...",
+    "@syncStatusSyncing": {
+        "description": "Tooltip when sync is in progress"
+    },
+    "syncStatusSynced": "All changes synced",
+    "@syncStatusSynced": {
+        "description": "Tooltip when all changes are synced"
+    },
+    "syncStatusError": "Sync error",
+    "@syncStatusError": {
+        "description": "Tooltip when sync has an error"
+    },
+    "syncStatusOffline": "Offline",
+    "@syncStatusOffline": {
+        "description": "Tooltip when device is offline"
+    },
+    "syncPendingChanges": "{count} pending {count, plural, one{change} other{changes}}",
+    "@syncPendingChanges": {
+        "description": "Text showing number of pending sync changes",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
     }
 }

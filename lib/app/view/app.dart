@@ -4,6 +4,7 @@ import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/app/routes/routes.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/sync/sync.dart';
 import 'package:envelope/theme/theme.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
@@ -61,8 +62,16 @@ class App extends StatelessWidget {
         RepositoryProvider.value(value: subscriptionRepository),
         RepositoryProvider.value(value: syncRepository),
       ],
-      child: BlocProvider(
-        create: (_) => AuthBloc(authRepository: authRepository),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (_) => AuthBloc(authRepository: authRepository),
+          ),
+          BlocProvider(
+            create: (_) => SyncBloc(syncRepository: syncRepository)
+              ..add(const SyncStarted()),
+          ),
+        ],
         child: const AppView(),
       ),
     );

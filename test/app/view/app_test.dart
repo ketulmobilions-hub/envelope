@@ -43,13 +43,18 @@ class MockSyncRepository extends Mock implements SyncRepository {}
 void main() {
   group('App', () {
     late MockAuthRepository authRepository;
+    late MockSyncRepository syncRepository;
 
     setUp(() {
       authRepository = MockAuthRepository();
+      syncRepository = MockSyncRepository();
       when(() => authRepository.user).thenAnswer(
         (_) => const Stream<User>.empty(),
       );
       when(() => authRepository.currentUser).thenReturn(User.empty);
+      when(() => syncRepository.syncStatus).thenAnswer(
+        (_) => const Stream<SyncStatus>.empty(),
+      );
     });
 
     testWidgets('renders AppView', (tester) async {
@@ -65,7 +70,7 @@ void main() {
           notificationRepository: MockNotificationRepository(),
           sharingRepository: MockSharingRepository(),
           subscriptionRepository: MockSubscriptionRepository(),
-          syncRepository: MockSyncRepository(),
+          syncRepository: syncRepository,
         ),
       );
       await tester.pump();
