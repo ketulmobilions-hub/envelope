@@ -40,11 +40,18 @@ class AccountsApiClient {
   }
 
   /// Creates a new account.
+  ///
+  /// Server-generated fields (`id`, `created_at`, `updated_at`) are
+  /// stripped from the payload so Supabase applies its defaults.
   Future<AccountDto> createAccount(AccountDto account) async {
     try {
+      final json = account.toJson()
+        ..remove('id')
+        ..remove('created_at')
+        ..remove('updated_at');
       final response = await _supabaseClient
           .from('accounts')
-          .insert(account.toJson())
+          .insert(json)
           .select()
           .single();
       return AccountDto.fromJson(response);
@@ -79,14 +86,15 @@ class AccountsApiClient {
 
   // --- Debt Accounts ---
 
-  /// Fetches a debt account by [accountId].
-  Future<DebtAccountDto> getDebtAccount(String accountId) async {
+  /// Fetches a debt account by [accountId], or `null` if none exists.
+  Future<DebtAccountDto?> getDebtAccount(String accountId) async {
     try {
       final response = await _supabaseClient
           .from('debt_accounts')
           .select()
           .eq('account_id', accountId)
-          .single();
+          .maybeSingle();
+      if (response == null) return null;
       return DebtAccountDto.fromJson(response);
     } catch (error) {
       throw EnvelopeApiException.fromPostgrestException(error);
