@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:envelope/accounts/accounts.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/dashboard/dashboard.dart';
 import 'package:envelope/onboarding/onboarding.dart';
@@ -16,6 +17,7 @@ abstract final class AppRoutes {
   static const String signUp = '/signUp';
   static const String forgotPassword = '/forgotPassword';
   static const String onboarding = '/onboarding';
+  static const String accounts = '/accounts';
 }
 
 /// Creates the application [GoRouter] with auth-based redirects.
@@ -104,6 +106,21 @@ GoRouter createRouter({
         name: AppRoutes.home,
         path: AppRoutes.home,
         builder: (context, state) => const HomePage(),
+      ),
+      GoRoute(
+        name: AppRoutes.accounts,
+        path: AppRoutes.accounts,
+        redirect: (context, state) {
+          final budgetId = state.uri.queryParameters['budgetId'];
+          if (budgetId == null || budgetId.isEmpty) {
+            return AppRoutes.home;
+          }
+          return null;
+        },
+        builder: (context, state) {
+          final budgetId = state.uri.queryParameters['budgetId']!;
+          return AccountsPage(budgetId: budgetId);
+        },
       ),
     ],
   );
