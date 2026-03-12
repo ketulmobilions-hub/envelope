@@ -11,5 +11,471 @@
     "homeTitle": "Home",
     "@homeTitle": {
         "description": "Title for the home/dashboard page"
+    },
+    "signUpTitle": "Create Account",
+    "@signUpTitle": {
+        "description": "Title for the sign up page"
+    },
+    "forgotPasswordTitle": "Reset Password",
+    "@forgotPasswordTitle": {
+        "description": "Title for the forgot password page"
+    },
+    "emailLabel": "Email",
+    "@emailLabel": {
+        "description": "Label for email input field"
+    },
+    "passwordLabel": "Password",
+    "@passwordLabel": {
+        "description": "Label for password input field"
+    },
+    "confirmPasswordLabel": "Confirm Password",
+    "@confirmPasswordLabel": {
+        "description": "Label for confirm password input field"
+    },
+    "displayNameLabel": "Display Name",
+    "@displayNameLabel": {
+        "description": "Label for display name input field"
+    },
+    "signInButton": "Sign In",
+    "@signInButton": {
+        "description": "Text for sign in button"
+    },
+    "signUpButton": "Create Account",
+    "@signUpButton": {
+        "description": "Text for sign up button"
+    },
+    "signInWithGoogle": "Continue with Google",
+    "@signInWithGoogle": {
+        "description": "Text for Google sign in button"
+    },
+    "signInWithApple": "Continue with Apple",
+    "@signInWithApple": {
+        "description": "Text for Apple sign in button"
+    },
+    "forgotPasswordLink": "Forgot password?",
+    "@forgotPasswordLink": {
+        "description": "Text for forgot password link"
+    },
+    "noAccountLink": "Don't have an account? Sign up",
+    "@noAccountLink": {
+        "description": "Text for link to sign up page"
+    },
+    "hasAccountLink": "Already have an account? Sign in",
+    "@hasAccountLink": {
+        "description": "Text for link to sign in page"
+    },
+    "sendResetEmailButton": "Send Reset Email",
+    "@sendResetEmailButton": {
+        "description": "Text for send password reset email button"
+    },
+    "forgotPasswordInstructions": "Enter your email address and we'll send you a link to reset your password.",
+    "@forgotPasswordInstructions": {
+        "description": "Instructions on the forgot password page"
+    },
+    "resetEmailSent": "Password reset email sent. Check your inbox.",
+    "@resetEmailSent": {
+        "description": "Message shown after password reset email is sent"
+    },
+    "emailRequired": "Please enter your email",
+    "@emailRequired": {
+        "description": "Validation message for empty email"
+    },
+    "emailInvalid": "Please enter a valid email",
+    "@emailInvalid": {
+        "description": "Validation message for invalid email"
+    },
+    "passwordRequired": "Please enter your password",
+    "@passwordRequired": {
+        "description": "Validation message for empty password"
+    },
+    "passwordTooShort": "Password must be at least 8 characters",
+    "@passwordTooShort": {
+        "description": "Validation message for short password"
+    },
+    "passwordsDoNotMatch": "Passwords do not match",
+    "@passwordsDoNotMatch": {
+        "description": "Validation message when passwords don't match"
+    },
+    "displayNameRequired": "Please enter your name",
+    "@displayNameRequired": {
+        "description": "Validation message for empty display name"
+    },
+    "or": "or",
+    "@or": {
+        "description": "Separator text between sign in methods"
+    },
+    "signOutButton": "Sign Out",
+    "@signOutButton": {
+        "description": "Text for sign out button"
+    },
+    "syncStatusSyncing": "Syncing...",
+    "@syncStatusSyncing": {
+        "description": "Tooltip when sync is in progress"
+    },
+    "syncStatusSynced": "All changes synced",
+    "@syncStatusSynced": {
+        "description": "Tooltip when all changes are synced"
+    },
+    "syncStatusError": "Sync error",
+    "@syncStatusError": {
+        "description": "Tooltip when sync has an error"
+    },
+    "syncStatusOffline": "Offline",
+    "@syncStatusOffline": {
+        "description": "Tooltip when device is offline"
+    },
+    "syncPendingChanges": "{count} pending {count, plural, one{change} other{changes}}",
+    "@syncPendingChanges": {
+        "description": "Text showing number of pending sync changes",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "onboardingTitle": "Set Up Your Budget",
+    "@onboardingTitle": {
+        "description": "Title for the onboarding page app bar"
+    },
+    "onboardingStepOf": "Step {current} of {total}",
+    "@onboardingStepOf": {
+        "description": "Progress indicator text",
+        "placeholders": {
+            "current": { "type": "int" },
+            "total": { "type": "int" }
+        }
+    },
+    "onboardingContinue": "Continue",
+    "@onboardingContinue": {
+        "description": "Continue button text"
+    },
+    "onboardingBack": "Back",
+    "@onboardingBack": {
+        "description": "Back button text"
+    },
+    "onboardingGetStarted": "Get Started",
+    "@onboardingGetStarted": {
+        "description": "Get started button on welcome step"
+    },
+    "onboardingComplete": "Complete Setup",
+    "@onboardingComplete": {
+        "description": "Complete onboarding button"
+    },
+    "onboardingWelcomeTitle": "Welcome to Envelope",
+    "@onboardingWelcomeTitle": {
+        "description": "Welcome step title"
+    },
+    "onboardingWelcomeDescription": "Envelope uses the envelope budgeting method to help you take control of your money. Assign every dollar a job by allocating your income into spending categories — your envelopes.",
+    "@onboardingWelcomeDescription": {
+        "description": "Welcome step description"
+    },
+    "onboardingCurrencyTitle": "Choose Your Currency",
+    "@onboardingCurrencyTitle": {
+        "description": "Currency step title"
+    },
+    "onboardingCurrencyDescription": "Select the base currency for your budget.",
+    "@onboardingCurrencyDescription": {
+        "description": "Currency step description"
+    },
+    "onboardingCurrencySearch": "Search currencies",
+    "@onboardingCurrencySearch": {
+        "description": "Currency search placeholder"
+    },
+    "onboardingAccountsTitle": "Add Your Accounts",
+    "@onboardingAccountsTitle": {
+        "description": "Accounts step title"
+    },
+    "onboardingAccountsDescription": "Add the bank accounts, credit cards, or cash you want to track.",
+    "@onboardingAccountsDescription": {
+        "description": "Accounts step description"
+    },
+    "onboardingAddAccount": "Add Account",
+    "@onboardingAddAccount": {
+        "description": "Add account button"
+    },
+    "onboardingAccountName": "Account Name",
+    "@onboardingAccountName": {
+        "description": "Account name field label"
+    },
+    "onboardingAccountType": "Account Type",
+    "@onboardingAccountType": {
+        "description": "Account type field label"
+    },
+    "onboardingStartingBalance": "Starting Balance",
+    "@onboardingStartingBalance": {
+        "description": "Starting balance field label"
+    },
+    "onboardingAccountRequired": "Please add at least one account to continue.",
+    "@onboardingAccountRequired": {
+        "description": "Validation message when no accounts added"
+    },
+    "onboardingAccountTypeChecking": "Checking",
+    "@onboardingAccountTypeChecking": {
+        "description": "Checking account type"
+    },
+    "onboardingAccountTypeSavings": "Savings",
+    "@onboardingAccountTypeSavings": {
+        "description": "Savings account type"
+    },
+    "onboardingAccountTypeCreditCard": "Credit Card",
+    "@onboardingAccountTypeCreditCard": {
+        "description": "Credit card account type"
+    },
+    "onboardingAccountTypeCash": "Cash",
+    "@onboardingAccountTypeCash": {
+        "description": "Cash account type"
+    },
+    "onboardingAccountTypeInvestment": "Investment",
+    "@onboardingAccountTypeInvestment": {
+        "description": "Investment account type"
+    },
+    "onboardingAccountTypeOther": "Other",
+    "@onboardingAccountTypeOther": {
+        "description": "Other account type"
+    },
+    "onboardingIncomeTitle": "Expected Monthly Income",
+    "@onboardingIncomeTitle": {
+        "description": "Income step title"
+    },
+    "onboardingIncomeDescription": "How much do you expect to earn each month? This helps pre-fill your envelope allocations.",
+    "@onboardingIncomeDescription": {
+        "description": "Income step description"
+    },
+    "onboardingIncomeLabel": "Monthly Income",
+    "@onboardingIncomeLabel": {
+        "description": "Income input label"
+    },
+    "onboardingEnvelopesTitle": "Set Up Your Envelopes",
+    "@onboardingEnvelopesTitle": {
+        "description": "Envelopes step title"
+    },
+    "onboardingEnvelopesDescription": "Organize your spending into category groups and envelopes. We've added some defaults to get you started.",
+    "@onboardingEnvelopesDescription": {
+        "description": "Envelopes step description"
+    },
+    "onboardingAddGroup": "Add Group",
+    "@onboardingAddGroup": {
+        "description": "Add category group button"
+    },
+    "onboardingAddEnvelope": "Add Envelope",
+    "@onboardingAddEnvelope": {
+        "description": "Add envelope button"
+    },
+    "onboardingGroupNeeds": "Needs",
+    "@onboardingGroupNeeds": {
+        "description": "Default needs category group"
+    },
+    "onboardingGroupWants": "Wants",
+    "@onboardingGroupWants": {
+        "description": "Default wants category group"
+    },
+    "onboardingGroupSavings": "Savings/Investments",
+    "@onboardingGroupSavings": {
+        "description": "Default savings category group"
+    },
+    "onboardingAllocationTitle": "Allocate Your Income",
+    "@onboardingAllocationTitle": {
+        "description": "Allocation step title"
+    },
+    "onboardingAllocationDescription": "Assign your income to each envelope. The goal is to allocate every dollar.",
+    "@onboardingAllocationDescription": {
+        "description": "Allocation step description"
+    },
+    "onboardingIncomeToAllocate": "Income to Allocate",
+    "@onboardingIncomeToAllocate": {
+        "description": "Label for total income to allocate"
+    },
+    "onboardingRemainingToAllocate": "Remaining",
+    "@onboardingRemainingToAllocate": {
+        "description": "Label for remaining amount to allocate"
+    },
+    "onboardingErrorAccountRequired": "Please add at least one account to continue.",
+    "@onboardingErrorAccountRequired": {
+        "description": "Error when no accounts added"
+    },
+    "onboardingErrorIncomeRequired": "Please enter your expected monthly income.",
+    "@onboardingErrorIncomeRequired": {
+        "description": "Error when income is zero"
+    },
+    "onboardingErrorEnvelopeRequired": "Please add at least one envelope to continue.",
+    "@onboardingErrorEnvelopeRequired": {
+        "description": "Error when no envelopes exist"
+    },
+    "onboardingErrorCompletionFailed": "Failed to complete onboarding. Please try again.",
+    "@onboardingErrorCompletionFailed": {
+        "description": "Error when onboarding completion fails"
+    },
+
+    "accountsTitle": "Accounts",
+    "@accountsTitle": {
+        "description": "Title for the accounts list page"
+    },
+    "accountsAddAccount": "Add Account",
+    "@accountsAddAccount": {
+        "description": "Button to add a new account"
+    },
+    "accountsEditAccount": "Edit Account",
+    "@accountsEditAccount": {
+        "description": "Button to edit an existing account"
+    },
+    "accountsEmptyTitle": "No accounts yet",
+    "@accountsEmptyTitle": {
+        "description": "Title when no accounts exist"
+    },
+    "accountsEmptySubtitle": "Add your first bank account, credit card, or cash to get started.",
+    "@accountsEmptySubtitle": {
+        "description": "Subtitle when no accounts exist"
+    },
+    "accountsTotalBalance": "Total Balance",
+    "@accountsTotalBalance": {
+        "description": "Label for total balance across all accounts"
+    },
+    "accountsArchived": "Archived",
+    "@accountsArchived": {
+        "description": "Section header for archived accounts"
+    },
+    "accountsArchive": "Archive",
+    "@accountsArchive": {
+        "description": "Menu option to archive an account"
+    },
+    "accountsUnarchive": "Unarchive",
+    "@accountsUnarchive": {
+        "description": "Menu option to unarchive an account"
+    },
+    "accountsNameLabel": "Account Name",
+    "@accountsNameLabel": {
+        "description": "Label for account name input"
+    },
+    "accountsNameRequired": "Please enter an account name",
+    "@accountsNameRequired": {
+        "description": "Validation when account name is empty"
+    },
+    "accountsTypeLabel": "Account Type",
+    "@accountsTypeLabel": {
+        "description": "Label for account type selector"
+    },
+    "accountsTypeChecking": "Checking",
+    "@accountsTypeChecking": {
+        "description": "Checking account type"
+    },
+    "accountsTypeSavings": "Savings",
+    "@accountsTypeSavings": {
+        "description": "Savings account type"
+    },
+    "accountsTypeCreditCard": "Credit Card",
+    "@accountsTypeCreditCard": {
+        "description": "Credit card account type"
+    },
+    "accountsTypeCash": "Cash",
+    "@accountsTypeCash": {
+        "description": "Cash account type"
+    },
+    "accountsTypeInvestment": "Investment",
+    "@accountsTypeInvestment": {
+        "description": "Investment account type"
+    },
+    "accountsTypeOther": "Other",
+    "@accountsTypeOther": {
+        "description": "Other account type"
+    },
+    "accountsStartingBalanceLabel": "Starting Balance",
+    "@accountsStartingBalanceLabel": {
+        "description": "Label for starting balance input"
+    },
+    "accountsCreateButton": "Create Account",
+    "@accountsCreateButton": {
+        "description": "Button to create a new account"
+    },
+    "accountsSaveButton": "Save Changes",
+    "@accountsSaveButton": {
+        "description": "Button to save account edits"
+    },
+    "accountsCurrentBalance": "Current Balance",
+    "@accountsCurrentBalance": {
+        "description": "Label for current balance"
+    },
+    "accountsStartingBalance": "Starting",
+    "@accountsStartingBalance": {
+        "description": "Short label for starting balance"
+    },
+    "accountsRunningBalance": "Running",
+    "@accountsRunningBalance": {
+        "description": "Short label for running balance"
+    },
+    "accountsCurrencyLabel": "Currency",
+    "@accountsCurrencyLabel": {
+        "description": "Label for currency field"
+    },
+    "accountsStatusLabel": "Status",
+    "@accountsStatusLabel": {
+        "description": "Label for account status field"
+    },
+    "accountsReconcile": "Reconcile Account",
+    "@accountsReconcile": {
+        "description": "Button to start reconciliation"
+    },
+    "accountsReconcileTitle": "Reconcile",
+    "@accountsReconcileTitle": {
+        "description": "Title for reconciliation dialog"
+    },
+    "accountsReconcileDescription": "Enter your actual bank balance to compare with the computed balance.",
+    "@accountsReconcileDescription": {
+        "description": "Description text in reconciliation dialog"
+    },
+    "accountsReconcileActualBalance": "Actual Balance",
+    "@accountsReconcileActualBalance": {
+        "description": "Label for actual balance input in reconciliation"
+    },
+    "accountsReconcileCancel": "Cancel",
+    "@accountsReconcileCancel": {
+        "description": "Cancel button in reconciliation dialog"
+    },
+    "accountsReconcileConfirm": "Reconcile",
+    "@accountsReconcileConfirm": {
+        "description": "Confirm button in reconciliation dialog"
+    },
+    "accountsReconciled": "Account reconciled",
+    "@accountsReconciled": {
+        "description": "Snackbar message after successful reconciliation"
+    },
+    "accountsTransactionsPlaceholder": "Transactions will appear here once the transactions feature is built.",
+    "@accountsTransactionsPlaceholder": {
+        "description": "Placeholder text for transaction list in account detail"
+    },
+    "accountsErrorLoadFailed": "Failed to load accounts. Please try again.",
+    "@accountsErrorLoadFailed": {
+        "description": "Error message when accounts stream fails"
+    },
+    "accountsErrorUpdateFailed": "Failed to update account. Please try again.",
+    "@accountsErrorUpdateFailed": {
+        "description": "Error message when account update fails"
+    },
+    "accountsErrorReconcileFailed": "Failed to reconcile account. Please try again.",
+    "@accountsErrorReconcileFailed": {
+        "description": "Error message when account reconciliation fails"
+    },
+    "accountsErrorDeleteFailed": "Failed to delete account. Please try again.",
+    "@accountsErrorDeleteFailed": {
+        "description": "Error message when account deletion fails"
+    },
+    "accountsArchiveConfirmTitle": "Archive Account?",
+    "@accountsArchiveConfirmTitle": {
+        "description": "Title for archive confirmation dialog"
+    },
+    "accountsArchiveConfirmMessage": "Archived accounts won't appear in your active list but their data is preserved.",
+    "@accountsArchiveConfirmMessage": {
+        "description": "Message in archive confirmation dialog"
+    },
+    "accountsDeleteConfirmTitle": "Delete Account?",
+    "@accountsDeleteConfirmTitle": {
+        "description": "Title for delete confirmation dialog"
+    },
+    "accountsDeleteConfirmMessage": "This will permanently delete this account and all its data. This action cannot be undone.",
+    "@accountsDeleteConfirmMessage": {
+        "description": "Message in delete confirmation dialog"
+    },
+    "accountsDelete": "Delete",
+    "@accountsDelete": {
+        "description": "Delete button text"
     }
 }

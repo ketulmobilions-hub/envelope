@@ -6,6 +6,7 @@ part 'sync_status.g.dart';
 enum SyncState {
   idle,
   syncing,
+  synced,
   error,
 }
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:account_repository/account_repository.dart';
 import 'package:auth_repository/auth_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
@@ -8,6 +10,7 @@ import 'package:goal_repository/goal_repository.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:notification_repository/notification_repository.dart';
 import 'package:report_repository/report_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sharing_repository/sharing_repository.dart';
 import 'package:subscription_repository/subscription_repository.dart';
 import 'package:sync_repository/sync_repository.dart';
@@ -21,7 +24,8 @@ class MockBudgetRepository extends Mock implements BudgetRepository {}
 
 class MockEnvelopeRepository extends Mock implements EnvelopeRepository {}
 
-class MockTransactionRepository extends Mock implements TransactionRepository {}
+class MockTransactionRepository extends Mock
+    implements TransactionRepository {}
 
 class MockGoalRepository extends Mock implements GoalRepository {}
 
@@ -39,10 +43,28 @@ class MockSyncRepository extends Mock implements SyncRepository {}
 
 void main() {
   group('App', () {
+    late MockAuthRepository authRepository;
+    late MockSyncRepository syncRepository;
+    late SharedPreferences prefs;
+
+    setUp(() async {
+      authRepository = MockAuthRepository();
+      syncRepository = MockSyncRepository();
+      when(() => authRepository.user).thenAnswer(
+        (_) => const Stream<User>.empty(),
+      );
+      when(() => authRepository.currentUser).thenReturn(User.empty);
+      when(() => syncRepository.syncStatus).thenAnswer(
+        (_) => const Stream<SyncStatus>.empty(),
+      );
+      SharedPreferences.setMockInitialValues({});
+      prefs = await SharedPreferences.getInstance();
+    });
+
     testWidgets('renders AppView', (tester) async {
       await tester.pumpWidget(
         App(
-          authRepository: MockAuthRepository(),
+          authRepository: authRepository,
           accountRepository: MockAccountRepository(),
           budgetRepository: MockBudgetRepository(),
           envelopeRepository: MockEnvelopeRepository(),
@@ -52,7 +74,8 @@ void main() {
           notificationRepository: MockNotificationRepository(),
           sharingRepository: MockSharingRepository(),
           subscriptionRepository: MockSubscriptionRepository(),
-          syncRepository: MockSyncRepository(),
+          syncRepository: syncRepository,
+          sharedPreferences: prefs,
         ),
       );
       await tester.pump();

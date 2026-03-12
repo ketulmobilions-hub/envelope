@@ -26,8 +26,20 @@ class AccountsDao extends DatabaseAccessor<AppDatabase>
   Stream<List<Account>> watchAccountsByBudgetId(String budgetId) =>
       (select(accounts)..where((t) => t.budgetId.equals(budgetId))).watch();
 
-  Future<int> insertAccount(AccountsCompanion account) =>
-      into(accounts).insert(account);
+  Future<int> insertAccount(
+    AccountsCompanion account, {
+    InsertMode mode = InsertMode.insert,
+  }) =>
+      into(accounts).insert(account, mode: mode);
+
+  Future<void> batchInsertAccounts(
+    List<AccountsCompanion> entries, {
+    InsertMode mode = InsertMode.insert,
+  }) async {
+    await batch((b) {
+      b.insertAll(accounts, entries, mode: mode);
+    });
+  }
 
   Future<bool> updateAccount(AccountsCompanion account) =>
       update(accounts).replace(account);
@@ -47,8 +59,11 @@ class AccountsDao extends DatabaseAccessor<AppDatabase>
   Future<List<DebtAccount>> getAllDebtAccounts() =>
       select(debtAccounts).get();
 
-  Future<int> insertDebtAccount(DebtAccountsCompanion debtAccount) =>
-      into(debtAccounts).insert(debtAccount);
+  Future<int> insertDebtAccount(
+    DebtAccountsCompanion debtAccount, {
+    InsertMode mode = InsertMode.insert,
+  }) =>
+      into(debtAccounts).insert(debtAccount, mode: mode);
 
   Future<bool> updateDebtAccount(DebtAccountsCompanion debtAccount) =>
       update(debtAccounts).replace(debtAccount);

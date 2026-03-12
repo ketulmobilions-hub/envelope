@@ -3,16 +3,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Facade that provides access to all Envelope API sub-clients.
 class EnvelopeApiClient {
-  /// Creates an [EnvelopeApiClient] with the given Supabase credentials.
-  EnvelopeApiClient({
-    required String supabaseUrl,
-    required String supabaseAnonKey,
-  }) : this._(
-          supabaseClient: SupabaseClient(supabaseUrl, supabaseAnonKey),
-        );
-
-  EnvelopeApiClient._({required SupabaseClient supabaseClient})
-      : users = UsersApiClient(supabaseClient: supabaseClient),
+  /// Creates an [EnvelopeApiClient] from a pre-initialized [SupabaseClient].
+  ///
+  /// Use `Supabase.initialize()` in the app bootstrap and pass
+  /// `Supabase.instance.client` to ensure platform-specific auth
+  /// persistence is properly configured.
+  EnvelopeApiClient({required SupabaseClient supabaseClient})
+      : auth = AuthApiClient(supabaseClient: supabaseClient),
+        users = UsersApiClient(supabaseClient: supabaseClient),
         budgets = BudgetsApiClient(supabaseClient: supabaseClient),
         accounts = AccountsApiClient(supabaseClient: supabaseClient),
         envelopes = EnvelopesApiClient(supabaseClient: supabaseClient),
@@ -21,6 +19,9 @@ class EnvelopeApiClient {
         goals = GoalsApiClient(supabaseClient: supabaseClient),
         reports = ReportsApiClient(supabaseClient: supabaseClient),
         sync = SyncApiClient(supabaseClient: supabaseClient);
+
+  /// API client for authentication operations.
+  final AuthApiClient auth;
 
   /// API client for user operations.
   final UsersApiClient users;

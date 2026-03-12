@@ -1,0 +1,120 @@
+import 'package:envelope/app/routes/routes.dart';
+import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/onboarding/cubit/cubit.dart';
+import 'package:envelope/onboarding/widgets/widgets.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class OnboardingPage extends StatelessWidget {
+  const OnboardingPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => OnboardingCubit(
+        sharedPreferences: context.read<SharedPreferences>(),
+      ),
+      child: const OnboardingView(),
+    );
+  }
+}
+
+class OnboardingView extends StatelessWidget {
+  const OnboardingView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
+    return BlocConsumer<OnboardingCubit, OnboardingState>(
+      listenWhen: (previous, current) =>
+          previous.status != current.status ||
+          previous.error != current.error,
+      listener: (context, state) {
+        if (state.status == OnboardingStatus.success) {
+          context.go(AppRoutes.home);
+        }
+        if (state.status == OnboardingStatus.failure &&
+            state.error != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                _localizeError(context.l10n, state.error!),
+              ),
+            ),
+          );
+        }
+      },
+      builder: (context, state) {
+        final stepIndex = state.currentStep.index;
+        final totalSteps = OnboardingStep.values.length;
+        final isWelcome = state.currentStep == OnboardingStep.welcome;
+        final isAllocation = state.currentStep == OnboardingStep.allocation;
+
+        return Scaffold(
+          appBar: isWelcome
+              ? null
+              : AppBar(
+                  title: Text(l10n.onboardingTitle),
+                  leading: IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () =>
+                        context.read<OnboardingCubit>().previousStep(),
+                  ),
+                ),
+          body: Column(
+            children: [
+              if (!isWelcome)
+                LinearProgressIndicator(
+                  value: (stepIndex + 1) / totalSteps,
+                ),
+              Expanded(
+                child: _buildStep(state.currentStep),
+              ),
+              if (!isWelcome && !isAllocation)
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () =>
+                            context.read<OnboardingCubit>().nextStep(),
+                        child: Text(l10n.onboardingContinue),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  String _localizeError(AppLocalizations l10n, OnboardingError error) {
+    return switch (error) {
+      OnboardingError.accountRequired =>
+        l10n.onboardingErrorAccountRequired,
+      OnboardingError.incomeRequired =>
+        l10n.onboardingErrorIncomeRequired,
+      OnboardingError.envelopeRequired =>
+        l10n.onboardingErrorEnvelopeRequired,
+      OnboardingError.completionFailed =>
+        l10n.onboardingErrorCompletionFailed,
+    };
+  }
+
+  Widget _buildStep(OnboardingStep step) {
+    return switch (step) {
+      OnboardingStep.welcome => const WelcomeStep(),
+      OnboardingStep.currency => const CurrencyStep(),
+      OnboardingStep.accounts => const AccountsStep(),
+      OnboardingStep.income => const IncomeStep(),
+      OnboardingStep.envelopes => const EnvelopesStep(),
+      OnboardingStep.allocation => const AllocationStep(),
+    };
+  }
+}

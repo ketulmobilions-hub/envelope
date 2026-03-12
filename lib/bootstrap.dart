@@ -13,10 +13,13 @@ import 'package:flutter/widgets.dart';
 import 'package:goal_repository/goal_repository.dart';
 import 'package:notification_repository/notification_repository.dart';
 import 'package:report_repository/report_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sharing_repository/sharing_repository.dart';
 import 'package:subscription_repository/subscription_repository.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sync_repository/sync_repository.dart';
 import 'package:transaction_repository/transaction_repository.dart';
+import 'package:uuid/uuid.dart';
 
 class AppBlocObserver extends BlocObserver {
   const AppBlocObserver();
@@ -46,11 +49,23 @@ Future<void> bootstrap({
 
   Bloc.observer = const AppBlocObserver();
 
+  await Supabase.initialize(
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
+  );
+
   final apiClient = EnvelopeApiClient(
-    supabaseUrl: supabaseUrl,
-    supabaseAnonKey: supabaseAnonKey,
+    supabaseClient: Supabase.instance.client,
   );
   final localDatabase = AppDatabase();
+
+  // Generate or retrieve a persistent device ID for sync tracking.
+  final prefs = await SharedPreferences.getInstance();
+  var deviceId = prefs.getString('device_id');
+  if (deviceId == null) {
+    deviceId = const Uuid().v4();
+    await prefs.setString('device_id', deviceId);
+  }
 
   final authRepository = AuthRepository(apiClient: apiClient);
   final accountRepository = AccountRepository(
@@ -89,8 +104,8 @@ Future<void> bootstrap({
     apiClient: apiClient,
   );
   final syncRepository = SyncRepository(
-    apiClient: apiClient,
     localDatabase: localDatabase,
+    deviceId: deviceId,
   );
 
   runApp(
@@ -106,6 +121,7 @@ Future<void> bootstrap({
       sharingRepository: sharingRepository,
       subscriptionRepository: subscriptionRepository,
       syncRepository: syncRepository,
+      sharedPreferences: prefs,
     ),
   );
 }
