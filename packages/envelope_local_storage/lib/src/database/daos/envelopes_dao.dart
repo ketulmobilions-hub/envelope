@@ -21,6 +21,10 @@ class EnvelopesDao extends DatabaseAccessor<AppDatabase>
   Future<List<CategoryGroup>> getAllCategoryGroups() =>
       select(categoryGroups).get();
 
+  Future<CategoryGroup?> getCategoryGroup(String id) =>
+      (select(categoryGroups)..where((t) => t.id.equals(id)))
+          .getSingleOrNull();
+
   Future<List<CategoryGroup>> getCategoryGroupsByBudgetId(String budgetId) =>
       (select(categoryGroups)..where((t) => t.budgetId.equals(budgetId)))
           .get();
@@ -29,8 +33,20 @@ class EnvelopesDao extends DatabaseAccessor<AppDatabase>
       (select(categoryGroups)..where((t) => t.budgetId.equals(budgetId)))
           .watch();
 
-  Future<int> insertCategoryGroup(CategoryGroupsCompanion group) =>
-      into(categoryGroups).insert(group);
+  Future<int> insertCategoryGroup(
+    CategoryGroupsCompanion group, {
+    InsertMode mode = InsertMode.insert,
+  }) =>
+      into(categoryGroups).insert(group, mode: mode);
+
+  Future<void> batchInsertCategoryGroups(
+    List<CategoryGroupsCompanion> entries, {
+    InsertMode mode = InsertMode.insert,
+  }) async {
+    await batch((b) {
+      b.insertAll(categoryGroups, entries, mode: mode);
+    });
+  }
 
   Future<bool> updateCategoryGroup(CategoryGroupsCompanion group) =>
       update(categoryGroups).replace(group);
@@ -64,8 +80,20 @@ class EnvelopesDao extends DatabaseAccessor<AppDatabase>
   Future<Envelope?> getEnvelope(String id) =>
       (select(envelopes)..where((t) => t.id.equals(id))).getSingleOrNull();
 
-  Future<int> insertEnvelope(EnvelopesCompanion envelope) =>
-      into(envelopes).insert(envelope);
+  Future<int> insertEnvelope(
+    EnvelopesCompanion envelope, {
+    InsertMode mode = InsertMode.insert,
+  }) =>
+      into(envelopes).insert(envelope, mode: mode);
+
+  Future<void> batchInsertEnvelopes(
+    List<EnvelopesCompanion> entries, {
+    InsertMode mode = InsertMode.insert,
+  }) async {
+    await batch((b) {
+      b.insertAll(envelopes, entries, mode: mode);
+    });
+  }
 
   Future<bool> updateEnvelope(EnvelopesCompanion envelope) =>
       update(envelopes).replace(envelope);
@@ -95,8 +123,20 @@ class EnvelopesDao extends DatabaseAccessor<AppDatabase>
             ..where((t) => t.budgetPeriodId.equals(budgetPeriodId)))
           .watch();
 
-  Future<int> insertAllocation(EnvelopeAllocationsCompanion allocation) =>
-      into(envelopeAllocations).insert(allocation);
+  Future<int> insertAllocation(
+    EnvelopeAllocationsCompanion allocation, {
+    InsertMode mode = InsertMode.insert,
+  }) =>
+      into(envelopeAllocations).insert(allocation, mode: mode);
+
+  Future<void> batchInsertAllocations(
+    List<EnvelopeAllocationsCompanion> entries, {
+    InsertMode mode = InsertMode.insert,
+  }) async {
+    await batch((b) {
+      b.insertAll(envelopeAllocations, entries, mode: mode);
+    });
+  }
 
   Future<bool> updateAllocation(EnvelopeAllocationsCompanion allocation) =>
       update(envelopeAllocations).replace(allocation);
