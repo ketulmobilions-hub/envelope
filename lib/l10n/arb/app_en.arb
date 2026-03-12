@@ -304,5 +304,178 @@
     "onboardingErrorCompletionFailed": "Failed to complete onboarding. Please try again.",
     "@onboardingErrorCompletionFailed": {
         "description": "Error when onboarding completion fails"
+    },
+
+    "accountsTitle": "Accounts",
+    "@accountsTitle": {
+        "description": "Title for the accounts list page"
+    },
+    "accountsAddAccount": "Add Account",
+    "@accountsAddAccount": {
+        "description": "Button to add a new account"
+    },
+    "accountsEditAccount": "Edit Account",
+    "@accountsEditAccount": {
+        "description": "Button to edit an existing account"
+    },
+    "accountsEmptyTitle": "No accounts yet",
+    "@accountsEmptyTitle": {
+        "description": "Title when no accounts exist"
+    },
+    "accountsEmptySubtitle": "Add your first bank account, credit card, or cash to get started.",
+    "@accountsEmptySubtitle": {
+        "description": "Subtitle when no accounts exist"
+    },
+    "accountsTotalBalance": "Total Balance",
+    "@accountsTotalBalance": {
+        "description": "Label for total balance across all accounts"
+    },
+    "accountsArchived": "Archived",
+    "@accountsArchived": {
+        "description": "Section header for archived accounts"
+    },
+    "accountsArchive": "Archive",
+    "@accountsArchive": {
+        "description": "Menu option to archive an account"
+    },
+    "accountsUnarchive": "Unarchive",
+    "@accountsUnarchive": {
+        "description": "Menu option to unarchive an account"
+    },
+    "accountsNameLabel": "Account Name",
+    "@accountsNameLabel": {
+        "description": "Label for account name input"
+    },
+    "accountsNameRequired": "Please enter an account name",
+    "@accountsNameRequired": {
+        "description": "Validation when account name is empty"
+    },
+    "accountsTypeLabel": "Account Type",
+    "@accountsTypeLabel": {
+        "description": "Label for account type selector"
+    },
+    "accountsTypeChecking": "Checking",
+    "@accountsTypeChecking": {
+        "description": "Checking account type"
+    },
+    "accountsTypeSavings": "Savings",
+    "@accountsTypeSavings": {
+        "description": "Savings account type"
+    },
+    "accountsTypeCreditCard": "Credit Card",
+    "@accountsTypeCreditCard": {
+        "description": "Credit card account type"
+    },
+    "accountsTypeCash": "Cash",
+    "@accountsTypeCash": {
+        "description": "Cash account type"
+    },
+    "accountsTypeInvestment": "Investment",
+    "@accountsTypeInvestment": {
+        "description": "Investment account type"
+    },
+    "accountsTypeOther": "Other",
+    "@accountsTypeOther": {
+        "description": "Other account type"
+    },
+    "accountsStartingBalanceLabel": "Starting Balance",
+    "@accountsStartingBalanceLabel": {
+        "description": "Label for starting balance input"
+    },
+    "accountsCreateButton": "Create Account",
+    "@accountsCreateButton": {
+        "description": "Button to create a new account"
+    },
+    "accountsSaveButton": "Save Changes",
+    "@accountsSaveButton": {
+        "description": "Button to save account edits"
+    },
+    "accountsCurrentBalance": "Current Balance",
+    "@accountsCurrentBalance": {
+        "description": "Label for current balance"
+    },
+    "accountsStartingBalance": "Starting",
+    "@accountsStartingBalance": {
+        "description": "Short label for starting balance"
+    },
+    "accountsRunningBalance": "Running",
+    "@accountsRunningBalance": {
+        "description": "Short label for running balance"
+    },
+    "accountsCurrencyLabel": "Currency",
+    "@accountsCurrencyLabel": {
+        "description": "Label for currency field"
+    },
+    "accountsStatusLabel": "Status",
+    "@accountsStatusLabel": {
+        "description": "Label for account status field"
+    },
+    "accountsReconcile": "Reconcile Account",
+    "@accountsReconcile": {
+        "description": "Button to start reconciliation"
+    },
+    "accountsReconcileTitle": "Reconcile",
+    "@accountsReconcileTitle": {
+        "description": "Title for reconciliation dialog"
+    },
+    "accountsReconcileDescription": "Enter your actual bank balance to compare with the computed balance.",
+    "@accountsReconcileDescription": {
+        "description": "Description text in reconciliation dialog"
+    },
+    "accountsReconcileActualBalance": "Actual Balance",
+    "@accountsReconcileActualBalance": {
+        "description": "Label for actual balance input in reconciliation"
+    },
+    "accountsReconcileCancel": "Cancel",
+    "@accountsReconcileCancel": {
+        "description": "Cancel button in reconciliation dialog"
+    },
+    "accountsReconcileConfirm": "Reconcile",
+    "@accountsReconcileConfirm": {
+        "description": "Confirm button in reconciliation dialog"
+    },
+    "accountsReconciled": "Account reconciled",
+    "@accountsReconciled": {
+        "description": "Snackbar message after successful reconciliation"
+    },
+    "accountsTransactionsPlaceholder": "Transactions will appear here once the transactions feature is built.",
+    "@accountsTransactionsPlaceholder": {
+        "description": "Placeholder text for transaction list in account detail"
+    },
+    "accountsErrorLoadFailed": "Failed to load accounts. Please try again.",
+    "@accountsErrorLoadFailed": {
+        "description": "Error message when accounts stream fails"
+    },
+    "accountsErrorUpdateFailed": "Failed to update account. Please try again.",
+    "@accountsErrorUpdateFailed": {
+        "description": "Error message when account update fails"
+    },
+    "accountsErrorReconcileFailed": "Failed to reconcile account. Please try again.",
+    "@accountsErrorReconcileFailed": {
+        "description": "Error message when account reconciliation fails"
+    },
+    "accountsErrorDeleteFailed": "Failed to delete account. Please try again.",
+    "@accountsErrorDeleteFailed": {
+        "description": "Error message when account deletion fails"
+    },
+    "accountsArchiveConfirmTitle": "Archive Account?",
+    "@accountsArchiveConfirmTitle": {
+        "description": "Title for archive confirmation dialog"
+    },
+    "accountsArchiveConfirmMessage": "Archived accounts won't appear in your active list but their data is preserved.",
+    "@accountsArchiveConfirmMessage": {
+        "description": "Message in archive confirmation dialog"
+    },
+    "accountsDeleteConfirmTitle": "Delete Account?",
+    "@accountsDeleteConfirmTitle": {
+        "description": "Title for delete confirmation dialog"
+    },
+    "accountsDeleteConfirmMessage": "This will permanently delete this account and all its data. This action cannot be undone.",
+    "@accountsDeleteConfirmMessage": {
+        "description": "Message in delete confirmation dialog"
+    },
+    "accountsDelete": "Delete",
+    "@accountsDelete": {
+        "description": "Delete button text"
     }
 }
