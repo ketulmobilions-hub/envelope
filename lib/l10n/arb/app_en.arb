@@ -658,5 +658,207 @@
     "envelopesNoCategoryGroupsError": "Please create a category group before adding an envelope.",
     "@envelopesNoCategoryGroupsError": {
         "description": "Error shown in envelope form when no category groups exist"
+    },
+
+    "budgetTitle": "Budget",
+    "@budgetTitle": {
+        "description": "Title for the budget allocation page"
+    },
+    "budgetReadyToAssign": "Ready to Assign",
+    "@budgetReadyToAssign": {
+        "description": "Label for the ready-to-assign amount"
+    },
+    "budgetOverAllocatedWarning": "You have assigned more than your available income.",
+    "@budgetOverAllocatedWarning": {
+        "description": "Warning shown when the user has over-allocated"
+    },
+    "budgetAllocatedLabel": "Allocated",
+    "@budgetAllocatedLabel": {
+        "description": "Label for the allocated amount column"
+    },
+    "budgetSpentLabel": "Spent",
+    "@budgetSpentLabel": {
+        "description": "Label for the spent amount"
+    },
+    "budgetAvailableLabel": "Available",
+    "@budgetAvailableLabel": {
+        "description": "Label for the available amount"
+    },
+    "budgetSaveAllocations": "Save",
+    "@budgetSaveAllocations": {
+        "description": "AppBar action button to save locally-edited allocations"
+    },
+    "budgetNoPeriodsTitle": "No budget periods",
+    "@budgetNoPeriodsTitle": {
+        "description": "Title when no budget periods exist"
+    },
+    "budgetNoPeriodsSubtitle": "Budget periods will be created automatically.",
+    "@budgetNoPeriodsSubtitle": {
+        "description": "Subtitle when no budget periods exist"
+    },
+    "budgetNoAllocations": "No envelopes yet",
+    "@budgetNoAllocations": {
+        "description": "Title when no category groups or envelopes exist"
+    },
+    "budgetNoAllocationsSubtitle": "Add envelopes in the Envelopes tab to start allocating.",
+    "@budgetNoAllocationsSubtitle": {
+        "description": "Subtitle when no envelopes exist for allocation"
+    },
+    "budgetTransferTitle": "Transfer Between Envelopes",
+    "@budgetTransferTitle": {
+        "description": "Title for the transfer dialog"
+    },
+    "budgetTransferFrom": "From",
+    "@budgetTransferFrom": {
+        "description": "Label for the from-envelope dropdown in transfer dialog"
+    },
+    "budgetTransferTo": "To",
+    "@budgetTransferTo": {
+        "description": "Label for the to-envelope dropdown in transfer dialog"
+    },
+    "budgetTransferAmount": "Amount",
+    "@budgetTransferAmount": {
+        "description": "Label for the amount field in transfer dialog"
+    },
+    "budgetTransferConfirm": "Transfer",
+    "@budgetTransferConfirm": {
+        "description": "Confirm button in transfer dialog"
+    },
+    "budgetTransferRequired": "Please select an envelope",
+    "@budgetTransferRequired": {
+        "description": "Validation message when no envelope selected in transfer dialog"
+    },
+    "budgetTransferAmountRequired": "Please enter a positive amount",
+    "@budgetTransferAmountRequired": {
+        "description": "Validation message when transfer amount is zero or missing"
+    },
+    "budgetTransferInsufficientFunds": "Amount exceeds the available allocation",
+    "@budgetTransferInsufficientFunds": {
+        "description": "Validation message when transfer amount exceeds source allocation"
+    },
+    "budgetTransferBetweenEnvelopes": "Transfer Between Envelopes",
+    "@budgetTransferBetweenEnvelopes": {
+        "description": "Action menu item for transfer"
+    },
+    "budgetApplyTemplate": "Apply Template",
+    "@budgetApplyTemplate": {
+        "description": "Action menu item and dialog title for applying a template"
+    },
+    "budgetManageTemplates": "Manage Templates",
+    "@budgetManageTemplates": {
+        "description": "Action menu item to open the templates management page"
+    },
+    "budgetDuplicateFromPrevious": "Copy from Previous Period",
+    "@budgetDuplicateFromPrevious": {
+        "description": "Action menu item to duplicate allocations from prior period"
+    },
+    "budgetTemplatesTitle": "Templates",
+    "@budgetTemplatesTitle": {
+        "description": "Title for the allocation templates page"
+    },
+    "budgetTemplatesEmpty": "No templates yet. Tap + to create one.",
+    "@budgetTemplatesEmpty": {
+        "description": "Placeholder when no templates exist"
+    },
+    "budgetTemplateItemCount": "{count, plural, one{{count} envelope} other{{count} envelopes}}",
+    "@budgetTemplateItemCount": {
+        "description": "Subtitle showing how many envelopes a template has",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "budgetTemplateNewTitle": "New Template",
+    "@budgetTemplateNewTitle": {
+        "description": "Title for the new template form page"
+    },
+    "budgetTemplateEditTitle": "Edit Template",
+    "@budgetTemplateEditTitle": {
+        "description": "Title for the edit template form page"
+    },
+    "budgetTemplateNameLabel": "Template Name",
+    "@budgetTemplateNameLabel": {
+        "description": "Label for the template name input field"
+    },
+    "budgetTemplateNameRequired": "Please enter a template name",
+    "@budgetTemplateNameRequired": {
+        "description": "Validation message when template name is empty"
+    },
+    "budgetTemplateItems": "Envelope Allocations",
+    "@budgetTemplateItems": {
+        "description": "Section header for template envelope items"
+    },
+    "budgetTemplateAddItem": "Add Envelope",
+    "@budgetTemplateAddItem": {
+        "description": "Button to add an envelope item to a template"
+    },
+    "budgetTemplateNoItems": "Add at least one envelope to the template.",
+    "@budgetTemplateNoItems": {
+        "description": "Hint when no items have been added to a template"
+    },
+    "budgetTemplateEnvelopeLabel": "Envelope",
+    "@budgetTemplateEnvelopeLabel": {
+        "description": "Label for the envelope dropdown in a template item row"
+    },
+    "budgetTemplatePercentageLabel": "Pct",
+    "@budgetTemplatePercentageLabel": {
+        "description": "Label for the percentage field in a template item row"
+    },
+    "budgetTemplatePercentageRequired": "Enter a percentage > 0",
+    "@budgetTemplatePercentageRequired": {
+        "description": "Validation message when template percentage is invalid"
+    },
+    "budgetTemplateDeleteConfirmTitle": "Delete Template?",
+    "@budgetTemplateDeleteConfirmTitle": {
+        "description": "Title for delete template confirmation dialog"
+    },
+    "budgetTemplateDeleteConfirmMessage": "This template will be permanently deleted.",
+    "@budgetTemplateDeleteConfirmMessage": {
+        "description": "Message in delete template confirmation dialog"
+    },
+    "budgetSaveButton": "Save",
+    "@budgetSaveButton": {
+        "description": "Save button in template form"
+    },
+    "budgetCreateButton": "Create",
+    "@budgetCreateButton": {
+        "description": "Create button in template form"
+    },
+    "budgetCancel": "Cancel",
+    "@budgetCancel": {
+        "description": "Cancel button in budget dialogs"
+    },
+    "budgetDelete": "Delete",
+    "@budgetDelete": {
+        "description": "Delete button in budget dialogs"
+    },
+    "budgetErrorLoadFailed": "Failed to load budget data. Please try again.",
+    "@budgetErrorLoadFailed": {
+        "description": "Error message when budget streams fail"
+    },
+    "budgetErrorAllocationFailed": "Failed to save allocation. Please try again.",
+    "@budgetErrorAllocationFailed": {
+        "description": "Error message when allocation save fails"
+    },
+    "budgetErrorTransferFailed": "Transfer failed. Please try again.",
+    "@budgetErrorTransferFailed": {
+        "description": "Error message when envelope transfer fails"
+    },
+    "budgetErrorTemplateFailed": "Template operation failed. Please try again.",
+    "@budgetErrorTemplateFailed": {
+        "description": "Error message when a template operation fails"
+    },
+    "budgetErrorPeriodFailed": "Failed to load budget period. Please try again.",
+    "@budgetErrorPeriodFailed": {
+        "description": "Error message when budget period operations fail"
+    },
+    "budgetGroupNoEnvelopes": "No envelopes in this group",
+    "@budgetGroupNoEnvelopes": {
+        "description": "Text shown inside an empty allocation group tile"
+    },
+    "budgetTemplatePercentageSumError": "Percentages must add up to 100%",
+    "@budgetTemplatePercentageSumError": {
+        "description": "Validation message when template percentages do not sum to 100"
     }
 }

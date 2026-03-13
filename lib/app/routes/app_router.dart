@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:envelope/accounts/accounts.dart';
 import 'package:envelope/auth/auth.dart';
+import 'package:envelope/budget/budget.dart';
 import 'package:envelope/dashboard/dashboard.dart';
 import 'package:envelope/envelopes/envelopes.dart';
 import 'package:envelope/onboarding/onboarding.dart';
@@ -20,6 +21,7 @@ abstract final class AppRoutes {
   static const String onboarding = '/onboarding';
   static const String accounts = '/accounts';
   static const String envelopes = '/envelopes';
+  static const String budget = '/budget';
 }
 
 /// Creates the application [GoRouter] with auth-based redirects.
@@ -137,6 +139,21 @@ GoRouter createRouter({
         builder: (context, state) {
           final budgetId = state.uri.queryParameters['budgetId']!;
           return EnvelopesPage(budgetId: budgetId);
+        },
+      ),
+      GoRoute(
+        name: AppRoutes.budget,
+        path: AppRoutes.budget,
+        redirect: (context, state) {
+          final budgetId = state.uri.queryParameters['budgetId'];
+          if (budgetId == null || budgetId.isEmpty) {
+            return AppRoutes.home;
+          }
+          return null;
+        },
+        builder: (context, state) {
+          final budgetId = state.uri.queryParameters['budgetId']!;
+          return BudgetPage(budgetId: budgetId);
         },
       ),
     ],
