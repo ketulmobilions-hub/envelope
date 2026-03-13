@@ -155,8 +155,20 @@ class EnvelopesDao extends DatabaseAccessor<AppDatabase>
             ..where((t) => t.budgetId.equals(budgetId)))
           .watch();
 
-  Future<int> insertTemplate(AllocationTemplatesCompanion template) =>
-      into(allocationTemplates).insert(template);
+  Future<int> insertTemplate(
+    AllocationTemplatesCompanion template, {
+    InsertMode mode = InsertMode.insert,
+  }) =>
+      into(allocationTemplates).insert(template, mode: mode);
+
+  Future<void> batchInsertTemplates(
+    List<AllocationTemplatesCompanion> entries, {
+    InsertMode mode = InsertMode.insert,
+  }) async {
+    await batch((b) {
+      b.insertAll(allocationTemplates, entries, mode: mode);
+    });
+  }
 
   Future<bool> updateTemplate(AllocationTemplatesCompanion template) =>
       update(allocationTemplates).replace(template);
@@ -172,8 +184,20 @@ class EnvelopesDao extends DatabaseAccessor<AppDatabase>
             ..where((t) => t.templateId.equals(templateId)))
           .get();
 
-  Future<int> insertTemplateItem(AllocationTemplateItemsCompanion item) =>
-      into(allocationTemplateItems).insert(item);
+  Future<int> insertTemplateItem(
+    AllocationTemplateItemsCompanion item, {
+    InsertMode mode = InsertMode.insert,
+  }) =>
+      into(allocationTemplateItems).insert(item, mode: mode);
+
+  Future<void> batchInsertTemplateItems(
+    List<AllocationTemplateItemsCompanion> entries, {
+    InsertMode mode = InsertMode.insert,
+  }) async {
+    await batch((b) {
+      b.insertAll(allocationTemplateItems, entries, mode: mode);
+    });
+  }
 
   Future<bool> updateTemplateItem(AllocationTemplateItemsCompanion item) =>
       update(allocationTemplateItems).replace(item);
