@@ -23,8 +23,23 @@ class BudgetsDao extends DatabaseAccessor<AppDatabase>
   Future<List<Budget>> getBudgetsByOwnerId(String ownerId) =>
       (select(budgets)..where((t) => t.ownerId.equals(ownerId))).get();
 
-  Future<int> insertBudget(BudgetsCompanion budget) =>
-      into(budgets).insert(budget);
+  Stream<List<Budget>> watchBudgetsByOwnerId(String ownerId) =>
+      (select(budgets)..where((t) => t.ownerId.equals(ownerId))).watch();
+
+  Future<int> insertBudget(
+    BudgetsCompanion budget, {
+    InsertMode mode = InsertMode.insert,
+  }) =>
+      into(budgets).insert(budget, mode: mode);
+
+  Future<void> batchInsertBudgets(
+    List<BudgetsCompanion> entries, {
+    InsertMode mode = InsertMode.insert,
+  }) async {
+    await batch((b) {
+      b.insertAll(budgets, entries, mode: mode);
+    });
+  }
 
   Future<bool> updateBudget(BudgetsCompanion budget) =>
       update(budgets).replace(budget);
@@ -61,8 +76,20 @@ class BudgetsDao extends DatabaseAccessor<AppDatabase>
       (select(budgetPeriods)..where((t) => t.id.equals(id)))
           .getSingleOrNull();
 
-  Future<int> insertBudgetPeriod(BudgetPeriodsCompanion period) =>
-      into(budgetPeriods).insert(period);
+  Future<int> insertBudgetPeriod(
+    BudgetPeriodsCompanion period, {
+    InsertMode mode = InsertMode.insert,
+  }) =>
+      into(budgetPeriods).insert(period, mode: mode);
+
+  Future<void> batchInsertBudgetPeriods(
+    List<BudgetPeriodsCompanion> entries, {
+    InsertMode mode = InsertMode.insert,
+  }) async {
+    await batch((b) {
+      b.insertAll(budgetPeriods, entries, mode: mode);
+    });
+  }
 
   Future<bool> updateBudgetPeriod(BudgetPeriodsCompanion period) =>
       update(budgetPeriods).replace(period);
