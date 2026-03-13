@@ -477,5 +477,186 @@
     "accountsDelete": "Delete",
     "@accountsDelete": {
         "description": "Delete button text"
+    },
+
+    "envelopesTitle": "Envelopes",
+    "@envelopesTitle": {
+        "description": "Title for the envelopes list page"
+    },
+    "envelopesAddCategoryGroup": "Add Category Group",
+    "@envelopesAddCategoryGroup": {
+        "description": "Button to add a new category group"
+    },
+    "envelopesEditCategoryGroup": "Edit Category Group",
+    "@envelopesEditCategoryGroup": {
+        "description": "Button to edit a category group"
+    },
+    "envelopesAddEnvelope": "Add Envelope",
+    "@envelopesAddEnvelope": {
+        "description": "Button to add a new envelope"
+    },
+    "envelopesEditEnvelope": "Edit Envelope",
+    "@envelopesEditEnvelope": {
+        "description": "Button to edit an envelope"
+    },
+    "envelopesEmptyTitle": "No envelopes yet",
+    "@envelopesEmptyTitle": {
+        "description": "Title when no category groups exist"
+    },
+    "envelopesEmptySubtitle": "Create your first category group to start organizing your budget.",
+    "@envelopesEmptySubtitle": {
+        "description": "Subtitle when no category groups exist"
+    },
+    "envelopesGroupEmpty": "No envelopes in this group yet.",
+    "@envelopesGroupEmpty": {
+        "description": "Text shown inside an empty category group"
+    },
+    "envelopesCategoryGroupNameLabel": "Group Name",
+    "@envelopesCategoryGroupNameLabel": {
+        "description": "Label for category group name input"
+    },
+    "envelopesCategoryGroupNameRequired": "Please enter a group name",
+    "@envelopesCategoryGroupNameRequired": {
+        "description": "Validation when category group name is empty"
+    },
+    "envelopesEnvelopeNameLabel": "Envelope Name",
+    "@envelopesEnvelopeNameLabel": {
+        "description": "Label for envelope name input"
+    },
+    "envelopesEnvelopeNameRequired": "Please enter an envelope name",
+    "@envelopesEnvelopeNameRequired": {
+        "description": "Validation when envelope name is empty"
+    },
+    "envelopesCategoryGroupLabel": "Category Group",
+    "@envelopesCategoryGroupLabel": {
+        "description": "Label for category group dropdown in envelope form"
+    },
+    "envelopesArchive": "Archive",
+    "@envelopesArchive": {
+        "description": "Menu option to archive"
+    },
+    "envelopesUnarchive": "Unarchive",
+    "@envelopesUnarchive": {
+        "description": "Menu option to unarchive"
+    },
+    "envelopesDelete": "Delete",
+    "@envelopesDelete": {
+        "description": "Menu option / button to delete"
+    },
+    "envelopesArchived": "Archived",
+    "@envelopesArchived": {
+        "description": "Section header for archived items"
+    },
+    "envelopesCancel": "Cancel",
+    "@envelopesCancel": {
+        "description": "Cancel button in dialogs"
+    },
+    "envelopesCreateButton": "Create",
+    "@envelopesCreateButton": {
+        "description": "Button to create a new item"
+    },
+    "envelopesSaveButton": "Save",
+    "@envelopesSaveButton": {
+        "description": "Button to save edits"
+    },
+    "envelopesReorder": "Reorder",
+    "@envelopesReorder": {
+        "description": "Button to enter reorder mode"
+    },
+    "envelopesDoneReordering": "Done",
+    "@envelopesDoneReordering": {
+        "description": "Button to exit reorder mode"
+    },
+    "envelopesArchiveGroupConfirmTitle": "Archive Category Group?",
+    "@envelopesArchiveGroupConfirmTitle": {
+        "description": "Title for archive group confirmation dialog"
+    },
+    "envelopesArchiveGroupConfirmMessage": "This group and its envelopes will be hidden from your active budget.",
+    "@envelopesArchiveGroupConfirmMessage": {
+        "description": "Message in archive group confirmation dialog"
+    },
+    "envelopesArchiveEnvelopeConfirmTitle": "Archive Envelope?",
+    "@envelopesArchiveEnvelopeConfirmTitle": {
+        "description": "Title for archive envelope confirmation dialog"
+    },
+    "envelopesArchiveEnvelopeConfirmMessage": "This envelope will be hidden from your active budget.",
+    "@envelopesArchiveEnvelopeConfirmMessage": {
+        "description": "Message in archive envelope confirmation dialog"
+    },
+    "envelopesDeleteGroupConfirmTitle": "Delete Category Group?",
+    "@envelopesDeleteGroupConfirmTitle": {
+        "description": "Title for delete group confirmation dialog"
+    },
+    "envelopesDeleteGroupConfirmMessage": "This will permanently delete this group and all its envelopes. This action cannot be undone.",
+    "@envelopesDeleteGroupConfirmMessage": {
+        "description": "Message in delete group confirmation dialog"
+    },
+    "envelopesDeleteEnvelopeConfirmTitle": "Delete Envelope?",
+    "@envelopesDeleteEnvelopeConfirmTitle": {
+        "description": "Title for delete envelope confirmation dialog"
+    },
+    "envelopesDeleteEnvelopeConfirmMessage": "This will permanently delete this envelope and its allocation history. This action cannot be undone.",
+    "@envelopesDeleteEnvelopeConfirmMessage": {
+        "description": "Message in delete envelope confirmation dialog"
+    },
+    "envelopesErrorLoadFailed": "Failed to load envelopes. Please try again.",
+    "@envelopesErrorLoadFailed": {
+        "description": "Error message when envelopes stream fails"
+    },
+    "envelopesErrorUpdateFailed": "Failed to update. Please try again.",
+    "@envelopesErrorUpdateFailed": {
+        "description": "Error message when an update fails"
+    },
+    "envelopesErrorDeleteFailed": "Failed to delete. Please try again.",
+    "@envelopesErrorDeleteFailed": {
+        "description": "Error message when a delete fails"
+    },
+    "envelopesErrorReorderFailed": "Failed to reorder. Please try again.",
+    "@envelopesErrorReorderFailed": {
+        "description": "Error message when reorder fails"
+    },
+    "envelopesDetailAllocated": "Allocated",
+    "@envelopesDetailAllocated": {
+        "description": "Label for allocated amount in envelope detail"
+    },
+    "envelopesDetailSpent": "Spent",
+    "@envelopesDetailSpent": {
+        "description": "Label for spent amount in envelope detail"
+    },
+    "envelopesDetailAvailable": "Available",
+    "@envelopesDetailAvailable": {
+        "description": "Label for available amount in envelope detail"
+    },
+    "envelopesDetailAllocationHistory": "Allocation History",
+    "@envelopesDetailAllocationHistory": {
+        "description": "Title for allocation history section"
+    },
+    "envelopesDetailAllocationHistoryPlaceholder": "Allocation history will appear here once budget periods are set up.",
+    "@envelopesDetailAllocationHistoryPlaceholder": {
+        "description": "Placeholder text for allocation history"
+    },
+    "envelopesDetailTransactionsPlaceholder": "Transactions will appear here once the transactions feature is built.",
+    "@envelopesDetailTransactionsPlaceholder": {
+        "description": "Placeholder text for transactions in envelope detail"
+    },
+    "envelopesDetailGoalProgressPlaceholder": "Goal tracking coming soon.",
+    "@envelopesDetailGoalProgressPlaceholder": {
+        "description": "Placeholder text for goal progress in envelope detail"
+    },
+    "envelopesStatusLabel": "Status",
+    "@envelopesStatusLabel": {
+        "description": "Label for status field in envelope detail"
+    },
+    "envelopesCreatedAtLabel": "Created",
+    "@envelopesCreatedAtLabel": {
+        "description": "Label for creation date in envelope detail"
+    },
+    "envelopesStatusArchived": "Archived",
+    "@envelopesStatusArchived": {
+        "description": "Status value shown in envelope detail when the envelope is archived"
+    },
+    "envelopesNoCategoryGroupsError": "Please create a category group before adding an envelope.",
+    "@envelopesNoCategoryGroupsError": {
+        "description": "Error shown in envelope form when no category groups exist"
     }
 }
