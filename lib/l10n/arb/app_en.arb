@@ -1264,5 +1264,65 @@
     "recurringUpcomingBillsBanner": "Upcoming bills due soon",
     "@recurringUpcomingBillsBanner": {
         "description": "Banner text for upcoming bill reminders"
+    },
+    "dashboardReadyToAssign": "Ready to Assign",
+    "@dashboardReadyToAssign": {
+        "description": "Label for the ready to assign amount on the dashboard"
+    },
+    "dashboardTotalBalance": "Total Balance",
+    "@dashboardTotalBalance": {
+        "description": "Label for total balance across all accounts"
+    },
+    "dashboardEnvelopes": "Envelopes",
+    "@dashboardEnvelopes": {
+        "description": "Section title for envelope spending on dashboard"
+    },
+    "dashboardRecentTransactions": "Recent Transactions",
+    "@dashboardRecentTransactions": {
+        "description": "Section title for recent transactions on dashboard"
+    },
+    "dashboardViewAll": "View All",
+    "@dashboardViewAll": {
+        "description": "Link text to view all items in a section"
+    },
+    "dashboardQuickAdd": "Add Transaction",
+    "@dashboardQuickAdd": {
+        "description": "Quick action button to add a transaction"
+    },
+    "dashboardNoTransactions": "No recent transactions",
+    "@dashboardNoTransactions": {
+        "description": "Empty state text when there are no transactions"
+    },
+    "dashboardNoEnvelopes": "No envelopes yet",
+    "@dashboardNoEnvelopes": {
+        "description": "Empty state text when there are no envelopes"
+    },
+    "dashboardSpent": "spent",
+    "@dashboardSpent": {
+        "description": "Label for spent amount on envelope card"
+    },
+    "dashboardAvailable": "available",
+    "@dashboardAvailable": {
+        "description": "Label for available amount on envelope card"
+    },
+    "dashboardOverspent": "Overspent",
+    "@dashboardOverspent": {
+        "description": "Label when envelope is overspent"
+    },
+    "dashboardErrorLoad": "Failed to load dashboard data",
+    "@dashboardErrorLoad": {
+        "description": "Error message when dashboard data fails to load"
+    },
+    "dashboardViewBudget": "Budget",
+    "@dashboardViewBudget": {
+        "description": "Quick action button label for budget page"
+    },
+    "dashboardViewAccounts": "Accounts",
+    "@dashboardViewAccounts": {
+        "description": "Quick action button label for accounts page"
+    },
+    "dashboardViewTransactions": "Transactions",
+    "@dashboardViewTransactions": {
+        "description": "Quick action button label for transactions page"
     }
 }
