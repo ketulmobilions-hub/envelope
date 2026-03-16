@@ -37,8 +37,11 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
       (select(transactions)..where((t) => t.envelopeId.equals(envelopeId)))
           .get();
 
-  Future<int> insertTransaction(TransactionsCompanion transaction) =>
-      into(transactions).insert(transaction);
+  Future<int> insertTransaction(
+    TransactionsCompanion transaction, {
+    InsertMode mode = InsertMode.insert,
+  }) =>
+      into(transactions).insert(transaction, mode: mode);
 
   Future<bool> updateTransaction(TransactionsCompanion transaction) =>
       update(transactions).replace(transaction);
@@ -61,8 +64,11 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
             ..where((t) => t.transactionId.equals(transactionId)))
           .watch();
 
-  Future<int> insertTransactionSplit(TransactionSplitsCompanion split) =>
-      into(transactionSplits).insert(split);
+  Future<int> insertTransactionSplit(
+    TransactionSplitsCompanion split, {
+    InsertMode mode = InsertMode.insert,
+  }) =>
+      into(transactionSplits).insert(split, mode: mode);
 
   Future<bool> updateTransactionSplit(TransactionSplitsCompanion split) =>
       update(transactionSplits).replace(split);
@@ -84,7 +90,11 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
   Stream<List<Tag>> watchTagsByBudgetId(String budgetId) =>
       (select(tags)..where((t) => t.budgetId.equals(budgetId))).watch();
 
-  Future<int> insertTag(TagsCompanion tag) => into(tags).insert(tag);
+  Future<int> insertTag(
+    TagsCompanion tag, {
+    InsertMode mode = InsertMode.insert,
+  }) =>
+      into(tags).insert(tag, mode: mode);
 
   Future<bool> updateTag(TagsCompanion tag) => update(tags).replace(tag);
 
@@ -102,8 +112,11 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
   Future<List<TransactionTag>> getTransactionsByTagId(String tagId) =>
       (select(transactionTags)..where((t) => t.tagId.equals(tagId))).get();
 
-  Future<int> insertTransactionTag(TransactionTagsCompanion transactionTag) =>
-      into(transactionTags).insert(transactionTag);
+  Future<int> insertTransactionTag(
+    TransactionTagsCompanion transactionTag, {
+    InsertMode mode = InsertMode.insert,
+  }) =>
+      into(transactionTags).insert(transactionTag, mode: mode);
 
   Future<int> deleteTransactionTag({
     required String transactionId,
