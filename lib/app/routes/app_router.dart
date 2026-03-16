@@ -7,6 +7,7 @@ import 'package:envelope/dashboard/dashboard.dart';
 import 'package:envelope/envelopes/envelopes.dart';
 import 'package:envelope/onboarding/onboarding.dart';
 import 'package:envelope/splash/splash.dart';
+import 'package:envelope/transactions/transactions.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,6 +23,7 @@ abstract final class AppRoutes {
   static const String accounts = '/accounts';
   static const String envelopes = '/envelopes';
   static const String budget = '/budget';
+  static const String transactions = '/transactions';
 }
 
 /// Creates the application [GoRouter] with auth-based redirects.
@@ -154,6 +156,21 @@ GoRouter createRouter({
         builder: (context, state) {
           final budgetId = state.uri.queryParameters['budgetId']!;
           return BudgetPage(budgetId: budgetId);
+        },
+      ),
+      GoRoute(
+        name: AppRoutes.transactions,
+        path: AppRoutes.transactions,
+        redirect: (context, state) {
+          final budgetId = state.uri.queryParameters['budgetId'];
+          if (budgetId == null || budgetId.isEmpty) {
+            return AppRoutes.home;
+          }
+          return null;
+        },
+        builder: (context, state) {
+          final budgetId = state.uri.queryParameters['budgetId']!;
+          return TransactionsPage(budgetId: budgetId);
         },
       ),
     ],

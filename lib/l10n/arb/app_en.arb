@@ -860,5 +860,186 @@
     "budgetTemplatePercentageSumError": "Percentages must add up to 100%",
     "@budgetTemplatePercentageSumError": {
         "description": "Validation message when template percentages do not sum to 100"
+    },
+
+    "transactionsTitle": "Transactions",
+    "@transactionsTitle": {
+        "description": "Title for the transactions list page"
+    },
+    "transactionsAddTransaction": "Add Transaction",
+    "@transactionsAddTransaction": {
+        "description": "Button to add a new transaction"
+    },
+    "transactionsEditTransaction": "Edit Transaction",
+    "@transactionsEditTransaction": {
+        "description": "Title when editing a transaction"
+    },
+    "transactionsEmptyTitle": "No transactions yet",
+    "@transactionsEmptyTitle": {
+        "description": "Title when no transactions exist"
+    },
+    "transactionsEmptySubtitle": "Add your first transaction to start tracking your spending.",
+    "@transactionsEmptySubtitle": {
+        "description": "Subtitle when no transactions exist"
+    },
+    "transactionsTypeIncome": "Income",
+    "@transactionsTypeIncome": {
+        "description": "Income transaction type"
+    },
+    "transactionsTypeExpense": "Expense",
+    "@transactionsTypeExpense": {
+        "description": "Expense transaction type"
+    },
+    "transactionsTypeTransfer": "Transfer",
+    "@transactionsTypeTransfer": {
+        "description": "Transfer transaction type"
+    },
+    "transactionsAccountLabel": "Account",
+    "@transactionsAccountLabel": {
+        "description": "Label for account dropdown"
+    },
+    "transactionsAccountRequired": "Please select an account",
+    "@transactionsAccountRequired": {
+        "description": "Validation when no account selected"
+    },
+    "transactionsEnvelopeLabel": "Envelope",
+    "@transactionsEnvelopeLabel": {
+        "description": "Label for envelope dropdown"
+    },
+    "transactionsNoEnvelope": "No envelope",
+    "@transactionsNoEnvelope": {
+        "description": "Option for no envelope assignment"
+    },
+    "transactionsAmountLabel": "Amount",
+    "@transactionsAmountLabel": {
+        "description": "Label for amount input"
+    },
+    "transactionsAmountRequired": "Please enter a valid amount",
+    "@transactionsAmountRequired": {
+        "description": "Validation when amount is missing or invalid"
+    },
+    "transactionsPayeeLabel": "Payee",
+    "@transactionsPayeeLabel": {
+        "description": "Label for payee input"
+    },
+    "transactionsNotesLabel": "Notes",
+    "@transactionsNotesLabel": {
+        "description": "Label for notes input"
+    },
+    "transactionsCreateButton": "Create Transaction",
+    "@transactionsCreateButton": {
+        "description": "Button to create a new transaction"
+    },
+    "transactionsSaveButton": "Save Changes",
+    "@transactionsSaveButton": {
+        "description": "Button to save transaction edits"
+    },
+    "transactionsDeleted": "Transaction deleted",
+    "@transactionsDeleted": {
+        "description": "Snackbar message after deleting a transaction"
+    },
+    "transactionsUndo": "Undo",
+    "@transactionsUndo": {
+        "description": "Undo button text in snackbar"
+    },
+    "transactionsClearFilters": "Clear",
+    "@transactionsClearFilters": {
+        "description": "Chip to clear all active filters"
+    },
+    "transactionsSearchHint": "Search transactions...",
+    "@transactionsSearchHint": {
+        "description": "Hint text in search field"
+    },
+    "transactionsSearchEmpty": "Type to search transactions",
+    "@transactionsSearchEmpty": {
+        "description": "Message shown when search query is empty"
+    },
+    "transactionsSearchNoResults": "No matching transactions",
+    "@transactionsSearchNoResults": {
+        "description": "Message shown when search has no results"
+    },
+    "transactionsTransferTitle": "Transfer Between Accounts",
+    "@transactionsTransferTitle": {
+        "description": "Title for the transfer form page"
+    },
+    "transactionsTransferFrom": "From Account",
+    "@transactionsTransferFrom": {
+        "description": "Label for from account in transfer"
+    },
+    "transactionsTransferTo": "To Account",
+    "@transactionsTransferTo": {
+        "description": "Label for to account in transfer"
+    },
+    "transactionsTransferButton": "Transfer",
+    "@transactionsTransferButton": {
+        "description": "Button to execute a transfer"
+    },
+    "transactionsTransferSameAccount": "Cannot transfer to the same account",
+    "@transactionsTransferSameAccount": {
+        "description": "Validation when from and to accounts are the same"
+    },
+    "transactionsSplitMode": "Split across envelopes",
+    "@transactionsSplitMode": {
+        "description": "Toggle label for split mode"
+    },
+    "transactionsSplitLabel": "Splits",
+    "@transactionsSplitLabel": {
+        "description": "Section header for split rows"
+    },
+    "transactionsRemaining": "Remaining",
+    "@transactionsRemaining": {
+        "description": "Label for remaining amount in splits"
+    },
+    "transactionsAddSplit": "Add Split",
+    "@transactionsAddSplit": {
+        "description": "Button to add another split row"
+    },
+    "transactionsTagsLabel": "Tags",
+    "@transactionsTagsLabel": {
+        "description": "Section header for tags"
+    },
+    "transactionsAddTag": "New Tag",
+    "@transactionsAddTag": {
+        "description": "Chip to create a new tag"
+    },
+    "transactionsTagNameHint": "Tag name",
+    "@transactionsTagNameHint": {
+        "description": "Hint for new tag name input"
+    },
+    "transactionsErrorLoadFailed": "Failed to load transactions. Please try again.",
+    "@transactionsErrorLoadFailed": {
+        "description": "Error message when transactions stream fails"
+    },
+    "transactionsErrorDeleteFailed": "Failed to delete transaction. Please try again.",
+    "@transactionsErrorDeleteFailed": {
+        "description": "Error message when transaction deletion fails"
+    },
+    "transactionsErrorUndoFailed": "Failed to undo deletion. Please try again.",
+    "@transactionsErrorUndoFailed": {
+        "description": "Error message when undo delete fails"
+    },
+    "transactionsToday": "Today",
+    "@transactionsToday": {
+        "description": "Date header label for today"
+    },
+    "transactionsYesterday": "Yesterday",
+    "@transactionsYesterday": {
+        "description": "Date header label for yesterday"
+    },
+    "transactionsDeleteConfirmTitle": "Delete Transaction?",
+    "@transactionsDeleteConfirmTitle": {
+        "description": "Title for delete confirmation dialog"
+    },
+    "transactionsDeleteConfirmMessage": "This transaction will be deleted. You can undo this action for a few seconds.",
+    "@transactionsDeleteConfirmMessage": {
+        "description": "Message in delete confirmation dialog"
+    },
+    "transactionsCancel": "Cancel",
+    "@transactionsCancel": {
+        "description": "Cancel button text"
+    },
+    "transactionsDelete": "Delete",
+    "@transactionsDelete": {
+        "description": "Delete button text"
     }
 }
