@@ -1041,5 +1041,228 @@
     "transactionsDelete": "Delete",
     "@transactionsDelete": {
         "description": "Delete button text"
+    },
+
+    "recurringTitle": "Recurring & Bills",
+    "@recurringTitle": {
+        "description": "Title for the recurring transactions page"
+    },
+    "recurringTabRecurring": "Recurring",
+    "@recurringTabRecurring": {
+        "description": "Tab label for recurring rules"
+    },
+    "recurringTabBills": "Bills",
+    "@recurringTabBills": {
+        "description": "Tab label for bill reminders"
+    },
+    "recurringAddRule": "Add Recurring Rule",
+    "@recurringAddRule": {
+        "description": "Button to add a new recurring rule"
+    },
+    "recurringEditRule": "Edit Recurring Rule",
+    "@recurringEditRule": {
+        "description": "Title when editing a recurring rule"
+    },
+    "recurringAddBill": "Add Bill Reminder",
+    "@recurringAddBill": {
+        "description": "Button to add a new bill reminder"
+    },
+    "recurringEditBill": "Edit Bill Reminder",
+    "@recurringEditBill": {
+        "description": "Title when editing a bill reminder"
+    },
+    "recurringEmptyRulesTitle": "No recurring transactions",
+    "@recurringEmptyRulesTitle": {
+        "description": "Title when no recurring rules exist"
+    },
+    "recurringEmptyRulesSubtitle": "Set up recurring transactions to automate your regular income and expenses.",
+    "@recurringEmptyRulesSubtitle": {
+        "description": "Subtitle when no recurring rules exist"
+    },
+    "recurringEmptyBillsTitle": "No bill reminders",
+    "@recurringEmptyBillsTitle": {
+        "description": "Title when no bill reminders exist"
+    },
+    "recurringEmptyBillsSubtitle": "Add bill reminders to never miss a payment.",
+    "@recurringEmptyBillsSubtitle": {
+        "description": "Subtitle when no bill reminders exist"
+    },
+    "recurringFrequencyDaily": "Daily",
+    "@recurringFrequencyDaily": {
+        "description": "Daily frequency option"
+    },
+    "recurringFrequencyWeekly": "Weekly",
+    "@recurringFrequencyWeekly": {
+        "description": "Weekly frequency option"
+    },
+    "recurringFrequencyBiWeekly": "Bi-weekly",
+    "@recurringFrequencyBiWeekly": {
+        "description": "Bi-weekly frequency option"
+    },
+    "recurringFrequencyMonthly": "Monthly",
+    "@recurringFrequencyMonthly": {
+        "description": "Monthly frequency option"
+    },
+    "recurringFrequencyYearly": "Yearly",
+    "@recurringFrequencyYearly": {
+        "description": "Yearly frequency option"
+    },
+    "recurringFrequencyCustom": "Custom",
+    "@recurringFrequencyCustom": {
+        "description": "Custom frequency option"
+    },
+    "recurringFrequencyLabel": "Frequency",
+    "@recurringFrequencyLabel": {
+        "description": "Label for frequency dropdown"
+    },
+    "recurringCustomIntervalLabel": "Every",
+    "@recurringCustomIntervalLabel": {
+        "description": "Label for custom interval input"
+    },
+    "recurringCustomUnitLabel": "Unit",
+    "@recurringCustomUnitLabel": {
+        "description": "Label for custom unit dropdown"
+    },
+    "recurringCustomUnitDays": "Days",
+    "@recurringCustomUnitDays": {
+        "description": "Custom unit: days"
+    },
+    "recurringCustomUnitWeeks": "Weeks",
+    "@recurringCustomUnitWeeks": {
+        "description": "Custom unit: weeks"
+    },
+    "recurringCustomUnitMonths": "Months",
+    "@recurringCustomUnitMonths": {
+        "description": "Custom unit: months"
+    },
+    "recurringCustomIntervalRequired": "Enter a valid interval",
+    "@recurringCustomIntervalRequired": {
+        "description": "Validation message for custom interval field"
+    },
+    "recurringStartDateLabel": "Start Date",
+    "@recurringStartDateLabel": {
+        "description": "Label for start date picker"
+    },
+    "recurringEndDateLabel": "End Date (optional)",
+    "@recurringEndDateLabel": {
+        "description": "Label for end date picker"
+    },
+    "recurringAutoPostLabel": "Auto-post transactions",
+    "@recurringAutoPostLabel": {
+        "description": "Toggle label for auto-post"
+    },
+    "recurringAutoPostSubtitle": "Automatically create transactions when due",
+    "@recurringAutoPostSubtitle": {
+        "description": "Subtitle for auto-post toggle"
+    },
+    "recurringNextOccurrence": "Next: {date}",
+    "@recurringNextOccurrence": {
+        "description": "Next occurrence display",
+        "placeholders": {
+            "date": { "type": "String" }
+        }
+    },
+    "recurringPaused": "Paused",
+    "@recurringPaused": {
+        "description": "Badge text for paused rules"
+    },
+    "recurringPause": "Pause",
+    "@recurringPause": {
+        "description": "Action to pause a rule"
+    },
+    "recurringResume": "Resume",
+    "@recurringResume": {
+        "description": "Action to resume a paused rule"
+    },
+    "recurringBillNameLabel": "Bill Name",
+    "@recurringBillNameLabel": {
+        "description": "Label for bill name input"
+    },
+    "recurringBillNameRequired": "Please enter a bill name",
+    "@recurringBillNameRequired": {
+        "description": "Validation when bill name is empty"
+    },
+    "recurringEstimatedAmountLabel": "Estimated Amount",
+    "@recurringEstimatedAmountLabel": {
+        "description": "Label for estimated amount input"
+    },
+    "recurringDueDayLabel": "Due Day of Month",
+    "@recurringDueDayLabel": {
+        "description": "Label for due day input"
+    },
+    "recurringDueDayRequired": "Please enter a day (1-31)",
+    "@recurringDueDayRequired": {
+        "description": "Validation when due day is invalid"
+    },
+    "recurringReminderDaysLabel": "Remind Days Before",
+    "@recurringReminderDaysLabel": {
+        "description": "Label for reminder days input"
+    },
+    "recurringPayNow": "Pay",
+    "@recurringPayNow": {
+        "description": "Action button to pay a bill"
+    },
+    "recurringDueDay": "Due day {day}",
+    "@recurringDueDay": {
+        "description": "Due day display",
+        "placeholders": {
+            "day": { "type": "int" }
+        }
+    },
+    "recurringCreateButton": "Create",
+    "@recurringCreateButton": {
+        "description": "Button to create a new recurring item"
+    },
+    "recurringSaveButton": "Save Changes",
+    "@recurringSaveButton": {
+        "description": "Button to save recurring item edits"
+    },
+    "recurringDeleted": "Item deleted",
+    "@recurringDeleted": {
+        "description": "Snackbar message after deleting a recurring item"
+    },
+    "recurringUndo": "Undo",
+    "@recurringUndo": {
+        "description": "Undo button text in snackbar"
+    },
+    "recurringDeleteConfirmTitle": "Delete?",
+    "@recurringDeleteConfirmTitle": {
+        "description": "Title for delete confirmation dialog"
+    },
+    "recurringDeleteConfirmMessage": "This item will be permanently deleted.",
+    "@recurringDeleteConfirmMessage": {
+        "description": "Message in delete confirmation dialog"
+    },
+    "recurringCancel": "Cancel",
+    "@recurringCancel": {
+        "description": "Cancel button text"
+    },
+    "recurringDelete": "Delete",
+    "@recurringDelete": {
+        "description": "Delete button text"
+    },
+    "recurringErrorLoadFailed": "Failed to load recurring data. Please try again.",
+    "@recurringErrorLoadFailed": {
+        "description": "Error message when recurring stream fails"
+    },
+    "recurringErrorDeleteFailed": "Failed to delete. Please try again.",
+    "@recurringErrorDeleteFailed": {
+        "description": "Error message when deletion fails"
+    },
+    "recurringErrorUndoFailed": "Failed to undo deletion. Please try again.",
+    "@recurringErrorUndoFailed": {
+        "description": "Error message when undo fails"
+    },
+    "recurringErrorPauseFailed": "Failed to update rule. Please try again.",
+    "@recurringErrorPauseFailed": {
+        "description": "Error message when pause/resume fails"
+    },
+    "recurringPendingBanner": "You have pending recurring transactions",
+    "@recurringPendingBanner": {
+        "description": "Banner text for pending recurring items on home page"
+    },
+    "recurringUpcomingBillsBanner": "Upcoming bills due soon",
+    "@recurringUpcomingBillsBanner": {
+        "description": "Banner text for upcoming bill reminders"
     }
 }

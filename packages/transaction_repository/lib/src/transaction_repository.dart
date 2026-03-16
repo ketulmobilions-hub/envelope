@@ -257,6 +257,25 @@ class TransactionRepository {
   // Recurring Rules
   // ---------------------------------------------------------------------------
 
+  /// Fetches recurring rules from the API and syncs to local storage.
+  Future<void> refreshRecurringRules(String budgetId) async {
+    try {
+      final remote =
+          await _apiClient.recurring.getRecurringRulesByBudget(budgetId);
+      for (final dto in remote) {
+        await _localDatabase.recurringDao.insertRecurringRule(
+          _toRecurringRuleCompanion(dto),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException(
+        'Failed to refresh recurring rules',
+        error: e,
+      );
+    }
+  }
+
   /// Creates a new recurring rule.
   ///
   /// Sends to the API first, then caches locally.
@@ -387,6 +406,25 @@ class TransactionRepository {
   // ---------------------------------------------------------------------------
   // Bill Reminders
   // ---------------------------------------------------------------------------
+
+  /// Fetches bill reminders from the API and syncs to local storage.
+  Future<void> refreshBillReminders(String budgetId) async {
+    try {
+      final remote =
+          await _apiClient.recurring.getBillRemindersByBudget(budgetId);
+      for (final dto in remote) {
+        await _localDatabase.recurringDao.insertBillReminder(
+          _toBillReminderCompanion(dto),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException(
+        'Failed to refresh bill reminders',
+        error: e,
+      );
+    }
+  }
 
   /// Creates a new bill reminder.
   ///
