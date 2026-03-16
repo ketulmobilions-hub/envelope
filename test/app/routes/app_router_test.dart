@@ -13,6 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:transaction_repository/transaction_repository.dart';
 
 class MockAuthBloc extends MockBloc<AuthEvent, AuthState>
     implements AuthBloc {}
@@ -22,11 +23,15 @@ class MockAuthRepository extends Mock implements AuthRepository {}
 class MockSyncBloc extends MockBloc<SyncEvent, SyncBlocState>
     implements SyncBloc {}
 
+class MockTransactionRepository extends Mock
+    implements TransactionRepository {}
+
 void main() {
   group('AppRouter', () {
     late MockAuthBloc authBloc;
     late MockAuthRepository authRepository;
     late MockSyncBloc syncBloc;
+    late MockTransactionRepository transactionRepository;
     late GoRouter router;
 
     late SharedPreferences prefs;
@@ -35,7 +40,12 @@ void main() {
       authBloc = MockAuthBloc();
       authRepository = MockAuthRepository();
       syncBloc = MockSyncBloc();
+      transactionRepository = MockTransactionRepository();
       when(() => syncBloc.state).thenReturn(const SyncBlocState());
+      when(() => transactionRepository.watchRecurringRules(any()))
+          .thenAnswer((_) => Stream.value([]));
+      when(() => transactionRepository.watchBillReminders(any()))
+          .thenAnswer((_) => Stream.value([]));
       SharedPreferences.setMockInitialValues(
         {'onboarding_complete': true},
       );
@@ -43,21 +53,24 @@ void main() {
     });
 
     Widget buildApp() {
-      return RepositoryProvider<SharedPreferences>.value(
-        value: prefs,
-        child: RepositoryProvider<AuthRepository>.value(
-          value: authRepository,
-          child: MultiBlocProvider(
-            providers: [
-              BlocProvider<AuthBloc>.value(value: authBloc),
-              BlocProvider<SyncBloc>.value(value: syncBloc),
-            ],
-            child: MaterialApp.router(
-              routerConfig: router,
-              localizationsDelegates:
-                  AppLocalizations.localizationsDelegates,
-              supportedLocales: AppLocalizations.supportedLocales,
-            ),
+      return MultiRepositoryProvider(
+        providers: [
+          RepositoryProvider<SharedPreferences>.value(value: prefs),
+          RepositoryProvider<AuthRepository>.value(value: authRepository),
+          RepositoryProvider<TransactionRepository>.value(
+            value: transactionRepository,
+          ),
+        ],
+        child: MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthBloc>.value(value: authBloc),
+            BlocProvider<SyncBloc>.value(value: syncBloc),
+          ],
+          child: MaterialApp.router(
+            routerConfig: router,
+            localizationsDelegates:
+                AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
           ),
         ),
       );

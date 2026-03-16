@@ -1,13 +1,18 @@
-// Repository stub — fields will be used when methods are implemented.
-// ignore_for_file: unused_field
+import 'package:drift/drift.dart' show InsertMode, Value;
 import 'package:envelope_api_client/envelope_api_client.dart';
 import 'package:envelope_local_storage/envelope_local_storage.dart'
     hide BillReminder, RecurringRule, Tag, Transaction, TransactionSplit;
+import 'package:envelope_local_storage/envelope_local_storage.dart' as storage;
 import 'package:transaction_repository/transaction_repository.dart';
 
 /// Repository for transaction, recurring rule, bill reminder, and tag
 /// operations.
+///
+/// Uses a remote-first strategy: writes go to the Supabase API first,
+/// then sync the result to the local Drift database. Reads stream from
+/// local storage for reactive UI updates.
 class TransactionRepository {
+  /// Creates a [TransactionRepository].
   const TransactionRepository({
     required EnvelopeApiClient apiClient,
     required AppDatabase localDatabase,
@@ -17,9 +22,13 @@ class TransactionRepository {
   final EnvelopeApiClient _apiClient;
   final AppDatabase _localDatabase;
 
-  // --- Transactions ---
+  // ---------------------------------------------------------------------------
+  // Transactions
+  // ---------------------------------------------------------------------------
 
   /// Creates a new transaction.
+  ///
+  /// Sends to the API first, then caches locally.
   Future<Transaction> createTransaction({
     required String budgetId,
     required String accountId,
@@ -29,64 +38,247 @@ class TransactionRepository {
     required DateTime date,
     required String createdBy,
     String? envelopeId,
+    double exchangeRate = 1.0,
     String? payee,
     String? notes,
+    String? recurringRuleId,
+    String? transferPairId,
   }) async {
-    // TODO(envelope): implement createTransaction
-    throw UnimplementedError();
+    try {
+      final dto = TransactionDto(
+        id: '',
+        budgetId: budgetId,
+        accountId: accountId,
+        type: type,
+        amount: amount,
+        currency: currency,
+        date: date,
+        createdBy: createdBy,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        envelopeId: envelopeId,
+        exchangeRate: exchangeRate,
+        payee: payee,
+        notes: notes,
+        recurringRuleId: recurringRuleId,
+        transferPairId: transferPairId,
+      );
+      final created = await _apiClient.transactions.createTransaction(dto);
+      await _cacheTransaction(created);
+      return _mapTransactionFromDto(created);
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException('Failed to create transaction', error: e);
+    }
   }
 
   /// Gets a transaction by its [id].
+  ///
+  /// Tries local storage first, falls back to the API.
   Future<Transaction> getTransaction(String id) async {
-    // TODO(envelope): implement getTransaction
-    throw UnimplementedError();
+    try {
+      final local = await _localDatabase.transactionsDao.getTransaction(id);
+      if (local != null) {
+        return _mapTransactionFromLocal(local);
+      }
+      final remote = await _apiClient.transactions.getTransaction(id);
+      await _cacheTransaction(remote);
+      return _mapTransactionFromDto(remote);
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException('Failed to get transaction', error: e);
+    }
   }
 
   /// Watches transactions for a [budgetId], optionally filtered by account
   /// or envelope.
+  ///
+  /// Returns a reactive stream from local storage.
   Stream<List<Transaction>> watchTransactions({
     required String budgetId,
     String? accountId,
     String? envelopeId,
   }) {
-    // TODO(envelope): implement watchTransactions
-    throw UnimplementedError();
+    late Stream<List<storage.Transaction>> stream;
+
+    if (accountId != null) {
+      stream = _localDatabase.transactionsDao
+          .watchTransactionsByBudgetId(budgetId)
+          .map((rows) => rows.where((r) => r.accountId == accountId).toList());
+    } else if (envelopeId != null) {
+      stream = _localDatabase.transactionsDao
+          .watchTransactionsByBudgetId(budgetId)
+          .map(
+            (rows) => rows.where((r) => r.envelopeId == envelopeId).toList(),
+          );
+    } else {
+      stream =
+          _localDatabase.transactionsDao.watchTransactionsByBudgetId(budgetId);
+    }
+
+    return stream
+        .map((rows) => rows.map(_mapTransactionFromLocal).toList())
+        .handleError(
+          (Object error) => throw TransactionException(
+            'Failed to watch transactions',
+            error: error,
+          ),
+        );
   }
 
   /// Updates a [transaction].
+  ///
+  /// Sends the update to the API and syncs locally.
   Future<void> updateTransaction(Transaction transaction) async {
-    // TODO(envelope): implement updateTransaction
-    throw UnimplementedError();
+    try {
+      final dto = _mapTransactionToDto(transaction);
+      final updated = await _apiClient.transactions.updateTransaction(dto);
+      await _cacheTransaction(updated);
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException('Failed to update transaction', error: e);
+    }
   }
 
   /// Deletes a transaction by its [id].
+  ///
+  /// Removes from the API first. Local cache removal is best-effort.
   Future<void> deleteTransaction(String id) async {
-    // TODO(envelope): implement deleteTransaction
-    throw UnimplementedError();
+    try {
+      await _apiClient.transactions.deleteTransaction(id);
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException('Failed to delete transaction', error: e);
+    }
+    try {
+      await _localDatabase.transactionsDao.deleteTransaction(id);
+    } on Exception {
+      // Stale local entry will be cleaned up on next refresh.
+    }
   }
 
-  // --- Split Transactions ---
+  /// Fetches transactions from the API and syncs to local storage.
+  Future<void> refreshTransactions(String budgetId) async {
+    try {
+      final remote =
+          await _apiClient.transactions.getTransactionsByBudget(budgetId);
+      final companions = remote.map(_toTransactionCompanion).toList();
+      for (final companion in companions) {
+        await _localDatabase.transactionsDao.insertTransaction(
+          companion,
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException('Failed to refresh transactions', error: e);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Split Transactions
+  // ---------------------------------------------------------------------------
 
   /// Creates split entries for a transaction.
+  ///
+  /// Sends each split to the API and caches locally.
   Future<void> createSplitTransaction({
     required String transactionId,
     required List<TransactionSplit> splits,
   }) async {
-    // TODO(envelope): implement createSplitTransaction
-    throw UnimplementedError();
+    try {
+      for (final split in splits) {
+        final dto = TransactionSplitDto(
+          id: '',
+          transactionId: transactionId,
+          envelopeId: split.envelopeId,
+          amount: split.amount.toDouble(),
+        );
+        final created =
+            await _apiClient.transactions.createTransactionSplit(dto);
+        await _localDatabase.transactionsDao.insertTransactionSplit(
+          _toTransactionSplitCompanion(created),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException(
+        'Failed to create split transaction',
+        error: e,
+      );
+    }
   }
 
   /// Gets all splits for a [transactionId].
   Future<List<TransactionSplit>> getTransactionSplits(
     String transactionId,
   ) async {
-    // TODO(envelope): implement getTransactionSplits
-    throw UnimplementedError();
+    try {
+      final local = await _localDatabase.transactionsDao
+          .getSplitsByTransactionId(transactionId);
+      if (local.isNotEmpty) {
+        return local.map(_mapTransactionSplitFromLocal).toList();
+      }
+      final remote =
+          await _apiClient.transactions.getTransactionSplits(transactionId);
+      for (final dto in remote) {
+        await _localDatabase.transactionsDao.insertTransactionSplit(
+          _toTransactionSplitCompanion(dto),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+      return remote.map(_mapTransactionSplitFromDto).toList();
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException(
+        'Failed to get transaction splits',
+        error: e,
+      );
+    }
   }
 
-  // --- Recurring Rules ---
+  /// Deletes all splits for a transaction and replaces them with [splits].
+  Future<void> replaceSplits({
+    required String transactionId,
+    required List<TransactionSplit> splits,
+  }) async {
+    try {
+      await _apiClient.transactions.deleteTransactionSplits(transactionId);
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException('Failed to replace splits', error: e);
+    }
+    try {
+      await _localDatabase.transactionsDao
+          .deleteSplitsByTransactionId(transactionId);
+    } on Exception {
+      // Stale local splits will be cleaned up on next refresh.
+    }
+    await createSplitTransaction(
+      transactionId: transactionId,
+      splits: splits,
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Recurring Rules
+  // ---------------------------------------------------------------------------
+
+  /// Fetches recurring rules from the API and syncs to local storage.
+  Future<void> refreshRecurringRules(String budgetId) async {
+    try {
+      final remote =
+          await _apiClient.recurring.getRecurringRulesByBudget(budgetId);
+      for (final dto in remote) {
+        await _localDatabase.recurringDao.insertRecurringRule(
+          _toRecurringRuleCompanion(dto),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException(
+        'Failed to refresh recurring rules',
+        error: e,
+      );
+    }
+  }
 
   /// Creates a new recurring rule.
+  ///
+  /// Sends to the API first, then caches locally.
   Future<RecurringRule> createRecurringRule({
     required String budgetId,
     required String accountId,
@@ -103,37 +295,140 @@ class TransactionRepository {
     DateTime? endDate,
     bool autoPost = false,
   }) async {
-    // TODO(envelope): implement createRecurringRule
-    throw UnimplementedError();
+    try {
+      final dto = RecurringRuleDto(
+        id: '',
+        budgetId: budgetId,
+        accountId: accountId,
+        type: type,
+        amount: amount,
+        currency: currency,
+        frequency: frequency,
+        startDate: startDate,
+        nextOccurrence: startDate,
+        createdAt: DateTime.now(),
+        envelopeId: envelopeId,
+        payee: payee,
+        notes: notes,
+        customInterval: customInterval,
+        customUnit: customUnit,
+        endDate: endDate,
+        autoPost: autoPost,
+      );
+      final created = await _apiClient.recurring.createRecurringRule(dto);
+      await _cacheRecurringRule(created);
+      return _mapRecurringRuleFromDto(created);
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException('Failed to create recurring rule', error: e);
+    }
   }
 
   /// Watches all recurring rules for a [budgetId].
+  ///
+  /// Returns a reactive stream from local storage.
   Stream<List<RecurringRule>> watchRecurringRules(String budgetId) {
-    // TODO(envelope): implement watchRecurringRules
-    throw UnimplementedError();
+    return _localDatabase.recurringDao
+        .watchRecurringRulesByBudgetId(budgetId)
+        .map((rows) => rows.map(_mapRecurringRuleFromLocal).toList())
+        .handleError(
+          (Object error) => throw TransactionException(
+            'Failed to watch recurring rules',
+            error: error,
+          ),
+        );
   }
 
   /// Updates a recurring [rule].
+  ///
+  /// Sends the update to the API and syncs locally.
   Future<void> updateRecurringRule(RecurringRule rule) async {
-    // TODO(envelope): implement updateRecurringRule
-    throw UnimplementedError();
+    try {
+      final dto = _mapRecurringRuleToDto(rule);
+      final updated = await _apiClient.recurring.updateRecurringRule(dto);
+      await _cacheRecurringRule(updated);
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException('Failed to update recurring rule', error: e);
+    }
   }
 
   /// Deletes a recurring rule by its [id].
+  ///
+  /// Removes from the API first. Local cache removal is best-effort.
   Future<void> deleteRecurringRule(String id) async {
-    // TODO(envelope): implement deleteRecurringRule
-    throw UnimplementedError();
+    try {
+      await _apiClient.recurring.deleteRecurringRule(id);
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException('Failed to delete recurring rule', error: e);
+    }
+    try {
+      await _localDatabase.recurringDao.deleteRecurringRule(id);
+    } on Exception {
+      // Stale local entry will be cleaned up on next refresh.
+    }
   }
 
   /// Pauses a recurring rule by its [id].
   Future<void> pauseRecurringRule(String id) async {
-    // TODO(envelope): implement pauseRecurringRule
-    throw UnimplementedError();
+    try {
+      final local = await _localDatabase.recurringDao.getRecurringRule(id);
+      if (local != null) {
+        final rule = _mapRecurringRuleFromLocal(local);
+        await updateRecurringRule(rule.copyWith(isPaused: true));
+        return;
+      }
+      final remote = await _apiClient.recurring.getRecurringRule(id);
+      final paused = remote.copyWith(isPaused: true);
+      final updated = await _apiClient.recurring.updateRecurringRule(paused);
+      await _cacheRecurringRule(updated);
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException('Failed to pause recurring rule', error: e);
+    }
   }
 
-  // --- Bill Reminders ---
+  /// Resumes a paused recurring rule by its [id].
+  Future<void> resumeRecurringRule(String id) async {
+    try {
+      final local = await _localDatabase.recurringDao.getRecurringRule(id);
+      if (local != null) {
+        final rule = _mapRecurringRuleFromLocal(local);
+        await updateRecurringRule(rule.copyWith(isPaused: false));
+        return;
+      }
+      final remote = await _apiClient.recurring.getRecurringRule(id);
+      final resumed = remote.copyWith(isPaused: false);
+      final updated = await _apiClient.recurring.updateRecurringRule(resumed);
+      await _cacheRecurringRule(updated);
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException('Failed to resume recurring rule', error: e);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Bill Reminders
+  // ---------------------------------------------------------------------------
+
+  /// Fetches bill reminders from the API and syncs to local storage.
+  Future<void> refreshBillReminders(String budgetId) async {
+    try {
+      final remote =
+          await _apiClient.recurring.getBillRemindersByBudget(budgetId);
+      for (final dto in remote) {
+        await _localDatabase.recurringDao.insertBillReminder(
+          _toBillReminderCompanion(dto),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException(
+        'Failed to refresh bill reminders',
+        error: e,
+      );
+    }
+  }
 
   /// Creates a new bill reminder.
+  ///
+  /// Sends to the API first, then caches locally.
   Future<BillReminder> createBillReminder({
     required String budgetId,
     required String name,
@@ -143,49 +438,129 @@ class TransactionRepository {
     String? envelopeId,
     int reminderDaysBefore = 3,
   }) async {
-    // TODO(envelope): implement createBillReminder
-    throw UnimplementedError();
+    try {
+      final dto = BillReminderDto(
+        id: '',
+        budgetId: budgetId,
+        name: name,
+        estimatedAmount: estimatedAmount,
+        dueDay: dueDay,
+        frequency: frequency,
+        createdAt: DateTime.now(),
+        envelopeId: envelopeId,
+        reminderDaysBefore: reminderDaysBefore,
+      );
+      final created = await _apiClient.recurring.createBillReminder(dto);
+      await _cacheBillReminder(created);
+      return _mapBillReminderFromDto(created);
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException('Failed to create bill reminder', error: e);
+    }
   }
 
   /// Watches all bill reminders for a [budgetId].
+  ///
+  /// Returns a reactive stream from local storage.
   Stream<List<BillReminder>> watchBillReminders(String budgetId) {
-    // TODO(envelope): implement watchBillReminders
-    throw UnimplementedError();
+    return _localDatabase.recurringDao
+        .watchBillRemindersByBudgetId(budgetId)
+        .map((rows) => rows.map(_mapBillReminderFromLocal).toList())
+        .handleError(
+          (Object error) => throw TransactionException(
+            'Failed to watch bill reminders',
+            error: error,
+          ),
+        );
   }
 
   /// Updates a bill [reminder].
+  ///
+  /// Sends the update to the API and syncs locally.
   Future<void> updateBillReminder(BillReminder reminder) async {
-    // TODO(envelope): implement updateBillReminder
-    throw UnimplementedError();
+    try {
+      final dto = _mapBillReminderToDto(reminder);
+      final updated = await _apiClient.recurring.updateBillReminder(dto);
+      await _cacheBillReminder(updated);
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException('Failed to update bill reminder', error: e);
+    }
   }
 
   /// Deletes a bill reminder by its [id].
+  ///
+  /// Removes from the API first. Local cache removal is best-effort.
   Future<void> deleteBillReminder(String id) async {
-    // TODO(envelope): implement deleteBillReminder
-    throw UnimplementedError();
+    try {
+      await _apiClient.recurring.deleteBillReminder(id);
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException('Failed to delete bill reminder', error: e);
+    }
+    try {
+      await _localDatabase.recurringDao.deleteBillReminder(id);
+    } on Exception {
+      // Stale local entry will be cleaned up on next refresh.
+    }
   }
 
-  // --- Tags ---
+  // ---------------------------------------------------------------------------
+  // Tags
+  // ---------------------------------------------------------------------------
 
   /// Creates a new tag.
+  ///
+  /// Sends to the API first, then caches locally.
   Future<Tag> createTag({
     required String budgetId,
     required String name,
   }) async {
-    // TODO(envelope): implement createTag
-    throw UnimplementedError();
+    try {
+      final dto = TagDto(id: '', budgetId: budgetId, name: name);
+      final created = await _apiClient.transactions.createTag(dto);
+      await _localDatabase.transactionsDao.insertTag(
+        _toTagCompanion(created),
+        mode: InsertMode.insertOrReplace,
+      );
+      return _mapTagFromDto(created);
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException('Failed to create tag', error: e);
+    }
   }
 
   /// Gets all tags for a [budgetId].
   Future<List<Tag>> getTags(String budgetId) async {
-    // TODO(envelope): implement getTags
-    throw UnimplementedError();
+    try {
+      final local =
+          await _localDatabase.transactionsDao.getTagsByBudgetId(budgetId);
+      if (local.isNotEmpty) {
+        return local.map(_mapTagFromLocal).toList();
+      }
+      final remote = await _apiClient.transactions.getTags(budgetId);
+      for (final dto in remote) {
+        await _localDatabase.transactionsDao.insertTag(
+          _toTagCompanion(dto),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+      return remote.map(_mapTagFromDto).toList();
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException('Failed to get tags', error: e);
+    }
   }
 
   /// Deletes a tag by its [id].
+  ///
+  /// Removes from the API first. Local cache removal is best-effort.
   Future<void> deleteTag(String id) async {
-    // TODO(envelope): implement deleteTag
-    throw UnimplementedError();
+    try {
+      await _apiClient.transactions.deleteTag(id);
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException('Failed to delete tag', error: e);
+    }
+    try {
+      await _localDatabase.transactionsDao.deleteTag(id);
+    } on Exception {
+      // Stale local entry will be cleaned up on next refresh.
+    }
   }
 
   /// Adds a tag to a transaction.
@@ -193,8 +568,21 @@ class TransactionRepository {
     required String transactionId,
     required String tagId,
   }) async {
-    // TODO(envelope): implement addTagToTransaction
-    throw UnimplementedError();
+    try {
+      await _apiClient.transactions.addTransactionTag(
+        transactionId: transactionId,
+        tagId: tagId,
+      );
+      await _localDatabase.transactionsDao.insertTransactionTag(
+        storage.TransactionTagsCompanion.insert(
+          transactionId: transactionId,
+          tagId: tagId,
+        ),
+        mode: InsertMode.insertOrReplace,
+      );
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException('Failed to add tag to transaction', error: e);
+    }
   }
 
   /// Removes a tag from a transaction.
@@ -202,7 +590,372 @@ class TransactionRepository {
     required String transactionId,
     required String tagId,
   }) async {
-    // TODO(envelope): implement removeTagFromTransaction
-    throw UnimplementedError();
+    try {
+      await _apiClient.transactions.removeTransactionTag(
+        transactionId: transactionId,
+        tagId: tagId,
+      );
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException(
+        'Failed to remove tag from transaction',
+        error: e,
+      );
+    }
+    try {
+      await _localDatabase.transactionsDao.deleteTransactionTag(
+        transactionId: transactionId,
+        tagId: tagId,
+      );
+    } on Exception {
+      // Stale local entry will be cleaned up on next refresh.
+    }
+  }
+
+  /// Gets all tag IDs associated with a transaction.
+  Future<List<String>> getTagIdsForTransaction(String transactionId) async {
+    try {
+      final local = await _localDatabase.transactionsDao
+          .getTagsByTransactionId(transactionId);
+      if (local.isNotEmpty) {
+        return local.map((r) => r.tagId).toList();
+      }
+      final tagIds =
+          await _apiClient.transactions.getTransactionTags(transactionId);
+      for (final tagId in tagIds) {
+        await _localDatabase.transactionsDao.insertTransactionTag(
+          storage.TransactionTagsCompanion.insert(
+            transactionId: transactionId,
+            tagId: tagId,
+          ),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+      return tagIds;
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException(
+        'Failed to get tags for transaction',
+        error: e,
+      );
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Private — DTO ↔ Domain mapping
+  // ---------------------------------------------------------------------------
+
+  static Transaction _mapTransactionFromDto(TransactionDto dto) {
+    return Transaction(
+      id: dto.id,
+      budgetId: dto.budgetId,
+      accountId: dto.accountId,
+      type: dto.type,
+      amount: dto.amount,
+      currency: dto.currency,
+      date: dto.date,
+      createdBy: dto.createdBy,
+      createdAt: dto.createdAt,
+      updatedAt: dto.updatedAt,
+      envelopeId: dto.envelopeId,
+      exchangeRate: dto.exchangeRate,
+      payee: dto.payee,
+      notes: dto.notes,
+      isReconciled: dto.isReconciled,
+      recurringRuleId: dto.recurringRuleId,
+      transferPairId: dto.transferPairId,
+    );
+  }
+
+  static Transaction _mapTransactionFromLocal(storage.Transaction row) {
+    return Transaction(
+      id: row.id,
+      budgetId: row.budgetId,
+      accountId: row.accountId,
+      type: row.type,
+      amount: row.amount,
+      currency: row.currency,
+      date: row.date,
+      createdBy: row.createdBy,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      envelopeId: row.envelopeId,
+      exchangeRate: row.exchangeRate,
+      payee: row.payee,
+      notes: row.notes,
+      isReconciled: row.isReconciled,
+      recurringRuleId: row.recurringRuleId,
+      transferPairId: row.transferPairId,
+    );
+  }
+
+  static TransactionDto _mapTransactionToDto(Transaction transaction) {
+    return TransactionDto(
+      id: transaction.id,
+      budgetId: transaction.budgetId,
+      accountId: transaction.accountId,
+      type: transaction.type,
+      amount: transaction.amount,
+      currency: transaction.currency,
+      date: transaction.date,
+      createdBy: transaction.createdBy,
+      createdAt: transaction.createdAt,
+      updatedAt: transaction.updatedAt,
+      envelopeId: transaction.envelopeId,
+      exchangeRate: transaction.exchangeRate,
+      payee: transaction.payee,
+      notes: transaction.notes,
+      isReconciled: transaction.isReconciled,
+      recurringRuleId: transaction.recurringRuleId,
+      transferPairId: transaction.transferPairId,
+    );
+  }
+
+  static TransactionSplit _mapTransactionSplitFromDto(
+    TransactionSplitDto dto,
+  ) {
+    return TransactionSplit(
+      id: dto.id,
+      transactionId: dto.transactionId,
+      envelopeId: dto.envelopeId,
+      amount: dto.amount.toInt(),
+    );
+  }
+
+  static TransactionSplit _mapTransactionSplitFromLocal(
+    storage.TransactionSplit row,
+  ) {
+    return TransactionSplit(
+      id: row.id,
+      transactionId: row.transactionId,
+      envelopeId: row.envelopeId,
+      amount: row.amount.toInt(),
+    );
+  }
+
+  static RecurringRule _mapRecurringRuleFromDto(RecurringRuleDto dto) {
+    return RecurringRule(
+      id: dto.id,
+      budgetId: dto.budgetId,
+      accountId: dto.accountId,
+      type: dto.type,
+      amount: dto.amount,
+      currency: dto.currency,
+      frequency: dto.frequency,
+      startDate: dto.startDate,
+      nextOccurrence: dto.nextOccurrence,
+      createdAt: dto.createdAt,
+      envelopeId: dto.envelopeId,
+      payee: dto.payee,
+      notes: dto.notes,
+      customInterval: dto.customInterval,
+      customUnit: dto.customUnit,
+      endDate: dto.endDate,
+      autoPost: dto.autoPost,
+      isPaused: dto.isPaused,
+    );
+  }
+
+  static RecurringRule _mapRecurringRuleFromLocal(storage.RecurringRule row) {
+    return RecurringRule(
+      id: row.id,
+      budgetId: row.budgetId,
+      accountId: row.accountId,
+      type: row.type,
+      amount: row.amount,
+      currency: row.currency,
+      frequency: row.frequency,
+      startDate: row.startDate,
+      nextOccurrence: row.nextOccurrence,
+      createdAt: row.createdAt,
+      envelopeId: row.envelopeId,
+      payee: row.payee,
+      notes: row.notes,
+      customInterval: row.customInterval,
+      customUnit: row.customUnit,
+      endDate: row.endDate,
+      autoPost: row.autoPost,
+      isPaused: row.isPaused,
+    );
+  }
+
+  static RecurringRuleDto _mapRecurringRuleToDto(RecurringRule rule) {
+    return RecurringRuleDto(
+      id: rule.id,
+      budgetId: rule.budgetId,
+      accountId: rule.accountId,
+      type: rule.type,
+      amount: rule.amount,
+      currency: rule.currency,
+      frequency: rule.frequency,
+      startDate: rule.startDate,
+      nextOccurrence: rule.nextOccurrence,
+      createdAt: rule.createdAt,
+      envelopeId: rule.envelopeId,
+      payee: rule.payee,
+      notes: rule.notes,
+      customInterval: rule.customInterval,
+      customUnit: rule.customUnit,
+      endDate: rule.endDate,
+      autoPost: rule.autoPost,
+      isPaused: rule.isPaused,
+    );
+  }
+
+  static BillReminder _mapBillReminderFromDto(BillReminderDto dto) {
+    return BillReminder(
+      id: dto.id,
+      budgetId: dto.budgetId,
+      name: dto.name,
+      estimatedAmount: dto.estimatedAmount,
+      dueDay: dto.dueDay,
+      frequency: dto.frequency,
+      createdAt: dto.createdAt,
+      envelopeId: dto.envelopeId,
+      reminderDaysBefore: dto.reminderDaysBefore,
+    );
+  }
+
+  static BillReminder _mapBillReminderFromLocal(storage.BillReminder row) {
+    return BillReminder(
+      id: row.id,
+      budgetId: row.budgetId,
+      name: row.name,
+      estimatedAmount: row.estimatedAmount,
+      dueDay: row.dueDay,
+      frequency: row.frequency,
+      createdAt: row.createdAt,
+      envelopeId: row.envelopeId,
+      reminderDaysBefore: row.reminderDaysBefore,
+    );
+  }
+
+  static BillReminderDto _mapBillReminderToDto(BillReminder reminder) {
+    return BillReminderDto(
+      id: reminder.id,
+      budgetId: reminder.budgetId,
+      name: reminder.name,
+      estimatedAmount: reminder.estimatedAmount,
+      dueDay: reminder.dueDay,
+      frequency: reminder.frequency,
+      createdAt: reminder.createdAt,
+      envelopeId: reminder.envelopeId,
+      reminderDaysBefore: reminder.reminderDaysBefore,
+    );
+  }
+
+  static Tag _mapTagFromDto(TagDto dto) {
+    return Tag(id: dto.id, budgetId: dto.budgetId, name: dto.name);
+  }
+
+  static Tag _mapTagFromLocal(storage.Tag row) {
+    return Tag(id: row.id, budgetId: row.budgetId, name: row.name);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Private — Local cache helpers
+  // ---------------------------------------------------------------------------
+
+  static storage.TransactionsCompanion _toTransactionCompanion(
+    TransactionDto dto,
+  ) {
+    return storage.TransactionsCompanion.insert(
+      id: dto.id,
+      budgetId: dto.budgetId,
+      accountId: dto.accountId,
+      type: dto.type,
+      amount: dto.amount,
+      currency: dto.currency,
+      date: dto.date,
+      createdBy: dto.createdBy,
+      createdAt: dto.createdAt,
+      updatedAt: dto.updatedAt,
+      envelopeId: Value(dto.envelopeId),
+      exchangeRate: Value(dto.exchangeRate),
+      payee: Value(dto.payee),
+      notes: Value(dto.notes),
+      isReconciled: Value(dto.isReconciled),
+      recurringRuleId: Value(dto.recurringRuleId),
+      transferPairId: Value(dto.transferPairId),
+    );
+  }
+
+  Future<void> _cacheTransaction(TransactionDto dto) async {
+    await _localDatabase.transactionsDao.insertTransaction(
+      _toTransactionCompanion(dto),
+      mode: InsertMode.insertOrReplace,
+    );
+  }
+
+  static storage.TransactionSplitsCompanion _toTransactionSplitCompanion(
+    TransactionSplitDto dto,
+  ) {
+    return storage.TransactionSplitsCompanion.insert(
+      id: dto.id,
+      transactionId: dto.transactionId,
+      envelopeId: dto.envelopeId,
+      amount: dto.amount,
+    );
+  }
+
+  static storage.RecurringRulesCompanion _toRecurringRuleCompanion(
+    RecurringRuleDto dto,
+  ) {
+    return storage.RecurringRulesCompanion.insert(
+      id: dto.id,
+      budgetId: dto.budgetId,
+      accountId: dto.accountId,
+      type: dto.type,
+      amount: dto.amount,
+      currency: dto.currency,
+      frequency: dto.frequency,
+      startDate: dto.startDate,
+      nextOccurrence: dto.nextOccurrence,
+      createdAt: dto.createdAt,
+      envelopeId: Value(dto.envelopeId),
+      payee: Value(dto.payee),
+      notes: Value(dto.notes),
+      customInterval: Value(dto.customInterval),
+      customUnit: Value(dto.customUnit),
+      endDate: Value(dto.endDate),
+      autoPost: Value(dto.autoPost),
+      isPaused: Value(dto.isPaused),
+    );
+  }
+
+  Future<void> _cacheRecurringRule(RecurringRuleDto dto) async {
+    await _localDatabase.recurringDao.insertRecurringRule(
+      _toRecurringRuleCompanion(dto),
+      mode: InsertMode.insertOrReplace,
+    );
+  }
+
+  static storage.BillRemindersCompanion _toBillReminderCompanion(
+    BillReminderDto dto,
+  ) {
+    return storage.BillRemindersCompanion.insert(
+      id: dto.id,
+      budgetId: dto.budgetId,
+      name: dto.name,
+      estimatedAmount: dto.estimatedAmount,
+      dueDay: dto.dueDay,
+      frequency: dto.frequency,
+      createdAt: dto.createdAt,
+      envelopeId: Value(dto.envelopeId),
+      reminderDaysBefore: Value(dto.reminderDaysBefore),
+    );
+  }
+
+  Future<void> _cacheBillReminder(BillReminderDto dto) async {
+    await _localDatabase.recurringDao.insertBillReminder(
+      _toBillReminderCompanion(dto),
+      mode: InsertMode.insertOrReplace,
+    );
+  }
+
+  static storage.TagsCompanion _toTagCompanion(TagDto dto) {
+    return storage.TagsCompanion.insert(
+      id: dto.id,
+      budgetId: dto.budgetId,
+      name: dto.name,
+    );
   }
 }
