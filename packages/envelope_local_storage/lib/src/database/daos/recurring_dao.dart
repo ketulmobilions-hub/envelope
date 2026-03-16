@@ -28,8 +28,11 @@ class RecurringDao extends DatabaseAccessor<AppDatabase>
   Stream<RecurringRule> watchRecurringRule(String id) =>
       (select(recurringRules)..where((t) => t.id.equals(id))).watchSingle();
 
-  Future<int> insertRecurringRule(RecurringRulesCompanion rule) =>
-      into(recurringRules).insert(rule);
+  Future<int> insertRecurringRule(
+    RecurringRulesCompanion rule, {
+    InsertMode mode = InsertMode.insert,
+  }) =>
+      into(recurringRules).insert(rule, mode: mode);
 
   Future<bool> updateRecurringRule(RecurringRulesCompanion rule) =>
       update(recurringRules).replace(rule);
@@ -52,8 +55,11 @@ class RecurringDao extends DatabaseAccessor<AppDatabase>
       (select(billReminders)..where((t) => t.id.equals(id)))
           .getSingleOrNull();
 
-  Future<int> insertBillReminder(BillRemindersCompanion reminder) =>
-      into(billReminders).insert(reminder);
+  Future<int> insertBillReminder(
+    BillRemindersCompanion reminder, {
+    InsertMode mode = InsertMode.insert,
+  }) =>
+      into(billReminders).insert(reminder, mode: mode);
 
   Future<bool> updateBillReminder(BillRemindersCompanion reminder) =>
       update(billReminders).replace(reminder);
