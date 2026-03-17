@@ -1,3 +1,4 @@
+import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/budget/bloc/bloc.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope_repository/envelope_repository.dart';
@@ -69,9 +70,9 @@ class _AllocationRowState extends State<AllocationRow> {
     final l10n = context.l10n;
     final allocation = widget.allocation;
     final spent = allocation?.spentAmount ?? 0;
-    final available = (allocation?.allocatedAmount ?? 0) -
-        spent +
-        (allocation?.rolloverAmount ?? 0);
+    final available = allocation != null
+        ? EnvelopeRepository.calculateRollover(allocation)
+        : 0;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -86,9 +87,25 @@ class _AllocationRowState extends State<AllocationRow> {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  '${l10n.budgetSpentLabel}: ${_formatCents(spent)}  '
-                  '${l10n.budgetAvailableLabel}: ${_formatCents(available)}',
+                Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: '${l10n.budgetSpentLabel}: '
+                            '${formatCents(spent)}  ',
+                      ),
+                      TextSpan(
+                        text: '${l10n.budgetAvailableLabel}: '
+                            '${formatCents(available)}',
+                        style: available < 0
+                            ? TextStyle(
+                                color: Theme.of(context).colorScheme.error,
+                                fontWeight: FontWeight.w600,
+                              )
+                            : null,
+                      ),
+                    ],
+                  ),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.outline,
                       ),
@@ -117,7 +134,7 @@ class _AllocationRowState extends State<AllocationRow> {
                 border: OutlineInputBorder(),
               ),
               onChanged: (value) {
-                final cents = _parseCents(value);
+                final cents = parseCents(value) ?? 0;
                 context.read<BudgetBloc>().add(
                       AllocationAmountChanged(
                         envelopeId: widget.envelope.id,
@@ -135,17 +152,5 @@ class _AllocationRowState extends State<AllocationRow> {
   static String _centsToText(int cents) {
     if (cents == 0) return '';
     return (cents / 100).toStringAsFixed(2);
-  }
-
-  static int _parseCents(String text) {
-    final value = double.tryParse(text) ?? 0;
-    return (value * 100).round();
-  }
-
-  static String _formatCents(int cents) {
-    final isNegative = cents < 0;
-    final absolute = cents.abs();
-    final formatted = (absolute / 100).toStringAsFixed(2);
-    return (isNegative ? r'-$' : r'$') + formatted;
   }
 }

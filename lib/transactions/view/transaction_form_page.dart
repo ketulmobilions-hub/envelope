@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:account_repository/account_repository.dart';
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/transactions/view/transfer_form_page.dart';
 import 'package:envelope/transactions/widgets/widgets.dart';
@@ -18,8 +19,10 @@ class TransactionFormPage extends StatefulWidget {
     required this.transactionRepository,
     required this.accountRepository,
     required this.envelopeRepository,
+    required this.budgetRepository,
     required this.budgetId,
     required this.userId,
+    this.budgetPeriodId,
     this.transaction,
     super.key,
   });
@@ -27,8 +30,10 @@ class TransactionFormPage extends StatefulWidget {
   final TransactionRepository transactionRepository;
   final AccountRepository accountRepository;
   final EnvelopeRepository envelopeRepository;
+  final BudgetRepository budgetRepository;
   final String budgetId;
   final String userId;
+  final String? budgetPeriodId;
   final Transaction? transaction;
 
   @override
@@ -443,6 +448,11 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
         await _saveTags(created.id);
       }
 
+      // Check for overspend on expense transactions with an envelope.
+      if (mounted) {
+        await _checkOverspend();
+      }
+
       if (mounted) Navigator.of(context).pop(true);
     } on TransactionException catch (e) {
       if (mounted) {
@@ -452,6 +462,106 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  Future<void> _checkOverspend() async {
+    final periodId = widget.budgetPeriodId;
+    if (periodId == null) return;
+    if (_selectedType != 'expense') return;
+
+    // Collect envelope IDs that were affected by this transaction.
+    final affectedEnvelopeIds = <String>[];
+    if (_isSplitMode) {
+      affectedEnvelopeIds.addAll(
+        _splits
+            .where((s) => s.envelopeId != null && s.amountCents > 0)
+            .map((s) => s.envelopeId!),
+      );
+    } else if (_selectedEnvelopeId != null) {
+      affectedEnvelopeIds.add(_selectedEnvelopeId!);
+    }
+    if (affectedEnvelopeIds.isEmpty) return;
+
+    try {
+      await widget.envelopeRepository.refreshAllocations(periodId);
+      final allocations = await widget.envelopeRepository
+          .watchAllocations(periodId)
+          .first;
+
+      // Find the first overspent allocation among affected envelopes.
+      EnvelopeAllocation? overspent;
+      for (final envId in affectedEnvelopeIds) {
+        final alloc = allocations
+            .where((a) => a.envelopeId == envId)
+            .firstOrNull;
+        if (alloc != null &&
+            EnvelopeRepository.calculateRollover(alloc) < 0) {
+          overspent = alloc;
+          break;
+        }
+      }
+      if (overspent == null) return;
+
+      if (!mounted) return;
+
+      final available =
+          EnvelopeRepository.calculateRollover(overspent);
+
+      // Find envelope name.
+      final envelopeName = _envelopes
+              .where((e) => e.id == overspent!.envelopeId)
+              .firstOrNull
+              ?.name ??
+          '';
+
+      final wantsCover = await showOverspendWarningDialog(
+        context,
+        envelopeName: envelopeName,
+        deficitCents: available,
+      );
+
+      if (wantsCover != true || !mounted) return;
+
+      final envelopes = await widget.envelopeRepository
+          .watchEnvelopes(widget.budgetId)
+          .first;
+
+      if (!mounted) return;
+
+      final coverResult = await showCoverOverspendDialog(
+        context,
+        budgetRepository: widget.budgetRepository,
+        allocations: allocations,
+        envelopes: envelopes,
+        overspentAllocation: overspent,
+        overspentEnvelopeName: envelopeName,
+        deficitCents: available.abs(),
+      );
+
+      if (!mounted) return;
+
+      final l10n = context.l10n;
+      if (coverResult == true) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(l10n.overspendCoverSuccess),
+            ),
+          );
+      } else if (coverResult == false) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(l10n.overspendCoverFailed),
+            ),
+          );
+      }
+    } on Exception {
+      // Silently skip overspend check if it fails —
+      // transaction was already saved.
     }
   }
 
