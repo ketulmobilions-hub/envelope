@@ -1,7 +1,10 @@
+import 'package:account_repository/account_repository.dart';
 import 'package:envelope/app/routes/routes.dart';
+import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/cubit.dart';
 import 'package:envelope/onboarding/widgets/widgets.dart';
+import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -12,9 +15,15 @@ class OnboardingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = context.read<AuthBloc>().state.user;
+    assert(user != null, 'OnboardingPage requires an authenticated user');
+
     return BlocProvider(
       create: (_) => OnboardingCubit(
         sharedPreferences: context.read<SharedPreferences>(),
+        envelopeRepository: context.read<EnvelopeRepository>(),
+        accountRepository: context.read<AccountRepository>(),
+        budgetId: user!.id,
       ),
       child: const OnboardingView(),
     );

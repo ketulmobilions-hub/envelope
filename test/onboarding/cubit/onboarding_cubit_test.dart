@@ -1,19 +1,36 @@
+import 'package:account_repository/account_repository.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:envelope/onboarding/cubit/cubit.dart';
+import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+class MockEnvelopeRepository extends Mock implements EnvelopeRepository {}
+
+class MockAccountRepository extends Mock implements AccountRepository {}
 
 void main() {
   group('OnboardingCubit', () {
     late SharedPreferences prefs;
+    late MockEnvelopeRepository envelopeRepository;
+    late MockAccountRepository accountRepository;
+
+    const testBudgetId = 'test-budget-id';
 
     setUp(() async {
       SharedPreferences.setMockInitialValues({});
       prefs = await SharedPreferences.getInstance();
+      envelopeRepository = MockEnvelopeRepository();
+      accountRepository = MockAccountRepository();
     });
 
-    OnboardingCubit buildCubit() =>
-        OnboardingCubit(sharedPreferences: prefs);
+    OnboardingCubit buildCubit() => OnboardingCubit(
+          sharedPreferences: prefs,
+          envelopeRepository: envelopeRepository,
+          accountRepository: accountRepository,
+          budgetId: testBudgetId,
+        );
 
     test('initial state is correct', () {
       final cubit = buildCubit();
@@ -432,38 +449,286 @@ void main() {
     });
 
     group('completeOnboarding', () {
+      final now = DateTime.now();
+
       blocTest<OnboardingCubit, OnboardingState>(
-        'emits submitting then success and persists flag',
-        build: buildCubit,
+        'persists accounts, category groups, envelopes and sets flag',
+        build: () {
+          when(
+            () => accountRepository.createAccount(
+              budgetId: any(named: 'budgetId'),
+              name: any(named: 'name'),
+              type: any(named: 'type'),
+              currency: any(named: 'currency'),
+              startingBalance: any(named: 'startingBalance'),
+            ),
+          ).thenAnswer(
+            (_) async => Account(
+              id: 'acc-1',
+              budgetId: testBudgetId,
+              name: 'Checking',
+              type: 'checking',
+              currency: 'USD',
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+          when(
+            () => envelopeRepository.createCategoryGroup(
+              budgetId: any(named: 'budgetId'),
+              name: any(named: 'name'),
+            ),
+          ).thenAnswer(
+            (_) async => CategoryGroup(
+              id: 'group-1',
+              budgetId: testBudgetId,
+              name: 'Needs',
+              createdAt: now,
+            ),
+          );
+          when(
+            () => envelopeRepository.createEnvelope(
+              categoryGroupId: any(named: 'categoryGroupId'),
+              budgetId: any(named: 'budgetId'),
+              name: any(named: 'name'),
+            ),
+          ).thenAnswer(
+            (_) async => Envelope(
+              id: 'env-1',
+              categoryGroupId: 'group-1',
+              budgetId: testBudgetId,
+              name: 'Rent',
+              createdAt: now,
+            ),
+          );
+          return buildCubit();
+        },
+        seed: () => const OnboardingState(
+          accounts: [
+            OnboardingAccount(
+              name: 'Checking',
+              type: 'checking',
+              currency: 'USD',
+              startingBalance: 1500.50,
+            ),
+          ],
+          categoryGroups: [
+            OnboardingCategoryGroup(
+              name: 'Needs',
+              envelopes: ['Rent', 'Groceries'],
+            ),
+          ],
+        ),
         act: (cubit) => cubit.completeOnboarding(),
         expect: () => [
-          const OnboardingState(
-            status: OnboardingStatus.submitting,
+          isA<OnboardingState>().having(
+            (s) => s.status,
+            'status',
+            OnboardingStatus.submitting,
           ),
-          const OnboardingState(
-            status: OnboardingStatus.success,
+          isA<OnboardingState>().having(
+            (s) => s.status,
+            'status',
+            OnboardingStatus.success,
           ),
         ],
         verify: (_) {
-          expect(
-            prefs.getBool('onboarding_complete'),
-            isTrue,
-          );
+          verify(
+            () => accountRepository.createAccount(
+              budgetId: testBudgetId,
+              name: 'Checking',
+              type: 'checking',
+              currency: 'USD',
+              startingBalance: 150050,
+            ),
+          ).called(1);
+          verify(
+            () => envelopeRepository.createCategoryGroup(
+              budgetId: testBudgetId,
+              name: 'Needs',
+            ),
+          ).called(1);
+          verify(
+            () => envelopeRepository.createEnvelope(
+              categoryGroupId: 'group-1',
+              budgetId: testBudgetId,
+              name: 'Rent',
+            ),
+          ).called(1);
+          verify(
+            () => envelopeRepository.createEnvelope(
+              categoryGroupId: 'group-1',
+              budgetId: testBudgetId,
+              name: 'Groceries',
+            ),
+          ).called(1);
+          expect(prefs.getBool('onboarding_complete'), isTrue);
         },
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'assigns envelopes to correct group when multiple groups',
+        build: () {
+          var groupCallCount = 0;
+          when(
+            () => accountRepository.createAccount(
+              budgetId: any(named: 'budgetId'),
+              name: any(named: 'name'),
+              type: any(named: 'type'),
+              currency: any(named: 'currency'),
+              startingBalance: any(named: 'startingBalance'),
+            ),
+          ).thenAnswer(
+            (_) async => Account(
+              id: 'acc-1',
+              budgetId: testBudgetId,
+              name: 'Checking',
+              type: 'checking',
+              currency: 'USD',
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+          when(
+            () => envelopeRepository.createCategoryGroup(
+              budgetId: any(named: 'budgetId'),
+              name: any(named: 'name'),
+            ),
+          ).thenAnswer((_) async {
+            groupCallCount++;
+            return CategoryGroup(
+              id: 'group-$groupCallCount',
+              budgetId: testBudgetId,
+              name: groupCallCount == 1 ? 'Needs' : 'Wants',
+              createdAt: now,
+            );
+          });
+          when(
+            () => envelopeRepository.createEnvelope(
+              categoryGroupId: any(named: 'categoryGroupId'),
+              budgetId: any(named: 'budgetId'),
+              name: any(named: 'name'),
+            ),
+          ).thenAnswer(
+            (_) async => Envelope(
+              id: 'env-1',
+              categoryGroupId: 'group-1',
+              budgetId: testBudgetId,
+              name: 'Rent',
+              createdAt: now,
+            ),
+          );
+          return buildCubit();
+        },
+        seed: () => const OnboardingState(
+          categoryGroups: [
+            OnboardingCategoryGroup(
+              name: 'Needs',
+              envelopes: ['Rent'],
+            ),
+            OnboardingCategoryGroup(
+              name: 'Wants',
+              envelopes: ['Dining Out'],
+            ),
+          ],
+        ),
+        act: (cubit) => cubit.completeOnboarding(),
+        expect: () => [
+          isA<OnboardingState>().having(
+            (s) => s.status,
+            'status',
+            OnboardingStatus.submitting,
+          ),
+          isA<OnboardingState>().having(
+            (s) => s.status,
+            'status',
+            OnboardingStatus.success,
+          ),
+        ],
+        verify: (_) {
+          verify(
+            () => envelopeRepository.createCategoryGroup(
+              budgetId: testBudgetId,
+              name: 'Needs',
+            ),
+          ).called(1);
+          verify(
+            () => envelopeRepository.createCategoryGroup(
+              budgetId: testBudgetId,
+              name: 'Wants',
+            ),
+          ).called(1);
+          verify(
+            () => envelopeRepository.createEnvelope(
+              categoryGroupId: 'group-1',
+              budgetId: testBudgetId,
+              name: 'Rent',
+            ),
+          ).called(1);
+          verify(
+            () => envelopeRepository.createEnvelope(
+              categoryGroupId: 'group-2',
+              budgetId: testBudgetId,
+              name: 'Dining Out',
+            ),
+          ).called(1);
+        },
+      );
+
+      blocTest<OnboardingCubit, OnboardingState>(
+        'emits failure when repository throws',
+        build: () {
+          when(
+            () => accountRepository.createAccount(
+              budgetId: any(named: 'budgetId'),
+              name: any(named: 'name'),
+              type: any(named: 'type'),
+              currency: any(named: 'currency'),
+              startingBalance: any(named: 'startingBalance'),
+            ),
+          ).thenThrow(Exception('network error'));
+          return buildCubit();
+        },
+        seed: () => const OnboardingState(
+          accounts: [
+            OnboardingAccount(
+              name: 'Checking',
+              type: 'checking',
+              currency: 'USD',
+            ),
+          ],
+        ),
+        act: (cubit) => cubit.completeOnboarding(),
+        expect: () => [
+          isA<OnboardingState>().having(
+            (s) => s.status,
+            'status',
+            OnboardingStatus.submitting,
+          ),
+          isA<OnboardingState>()
+              .having(
+                (s) => s.status,
+                'status',
+                OnboardingStatus.failure,
+              )
+              .having(
+                (s) => s.error,
+                'error',
+                OnboardingError.completionFailed,
+              ),
+        ],
       );
     });
 
     group('isOnboardingComplete', () {
-      test('returns false when not set', () async {
-        final result =
-            await OnboardingCubit.isOnboardingComplete(prefs);
+      test('returns false when not set', () {
+        final result = OnboardingCubit.isOnboardingComplete(prefs);
         expect(result, isFalse);
       });
 
       test('returns true when flag is set', () async {
         await prefs.setBool('onboarding_complete', true);
-        final result =
-            await OnboardingCubit.isOnboardingComplete(prefs);
+        final result = OnboardingCubit.isOnboardingComplete(prefs);
         expect(result, isTrue);
       });
     });
