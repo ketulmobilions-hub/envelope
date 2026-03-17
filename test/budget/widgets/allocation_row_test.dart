@@ -80,5 +80,65 @@ void main() {
         ),
       ).called(greaterThanOrEqualTo(1));
     });
+
+    testWidgets(
+      'shows available in red when overspent',
+      (tester) async {
+        final allocation = EnvelopeAllocation(
+          id: 'alloc-1',
+          envelopeId: 'env-1',
+          budgetPeriodId: 'period-1',
+          allocatedAmount: 10000, // $100.00
+          spentAmount: 15000, // $150.00
+          createdAt: now,
+        );
+        await tester.pumpApp(buildSubject(allocation: allocation));
+
+        // Find the Text.rich widget containing the available text.
+        final textRichFinder = find.byWidgetPredicate(
+          (w) =>
+              w is Text &&
+              w.textSpan != null &&
+              w.textSpan!.toPlainText().contains(r'-$50.00'),
+        );
+        expect(textRichFinder, findsOneWidget);
+
+        // Verify the available span has error color styling.
+        final textWidget = tester.widget<Text>(textRichFinder);
+        final rootSpan = textWidget.textSpan! as TextSpan;
+        final availableSpan = rootSpan.children!.last as TextSpan;
+        expect(availableSpan.style?.fontWeight, FontWeight.w600);
+        expect(availableSpan.style?.color, isNotNull);
+      },
+    );
+
+    testWidgets(
+      'available text is not red when balance is positive',
+      (tester) async {
+        final allocation = EnvelopeAllocation(
+          id: 'alloc-1',
+          envelopeId: 'env-1',
+          budgetPeriodId: 'period-1',
+          allocatedAmount: 20000,
+          spentAmount: 5000,
+          createdAt: now,
+        );
+        await tester.pumpApp(buildSubject(allocation: allocation));
+
+        final textRichFinder = find.byWidgetPredicate(
+          (w) =>
+              w is Text &&
+              w.textSpan != null &&
+              w.textSpan!.toPlainText().contains(r'$150.00'),
+        );
+        expect(textRichFinder, findsOneWidget);
+
+        final textWidget = tester.widget<Text>(textRichFinder);
+        final rootSpan = textWidget.textSpan! as TextSpan;
+        final availableSpan = rootSpan.children!.last as TextSpan;
+        // No special style when not overspent.
+        expect(availableSpan.style, isNull);
+      },
+    );
   });
 }

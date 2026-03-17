@@ -1324,5 +1324,70 @@
     "dashboardViewTransactions": "Transactions",
     "@dashboardViewTransactions": {
         "description": "Quick action button label for transactions page"
+    },
+
+    "overspendWarningTitle": "Envelope Overspent",
+    "@overspendWarningTitle": {
+        "description": "Title for the overspend warning dialog"
+    },
+    "overspendWarningMessage": "{envelopeName} is now overspent by {amount}.",
+    "@overspendWarningMessage": {
+        "description": "Message in overspend warning dialog showing envelope name and deficit",
+        "placeholders": {
+            "envelopeName": { "type": "String" },
+            "amount": { "type": "String" }
+        }
+    },
+    "overspendDismiss": "Dismiss",
+    "@overspendDismiss": {
+        "description": "Button to dismiss the overspend warning"
+    },
+    "overspendCoverButton": "Cover Overspending",
+    "@overspendCoverButton": {
+        "description": "Button to open the cover overspend dialog"
+    },
+    "overspendCoverTitle": "Cover Overspending",
+    "@overspendCoverTitle": {
+        "description": "Title for the cover overspend dialog"
+    },
+    "overspendCoverFromLabel": "Move funds from",
+    "@overspendCoverFromLabel": {
+        "description": "Label for the source envelope dropdown in cover dialog"
+    },
+    "overspendCoverToLabel": "To (overspent)",
+    "@overspendCoverToLabel": {
+        "description": "Label for the locked destination envelope in cover dialog"
+    },
+    "overspendCoverAmountLabel": "Amount",
+    "@overspendCoverAmountLabel": {
+        "description": "Label for the amount field in cover dialog"
+    },
+    "overspendCoverConfirm": "Transfer",
+    "@overspendCoverConfirm": {
+        "description": "Confirm button in cover overspend dialog"
+    },
+    "overspendCoverSuccess": "Funds transferred successfully",
+    "@overspendCoverSuccess": {
+        "description": "Snackbar message after successful cover transfer"
+    },
+    "overspendCoverFailed": "Transfer failed. Please try again.",
+    "@overspendCoverFailed": {
+        "description": "Snackbar message when cover transfer fails"
+    },
+    "overspendCoverNoSource": "No envelopes with available funds",
+    "@overspendCoverNoSource": {
+        "description": "Message when no source envelopes have positive balance"
+    },
+    "overspendCoverSourceRequired": "Please select a source envelope",
+    "@overspendCoverSourceRequired": {
+        "description": "Validation when no source envelope selected"
+    },
+    "overspendCoverAmountRequired": "Please enter a positive amount",
+    "@overspendCoverAmountRequired": {
+        "description": "Validation when cover amount is zero or missing"
+    },
+    "overspendCoverInsufficientFunds": "Amount exceeds available funds",
+    "@overspendCoverInsufficientFunds": {
+        "description": "Validation when cover amount exceeds source allocation"
     }
 }

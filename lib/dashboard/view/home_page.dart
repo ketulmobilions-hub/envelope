@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:account_repository/account_repository.dart';
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/app/routes/app_router.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/dashboard/bloc/bloc.dart';
@@ -72,6 +73,7 @@ class _HomeView extends StatelessWidget {
   final String userId;
 
   void _openAddTransaction(BuildContext context) {
+    final dashboardState = context.read<DashboardBloc>().state;
     unawaited(
       Navigator.of(context).push<bool>(
         MaterialPageRoute(
@@ -80,8 +82,10 @@ class _HomeView extends StatelessWidget {
                 context.read<TransactionRepository>(),
             accountRepository: context.read<AccountRepository>(),
             envelopeRepository: context.read<EnvelopeRepository>(),
+            budgetRepository: context.read<BudgetRepository>(),
             budgetId: budgetId,
             userId: userId,
+            budgetPeriodId: dashboardState.selectedPeriod?.id,
           ),
         ),
       ),
