@@ -1,4 +1,5 @@
 import 'package:account_repository/account_repository.dart';
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/transactions/bloc/bloc.dart';
@@ -112,14 +113,22 @@ class TransactionsView extends StatelessWidget {
 
   Future<void> _openAddTransaction(BuildContext context) async {
     final bloc = context.read<TransactionsBloc>();
+    final budgetRepository = context.read<BudgetRepository>();
+    final periodId = await _getCurrentPeriodId(budgetRepository, budgetId);
+    if (!context.mounted) return;
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
         builder: (_) => TransactionFormPage(
-          transactionRepository: context.read<TransactionRepository>(),
+          transactionRepository:
+              context.read<TransactionRepository>(),
           accountRepository: context.read<AccountRepository>(),
-          envelopeRepository: context.read<EnvelopeRepository>(),
+          envelopeRepository:
+              context.read<EnvelopeRepository>(),
+          budgetRepository: budgetRepository,
           budgetId: budgetId,
-          userId: context.read<AuthBloc>().state.user?.id ?? '',
+          userId:
+              context.read<AuthBloc>().state.user?.id ?? '',
+          budgetPeriodId: periodId,
         ),
       ),
     );
@@ -214,14 +223,22 @@ class _TransactionsList extends StatelessWidget {
     Transaction transaction,
   ) async {
     final bloc = context.read<TransactionsBloc>();
+    final budgetRepository = context.read<BudgetRepository>();
+    final periodId =
+        await _getCurrentPeriodId(budgetRepository, budgetId);
+    if (!context.mounted) return;
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
         builder: (_) => TransactionFormPage(
-          transactionRepository: context.read<TransactionRepository>(),
+          transactionRepository:
+              context.read<TransactionRepository>(),
           accountRepository: context.read<AccountRepository>(),
-          envelopeRepository: context.read<EnvelopeRepository>(),
+          envelopeRepository:
+              context.read<EnvelopeRepository>(),
+          budgetRepository: budgetRepository,
           budgetId: budgetId,
           userId: transaction.createdBy,
+          budgetPeriodId: periodId,
           transaction: transaction,
         ),
       ),
@@ -275,5 +292,32 @@ class _TransactionsList extends StatelessWidget {
           ),
         ),
       );
+  }
+
+}
+
+/// Resolves the current (open) budget period ID.
+Future<String?> _getCurrentPeriodId(
+  BudgetRepository budgetRepository,
+  String budgetId,
+) async {
+  try {
+    final periods = await budgetRepository
+        .watchBudgetPeriods(budgetId)
+        .first;
+    if (periods.isEmpty) return null;
+    final now = DateTime.now();
+    final current = periods.firstWhere(
+      (p) =>
+          !p.isClosed &&
+          !p.startDate.isAfter(now) &&
+          !p.endDate.isBefore(now),
+      orElse: () =>
+          periods.where((p) => !p.isClosed).lastOrNull ??
+          periods.last,
+    );
+    return current.id;
+  } on Exception {
+    return null;
   }
 }
