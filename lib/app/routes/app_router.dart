@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:envelope/accounts/accounts.dart';
+import 'package:envelope/app/view/app_shell.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/budget/budget.dart';
 import 'package:envelope/dashboard/dashboard.dart';
@@ -110,88 +111,73 @@ GoRouter createRouter({
         path: AppRoutes.onboarding,
         builder: (context, state) => const OnboardingPage(),
       ),
-      GoRoute(
-        name: AppRoutes.home,
-        path: AppRoutes.home,
-        builder: (context, state) => const HomePage(),
-      ),
-      GoRoute(
-        name: AppRoutes.accounts,
-        path: AppRoutes.accounts,
-        redirect: (context, state) {
-          final budgetId = state.uri.queryParameters['budgetId'];
-          if (budgetId == null || budgetId.isEmpty) {
-            return AppRoutes.home;
-          }
-          return null;
-        },
-        builder: (context, state) {
-          final budgetId = state.uri.queryParameters['budgetId']!;
-          return AccountsPage(budgetId: budgetId);
-        },
-      ),
-      GoRoute(
-        name: AppRoutes.envelopes,
-        path: AppRoutes.envelopes,
-        redirect: (context, state) {
-          final budgetId = state.uri.queryParameters['budgetId'];
-          if (budgetId == null || budgetId.isEmpty) {
-            return AppRoutes.home;
-          }
-          return null;
-        },
-        builder: (context, state) {
-          final budgetId = state.uri.queryParameters['budgetId']!;
-          return EnvelopesPage(budgetId: budgetId);
-        },
-      ),
-      GoRoute(
-        name: AppRoutes.budget,
-        path: AppRoutes.budget,
-        redirect: (context, state) {
-          final budgetId = state.uri.queryParameters['budgetId'];
-          if (budgetId == null || budgetId.isEmpty) {
-            return AppRoutes.home;
-          }
-          return null;
-        },
-        builder: (context, state) {
-          final budgetId = state.uri.queryParameters['budgetId']!;
-          return BudgetPage(budgetId: budgetId);
-        },
-      ),
-      GoRoute(
-        name: AppRoutes.transactions,
-        path: AppRoutes.transactions,
-        redirect: (context, state) {
-          final budgetId = state.uri.queryParameters['budgetId'];
-          if (budgetId == null || budgetId.isEmpty) {
-            return AppRoutes.home;
-          }
-          return null;
-        },
-        builder: (context, state) {
-          final budgetId = state.uri.queryParameters['budgetId']!;
-          return TransactionsPage(budgetId: budgetId);
-        },
-      ),
-      GoRoute(
-        name: AppRoutes.recurring,
-        path: AppRoutes.recurring,
-        redirect: (context, state) {
-          final budgetId = state.uri.queryParameters['budgetId'];
-          if (budgetId == null || budgetId.isEmpty) {
-            return AppRoutes.home;
-          }
-          return null;
-        },
-        builder: (context, state) {
-          final budgetId = state.uri.queryParameters['budgetId']!;
-          return RecurringPage(budgetId: budgetId);
-        },
+      // Shell route wraps tabs with persistent bottom nav.
+      ShellRoute(
+        builder: (context, state, child) => AppShell(child: child),
+        routes: [
+          GoRoute(
+            name: AppRoutes.home,
+            path: AppRoutes.home,
+            builder: (context, state) => const HomePage(),
+          ),
+          GoRoute(
+            name: AppRoutes.envelopes,
+            path: AppRoutes.envelopes,
+            redirect: _requireBudgetId,
+            builder: (context, state) {
+              final budgetId = state.uri.queryParameters['budgetId']!;
+              return EnvelopesPage(budgetId: budgetId);
+            },
+          ),
+          GoRoute(
+            name: AppRoutes.transactions,
+            path: AppRoutes.transactions,
+            redirect: _requireBudgetId,
+            builder: (context, state) {
+              final budgetId = state.uri.queryParameters['budgetId']!;
+              return TransactionsPage(budgetId: budgetId);
+            },
+          ),
+          GoRoute(
+            name: AppRoutes.accounts,
+            path: AppRoutes.accounts,
+            redirect: _requireBudgetId,
+            builder: (context, state) {
+              final budgetId = state.uri.queryParameters['budgetId']!;
+              return AccountsPage(budgetId: budgetId);
+            },
+          ),
+          GoRoute(
+            name: AppRoutes.budget,
+            path: AppRoutes.budget,
+            redirect: _requireBudgetId,
+            builder: (context, state) {
+              final budgetId = state.uri.queryParameters['budgetId']!;
+              return BudgetPage(budgetId: budgetId);
+            },
+          ),
+          GoRoute(
+            name: AppRoutes.recurring,
+            path: AppRoutes.recurring,
+            redirect: _requireBudgetId,
+            builder: (context, state) {
+              final budgetId = state.uri.queryParameters['budgetId']!;
+              return RecurringPage(budgetId: budgetId);
+            },
+          ),
+        ],
       ),
     ],
   );
+}
+
+/// Shared redirect that ensures budgetId is present.
+String? _requireBudgetId(BuildContext context, GoRouterState state) {
+  final budgetId = state.uri.queryParameters['budgetId'];
+  if (budgetId == null || budgetId.isEmpty) {
+    return AppRoutes.home;
+  }
+  return null;
 }
 
 /// Adapts [AuthBloc] stream to a [ChangeNotifier] for GoRouter's

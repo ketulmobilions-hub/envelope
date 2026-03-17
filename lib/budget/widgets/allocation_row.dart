@@ -131,7 +131,6 @@ class _AllocationRowState extends State<AllocationRow> {
                   horizontal: 8,
                   vertical: 8,
                 ),
-                border: OutlineInputBorder(),
               ),
               onChanged: (value) {
                 final cents = parseCents(value) ?? 0;

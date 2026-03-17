@@ -178,7 +178,6 @@ class _AllocationFieldState extends State<_AllocationField> {
         decoration: InputDecoration(
           labelText: widget.envelopeName,
           prefixText: '${widget.currency} ',
-          border: const OutlineInputBorder(),
           isDense: true,
         ),
         keyboardType: const TextInputType.numberWithOptions(decimal: true),

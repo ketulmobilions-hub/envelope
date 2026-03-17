@@ -53,7 +53,6 @@ class _IncomeStepState extends State<IncomeStep> {
             decoration: InputDecoration(
               labelText: l10n.onboardingIncomeLabel,
               prefixText: '$currency ',
-              border: const OutlineInputBorder(),
             ),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             onChanged: (value) {

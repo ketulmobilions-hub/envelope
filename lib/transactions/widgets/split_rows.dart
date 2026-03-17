@@ -1,4 +1,5 @@
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/theme/app_colors.dart';
 import 'package:envelope/transactions/widgets/transaction_helpers.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
@@ -63,7 +64,7 @@ class SplitRows extends StatelessWidget {
               '${l10n.transactionsRemaining}: ${formatCents(remaining)}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: remaining == 0
-                        ? Colors.green
+                        ? AppColors.income
                         : Theme.of(context).colorScheme.error,
                   ),
             ),

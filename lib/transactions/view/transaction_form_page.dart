@@ -138,45 +138,37 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Type selector
-                SegmentedButton<String>(
-                  segments: [
-                    ButtonSegment(
-                      value: 'income',
-                      label: Text(l10n.transactionsTypeIncome),
-                      icon: const Icon(Icons.arrow_downward_outlined),
+                // Type selector — pill chips.
+                Row(
+                  children: [
+                    _TypeChip(
+                      label: l10n.transactionsTypeExpense,
+                      isSelected: _selectedType == 'expense',
+                      onTap: () => setState(() => _selectedType = 'expense'),
                     ),
-                    ButtonSegment(
-                      value: 'expense',
-                      label: Text(l10n.transactionsTypeExpense),
-                      icon: const Icon(Icons.arrow_upward_outlined),
+                    const SizedBox(width: 8),
+                    _TypeChip(
+                      label: l10n.transactionsTypeIncome,
+                      isSelected: _selectedType == 'income',
+                      onTap: () => setState(() => _selectedType = 'income'),
                     ),
-                    ButtonSegment(
-                      value: 'transfer',
-                      label: Text(l10n.transactionsTypeTransfer),
-                      icon: const Icon(Icons.swap_horiz_outlined),
+                    const SizedBox(width: 8),
+                    _TypeChip(
+                      label: l10n.transactionsTypeTransfer,
+                      isSelected: _selectedType == 'transfer',
+                      onTap: () async {
+                        await _navigateToTransfer();
+                      },
                     ),
                   ],
-                  selected: {_selectedType},
-                  onSelectionChanged: (selected) async {
-                    final type = selected.first;
-                    if (type == 'transfer') {
-                      await _navigateToTransfer();
-                      return;
-                    }
-                    setState(() => _selectedType = type);
-                  },
                 ),
                 const SizedBox(height: 16),
 
-                // Date picker
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.calendar_today),
-                  title: Text(
-                    formatTransactionDate(_selectedDate),
-                  ),
-                  onTap: _pickDate,
+                // Horizontal date picker.
+                HorizontalDatePicker(
+                  selectedDate: _selectedDate,
+                  onDateSelected: (date) =>
+                      setState(() => _selectedDate = date),
                 ),
                 const SizedBox(height: 16),
 
@@ -231,13 +223,24 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                   ),
                 if (!_isSplitMode) const SizedBox(height: 16),
 
-                // Amount
+                // Amount — large centered serif display.
                 TextFormField(
                   controller: _amountController,
                   decoration: InputDecoration(
-                    labelText: l10n.transactionsAmountLabel,
-                    prefixIcon: const Icon(Icons.attach_money),
+                    hintText: r'$0.00',
+                    hintStyle: Theme.of(context)
+                        .textTheme
+                        .displaySmall
+                        ?.copyWith(
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
+                    border: InputBorder.none,
                   ),
+                  style: Theme.of(context)
+                      .textTheme
+                      .displaySmall
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
@@ -326,19 +329,22 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
 
                 const SizedBox(height: 32),
 
-                // Submit button
-                FilledButton(
-                  onPressed: _isSubmitting ? null : _submit,
-                  child: _isSubmitting
-                      ? const SizedBox.square(
-                          dimension: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(
-                          _isEditing
-                              ? l10n.transactionsSaveButton
-                              : l10n.transactionsCreateButton,
-                        ),
+                // Submit button — full width.
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: _isSubmitting ? null : _submit,
+                    child: _isSubmitting
+                        ? const SizedBox.square(
+                            dimension: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(
+                            _isEditing
+                                ? l10n.transactionsSaveButton
+                                : l10n.transactionsCreateButton,
+                          ),
+                  ),
                 ),
               ],
             ),
@@ -346,18 +352,6 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
         ),
       ),
     );
-  }
-
-  Future<void> _pickDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-    if (picked != null) {
-      setState(() => _selectedDate = picked);
-    }
   }
 
   Future<void> _navigateToTransfer() async {
@@ -617,5 +611,50 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
         tagId: tagId,
       );
     }
+  }
+}
+
+class _TypeChip extends StatelessWidget {
+  const _TypeChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Theme.of(context).colorScheme.secondary
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: isSelected
+                ? Theme.of(context).colorScheme.secondary
+                : Theme.of(context).dividerColor,
+          ),
+        ),
+        child: Text(
+          label.toUpperCase(),
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1,
+            color: isSelected
+                ? Theme.of(context).colorScheme.onSecondary
+                : Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+      ),
+    );
   }
 }

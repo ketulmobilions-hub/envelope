@@ -64,6 +64,10 @@ class _EnvelopesViewState extends State<EnvelopesView> {
         appBar: AppBar(
           title: Text(l10n.envelopesTitle),
           actions: [
+            IconButton(
+              onPressed: () => _showAddMenu(context),
+              icon: const Icon(Icons.add),
+            ),
             BlocBuilder<EnvelopesBloc, EnvelopesState>(
               buildWhen: (prev, curr) => prev.status != curr.status ||
                   prev.categoryGroups != curr.categoryGroups,
@@ -84,10 +88,6 @@ class _EnvelopesViewState extends State<EnvelopesView> {
               },
             ),
           ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => _showAddMenu(context),
-          child: const Icon(Icons.add),
         ),
         body: BlocBuilder<EnvelopesBloc, EnvelopesState>(
           builder: (context, state) {

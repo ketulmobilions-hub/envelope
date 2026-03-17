@@ -64,10 +64,6 @@ class TransactionsView extends StatelessWidget {
             ),
           ],
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => _openAddTransaction(context),
-          child: const Icon(Icons.add),
-        ),
         body: BlocBuilder<TransactionsBloc, TransactionsState>(
           builder: (context, state) {
             if (state.status == TransactionsStatus.loading ||
