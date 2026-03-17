@@ -2,16 +2,14 @@ import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/envelopes/cubit/cubit.dart';
 import 'package:envelope/envelopes/view/envelope_form_page.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/theme/app_colors.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-/// Detail page for a single envelope showing allocation info and history.
-///
-/// Expects an [EnvelopeDetailCubit] to be provided above this widget.
-/// [categoryGroups] is passed to the edit form so the group dropdown is
-/// populated; supply the active (non-archived) groups from the parent page.
+/// Detail page for a single envelope with terracotta header.
 class EnvelopeDetailPage extends StatelessWidget {
   const EnvelopeDetailPage({
     required this.categoryGroups,
@@ -29,155 +27,191 @@ class EnvelopeDetailPage extends StatelessWidget {
         final envelope = state.envelope;
 
         return Scaffold(
-          appBar: AppBar(
-            title: Text(envelope.name),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.edit_outlined),
-                tooltip: l10n.envelopesEditEnvelope,
-                onPressed: () => _openEdit(context, envelope),
-              ),
-            ],
-          ),
-          body: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              // Allocation summary card.
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      Text(
-                        l10n.envelopesDetailAvailable,
-                        style:
-                            Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.outline,
-                                ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        formatCents(0),
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineLarge
-                            ?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _AllocationDetail(
-                            label: l10n.envelopesDetailAllocated,
-                            amount: 0,
+          body: CustomScrollView(
+            slivers: [
+              // Terracotta header.
+              SliverAppBar(
+                expandedHeight: 200,
+                pinned: true,
+                backgroundColor: AppColors.primary,
+                iconTheme: const IconThemeData(color: AppColors.onPrimary),
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined),
+                    tooltip: l10n.envelopesEditEnvelope,
+                    onPressed: () => _openEdit(context, envelope),
+                  ),
+                ],
+                flexibleSpace: FlexibleSpaceBar(
+                  centerTitle: true,
+                  title: Text(
+                    envelope.name,
+                    style: const TextStyle(
+                      color: AppColors.onPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  background: Container(
+                    color: AppColors.primary,
+                    padding: const EdgeInsets.fromLTRB(24, 80, 24, 48),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          l10n.envelopesDetailAvailable,
+                          style: const TextStyle(
+                            color: AppColors.onPrimary,
+                            fontSize: 13,
                           ),
-                          _AllocationDetail(
-                            label: l10n.envelopesDetailSpent,
-                            amount: 0,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          formatCents(0),
+                          style: GoogleFonts.playfairDisplay(
+                            color: AppColors.onPrimary,
+                            fontSize: 36,
+                            fontWeight: FontWeight.bold,
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _HeaderDetail(
+                              label: l10n.envelopesDetailAllocated,
+                              amount: 0,
+                            ),
+                            const SizedBox(width: 32),
+                            _HeaderDetail(
+                              label: l10n.envelopesDetailSpent,
+                              amount: 0,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              // Envelope info card.
-              Card(
+              // Content.
+              SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (envelope.isArchived) ...[
-                        _InfoRow(
-                          label: l10n.envelopesStatusLabel,
-                          // Dedicated key for the status value (different
-                          // semantic from the "Archived" section header).
-                          value: l10n.envelopesStatusArchived,
+                      // Envelope info card.
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (envelope.isArchived) ...[
+                                _InfoRow(
+                                  label: l10n.envelopesStatusLabel,
+                                  value: l10n.envelopesStatusArchived,
+                                ),
+                                const Divider(),
+                              ],
+                              _InfoRow(
+                                label: l10n.envelopesCreatedAtLabel,
+                                value: DateFormat.yMd()
+                                    .format(envelope.createdAt),
+                              ),
+                            ],
+                          ),
                         ),
-                        const Divider(),
-                      ],
-                      _InfoRow(
-                        label: l10n.envelopesCreatedAtLabel,
-                        value: DateFormat.yMd().format(envelope.createdAt),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Allocation history placeholder.
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      Text(
-                        l10n.envelopesDetailAllocationHistory,
-                        style: Theme.of(context).textTheme.titleSmall,
                       ),
                       const SizedBox(height: 16),
-                      Icon(
-                        Icons.history_outlined,
-                        size: 48,
-                        color: Theme.of(context).colorScheme.outline,
+                      // Allocation history placeholder.
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            children: [
+                              Text(
+                                l10n.envelopesDetailAllocationHistory,
+                                style:
+                                    Theme.of(context).textTheme.titleSmall,
+                              ),
+                              const SizedBox(height: 16),
+                              Icon(
+                                Icons.history_outlined,
+                                size: 48,
+                                color: Theme.of(context).colorScheme.outline,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                l10n.envelopesDetailAllocationHistoryPlaceholder,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .outline,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n.envelopesDetailAllocationHistoryPlaceholder,
-                        style:
-                            Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.outline,
-                                ),
+                      const SizedBox(height: 16),
+                      // Transactions placeholder.
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.receipt_long_outlined,
+                                size: 48,
+                                color: Theme.of(context).colorScheme.outline,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                l10n.envelopesDetailTransactionsPlaceholder,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .outline,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Transactions placeholder.
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.receipt_long_outlined,
-                        size: 48,
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n.envelopesDetailTransactionsPlaceholder,
-                        style:
-                            Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.outline,
-                                ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Goal progress placeholder.
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.flag_outlined,
-                        size: 48,
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n.envelopesDetailGoalProgressPlaceholder,
-                        style:
-                            Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.outline,
-                                ),
+                      const SizedBox(height: 16),
+                      // Goal progress placeholder.
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.flag_outlined,
+                                size: 48,
+                                color: Theme.of(context).colorScheme.outline,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                l10n.envelopesDetailGoalProgressPlaceholder,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .outline,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -208,8 +242,8 @@ class EnvelopeDetailPage extends StatelessWidget {
   }
 }
 
-class _AllocationDetail extends StatelessWidget {
-  const _AllocationDetail({required this.label, required this.amount});
+class _HeaderDetail extends StatelessWidget {
+  const _HeaderDetail({required this.label, required this.amount});
 
   final String label;
   final int amount;
@@ -220,14 +254,18 @@ class _AllocationDetail extends StatelessWidget {
       children: [
         Text(
           label,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Theme.of(context).colorScheme.outline,
-              ),
+          style: TextStyle(
+            color: AppColors.onPrimary.withValues(alpha: 0.8),
+            fontSize: 11,
+          ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         Text(
           formatCents(amount),
-          style: Theme.of(context).textTheme.titleMedium,
+          style: const TextStyle(
+            color: AppColors.onPrimary,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ],
     );

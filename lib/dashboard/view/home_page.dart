@@ -1,7 +1,5 @@
 import 'dart:async';
 
-import 'package:account_repository/account_repository.dart';
-import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/app/routes/app_router.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/dashboard/bloc/bloc.dart';
@@ -9,8 +7,6 @@ import 'package:envelope/dashboard/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/recurring/cubit/recurring_check_cubit.dart';
 import 'package:envelope/sync/sync.dart';
-import 'package:envelope/transactions/transactions.dart';
-import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -61,36 +57,15 @@ class HomePage extends StatelessWidget {
           )..add(const DashboardStarted()),
         ),
       ],
-      child: _HomeView(budgetId: budgetId, userId: userId),
+      child: _HomeView(budgetId: budgetId),
     );
   }
 }
 
 class _HomeView extends StatelessWidget {
-  const _HomeView({required this.budgetId, required this.userId});
+  const _HomeView({required this.budgetId});
 
   final String budgetId;
-  final String userId;
-
-  void _openAddTransaction(BuildContext context) {
-    final dashboardState = context.read<DashboardBloc>().state;
-    unawaited(
-      Navigator.of(context).push<bool>(
-        MaterialPageRoute(
-          builder: (_) => TransactionFormPage(
-            transactionRepository:
-                context.read<TransactionRepository>(),
-            accountRepository: context.read<AccountRepository>(),
-            envelopeRepository: context.read<EnvelopeRepository>(),
-            budgetRepository: context.read<BudgetRepository>(),
-            budgetId: budgetId,
-            userId: userId,
-            budgetPeriodId: dashboardState.selectedPeriod?.id,
-          ),
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,10 +77,6 @@ class _HomeView extends StatelessWidget {
         actions: const [
           SyncStatusIndicator(),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _openAddTransaction(context),
-        child: const Icon(Icons.add),
       ),
       body: BlocListener<DashboardBloc, DashboardState>(
         listenWhen: (prev, curr) =>
@@ -175,18 +146,6 @@ class _HomeView extends StatelessWidget {
                     readyToAssign: state.readyToAssign,
                     onTap: () => context.go(
                       '${AppRoutes.budget}?budgetId=$budgetId',
-                    ),
-                  ),
-
-                  // Quick Actions
-                  QuickActionsRow(
-                    onAddTransaction: () =>
-                        _openAddTransaction(context),
-                    onViewBudget: () => context.go(
-                      '${AppRoutes.budget}?budgetId=$budgetId',
-                    ),
-                    onViewAccounts: () => context.go(
-                      '${AppRoutes.accounts}?budgetId=$budgetId',
                     ),
                   ),
 

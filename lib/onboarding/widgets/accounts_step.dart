@@ -118,7 +118,6 @@ class AccountsStep extends StatelessWidget {
                     controller: nameController,
                     decoration: InputDecoration(
                       labelText: l10n.onboardingAccountName,
-                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -126,7 +125,6 @@ class AccountsStep extends StatelessWidget {
                     initialValue: selectedType,
                     decoration: InputDecoration(
                       labelText: l10n.onboardingAccountType,
-                      border: const OutlineInputBorder(),
                     ),
                     items: _accountTypes.map((type) {
                       return DropdownMenuItem(
@@ -147,7 +145,6 @@ class AccountsStep extends StatelessWidget {
                     controller: balanceController,
                     decoration: InputDecoration(
                       labelText: l10n.onboardingStartingBalance,
-                      border: const OutlineInputBorder(),
                     ),
                     keyboardType:
                         const TextInputType.numberWithOptions(

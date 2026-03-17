@@ -1,9 +1,10 @@
-import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/dashboard/bloc/bloc.dart';
+import 'package:envelope/envelopes/widgets/envelope_card.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
-/// Displays a grid of envelope spending summaries on the dashboard.
+/// Displays a grid of envelope spending summaries on the dashboard
+/// using envelope-shaped cards.
 class EnvelopeSummaryCard extends StatelessWidget {
   const EnvelopeSummaryCard({
     required this.summaries,
@@ -86,99 +87,26 @@ class EnvelopeSummaryCard extends StatelessWidget {
             const SizedBox(height: 12),
             LayoutBuilder(
               builder: (context, constraints) {
-                final cardWidth =
-                    (constraints.maxWidth - 8) / 2;
+                final cardWidth = (constraints.maxWidth - 8) / 2;
                 return Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: displaySummaries
                       .map(
-                        (s) => _EnvelopeMiniCard(
-                          summary: s,
+                        (s) => SizedBox(
                           width: cardWidth,
+                          child: EnvelopeCard(
+                            name: s.envelope.name,
+                            availableCents: s.available,
+                            allocatedCents: s.allocated,
+                            spentCents: s.spent,
+                            isOverspent: s.isOverspent,
+                          ),
                         ),
                       )
                       .toList(),
                 );
               },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _EnvelopeMiniCard extends StatelessWidget {
-  const _EnvelopeMiniCard({
-    required this.summary,
-    required this.width,
-  });
-
-  final EnvelopeSummary summary;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final l10n = context.l10n;
-
-    final allocated = summary.allocated;
-    final spent = summary.spent;
-    final available = summary.available;
-    final progress = allocated > 0
-        ? (spent / allocated).clamp(0.0, 1.0)
-        : 0.0;
-
-    final Color statusColor;
-    if (summary.isOverspent) {
-      statusColor = theme.colorScheme.error;
-    } else if (allocated > 0 && spent / allocated >= 0.75) {
-      statusColor = Colors.amber;
-    } else {
-      statusColor = Colors.green;
-    }
-
-    return SizedBox(
-      width: width,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: statusColor.withValues(alpha: 0.05),
-          border: Border.all(color: statusColor.withValues(alpha: 0.3)),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              summary.envelope.name,
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: progress,
-                backgroundColor: statusColor.withValues(alpha: 0.15),
-                valueColor: AlwaysStoppedAnimation(statusColor),
-                minHeight: 4,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              summary.isOverspent
-                  ? l10n.dashboardOverspent
-                  : '${formatCents(available)} ${l10n.dashboardAvailable}',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: statusColor,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

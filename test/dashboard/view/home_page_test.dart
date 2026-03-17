@@ -161,10 +161,6 @@ void main() {
           find.byType(RecentTransactionsCard),
           findsOneWidget,
         );
-        expect(
-          find.byType(QuickActionsRow),
-          findsOneWidget,
-        );
       },
     );
 

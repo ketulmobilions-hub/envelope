@@ -53,10 +53,12 @@ class AccountsView extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: Text(l10n.accountsTitle),
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => _openAddAccount(context),
-          child: const Icon(Icons.add),
+          actions: [
+            IconButton(
+              onPressed: () => _openAddAccount(context),
+              icon: const Icon(Icons.add),
+            ),
+          ],
         ),
         body: BlocBuilder<AccountsBloc, AccountsState>(
           builder: (context, state) {
