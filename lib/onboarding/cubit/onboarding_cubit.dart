@@ -1,4 +1,6 @@
+import 'package:account_repository/account_repository.dart';
 import 'package:bloc/bloc.dart';
+import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -9,14 +11,24 @@ const String _onboardingCompleteKey = 'onboarding_complete';
 
 /// Cubit that manages the onboarding wizard state.
 class OnboardingCubit extends Cubit<OnboardingState> {
-  OnboardingCubit({required SharedPreferences sharedPreferences})
-      : _prefs = sharedPreferences,
+  OnboardingCubit({
+    required SharedPreferences sharedPreferences,
+    required EnvelopeRepository envelopeRepository,
+    required AccountRepository accountRepository,
+    required String budgetId,
+  })  : _prefs = sharedPreferences,
+        _envelopeRepository = envelopeRepository,
+        _accountRepository = accountRepository,
+        _budgetId = budgetId,
         super(const OnboardingState());
 
   final SharedPreferences _prefs;
+  final EnvelopeRepository _envelopeRepository;
+  final AccountRepository _accountRepository;
+  final String _budgetId;
 
   /// Returns whether onboarding has been completed.
-  static Future<bool> isOnboardingComplete(SharedPreferences prefs) async {
+  static bool isOnboardingComplete(SharedPreferences prefs) {
     return prefs.getBool(_onboardingCompleteKey) ?? false;
   }
 
@@ -174,10 +186,46 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     };
   }
 
-  /// Marks onboarding as complete and persists the flag.
+  /// Marks onboarding as complete, persists all data to the backend,
+  /// and sets the SharedPreferences flag.
+  ///
+  /// NOTE: If a failure occurs mid-way, already-created entities remain in
+  /// the backend (partial persistence). On retry the user may get duplicates.
+  // TODO(ketulmobilions-hub): Add idempotency keys or upsert
+  //  logic to prevent duplicates (#46).
   Future<void> completeOnboarding() async {
     emit(state.copyWith(status: OnboardingStatus.submitting));
     try {
+      // Create accounts.
+      // startingBalance is stored as cents (int) — use .round() to handle
+      // floating-point imprecision from the double input.
+      for (final account in state.accounts) {
+        await _accountRepository.createAccount(
+          budgetId: _budgetId,
+          name: account.name,
+          type: account.type,
+          currency: account.currency,
+          startingBalance: (account.startingBalance * 100).round(),
+        );
+      }
+
+      // Create category groups and their envelopes
+      for (final group in state.categoryGroups) {
+        final createdGroup =
+            await _envelopeRepository.createCategoryGroup(
+          budgetId: _budgetId,
+          name: group.name,
+        );
+
+        for (final envelopeName in group.envelopes) {
+          await _envelopeRepository.createEnvelope(
+            categoryGroupId: createdGroup.id,
+            budgetId: _budgetId,
+            name: envelopeName,
+          );
+        }
+      }
+
       await _prefs.setBool(_onboardingCompleteKey, true);
       emit(state.copyWith(status: OnboardingStatus.success));
     } on Exception {
