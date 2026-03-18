@@ -4,11 +4,13 @@ import 'package:account_repository/account_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
 import 'package:envelope/transactions/view/transaction_form_page.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 
 /// Shell widget providing persistent bottom navigation bar with 3 tabs
@@ -34,8 +36,8 @@ class AppShell extends StatelessWidget {
   }
 
   void _onTabTap(BuildContext context, int index) {
-    final authState = context.read<AuthBloc>().state;
-    final budgetId = authState.user?.id ?? '';
+    final budgetId =
+        context.read<SharedPreferences>().getString(activeBudgetIdKey) ?? '';
     context.go('${_tabs[index]}?budgetId=$budgetId');
   }
 
@@ -44,7 +46,8 @@ class AppShell extends StatelessWidget {
     final user = authState.user;
     if (user == null) return;
 
-    final budgetId = user.id;
+    final budgetId =
+        context.read<SharedPreferences>().getString(activeBudgetIdKey) ?? '';
 
     unawaited(
       Navigator.of(context).push<bool>(

@@ -1,5 +1,6 @@
 import 'package:account_repository/account_repository.dart';
 import 'package:bloc_test/bloc_test.dart';
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/onboarding/cubit/cubit.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,12 +11,16 @@ class MockEnvelopeRepository extends Mock implements EnvelopeRepository {}
 
 class MockAccountRepository extends Mock implements AccountRepository {}
 
+class MockBudgetRepository extends Mock implements BudgetRepository {}
+
 void main() {
   group('OnboardingCubit', () {
     late SharedPreferences prefs;
     late MockEnvelopeRepository envelopeRepository;
     late MockAccountRepository accountRepository;
+    late MockBudgetRepository budgetRepository;
 
+    const testUserId = 'test-user-id';
     const testBudgetId = 'test-budget-id';
 
     setUp(() async {
@@ -23,13 +28,15 @@ void main() {
       prefs = await SharedPreferences.getInstance();
       envelopeRepository = MockEnvelopeRepository();
       accountRepository = MockAccountRepository();
+      budgetRepository = MockBudgetRepository();
     });
 
     OnboardingCubit buildCubit() => OnboardingCubit(
           sharedPreferences: prefs,
           envelopeRepository: envelopeRepository,
           accountRepository: accountRepository,
-          budgetId: testBudgetId,
+          budgetRepository: budgetRepository,
+          userId: testUserId,
         );
 
     test('initial state is correct', () {
@@ -451,9 +458,29 @@ void main() {
     group('completeOnboarding', () {
       final now = DateTime.now();
 
+      void stubCreateBudget() {
+        when(
+          () => budgetRepository.createBudget(
+            name: any(named: 'name'),
+            baseCurrency: any(named: 'baseCurrency'),
+            ownerId: any(named: 'ownerId'),
+          ),
+        ).thenAnswer(
+          (_) async => Budget(
+            id: testBudgetId,
+            ownerId: testUserId,
+            name: 'My Budget',
+            baseCurrency: 'USD',
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
+      }
+
       blocTest<OnboardingCubit, OnboardingState>(
-        'persists accounts, category groups, envelopes and sets flag',
+        'creates budget first, then persists accounts, groups, envelopes',
         build: () {
+          stubCreateBudget();
           when(
             () => accountRepository.createAccount(
               budgetId: any(named: 'budgetId'),
@@ -534,6 +561,13 @@ void main() {
         ],
         verify: (_) {
           verify(
+            () => budgetRepository.createBudget(
+              name: 'My Budget',
+              baseCurrency: 'USD',
+              ownerId: testUserId,
+            ),
+          ).called(1);
+          verify(
             () => accountRepository.createAccount(
               budgetId: testBudgetId,
               name: 'Checking',
@@ -563,12 +597,14 @@ void main() {
             ),
           ).called(1);
           expect(prefs.getBool('onboarding_complete'), isTrue);
+          expect(prefs.getString('active_budget_id'), testBudgetId);
         },
       );
 
       blocTest<OnboardingCubit, OnboardingState>(
         'assigns envelopes to correct group when multiple groups',
         build: () {
+          stubCreateBudget();
           var groupCallCount = 0;
           when(
             () => accountRepository.createAccount(
@@ -678,6 +714,7 @@ void main() {
       blocTest<OnboardingCubit, OnboardingState>(
         'emits failure when repository throws',
         build: () {
+          stubCreateBudget();
           when(
             () => accountRepository.createAccount(
               budgetId: any(named: 'budgetId'),

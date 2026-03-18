@@ -1,6 +1,7 @@
 import 'package:account_repository/account_repository.dart';
 import 'package:auth_repository/auth_repository.dart';
 import 'package:bloc_test/bloc_test.dart';
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/cubit.dart';
@@ -20,6 +21,8 @@ class MockEnvelopeRepository extends Mock implements EnvelopeRepository {}
 
 class MockAccountRepository extends Mock implements AccountRepository {}
 
+class MockBudgetRepository extends Mock implements BudgetRepository {}
+
 class MockAuthBloc extends MockBloc<AuthEvent, AuthState>
     implements AuthBloc {}
 
@@ -28,6 +31,7 @@ void main() {
     late SharedPreferences prefs;
     late MockEnvelopeRepository envelopeRepository;
     late MockAccountRepository accountRepository;
+    late MockBudgetRepository budgetRepository;
     late MockAuthBloc authBloc;
 
     setUp(() async {
@@ -35,6 +39,7 @@ void main() {
       prefs = await SharedPreferences.getInstance();
       envelopeRepository = MockEnvelopeRepository();
       accountRepository = MockAccountRepository();
+      budgetRepository = MockBudgetRepository();
       authBloc = MockAuthBloc();
 
       final now = DateTime.now();
@@ -61,6 +66,9 @@ void main() {
             ),
             RepositoryProvider<AccountRepository>.value(
               value: accountRepository,
+            ),
+            RepositoryProvider<BudgetRepository>.value(
+              value: budgetRepository,
             ),
           ],
           child: BlocProvider<AuthBloc>.value(

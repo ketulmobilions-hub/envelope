@@ -1,5 +1,6 @@
 import 'package:account_repository/account_repository.dart';
 import 'package:bloc/bloc.dart';
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,23 +10,29 @@ part 'onboarding_state.dart';
 /// Key used in [SharedPreferences] to persist onboarding completion.
 const String _onboardingCompleteKey = 'onboarding_complete';
 
+/// Key used in [SharedPreferences] to store the active budget ID.
+const String activeBudgetIdKey = 'active_budget_id';
+
 /// Cubit that manages the onboarding wizard state.
 class OnboardingCubit extends Cubit<OnboardingState> {
   OnboardingCubit({
     required SharedPreferences sharedPreferences,
     required EnvelopeRepository envelopeRepository,
     required AccountRepository accountRepository,
-    required String budgetId,
+    required BudgetRepository budgetRepository,
+    required String userId,
   })  : _prefs = sharedPreferences,
         _envelopeRepository = envelopeRepository,
         _accountRepository = accountRepository,
-        _budgetId = budgetId,
+        _budgetRepository = budgetRepository,
+        _userId = userId,
         super(const OnboardingState());
 
   final SharedPreferences _prefs;
   final EnvelopeRepository _envelopeRepository;
   final AccountRepository _accountRepository;
-  final String _budgetId;
+  final BudgetRepository _budgetRepository;
+  final String _userId;
 
   /// Returns whether onboarding has been completed.
   static bool isOnboardingComplete(SharedPreferences prefs) {
@@ -196,12 +203,21 @@ class OnboardingCubit extends Cubit<OnboardingState> {
   Future<void> completeOnboarding() async {
     emit(state.copyWith(status: OnboardingStatus.submitting));
     try {
+      // Create the budget first — RLS policies require a budget row to exist
+      // before accounts/envelopes can reference it.
+      final budget = await _budgetRepository.createBudget(
+        name: 'My Budget',
+        baseCurrency: state.baseCurrency,
+        ownerId: _userId,
+      );
+      final budgetId = budget.id;
+
       // Create accounts.
       // startingBalance is stored as cents (int) — use .round() to handle
       // floating-point imprecision from the double input.
       for (final account in state.accounts) {
         await _accountRepository.createAccount(
-          budgetId: _budgetId,
+          budgetId: budgetId,
           name: account.name,
           type: account.type,
           currency: account.currency,
@@ -213,19 +229,20 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       for (final group in state.categoryGroups) {
         final createdGroup =
             await _envelopeRepository.createCategoryGroup(
-          budgetId: _budgetId,
+          budgetId: budgetId,
           name: group.name,
         );
 
         for (final envelopeName in group.envelopes) {
           await _envelopeRepository.createEnvelope(
             categoryGroupId: createdGroup.id,
-            budgetId: _budgetId,
+            budgetId: budgetId,
             name: envelopeName,
           );
         }
       }
 
+      await _prefs.setString(activeBudgetIdKey, budgetId);
       await _prefs.setBool(_onboardingCompleteKey, true);
       emit(state.copyWith(status: OnboardingStatus.success));
     } on Exception {
