@@ -5,11 +5,13 @@ import 'package:envelope/auth/auth.dart';
 import 'package:envelope/dashboard/bloc/bloc.dart';
 import 'package:envelope/dashboard/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
 import 'package:envelope/recurring/cubit/recurring_check_cubit.dart';
 import 'package:envelope/sync/sync.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 
 /// Home/dashboard page with aggregated budget summary.
@@ -29,9 +31,8 @@ class HomePage extends StatelessWidget {
       );
     }
 
-    // TODO(budget): Replace with actual budget ID once budget selection
-    // is implemented. Using user ID as a placeholder.
-    final budgetId = user.id;
+    final budgetId =
+        context.read<SharedPreferences>().getString(activeBudgetIdKey) ?? '';
     final userId = user.id;
 
     return MultiBlocProvider(

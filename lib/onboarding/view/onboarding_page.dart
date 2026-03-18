@@ -1,4 +1,5 @@
 import 'package:account_repository/account_repository.dart';
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/app/routes/routes.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
@@ -23,7 +24,8 @@ class OnboardingPage extends StatelessWidget {
         sharedPreferences: context.read<SharedPreferences>(),
         envelopeRepository: context.read<EnvelopeRepository>(),
         accountRepository: context.read<AccountRepository>(),
-        budgetId: user!.id,
+        budgetRepository: context.read<BudgetRepository>(),
+        userId: user!.id,
       ),
       child: const OnboardingView(),
     );

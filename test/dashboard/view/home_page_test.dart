@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 
 import '../../helpers/helpers.dart';
@@ -37,16 +38,22 @@ void main() {
   late AccountRepository accountRepository;
   late BudgetRepository budgetRepository;
   late EnvelopeRepository envelopeRepository;
+  late SharedPreferences prefs;
 
   final now = DateTime(2024);
 
-  setUp(() {
+  setUp(() async {
     syncBloc = _MockSyncBloc();
     authBloc = _MockAuthBloc();
     transactionRepository = _MockTransactionRepository();
     accountRepository = _MockAccountRepository();
     budgetRepository = _MockBudgetRepository();
     envelopeRepository = _MockEnvelopeRepository();
+
+    SharedPreferences.setMockInitialValues(
+      {'active_budget_id': 'test-budget-id'},
+    );
+    prefs = await SharedPreferences.getInstance();
 
     when(() => syncBloc.state).thenReturn(const SyncBlocState());
     when(() => authBloc.state).thenReturn(
@@ -97,6 +104,7 @@ void main() {
       ],
       child: MultiRepositoryProvider(
         providers: [
+          RepositoryProvider<SharedPreferences>.value(value: prefs),
           RepositoryProvider<TransactionRepository>.value(
             value: transactionRepository,
           ),
