@@ -33,7 +33,10 @@ void main() {
       expect(find.text('Email'), findsOneWidget);
       expect(find.text('Password'), findsOneWidget);
       expect(find.text('Confirm Password'), findsOneWidget);
-      expect(find.widgetWithText(FilledButton, 'Create Account'), findsOneWidget);
+      expect(
+        find.widgetWithText(FilledButton, 'Create Account'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('renders back to login link', (tester) async {

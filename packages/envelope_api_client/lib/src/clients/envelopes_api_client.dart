@@ -6,7 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class EnvelopesApiClient {
   /// Creates an [EnvelopesApiClient] with the given [SupabaseClient].
   const EnvelopesApiClient({required SupabaseClient supabaseClient})
-      : _supabaseClient = supabaseClient;
+    : _supabaseClient = supabaseClient;
 
   final SupabaseClient _supabaseClient;
 
@@ -47,9 +47,13 @@ class EnvelopesApiClient {
     CategoryGroupDto categoryGroup,
   ) async {
     try {
+      final json = categoryGroup.toJson()
+        ..remove('id')
+        ..remove('created_at')
+        ..remove('updated_at');
       final response = await _supabaseClient
           .from('category_groups')
-          .insert(categoryGroup.toJson())
+          .insert(json)
           .select()
           .single();
       return CategoryGroupDto.fromJson(response);
@@ -133,9 +137,13 @@ class EnvelopesApiClient {
   /// Creates a new envelope.
   Future<EnvelopeDto> createEnvelope(EnvelopeDto envelope) async {
     try {
+      final json = envelope.toJson()
+        ..remove('id')
+        ..remove('created_at')
+        ..remove('updated_at');
       final response = await _supabaseClient
           .from('envelopes')
-          .insert(envelope.toJson())
+          .insert(json)
           .select()
           .single();
       return EnvelopeDto.fromJson(response);

@@ -13,8 +13,8 @@ class EnvelopeRepository {
   const EnvelopeRepository({
     required EnvelopeApiClient apiClient,
     required storage.AppDatabase localDatabase,
-  })  : _apiClient = apiClient,
-        _localDatabase = localDatabase;
+  }) : _apiClient = apiClient,
+       _localDatabase = localDatabase;
 
   final EnvelopeApiClient _apiClient;
   final storage.AppDatabase _localDatabase;
@@ -36,8 +36,7 @@ class EnvelopeRepository {
         createdAt: DateTime.now(),
       );
 
-      final created =
-          await _apiClient.envelopes.createCategoryGroup(dto);
+      final created = await _apiClient.envelopes.createCategoryGroup(dto);
       await _cacheCategoryGroup(created);
       return _mapCategoryGroupFromDto(created);
     } on EnvelopeApiException catch (e) {
@@ -53,14 +52,12 @@ class EnvelopeRepository {
   /// Tries local storage first, falls back to the API.
   Future<CategoryGroup> getCategoryGroup(String id) async {
     try {
-      final local =
-          await _localDatabase.envelopesDao.getCategoryGroup(id);
+      final local = await _localDatabase.envelopesDao.getCategoryGroup(id);
       if (local != null) {
         return _mapCategoryGroupFromLocal(local);
       }
 
-      final remote =
-          await _apiClient.envelopes.getCategoryGroup(id);
+      final remote = await _apiClient.envelopes.getCategoryGroup(id);
       await _cacheCategoryGroup(remote);
       return _mapCategoryGroupFromDto(remote);
     } on EnvelopeApiException catch (e) {
@@ -94,8 +91,7 @@ class EnvelopeRepository {
   Future<void> updateCategoryGroup(CategoryGroup group) async {
     try {
       final dto = _mapCategoryGroupToDto(group);
-      final updated =
-          await _apiClient.envelopes.updateCategoryGroup(dto);
+      final updated = await _apiClient.envelopes.updateCategoryGroup(dto);
       await _cacheCategoryGroup(updated);
     } on EnvelopeApiException catch (e) {
       throw EnvelopeException(
@@ -170,8 +166,7 @@ class EnvelopeRepository {
       // Fetch all DTOs first to minimize partial-failure window.
       final dtos = <CategoryGroupDto>[];
       for (final id in orderedIds) {
-        final dto =
-            await _apiClient.envelopes.getCategoryGroup(id);
+        final dto = await _apiClient.envelopes.getCategoryGroup(id);
         dtos.add(dto);
       }
 
@@ -179,14 +174,12 @@ class EnvelopeRepository {
       final results = <CategoryGroupDto>[];
       for (var i = 0; i < dtos.length; i++) {
         final updated = dtos[i].copyWith(sortOrder: i);
-        final result =
-            await _apiClient.envelopes.updateCategoryGroup(updated);
+        final result = await _apiClient.envelopes.updateCategoryGroup(updated);
         results.add(result);
       }
 
       // Batch cache all results.
-      final companions =
-          results.map(_toCategoryGroupCompanion).toList();
+      final companions = results.map(_toCategoryGroupCompanion).toList();
       await _localDatabase.envelopesDao.batchInsertCategoryGroups(
         companions,
         mode: InsertMode.insertOrReplace,
@@ -202,10 +195,10 @@ class EnvelopeRepository {
   /// Fetches category groups from the API and syncs to local storage.
   Future<void> refreshCategoryGroups(String budgetId) async {
     try {
-      final remote = await _apiClient.envelopes
-          .getCategoryGroupsByBudget(budgetId);
-      final companions =
-          remote.map(_toCategoryGroupCompanion).toList();
+      final remote = await _apiClient.envelopes.getCategoryGroupsByBudget(
+        budgetId,
+      );
+      final companions = remote.map(_toCategoryGroupCompanion).toList();
       await _localDatabase.envelopesDao.batchInsertCategoryGroups(
         companions,
         mode: InsertMode.insertOrReplace,
@@ -237,8 +230,7 @@ class EnvelopeRepository {
         createdAt: DateTime.now(),
       );
 
-      final created =
-          await _apiClient.envelopes.createEnvelope(dto);
+      final created = await _apiClient.envelopes.createEnvelope(dto);
       await _cacheEnvelope(created);
       return _mapEnvelopeFromDto(created);
     } on EnvelopeApiException catch (e) {
@@ -254,14 +246,12 @@ class EnvelopeRepository {
   /// Tries local storage first, falls back to the API.
   Future<Envelope> getEnvelope(String id) async {
     try {
-      final local =
-          await _localDatabase.envelopesDao.getEnvelope(id);
+      final local = await _localDatabase.envelopesDao.getEnvelope(id);
       if (local != null) {
         return _mapEnvelopeFromLocal(local);
       }
 
-      final remote =
-          await _apiClient.envelopes.getEnvelope(id);
+      final remote = await _apiClient.envelopes.getEnvelope(id);
       await _cacheEnvelope(remote);
       return _mapEnvelopeFromDto(remote);
     } on EnvelopeApiException catch (e) {
@@ -314,8 +304,7 @@ class EnvelopeRepository {
   Future<void> updateEnvelope(Envelope envelope) async {
     try {
       final dto = _mapEnvelopeToDto(envelope);
-      final updated =
-          await _apiClient.envelopes.updateEnvelope(dto);
+      final updated = await _apiClient.envelopes.updateEnvelope(dto);
       await _cacheEnvelope(updated);
     } on EnvelopeApiException catch (e) {
       throw EnvelopeException(
@@ -417,14 +406,12 @@ class EnvelopeRepository {
       final results = <EnvelopeDto>[];
       for (var i = 0; i < dtos.length; i++) {
         final updated = dtos[i].copyWith(sortOrder: i);
-        final result =
-            await _apiClient.envelopes.updateEnvelope(updated);
+        final result = await _apiClient.envelopes.updateEnvelope(updated);
         results.add(result);
       }
 
       // Batch cache all results.
-      final companions =
-          results.map(_toEnvelopeCompanion).toList();
+      final companions = results.map(_toEnvelopeCompanion).toList();
       await _localDatabase.envelopesDao.batchInsertEnvelopes(
         companions,
         mode: InsertMode.insertOrReplace,
@@ -440,10 +427,8 @@ class EnvelopeRepository {
   /// Fetches envelopes from the API and syncs to local storage.
   Future<void> refreshEnvelopes(String budgetId) async {
     try {
-      final remote = await _apiClient.envelopes
-          .getEnvelopesByBudget(budgetId);
-      final companions =
-          remote.map(_toEnvelopeCompanion).toList();
+      final remote = await _apiClient.envelopes.getEnvelopesByBudget(budgetId);
+      final companions = remote.map(_toEnvelopeCompanion).toList();
       await _localDatabase.envelopesDao.batchInsertEnvelopes(
         companions,
         mode: InsertMode.insertOrReplace,
@@ -475,8 +460,7 @@ class EnvelopeRepository {
         createdAt: DateTime.now(),
       );
 
-      final created = await _apiClient.envelopes
-          .createEnvelopeAllocation(dto);
+      final created = await _apiClient.envelopes.createEnvelopeAllocation(dto);
       await _cacheAllocation(created);
       return _mapAllocationFromDto(created);
     } on EnvelopeApiException catch (e) {
@@ -514,8 +498,7 @@ class EnvelopeRepository {
   ) async {
     try {
       final dto = _mapAllocationToDto(allocation);
-      final updated = await _apiClient.envelopes
-          .updateEnvelopeAllocation(dto);
+      final updated = await _apiClient.envelopes.updateEnvelopeAllocation(dto);
       await _cacheAllocation(updated);
     } on EnvelopeApiException catch (e) {
       throw EnvelopeException(
@@ -547,10 +530,10 @@ class EnvelopeRepository {
   /// Fetches allocations from the API and syncs to local storage.
   Future<void> refreshAllocations(String budgetPeriodId) async {
     try {
-      final remote = await _apiClient.envelopes
-          .getAllocationsByPeriod(budgetPeriodId);
-      final companions =
-          remote.map(_toAllocationCompanion).toList();
+      final remote = await _apiClient.envelopes.getAllocationsByPeriod(
+        budgetPeriodId,
+      );
+      final companions = remote.map(_toAllocationCompanion).toList();
       await _localDatabase.envelopesDao.batchInsertAllocations(
         companions,
         mode: InsertMode.insertOrReplace,
