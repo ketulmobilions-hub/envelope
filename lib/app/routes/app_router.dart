@@ -6,6 +6,7 @@ import 'package:envelope/auth/auth.dart';
 import 'package:envelope/budget/budget.dart';
 import 'package:envelope/dashboard/dashboard.dart';
 import 'package:envelope/envelopes/envelopes.dart';
+import 'package:envelope/goals/goals.dart';
 import 'package:envelope/onboarding/onboarding.dart';
 import 'package:envelope/recurring/recurring.dart';
 import 'package:envelope/splash/splash.dart';
@@ -26,6 +27,7 @@ abstract final class AppRoutes {
   static const String envelopes = '/envelopes';
   static const String budget = '/budget';
   static const String transactions = '/transactions';
+  static const String goals = '/goals';
   static const String recurring = '/recurring';
 }
 
@@ -145,6 +147,15 @@ GoRouter createRouter({
             builder: (context, state) {
               final budgetId = state.uri.queryParameters['budgetId']!;
               return AccountsPage(budgetId: budgetId);
+            },
+          ),
+          GoRoute(
+            name: AppRoutes.goals,
+            path: AppRoutes.goals,
+            redirect: _requireBudgetId,
+            builder: (context, state) {
+              final budgetId = state.uri.queryParameters['budgetId']!;
+              return GoalsPage(budgetId: budgetId);
             },
           ),
           GoRoute(

@@ -24,6 +24,7 @@ class AppShell extends StatelessWidget {
     '/envelopes',
     '/transactions',
     '/accounts',
+    '/goals',
   ];
 
   int _selectedIndex(BuildContext context) {
@@ -95,6 +96,11 @@ class AppShell extends StatelessWidget {
             icon: const Icon(Icons.account_balance_outlined),
             selectedIcon: const Icon(Icons.account_balance),
             label: l10n.accountsTitle,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.flag_outlined),
+            selectedIcon: const Icon(Icons.flag),
+            label: l10n.goalsTitle,
           ),
         ],
       ),

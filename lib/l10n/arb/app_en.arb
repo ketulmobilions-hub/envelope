@@ -1389,5 +1389,151 @@
     "overspendCoverInsufficientFunds": "Amount exceeds available funds",
     "@overspendCoverInsufficientFunds": {
         "description": "Validation when cover amount exceeds source allocation"
+    },
+    "goalsTitle": "Goals",
+    "@goalsTitle": {
+        "description": "Title for the goals page"
+    },
+    "goalsAddGoal": "Add Goal",
+    "@goalsAddGoal": {
+        "description": "Button text to add a new goal"
+    },
+    "goalsEditGoal": "Edit Goal",
+    "@goalsEditGoal": {
+        "description": "Button text to edit a goal"
+    },
+    "goalsNameLabel": "Goal Name",
+    "@goalsNameLabel": {
+        "description": "Label for goal name input"
+    },
+    "goalsTypeLabel": "Goal Type",
+    "@goalsTypeLabel": {
+        "description": "Label for goal type dropdown"
+    },
+    "goalsTargetAmountLabel": "Target Amount",
+    "@goalsTargetAmountLabel": {
+        "description": "Label for target amount input"
+    },
+    "goalsTargetDateLabel": "Target Date",
+    "@goalsTargetDateLabel": {
+        "description": "Label for target date picker"
+    },
+    "goalsMonthlyContributionLabel": "Monthly Contribution",
+    "@goalsMonthlyContributionLabel": {
+        "description": "Label for monthly contribution input"
+    },
+    "goalsTypeSavingsTarget": "Savings Target",
+    "@goalsTypeSavingsTarget": {
+        "description": "Display name for savings target goal type"
+    },
+    "goalsTypeMonthlyContribution": "Monthly Contribution",
+    "@goalsTypeMonthlyContribution": {
+        "description": "Display name for monthly contribution goal type"
+    },
+    "goalsTypeDebtPayoff": "Debt Payoff",
+    "@goalsTypeDebtPayoff": {
+        "description": "Display name for debt payoff goal type"
+    },
+    "goalsEmptyTitle": "No goals yet",
+    "@goalsEmptyTitle": {
+        "description": "Title shown when no goals exist"
+    },
+    "goalsEmptySubtitle": "Create a goal to start tracking your progress",
+    "@goalsEmptySubtitle": {
+        "description": "Subtitle shown when no goals exist"
+    },
+    "goalsCreateButton": "Create Goal",
+    "@goalsCreateButton": {
+        "description": "Button text to create a goal"
+    },
+    "goalsSaveButton": "Save Goal",
+    "@goalsSaveButton": {
+        "description": "Button text to save goal changes"
+    },
+    "goalsComplete": "Mark Complete",
+    "@goalsComplete": {
+        "description": "Button text to mark a goal as complete"
+    },
+    "goalsUncomplete": "Mark Incomplete",
+    "@goalsUncomplete": {
+        "description": "Button text to mark a goal as incomplete"
+    },
+    "goalsCompleted": "Completed",
+    "@goalsCompleted": {
+        "description": "Section header for completed goals"
+    },
+    "goalsDelete": "Delete",
+    "@goalsDelete": {
+        "description": "Button text to delete a goal"
+    },
+    "goalsCancel": "Cancel",
+    "@goalsCancel": {
+        "description": "Button text to cancel a goal action"
+    },
+    "goalsErrorLoadFailed": "Failed to load goals",
+    "@goalsErrorLoadFailed": {
+        "description": "Error message when goals fail to load"
+    },
+    "goalsErrorUpdateFailed": "Failed to update goal",
+    "@goalsErrorUpdateFailed": {
+        "description": "Error message when goal update fails"
+    },
+    "goalsErrorDeleteFailed": "Failed to delete goal",
+    "@goalsErrorDeleteFailed": {
+        "description": "Error message when goal deletion fails"
+    },
+    "goalsProgress": "Progress",
+    "@goalsProgress": {
+        "description": "Label for goal progress section"
+    },
+    "goalsCurrentAmount": "Current",
+    "@goalsCurrentAmount": {
+        "description": "Label for current amount in goal detail"
+    },
+    "goalsTargetAmount": "Target",
+    "@goalsTargetAmount": {
+        "description": "Label for target amount in goal detail"
+    },
+    "goalsMonthlyNeeded": "Monthly needed",
+    "@goalsMonthlyNeeded": {
+        "description": "Label for monthly contribution needed"
+    },
+    "goalsStatusLabel": "Status",
+    "@goalsStatusLabel": {
+        "description": "Label for goal status"
+    },
+    "goalsDeleteConfirmTitle": "Delete Goal?",
+    "@goalsDeleteConfirmTitle": {
+        "description": "Title for delete goal confirmation dialog"
+    },
+    "goalsDeleteConfirmMessage": "This action cannot be undone. Are you sure you want to delete this goal?",
+    "@goalsDeleteConfirmMessage": {
+        "description": "Message for delete goal confirmation dialog"
+    },
+    "goalsPerMonth": "{amount} / month",
+    "@goalsPerMonth": {
+        "description": "Monthly contribution display format",
+        "placeholders": {
+            "amount": {
+                "type": "String",
+                "example": "$200.00"
+            }
+        }
+    },
+    "goalsMarkedComplete": "Goal marked as complete",
+    "@goalsMarkedComplete": {
+        "description": "Snackbar confirmation after marking a goal complete"
+    },
+    "goalsMarkedIncomplete": "Goal marked as incomplete",
+    "@goalsMarkedIncomplete": {
+        "description": "Snackbar confirmation after marking a goal incomplete"
+    },
+    "goalsNameRequired": "Please enter a goal name",
+    "@goalsNameRequired": {
+        "description": "Validation message when goal name is empty"
+    },
+    "goalsTargetAmountRequired": "Please enter a target amount",
+    "@goalsTargetAmountRequired": {
+        "description": "Validation message when target amount is empty"
     }
 }
