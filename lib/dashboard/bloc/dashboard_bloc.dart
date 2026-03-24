@@ -17,12 +17,12 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     required EnvelopeRepository envelopeRepository,
     required TransactionRepository transactionRepository,
     required String budgetId,
-  })  : _budgetRepository = budgetRepository,
-        _accountRepository = accountRepository,
-        _envelopeRepository = envelopeRepository,
-        _transactionRepository = transactionRepository,
-        _budgetId = budgetId,
-        super(const DashboardState()) {
+  }) : _budgetRepository = budgetRepository,
+       _accountRepository = accountRepository,
+       _envelopeRepository = envelopeRepository,
+       _transactionRepository = transactionRepository,
+       _budgetId = budgetId,
+       super(const DashboardState()) {
     on<DashboardStarted>(_onStarted);
     on<_PeriodsUpdated>(_onPeriodsUpdated);
     on<_AccountsUpdated>(_onAccountsUpdated);
@@ -175,10 +175,12 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       _waitingForAllocations = true;
     }
 
-    emit(state.copyWith(
-      status: _isLoaded ? DashboardStatus.loaded : state.status,
-      selectedPeriod: selected,
-    ));
+    emit(
+      state.copyWith(
+        status: _isLoaded ? DashboardStatus.loaded : state.status,
+        selectedPeriod: selected,
+      ),
+    );
 
     // Subscribe to allocations for the selected period.
     if (selected != null && selected.id != previousPeriodId) {
@@ -188,8 +190,9 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     // Compute ready to assign.
     if (selected != null) {
       try {
-        final readyToAssign =
-            await _budgetRepository.calculateReadyToAssign(selected.id);
+        final readyToAssign = await _budgetRepository.calculateReadyToAssign(
+          selected.id,
+        );
         emit(state.copyWith(readyToAssign: readyToAssign));
       } on BudgetException {
         // Keep previous value.
@@ -203,10 +206,12 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   ) {
     if (event.generation != _generation) return;
     _accountsReceived = true;
-    emit(state.copyWith(
-      status: _isLoaded ? DashboardStatus.loaded : state.status,
-      accounts: event.accounts,
-    ));
+    emit(
+      state.copyWith(
+        status: _isLoaded ? DashboardStatus.loaded : state.status,
+        accounts: event.accounts,
+      ),
+    );
   }
 
   void _onEnvelopesUpdated(
@@ -215,10 +220,12 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   ) {
     if (event.generation != _generation) return;
     _envelopesReceived = true;
-    emit(state.copyWith(
-      status: _isLoaded ? DashboardStatus.loaded : state.status,
-      envelopes: event.envelopes,
-    ));
+    emit(
+      state.copyWith(
+        status: _isLoaded ? DashboardStatus.loaded : state.status,
+        envelopes: event.envelopes,
+      ),
+    );
   }
 
   void _onCategoryGroupsUpdated(
@@ -227,10 +234,12 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   ) {
     if (event.generation != _generation) return;
     _groupsReceived = true;
-    emit(state.copyWith(
-      status: _isLoaded ? DashboardStatus.loaded : state.status,
-      categoryGroups: event.categoryGroups,
-    ));
+    emit(
+      state.copyWith(
+        status: _isLoaded ? DashboardStatus.loaded : state.status,
+        categoryGroups: event.categoryGroups,
+      ),
+    );
   }
 
   Future<void> _onAllocationsUpdated(
@@ -240,16 +249,19 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     if (event.generation != _allocationsGeneration) return;
     _waitingForAllocations = false;
 
-    emit(state.copyWith(
-      status: _isLoaded ? DashboardStatus.loaded : state.status,
-      allocations: event.allocations,
-    ));
+    emit(
+      state.copyWith(
+        status: _isLoaded ? DashboardStatus.loaded : state.status,
+        allocations: event.allocations,
+      ),
+    );
 
     // Recompute ready to assign when allocations change.
     if (state.selectedPeriod != null) {
       try {
-        final readyToAssign = await _budgetRepository
-            .calculateReadyToAssign(state.selectedPeriod!.id);
+        final readyToAssign = await _budgetRepository.calculateReadyToAssign(
+          state.selectedPeriod!.id,
+        );
         emit(state.copyWith(readyToAssign: readyToAssign));
       } on BudgetException {
         // Keep previous value.
@@ -269,10 +281,12 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       ..sort((a, b) => b.date.compareTo(a.date));
     final recent = sorted.take(5).toList();
 
-    emit(state.copyWith(
-      status: _isLoaded ? DashboardStatus.loaded : state.status,
-      recentTransactions: recent,
-    ));
+    emit(
+      state.copyWith(
+        status: _isLoaded ? DashboardStatus.loaded : state.status,
+        recentTransactions: recent,
+      ),
+    );
   }
 
   void _onStreamError(
@@ -283,10 +297,12 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     // if the allocations stream was the one that errored.
     _waitingForAllocations = false;
 
-    emit(state.copyWith(
-      status: DashboardStatus.error,
-      error: DashboardError.loadFailed,
-    ));
+    emit(
+      state.copyWith(
+        status: DashboardStatus.error,
+        error: DashboardError.loadFailed,
+      ),
+    );
     emit(state.copyWith(status: DashboardStatus.loaded, error: null));
   }
 
@@ -314,8 +330,8 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     if (state.selectedPeriod != null) {
       futures.add(
         _safeRefresh(
-          () => _envelopeRepository
-              .refreshAllocations(state.selectedPeriod!.id),
+          () =>
+              _envelopeRepository.refreshAllocations(state.selectedPeriod!.id),
         ),
       );
     }

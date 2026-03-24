@@ -13,16 +13,21 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 
-/// Shell widget providing persistent bottom navigation bar with 3 tabs
-/// and a centered FAB for adding transactions.
+/// Shell widget providing persistent bottom navigation bar.
+///
+/// Tabs: Home, Transactions, Add Transaction, Accounts, Goals.
 class AppShell extends StatelessWidget {
   const AppShell({required this.child, super.key});
 
   final Widget child;
 
-  static const _tabs = [
-    '/envelopes',
+  /// Tab index 2 is the "add transaction" action, not a route.
+  static const int _addTransactionIndex = 2;
+
+  static const List<String?> _tabs = [
+    '/home',
     '/transactions',
+    null, // placeholder for add transaction button
     '/accounts',
     '/goals',
   ];
@@ -30,16 +35,23 @@ class AppShell extends StatelessWidget {
   int _selectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     for (var i = 0; i < _tabs.length; i++) {
-      if (location.startsWith(_tabs[i])) return i;
+      final tab = _tabs[i];
+      if (tab != null && location.startsWith(tab)) return i;
     }
-    // Default to envelopes tab for /home and other routes.
+    // Default to home tab for unmatched routes.
     return 0;
   }
 
-  void _onTabTap(BuildContext context, int index) {
+  void _onDestinationSelected(BuildContext context, int index) {
+    if (index == _addTransactionIndex) {
+      unawaited(_openAddTransaction(context));
+      return;
+    }
+    final route = _tabs[index];
+    if (route == null) return;
     final budgetId =
         context.read<SharedPreferences>().getString(activeBudgetIdKey) ?? '';
-    context.go('${_tabs[index]}?budgetId=$budgetId');
+    context.go('$route?budgetId=$budgetId');
   }
 
   Future<void> _openAddTransaction(BuildContext context) async {
@@ -73,24 +85,26 @@ class AppShell extends StatelessWidget {
 
     return Scaffold(
       body: child,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _openAddTransaction(context),
-        child: const Icon(Icons.add),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: NavigationBar(
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
         selectedIndex: selectedIndex,
-        onDestinationSelected: (index) => _onTabTap(context, index),
+        onDestinationSelected: (index) =>
+            _onDestinationSelected(context, index),
         destinations: [
           NavigationDestination(
-            icon: const Icon(Icons.mail_outline),
-            selectedIcon: const Icon(Icons.mail),
-            label: l10n.envelopesTitle,
+            icon: const Icon(Icons.home_outlined),
+            selectedIcon: const Icon(Icons.home),
+            label: l10n.homeTitle,
           ),
           NavigationDestination(
             icon: const Icon(Icons.receipt_long_outlined),
             selectedIcon: const Icon(Icons.receipt_long),
             label: l10n.transactionsTitle,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.add_circle_outline, size: 32),
+            selectedIcon: const Icon(Icons.add_circle, size: 32),
+            label: l10n.transactionsAddTransaction,
           ),
           NavigationDestination(
             icon: const Icon(Icons.account_balance_outlined),

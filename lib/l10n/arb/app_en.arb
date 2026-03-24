@@ -1535,5 +1535,31 @@
     "goalsTargetAmountRequired": "Please enter a target amount",
     "@goalsTargetAmountRequired": {
         "description": "Validation message when target amount is empty"
+    },
+    "dashboardAllocated": "Allocated",
+    "@dashboardAllocated": {
+        "description": "Column header for allocated amount in category group summary"
+    },
+    "envelopesDetailDeleteEnvelope": "Delete Envelope",
+    "@envelopesDetailDeleteEnvelope": {
+        "description": "Tooltip for delete button on envelope detail page"
+    },
+    "envelopesDetailDeleteSuccess": "Envelope deleted",
+    "@envelopesDetailDeleteSuccess": {
+        "description": "Snackbar message after successfully deleting an envelope"
+    },
+    "envelopesDetailDeleteError": "Failed to delete envelope",
+    "@envelopesDetailDeleteError": {
+        "description": "Snackbar message when envelope deletion fails"
+    },
+    "envelopeCardOfAllocated": "of {amount}",
+    "@envelopeCardOfAllocated": {
+        "description": "Subtitle on envelope card showing allocated amount",
+        "placeholders": {
+            "amount": {
+                "type": "String",
+                "example": "$500.00"
+            }
+        }
     }
 }

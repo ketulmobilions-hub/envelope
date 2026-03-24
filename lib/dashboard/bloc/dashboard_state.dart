@@ -58,19 +58,16 @@ final class DashboardState extends Equatable {
     final groupMap = {
       for (final g in categoryGroups) g.id: g.name,
     };
-    return envelopes
-        .where((e) => !e.isArchived)
-        .map((e) {
-          final allocation = allocations
-              .where((a) => a.envelopeId == e.id)
-              .firstOrNull;
-          return EnvelopeSummary(
-            envelope: e,
-            categoryGroupName: groupMap[e.categoryGroupId] ?? '',
-            allocation: allocation,
-          );
-        })
-        .toList();
+    return envelopes.where((e) => !e.isArchived).map((e) {
+      final allocation = allocations
+          .where((a) => a.envelopeId == e.id)
+          .firstOrNull;
+      return EnvelopeSummary(
+        envelope: e,
+        categoryGroupName: groupMap[e.categoryGroupId] ?? '',
+        allocation: allocation,
+      );
+    }).toList();
   }
 
   DashboardState copyWith({
@@ -103,14 +100,14 @@ final class DashboardState extends Equatable {
 
   @override
   List<Object?> get props => [
-        status,
-        error,
-        selectedPeriod,
-        readyToAssign,
-        accounts,
-        envelopes,
-        categoryGroups,
-        allocations,
-        recentTransactions,
-      ];
+    status,
+    error,
+    selectedPeriod,
+    readyToAssign,
+    accounts,
+    envelopes,
+    categoryGroups,
+    allocations,
+    recentTransactions,
+  ];
 }

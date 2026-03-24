@@ -96,9 +96,9 @@ class _HomeView extends StatelessWidget {
 
             return RefreshIndicator(
               onRefresh: () async {
-                context
-                    .read<DashboardBloc>()
-                    .add(const DashboardRefreshRequested());
+                context.read<DashboardBloc>().add(
+                  const DashboardRefreshRequested(),
+                );
               },
               child: ListView(
                 children: [
@@ -125,8 +125,7 @@ class _HomeView extends StatelessWidget {
                             ),
                           if (recurringState.upcomingBills.isNotEmpty)
                             MaterialBanner(
-                              content:
-                                  Text(l10n.recurringUpcomingBillsBanner),
+                              content: Text(l10n.recurringUpcomingBillsBanner),
                               leading: const Icon(Icons.receipt_outlined),
                               actions: [
                                 TextButton(
@@ -153,6 +152,7 @@ class _HomeView extends StatelessWidget {
                   // Envelope Summaries
                   EnvelopeSummaryCard(
                     summaries: state.envelopeSummaries,
+                    categoryGroups: state.categoryGroups,
                     onViewAll: () => context.go(
                       '${AppRoutes.envelopes}?budgetId=$budgetId',
                     ),

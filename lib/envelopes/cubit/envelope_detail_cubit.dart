@@ -8,8 +8,12 @@ class EnvelopeDetailCubit extends Cubit<EnvelopeDetailState> {
   EnvelopeDetailCubit({
     required EnvelopeRepository envelopeRepository,
     required Envelope envelope,
+    EnvelopeAllocation? allocation,
   })  : _envelopeRepository = envelopeRepository,
-        super(EnvelopeDetailState(envelope: envelope));
+        super(EnvelopeDetailState(
+          envelope: envelope,
+          allocation: allocation,
+        ));
 
   final EnvelopeRepository _envelopeRepository;
 
@@ -21,6 +25,17 @@ class EnvelopeDetailCubit extends Cubit<EnvelopeDetailState> {
       emit(state.copyWith(envelope: updated));
     } on EnvelopeException {
       // Keep current data if refresh fails.
+    }
+  }
+
+  /// Deletes the envelope from the repository.
+  /// Returns `true` on success, `false` on failure.
+  Future<bool> deleteEnvelope() async {
+    try {
+      await _envelopeRepository.deleteEnvelope(state.envelope.id);
+      return true;
+    } on EnvelopeException {
+      return false;
     }
   }
 }

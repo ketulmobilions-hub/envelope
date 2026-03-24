@@ -159,6 +159,7 @@ class BudgetRepository {
     required String budgetId,
     required DateTime startDate,
     required DateTime endDate,
+    int totalIncome = 0,
   }) async {
     try {
       final dto = BudgetPeriodDto(
@@ -166,6 +167,7 @@ class BudgetRepository {
         budgetId: budgetId,
         startDate: startDate,
         endDate: endDate,
+        totalIncome: totalIncome,
         createdAt: DateTime.now(),
       );
 
