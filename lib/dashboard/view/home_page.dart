@@ -83,8 +83,11 @@ class _HomeView extends StatelessWidget {
         listenWhen: (prev, curr) =>
             prev.error != curr.error && curr.error != null,
         listener: (context, state) {
+          final message = state.error == DashboardError.allocationFailed
+              ? l10n.dashboardErrorAllocation
+              : l10n.dashboardErrorLoad;
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.dashboardErrorLoad)),
+            SnackBar(content: Text(message)),
           );
         },
         child: BlocBuilder<DashboardBloc, DashboardState>(

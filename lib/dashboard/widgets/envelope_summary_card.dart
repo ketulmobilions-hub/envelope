@@ -4,11 +4,13 @@ import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/dashboard/bloc/bloc.dart';
 import 'package:envelope/envelopes/cubit/cubit.dart';
 import 'package:envelope/envelopes/view/envelope_detail_page.dart';
+import 'package:envelope/dashboard/widgets/quick_allocate_dialog.dart';
 import 'package:envelope/envelopes/widgets/envelope_card.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Displays envelopes grouped by category on the dashboard.
@@ -202,6 +204,8 @@ class _CategoryGroupSection extends StatelessWidget {
                           isOverspent: s.isOverspent,
                           heroTag: 'envelope_${s.envelope.id}',
                           onTap: () => _openDetail(context, s),
+                          onLongPress: () =>
+                              _showQuickAllocate(context, s),
                         ),
                       ),
                     )
@@ -210,6 +214,31 @@ class _CategoryGroupSection extends StatelessWidget {
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _showQuickAllocate(
+    BuildContext context,
+    EnvelopeSummary summary,
+  ) async {
+    await HapticFeedback.mediumImpact();
+
+    if (!context.mounted) return;
+
+    final cents = await showDialog<int>(
+      context: context,
+      builder: (_) => QuickAllocateDialog(
+        envelopeName: summary.envelope.name,
+        currentAmountCents: summary.allocated,
+      ),
+    );
+    if (cents == null || !context.mounted) return;
+
+    context.read<DashboardBloc>().add(
+      QuickAllocationRequested(
+        envelopeId: summary.envelope.id,
+        amount: cents,
       ),
     );
   }

@@ -1561,5 +1561,31 @@
                 "example": "$500.00"
             }
         }
+    },
+    "quickAllocateTitle": "Allocate to {envelopeName}",
+    "@quickAllocateTitle": {
+        "description": "Title for the quick allocate dialog",
+        "placeholders": {
+            "envelopeName": {
+                "type": "String",
+                "example": "Groceries"
+            }
+        }
+    },
+    "quickAllocateHint": "Amount",
+    "@quickAllocateHint": {
+        "description": "Hint text for the amount input in quick allocate dialog"
+    },
+    "quickAllocateSave": "Save",
+    "@quickAllocateSave": {
+        "description": "Save button in quick allocate dialog"
+    },
+    "quickAllocateCancel": "Cancel",
+    "@quickAllocateCancel": {
+        "description": "Cancel button in quick allocate dialog"
+    },
+    "dashboardErrorAllocation": "Failed to save allocation",
+    "@dashboardErrorAllocation": {
+        "description": "Error message when quick allocation fails"
     }
 }

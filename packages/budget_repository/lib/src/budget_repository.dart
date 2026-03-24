@@ -287,7 +287,7 @@ class BudgetRepository {
 
   /// Calculates the "Ready to Assign" amount for a budget period.
   ///
-  /// Formula: totalIncome - totalAllocated + sum(rolloverAmounts)
+  /// Formula: totalIncome - sum(allocatedAmounts) + sum(rolloverAmounts)
   Future<int> calculateReadyToAssign(String budgetPeriodId) async {
     try {
       final period = await _localDatabase.budgetsDao
@@ -301,12 +301,16 @@ class BudgetRepository {
       final allocations = await _localDatabase.envelopesDao
           .getAllocationsByPeriodId(budgetPeriodId);
 
+      final totalAllocated = allocations.fold<int>(
+        0,
+        (sum, a) => sum + a.allocatedAmount,
+      );
       final totalRollover = allocations.fold<int>(
         0,
         (sum, a) => sum + a.rolloverAmount,
       );
 
-      return period.totalIncome - period.totalAllocated + totalRollover;
+      return period.totalIncome - totalAllocated + totalRollover;
     } on BudgetException {
       rethrow;
     } on Exception catch (e) {

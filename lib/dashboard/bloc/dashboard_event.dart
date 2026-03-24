@@ -83,6 +83,20 @@ final class _RecentTransactionsUpdated extends DashboardEvent {
   List<Object?> get props => [transactions, generation];
 }
 
+/// Quick-allocate an amount to an envelope from the homepage.
+final class QuickAllocationRequested extends DashboardEvent {
+  const QuickAllocationRequested({
+    required this.envelopeId,
+    required this.amount,
+  });
+
+  final String envelopeId;
+  final int amount;
+
+  @override
+  List<Object?> get props => [envelopeId, amount];
+}
+
 /// Internal event when any stream errors.
 final class _DashboardStreamError extends DashboardEvent {
   const _DashboardStreamError();

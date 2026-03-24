@@ -2,7 +2,7 @@ part of 'dashboard_bloc.dart';
 
 enum DashboardStatus { initial, loading, loaded, error }
 
-enum DashboardError { loadFailed }
+enum DashboardError { loadFailed, allocationFailed }
 
 /// Summary of an envelope with its allocation for the current period.
 final class EnvelopeSummary extends Equatable {

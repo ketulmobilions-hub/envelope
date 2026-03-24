@@ -32,6 +32,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     on<_RecentTransactionsUpdated>(_onRecentTransactionsUpdated);
     on<_DashboardStreamError>(_onStreamError);
     on<DashboardRefreshRequested>(_onRefreshRequested);
+    on<QuickAllocationRequested>(_onQuickAllocationRequested);
   }
 
   final BudgetRepository _budgetRepository;
@@ -336,6 +337,50 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       );
     }
     await Future.wait(futures);
+  }
+
+  Future<void> _onQuickAllocationRequested(
+    QuickAllocationRequested event,
+    Emitter<DashboardState> emit,
+  ) async {
+    final periodId = state.selectedPeriod?.id;
+    if (periodId == null) return;
+
+    try {
+      // Look up the current allocation from state to avoid stale data.
+      final currentAllocation = state.allocations
+          .where((a) => a.envelopeId == event.envelopeId)
+          .firstOrNull;
+
+      if (currentAllocation != null) {
+        await _envelopeRepository.updateAllocation(
+          currentAllocation.copyWith(allocatedAmount: event.amount),
+        );
+      } else {
+        await _envelopeRepository.allocate(
+          envelopeId: event.envelopeId,
+          budgetPeriodId: periodId,
+          amount: event.amount,
+        );
+      }
+
+      // Recompute ready to assign after allocation change.
+      try {
+        final readyToAssign =
+            await _budgetRepository.calculateReadyToAssign(periodId);
+        emit(state.copyWith(readyToAssign: readyToAssign));
+      } on BudgetException {
+        // Keep previous value.
+      }
+    } on EnvelopeException {
+      emit(
+        state.copyWith(
+          status: DashboardStatus.error,
+          error: DashboardError.allocationFailed,
+        ),
+      );
+      emit(state.copyWith(status: DashboardStatus.loaded, error: null));
+    }
   }
 
   // ---------------------------------------------------------------------------
