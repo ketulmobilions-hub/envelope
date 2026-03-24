@@ -227,9 +227,12 @@ class EnvelopesApiClient {
     EnvelopeAllocationDto allocation,
   ) async {
     try {
+      final json = allocation.toJson()
+        ..remove('id')
+        ..remove('created_at');
       final response = await _supabaseClient
           .from('envelope_allocations')
-          .insert(allocation.toJson())
+          .insert(json)
           .select()
           .single();
       return EnvelopeAllocationDto.fromJson(response);

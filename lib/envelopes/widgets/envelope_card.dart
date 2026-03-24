@@ -14,6 +14,7 @@ class EnvelopeCard extends StatelessWidget {
     this.isOverspent = false,
     this.heroTag,
     this.onTap,
+    this.onLongPress,
     super.key,
   });
 
@@ -24,6 +25,7 @@ class EnvelopeCard extends StatelessWidget {
   final bool isOverspent;
   final String? heroTag;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -131,6 +133,13 @@ class EnvelopeCard extends StatelessWidget {
       );
     }
 
-    return GestureDetector(onTap: onTap, child: card);
+    return Semantics(
+      onLongPressHint: onLongPress != null ? 'Quick allocate' : null,
+      child: GestureDetector(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        child: card,
+      ),
+    );
   }
 }

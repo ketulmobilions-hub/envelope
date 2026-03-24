@@ -170,13 +170,6 @@ class _EnvelopeAppBarState extends State<_EnvelopeAppBar>
       end: Offset.zero,
     ).animate(_slideCurve);
 
-    _scheduleAnimation();
-  }
-
-  void _scheduleAnimation() {
-    ModalRoute.of(context)?.animation?.addStatusListener(
-      _onRouteAnimationStatus,
-    );
   }
 
   void _onRouteAnimationStatus(AnimationStatus status) {
@@ -413,37 +406,6 @@ class _EnvelopeContentState extends State<_EnvelopeContent>
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                // Allocation history.
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      Text(
-                        l10n
-                            .envelopesDetailAllocationHistory
-                            .toUpperCase(),
-                        style: sectionTitle,
-                      ),
-                      const SizedBox(height: 16),
-                      const Icon(
-                        Icons.history_outlined,
-                        size: 48,
-                        color: AppColors.primaryDark,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n
-                            .envelopesDetailAllocationHistoryPlaceholder,
-                        style: mutedStyle,
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-                Divider(
-                  color: AppColors.onPrimary
-                      .withValues(alpha: 0.2),
-                ),
                 // Transactions.
                 Padding(
                   padding: const EdgeInsets.all(20),
