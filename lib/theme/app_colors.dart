@@ -34,4 +34,7 @@ abstract final class AppColors {
 
   /// Warning amber.
   static const Color warning = Color(0xFFD4A24E);
+
+  /// Dark brown on terracotta — icons & accents on primary.
+  static const Color primaryDark = Color(0xFF5C2E1A);
 }

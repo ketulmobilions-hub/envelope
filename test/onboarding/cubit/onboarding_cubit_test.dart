@@ -475,6 +475,23 @@ void main() {
             updatedAt: now,
           ),
         );
+        when(
+          () => budgetRepository.createBudgetPeriod(
+            budgetId: any(named: 'budgetId'),
+            startDate: any(named: 'startDate'),
+            endDate: any(named: 'endDate'),
+            totalIncome: any(named: 'totalIncome'),
+          ),
+        ).thenAnswer(
+          (_) async => BudgetPeriod(
+            id: 'period-1',
+            budgetId: testBudgetId,
+            startDate: DateTime(now.year, now.month),
+            endDate: DateTime(now.year, now.month + 1)
+                .subtract(const Duration(days: 1)),
+            createdAt: now,
+          ),
+        );
       }
 
       blocTest<OnboardingCubit, OnboardingState>(

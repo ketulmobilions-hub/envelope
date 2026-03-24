@@ -21,12 +21,12 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     required AccountRepository accountRepository,
     required BudgetRepository budgetRepository,
     required String userId,
-  })  : _prefs = sharedPreferences,
-        _envelopeRepository = envelopeRepository,
-        _accountRepository = accountRepository,
-        _budgetRepository = budgetRepository,
-        _userId = userId,
-        super(const OnboardingState());
+  }) : _prefs = sharedPreferences,
+       _envelopeRepository = envelopeRepository,
+       _accountRepository = accountRepository,
+       _budgetRepository = budgetRepository,
+       _userId = userId,
+       super(const OnboardingState());
 
   final SharedPreferences _prefs;
   final EnvelopeRepository _envelopeRepository;
@@ -186,8 +186,7 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       OnboardingStep.income when state.expectedIncome <= 0 =>
         OnboardingError.incomeRequired,
       OnboardingStep.envelopes
-          when state.categoryGroups
-              .every((g) => g.envelopes.isEmpty) =>
+          when state.categoryGroups.every((g) => g.envelopes.isEmpty) =>
         OnboardingError.envelopeRequired,
       _ => null,
     };
@@ -215,20 +214,36 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       // Create accounts.
       // startingBalance is stored as cents (int) — use .round() to handle
       // floating-point imprecision from the double input.
+      var totalStartingBalance = 0;
       for (final account in state.accounts) {
+        final balanceCents = (account.startingBalance * 100).round();
+        totalStartingBalance += balanceCents;
         await _accountRepository.createAccount(
           budgetId: budgetId,
           name: account.name,
           type: account.type,
           currency: account.currency,
-          startingBalance: (account.startingBalance * 100).round(),
+          startingBalance: balanceCents,
         );
       }
 
+      // Create the initial budget period for the current month.
+      // totalIncome is seeded with the sum of all account starting balances
+      // so that "Ready to Assign" reflects money available to budget.
+      final now = DateTime.now();
+      final periodStart = DateTime(now.year, now.month);
+      final periodEnd = DateTime(now.year, now.month + 1)
+          .subtract(const Duration(days: 1));
+      await _budgetRepository.createBudgetPeriod(
+        budgetId: budgetId,
+        startDate: periodStart,
+        endDate: periodEnd,
+        totalIncome: totalStartingBalance,
+      );
+
       // Create category groups and their envelopes
       for (final group in state.categoryGroups) {
-        final createdGroup =
-            await _envelopeRepository.createCategoryGroup(
+        final createdGroup = await _envelopeRepository.createCategoryGroup(
           budgetId: budgetId,
           name: group.name,
         );
