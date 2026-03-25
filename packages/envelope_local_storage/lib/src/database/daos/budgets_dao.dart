@@ -48,6 +48,9 @@ class BudgetsDao extends DatabaseAccessor<AppDatabase>
       (delete(budgets)..where((t) => t.id.equals(id))).go();
 
   // Budget Members CRUD
+  Future<BudgetMember?> getBudgetMember(String id) =>
+      (select(budgetMembers)..where((t) => t.id.equals(id))).getSingleOrNull();
+
   Future<List<BudgetMember>> getMembersByBudgetId(String budgetId) =>
       (select(budgetMembers)..where((t) => t.budgetId.equals(budgetId))).get();
 
@@ -55,8 +58,20 @@ class BudgetsDao extends DatabaseAccessor<AppDatabase>
       (select(budgetMembers)..where((t) => t.budgetId.equals(budgetId)))
           .watch();
 
-  Future<int> insertBudgetMember(BudgetMembersCompanion member) =>
-      into(budgetMembers).insert(member);
+  Future<int> insertBudgetMember(
+    BudgetMembersCompanion member, {
+    InsertMode mode = InsertMode.insert,
+  }) =>
+      into(budgetMembers).insert(member, mode: mode);
+
+  Future<void> batchInsertBudgetMembers(
+    List<BudgetMembersCompanion> entries, {
+    InsertMode mode = InsertMode.insert,
+  }) async {
+    await batch((b) {
+      b.insertAll(budgetMembers, entries, mode: mode);
+    });
+  }
 
   Future<bool> updateBudgetMember(BudgetMembersCompanion member) =>
       update(budgetMembers).replace(member);

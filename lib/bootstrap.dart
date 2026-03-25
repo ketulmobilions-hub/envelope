@@ -99,6 +99,7 @@ Future<void> bootstrap({
   final sharingRepository = SharingRepository(
     apiClient: apiClient,
     localDatabase: localDatabase,
+    supabaseClient: Supabase.instance.client,
   );
   final subscriptionRepository = SubscriptionRepository(
     apiClient: apiClient,

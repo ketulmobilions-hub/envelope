@@ -137,6 +137,28 @@ class BudgetsApiClient {
     }
   }
 
+  /// Invokes the `send-invite-email` Edge Function to send an invitation.
+  Future<void> invokeSendInviteEmail({
+    required String email,
+    required String budgetName,
+    required String inviterName,
+    required String inviteId,
+  }) async {
+    try {
+      await _supabaseClient.functions.invoke(
+        'send-invite-email',
+        body: {
+          'email': email,
+          'budgetName': budgetName,
+          'inviterName': inviterName,
+          'inviteId': inviteId,
+        },
+      );
+    } catch (error) {
+      throw EnvelopeApiException.fromPostgrestException(error);
+    }
+  }
+
   // --- Budget Periods ---
 
   /// Fetches all periods for a budget.
