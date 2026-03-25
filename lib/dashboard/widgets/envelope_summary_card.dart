@@ -131,12 +131,11 @@ class _CategoryGroupSection extends StatelessWidget {
     final theme = Theme.of(context);
 
     // Compute group totals.
-    final totalAllocated =
-        summaries.fold(0, (sum, s) => sum + s.allocated);
-    final totalAvailable =
-        summaries.fold(0, (sum, s) => sum + s.available);
-    final availColor =
-        totalAvailable < 0 ? AppColors.expense : AppColors.charcoal;
+    final totalAllocated = summaries.fold(0, (sum, s) => sum + s.allocated);
+    final totalAvailable = summaries.fold(0, (sum, s) => sum + s.available);
+    final availColor = totalAvailable < 0
+        ? AppColors.expense
+        : AppColors.charcoal;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -202,10 +201,10 @@ class _CategoryGroupSection extends StatelessWidget {
                           allocatedCents: s.allocated,
                           spentCents: s.spent,
                           isOverspent: s.isOverspent,
+                          color: AppColors.fromHex(s.envelope.color),
                           heroTag: 'envelope_${s.envelope.id}',
                           onTap: () => _openDetail(context, s),
-                          onLongPress: () =>
-                              _showQuickAllocate(context, s),
+                          onLongPress: () => _showQuickAllocate(context, s),
                         ),
                       ),
                     )
@@ -244,32 +243,32 @@ class _CategoryGroupSection extends StatelessWidget {
   }
 
   void _openDetail(BuildContext context, EnvelopeSummary summary) {
-    unawaited(Navigator.of(context).push(
-      PageRouteBuilder<void>(
-        transitionDuration: const Duration(milliseconds: 500),
-        reverseTransitionDuration:
-            const Duration(milliseconds: 400),
-        pageBuilder: (_, animation, secondaryAnimation) => BlocProvider(
-          create: (_) => EnvelopeDetailCubit(
-            envelopeRepository:
-                context.read<EnvelopeRepository>(),
-            envelope: summary.envelope,
-            allocation: summary.allocation,
-          ),
-          child: EnvelopeDetailPage(
-            categoryGroups: categoryGroups,
-          ),
-        ),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(
-            opacity: CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOut,
+    unawaited(
+      Navigator.of(context).push(
+        PageRouteBuilder<void>(
+          transitionDuration: const Duration(milliseconds: 500),
+          reverseTransitionDuration: const Duration(milliseconds: 400),
+          pageBuilder: (_, animation, secondaryAnimation) => BlocProvider(
+            create: (_) => EnvelopeDetailCubit(
+              envelopeRepository: context.read<EnvelopeRepository>(),
+              envelope: summary.envelope,
+              allocation: summary.allocation,
             ),
-            child: child,
-          );
-        },
+            child: EnvelopeDetailPage(
+              categoryGroups: categoryGroups,
+            ),
+          ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOut,
+              ),
+              child: child,
+            );
+          },
+        ),
       ),
-    ));
+    );
   }
 }

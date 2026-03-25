@@ -3223,6 +3223,15 @@ class $EnvelopesTable extends Envelopes
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<String> color = GeneratedColumn<String>(
+    'color',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -3242,6 +3251,7 @@ class $EnvelopesTable extends Envelopes
     name,
     sortOrder,
     isArchived,
+    color,
     createdAt,
   ];
   @override
@@ -3300,6 +3310,12 @@ class $EnvelopesTable extends Envelopes
         isArchived.isAcceptableOrUnknown(data['is_archived']!, _isArchivedMeta),
       );
     }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -3341,6 +3357,10 @@ class $EnvelopesTable extends Envelopes
         DriftSqlType.bool,
         data['${effectivePrefix}is_archived'],
       )!,
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}color'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -3361,6 +3381,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
   final String name;
   final int sortOrder;
   final bool isArchived;
+  final String? color;
   final DateTime createdAt;
   const Envelope({
     required this.id,
@@ -3369,6 +3390,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
     required this.name,
     required this.sortOrder,
     required this.isArchived,
+    this.color,
     required this.createdAt,
   });
   @override
@@ -3380,6 +3402,9 @@ class Envelope extends DataClass implements Insertable<Envelope> {
     map['name'] = Variable<String>(name);
     map['sort_order'] = Variable<int>(sortOrder);
     map['is_archived'] = Variable<bool>(isArchived);
+    if (!nullToAbsent || color != null) {
+      map['color'] = Variable<String>(color);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -3392,6 +3417,9 @@ class Envelope extends DataClass implements Insertable<Envelope> {
       name: Value(name),
       sortOrder: Value(sortOrder),
       isArchived: Value(isArchived),
+      color: color == null && nullToAbsent
+          ? const Value.absent()
+          : Value(color),
       createdAt: Value(createdAt),
     );
   }
@@ -3408,6 +3436,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
       name: serializer.fromJson<String>(json['name']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
       isArchived: serializer.fromJson<bool>(json['isArchived']),
+      color: serializer.fromJson<String?>(json['color']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -3421,6 +3450,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
       'name': serializer.toJson<String>(name),
       'sortOrder': serializer.toJson<int>(sortOrder),
       'isArchived': serializer.toJson<bool>(isArchived),
+      'color': serializer.toJson<String?>(color),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -3432,6 +3462,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
     String? name,
     int? sortOrder,
     bool? isArchived,
+    Value<String?> color = const Value.absent(),
     DateTime? createdAt,
   }) => Envelope(
     id: id ?? this.id,
@@ -3440,6 +3471,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
     name: name ?? this.name,
     sortOrder: sortOrder ?? this.sortOrder,
     isArchived: isArchived ?? this.isArchived,
+    color: color.present ? color.value : this.color,
     createdAt: createdAt ?? this.createdAt,
   );
   Envelope copyWithCompanion(EnvelopesCompanion data) {
@@ -3454,6 +3486,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
       isArchived: data.isArchived.present
           ? data.isArchived.value
           : this.isArchived,
+      color: data.color.present ? data.color.value : this.color,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -3467,6 +3500,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
           ..write('name: $name, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('isArchived: $isArchived, ')
+          ..write('color: $color, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -3480,6 +3514,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
     name,
     sortOrder,
     isArchived,
+    color,
     createdAt,
   );
   @override
@@ -3492,6 +3527,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
           other.name == this.name &&
           other.sortOrder == this.sortOrder &&
           other.isArchived == this.isArchived &&
+          other.color == this.color &&
           other.createdAt == this.createdAt);
 }
 
@@ -3502,6 +3538,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
   final Value<String> name;
   final Value<int> sortOrder;
   final Value<bool> isArchived;
+  final Value<String?> color;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
   const EnvelopesCompanion({
@@ -3511,6 +3548,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
     this.name = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.isArchived = const Value.absent(),
+    this.color = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -3521,6 +3559,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
     required String name,
     this.sortOrder = const Value.absent(),
     this.isArchived = const Value.absent(),
+    this.color = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -3535,6 +3574,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
     Expression<String>? name,
     Expression<int>? sortOrder,
     Expression<bool>? isArchived,
+    Expression<String>? color,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -3545,6 +3585,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
       if (name != null) 'name': name,
       if (sortOrder != null) 'sort_order': sortOrder,
       if (isArchived != null) 'is_archived': isArchived,
+      if (color != null) 'color': color,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -3557,6 +3598,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
     Value<String>? name,
     Value<int>? sortOrder,
     Value<bool>? isArchived,
+    Value<String?>? color,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
   }) {
@@ -3567,6 +3609,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
       name: name ?? this.name,
       sortOrder: sortOrder ?? this.sortOrder,
       isArchived: isArchived ?? this.isArchived,
+      color: color ?? this.color,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -3593,6 +3636,9 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
     if (isArchived.present) {
       map['is_archived'] = Variable<bool>(isArchived.value);
     }
+    if (color.present) {
+      map['color'] = Variable<String>(color.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -3611,6 +3657,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
           ..write('name: $name, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('isArchived: $isArchived, ')
+          ..write('color: $color, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -12920,6 +12967,7 @@ typedef $$EnvelopesTableCreateCompanionBuilder =
       required String name,
       Value<int> sortOrder,
       Value<bool> isArchived,
+      Value<String?> color,
       required DateTime createdAt,
       Value<int> rowid,
     });
@@ -12931,6 +12979,7 @@ typedef $$EnvelopesTableUpdateCompanionBuilder =
       Value<String> name,
       Value<int> sortOrder,
       Value<bool> isArchived,
+      Value<String?> color,
       Value<DateTime> createdAt,
       Value<int> rowid,
     });
@@ -12971,6 +13020,11 @@ class $$EnvelopesTableFilterComposer
 
   ColumnFilters<bool> get isArchived => $composableBuilder(
     column: $table.isArchived,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get color => $composableBuilder(
+    column: $table.color,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13019,6 +13073,11 @@ class $$EnvelopesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -13055,6 +13114,9 @@ class $$EnvelopesTableAnnotationComposer
     column: $table.isArchived,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -13094,6 +13156,7 @@ class $$EnvelopesTableTableManager
                 Value<String> name = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
                 Value<bool> isArchived = const Value.absent(),
+                Value<String?> color = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => EnvelopesCompanion(
@@ -13103,6 +13166,7 @@ class $$EnvelopesTableTableManager
                 name: name,
                 sortOrder: sortOrder,
                 isArchived: isArchived,
+                color: color,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -13114,6 +13178,7 @@ class $$EnvelopesTableTableManager
                 required String name,
                 Value<int> sortOrder = const Value.absent(),
                 Value<bool> isArchived = const Value.absent(),
+                Value<String?> color = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
               }) => EnvelopesCompanion.insert(
@@ -13123,6 +13188,7 @@ class $$EnvelopesTableTableManager
                 name: name,
                 sortOrder: sortOrder,
                 isArchived: isArchived,
+                color: color,
                 createdAt: createdAt,
                 rowid: rowid,
               ),

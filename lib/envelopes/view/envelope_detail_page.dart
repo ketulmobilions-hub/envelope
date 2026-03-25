@@ -23,17 +23,20 @@ class EnvelopeDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<EnvelopeDetailCubit, EnvelopeDetailState>(
       builder: (context, state) {
+        final envelopeColor =
+            AppColors.fromHex(state.envelope.color) ?? AppColors.primary;
         return Scaffold(
-          backgroundColor: AppColors.primary,
+          backgroundColor: envelopeColor,
           body: CustomScrollView(
             slivers: [
               _EnvelopeAppBar(
                 state: state,
+                envelopeColor: envelopeColor,
                 heroTag: 'envelope_${state.envelope.id}',
                 onEdit: () => _openEdit(context, state.envelope),
                 onDelete: () => _confirmDelete(context),
               ),
-              const _EnvelopeContent(),
+              _EnvelopeContent(envelopeColor: envelopeColor),
             ],
           ),
         );
@@ -49,8 +52,7 @@ class EnvelopeDetailPage extends StatelessWidget {
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
         builder: (_) => EnvelopeFormPage(
-          envelopeRepository:
-              context.read<EnvelopeRepository>(),
+          envelopeRepository: context.read<EnvelopeRepository>(),
           budgetId: envelope.budgetId,
           categoryGroups: categoryGroups,
           envelope: envelope,
@@ -76,17 +78,14 @@ class EnvelopeDetailPage extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () =>
-                Navigator.of(dialogContext).pop(false),
+            onPressed: () => Navigator.of(dialogContext).pop(false),
             child: Text(l10n.envelopesCancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor:
-                  Theme.of(dialogContext).colorScheme.error,
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
             ),
-            onPressed: () =>
-                Navigator.of(dialogContext).pop(true),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
             child: Text(l10n.envelopesDelete),
           ),
         ],
@@ -123,19 +122,20 @@ class EnvelopeDetailPage extends StatelessWidget {
 class _EnvelopeAppBar extends StatefulWidget {
   const _EnvelopeAppBar({
     required this.state,
+    required this.envelopeColor,
     required this.heroTag,
     required this.onEdit,
     required this.onDelete,
   });
 
   final EnvelopeDetailState state;
+  final Color envelopeColor;
   final String heroTag;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   @override
-  State<_EnvelopeAppBar> createState() =>
-      _EnvelopeAppBarState();
+  State<_EnvelopeAppBar> createState() => _EnvelopeAppBarState();
 }
 
 class _EnvelopeAppBarState extends State<_EnvelopeAppBar>
@@ -170,37 +170,31 @@ class _EnvelopeAppBarState extends State<_EnvelopeAppBar>
       end: Offset.zero,
     ).animate(_slideCurve);
 
+    // Start content animation after the route transition completes.
+    _startAfterRouteTransition();
   }
 
-  void _onRouteAnimationStatus(AnimationStatus status) {
-    if (status == AnimationStatus.completed && mounted) {
-      unawaited(_controller.forward());
-    }
-  }
+  void _startAfterRouteTransition() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final animation = ModalRoute.of(context)?.animation;
+      if (animation == null || animation.status == AnimationStatus.completed) {
+        unawaited(_controller.forward());
+      } else {
+        void listener(AnimationStatus status) {
+          if (status == AnimationStatus.completed && mounted) {
+            animation.removeStatusListener(listener);
+            unawaited(_controller.forward());
+          }
+        }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Re-attach in case the route wasn't ready in initState.
-    final routeAnimation = ModalRoute.of(context)?.animation;
-    routeAnimation?.removeStatusListener(
-      _onRouteAnimationStatus,
-    );
-    routeAnimation?.addStatusListener(
-      _onRouteAnimationStatus,
-    );
-    // If the route is already completed (e.g. no transition),
-    // start immediately.
-    if (routeAnimation?.status == AnimationStatus.completed) {
-      unawaited(_controller.forward());
-    }
+        animation.addStatusListener(listener);
+      }
+    });
   }
 
   @override
   void dispose() {
-    ModalRoute.of(context)?.animation?.removeStatusListener(
-      _onRouteAnimationStatus,
-    );
     _opacityCurve.dispose();
     _slideCurve.dispose();
     _controller.dispose();
@@ -216,9 +210,8 @@ class _EnvelopeAppBarState extends State<_EnvelopeAppBar>
     return SliverAppBar(
       expandedHeight: 200,
       pinned: true,
-      backgroundColor: AppColors.primary,
-      iconTheme:
-          const IconThemeData(color: AppColors.onPrimary),
+      backgroundColor: widget.envelopeColor,
+      iconTheme: const IconThemeData(color: AppColors.onPrimary),
       actions: [
         IconButton(
           icon: const Icon(Icons.edit_outlined),
@@ -247,16 +240,18 @@ class _EnvelopeAppBarState extends State<_EnvelopeAppBar>
           child: Material(
             type: MaterialType.transparency,
             child: Container(
-              color: AppColors.primary,
+              color: widget.envelopeColor,
               padding: const EdgeInsets.fromLTRB(
-                24, 80, 24, 48,
+                24,
+                80,
+                24,
+                48,
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    l10n.envelopesDetailAvailable
-                        .toUpperCase(),
+                    l10n.envelopesDetailAvailable.toUpperCase(),
                     style: const TextStyle(
                       color: AppColors.onPrimary,
                       fontSize: 13,
@@ -274,16 +269,14 @@ class _EnvelopeAppBarState extends State<_EnvelopeAppBar>
                   ),
                   const SizedBox(height: 12),
                   Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       SlideTransition(
                         position: _slideLeft,
                         child: FadeTransition(
                           opacity: _opacityCurve,
                           child: _HeaderDetail(
-                            label:
-                                l10n.envelopesDetailAllocated,
+                            label: l10n.envelopesDetailAllocated,
                             amount: state.allocated,
                           ),
                         ),
@@ -294,8 +287,7 @@ class _EnvelopeAppBarState extends State<_EnvelopeAppBar>
                         child: FadeTransition(
                           opacity: _opacityCurve,
                           child: _HeaderDetail(
-                            label:
-                                l10n.envelopesDetailSpent,
+                            label: l10n.envelopesDetailSpent,
                             amount: state.spent,
                           ),
                         ),
@@ -315,11 +307,12 @@ class _EnvelopeAppBarState extends State<_EnvelopeAppBar>
 // ── Content section with slide-up animation ──────────────────
 
 class _EnvelopeContent extends StatefulWidget {
-  const _EnvelopeContent();
+  const _EnvelopeContent({required this.envelopeColor});
+
+  final Color envelopeColor;
 
   @override
-  State<_EnvelopeContent> createState() =>
-      _EnvelopeContentState();
+  State<_EnvelopeContent> createState() => _EnvelopeContentState();
 }
 
 class _EnvelopeContentState extends State<_EnvelopeContent>
@@ -348,34 +341,32 @@ class _EnvelopeContentState extends State<_EnvelopeContent>
       begin: const Offset(0, 0.15),
       end: Offset.zero,
     ).animate(_slideCurve);
+
+    // Start content animation after the route transition completes.
+    _startAfterRouteTransition();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final routeAnimation = ModalRoute.of(context)?.animation;
-    routeAnimation?.removeStatusListener(
-      _onRouteAnimationStatus,
-    );
-    routeAnimation?.addStatusListener(
-      _onRouteAnimationStatus,
-    );
-    if (routeAnimation?.status == AnimationStatus.completed) {
-      unawaited(_controller.forward());
-    }
-  }
+  void _startAfterRouteTransition() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final animation = ModalRoute.of(context)?.animation;
+      if (animation == null || animation.status == AnimationStatus.completed) {
+        unawaited(_controller.forward());
+      } else {
+        void listener(AnimationStatus status) {
+          if (status == AnimationStatus.completed && mounted) {
+            animation.removeStatusListener(listener);
+            unawaited(_controller.forward());
+          }
+        }
 
-  void _onRouteAnimationStatus(AnimationStatus status) {
-    if (status == AnimationStatus.completed && mounted) {
-      unawaited(_controller.forward());
-    }
+        animation.addStatusListener(listener);
+      }
+    });
   }
 
   @override
   void dispose() {
-    ModalRoute.of(context)?.animation?.removeStatusListener(
-      _onRouteAnimationStatus,
-    );
     _slideCurve.dispose();
     _opacityCurve.dispose();
     _controller.dispose();
@@ -389,8 +380,7 @@ class _EnvelopeContentState extends State<_EnvelopeContent>
     final mutedStyle = theme.textTheme.bodyMedium?.copyWith(
       color: AppColors.onPrimary.withValues(alpha: 0.85),
     );
-    final sectionTitle =
-        theme.textTheme.titleSmall?.copyWith(
+    final sectionTitle = theme.textTheme.titleSmall?.copyWith(
       fontWeight: FontWeight.w700,
       letterSpacing: 0.8,
       color: AppColors.onPrimary,
@@ -402,7 +392,7 @@ class _EnvelopeContentState extends State<_EnvelopeContent>
         child: FadeTransition(
           opacity: _opacityCurve,
           child: Container(
-            color: AppColors.primary,
+            color: widget.envelopeColor,
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
@@ -418,8 +408,7 @@ class _EnvelopeContentState extends State<_EnvelopeContent>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        l10n
-                            .envelopesDetailTransactionsPlaceholder
+                        l10n.envelopesDetailTransactionsPlaceholder
                             .toUpperCase(),
                         style: mutedStyle,
                         textAlign: TextAlign.center,
@@ -428,8 +417,7 @@ class _EnvelopeContentState extends State<_EnvelopeContent>
                   ),
                 ),
                 Divider(
-                  color: AppColors.onPrimary
-                      .withValues(alpha: 0.2),
+                  color: AppColors.onPrimary.withValues(alpha: 0.2),
                 ),
                 // Goal progress.
                 Padding(
@@ -443,8 +431,7 @@ class _EnvelopeContentState extends State<_EnvelopeContent>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        l10n
-                            .envelopesDetailGoalProgressPlaceholder
+                        l10n.envelopesDetailGoalProgressPlaceholder
                             .toUpperCase(),
                         style: mutedStyle,
                         textAlign: TextAlign.center,
@@ -479,8 +466,7 @@ class _HeaderDetail extends StatelessWidget {
         Text(
           label.toUpperCase(),
           style: TextStyle(
-            color:
-                AppColors.onPrimary.withValues(alpha: 0.8),
+            color: AppColors.onPrimary.withValues(alpha: 0.8),
             fontSize: 11,
             letterSpacing: 0.8,
           ),

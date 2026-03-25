@@ -13,6 +13,7 @@ abstract class Envelope with _$Envelope {
     required DateTime createdAt,
     @Default(0) int sortOrder,
     @Default(false) bool isArchived,
+    @Default(null) String? color,
   }) = _Envelope;
 
   factory Envelope.fromJson(Map<String, dynamic> json) =>
