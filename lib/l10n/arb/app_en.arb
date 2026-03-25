@@ -559,6 +559,10 @@
     "@envelopesSaveButton": {
         "description": "Button to save edits"
     },
+    "envelopesColorLabel": "Color",
+    "@envelopesColorLabel": {
+        "description": "Label for the envelope color picker"
+    },
     "envelopesReorder": "Reorder",
     "@envelopesReorder": {
         "description": "Button to enter reorder mode"

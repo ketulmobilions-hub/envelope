@@ -9,6 +9,7 @@ class Envelopes extends Table {
       integer().named('sort_order').withDefault(const Constant(0))();
   BoolColumn get isArchived =>
       boolean().named('is_archived').withDefault(const Constant(false))();
+  TextColumn get color => text().nullable()();
   DateTimeColumn get createdAt => dateTime().named('created_at')();
 
   @override

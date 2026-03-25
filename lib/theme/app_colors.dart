@@ -37,4 +37,13 @@ abstract final class AppColors {
 
   /// Dark brown on terracotta — icons & accents on primary.
   static const Color primaryDark = Color(0xFF5C2E1A);
+
+  /// Parses a "#RRGGBB" hex string to a [Color]. Returns `null` if invalid.
+  static Color? fromHex(String? hex) {
+    if (hex == null || hex.length != 7 || !hex.startsWith('#')) return null;
+    final value = int.tryParse(hex.substring(1), radix: 16);
+    if (value == null) return null;
+    return Color(0xFF000000 | value);
+  }
+
 }

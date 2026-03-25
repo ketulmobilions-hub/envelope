@@ -20,6 +20,7 @@ mixin _$Envelope {
   DateTime get createdAt;
   int get sortOrder;
   bool get isArchived;
+  String? get color;
 
   /// Create a copy of Envelope
   /// with the given fields replaced by the non-null parameter values.
@@ -47,7 +48,8 @@ mixin _$Envelope {
             (identical(other.sortOrder, sortOrder) ||
                 other.sortOrder == sortOrder) &&
             (identical(other.isArchived, isArchived) ||
-                other.isArchived == isArchived));
+                other.isArchived == isArchived) &&
+            (identical(other.color, color) || other.color == color));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -61,11 +63,12 @@ mixin _$Envelope {
     createdAt,
     sortOrder,
     isArchived,
+    color,
   );
 
   @override
   String toString() {
-    return 'Envelope(id: $id, categoryGroupId: $categoryGroupId, budgetId: $budgetId, name: $name, createdAt: $createdAt, sortOrder: $sortOrder, isArchived: $isArchived)';
+    return 'Envelope(id: $id, categoryGroupId: $categoryGroupId, budgetId: $budgetId, name: $name, createdAt: $createdAt, sortOrder: $sortOrder, isArchived: $isArchived, color: $color)';
   }
 }
 
@@ -82,6 +85,7 @@ abstract mixin class $EnvelopeCopyWith<$Res> {
     DateTime createdAt,
     int sortOrder,
     bool isArchived,
+    String? color,
   });
 }
 
@@ -104,6 +108,7 @@ class _$EnvelopeCopyWithImpl<$Res> implements $EnvelopeCopyWith<$Res> {
     Object? createdAt = null,
     Object? sortOrder = null,
     Object? isArchived = null,
+    Object? color = freezed,
   }) {
     return _then(
       _self.copyWith(
@@ -135,6 +140,10 @@ class _$EnvelopeCopyWithImpl<$Res> implements $EnvelopeCopyWith<$Res> {
             ? _self.isArchived
             : isArchived // ignore: cast_nullable_to_non_nullable
                   as bool,
+        color: freezed == color
+            ? _self.color
+            : color // ignore: cast_nullable_to_non_nullable
+                  as String?,
       ),
     );
   }
@@ -241,6 +250,7 @@ extension EnvelopePatterns on Envelope {
       DateTime createdAt,
       int sortOrder,
       bool isArchived,
+      String? color,
     )?
     $default, {
     required TResult orElse(),
@@ -256,6 +266,7 @@ extension EnvelopePatterns on Envelope {
           _that.createdAt,
           _that.sortOrder,
           _that.isArchived,
+          _that.color,
         );
       case _:
         return orElse();
@@ -285,6 +296,7 @@ extension EnvelopePatterns on Envelope {
       DateTime createdAt,
       int sortOrder,
       bool isArchived,
+      String? color,
     )
     $default,
   ) {
@@ -299,6 +311,7 @@ extension EnvelopePatterns on Envelope {
           _that.createdAt,
           _that.sortOrder,
           _that.isArchived,
+          _that.color,
         );
       case _:
         throw StateError('Unexpected subclass');
@@ -327,6 +340,7 @@ extension EnvelopePatterns on Envelope {
       DateTime createdAt,
       int sortOrder,
       bool isArchived,
+      String? color,
     )?
     $default,
   ) {
@@ -341,6 +355,7 @@ extension EnvelopePatterns on Envelope {
           _that.createdAt,
           _that.sortOrder,
           _that.isArchived,
+          _that.color,
         );
       case _:
         return null;
@@ -359,6 +374,7 @@ class _Envelope implements Envelope {
     required this.createdAt,
     this.sortOrder = 0,
     this.isArchived = false,
+    this.color = null,
   });
   factory _Envelope.fromJson(Map<String, dynamic> json) =>
       _$EnvelopeFromJson(json);
@@ -379,6 +395,9 @@ class _Envelope implements Envelope {
   @override
   @JsonKey()
   final bool isArchived;
+  @override
+  @JsonKey()
+  final String? color;
 
   /// Create a copy of Envelope
   /// with the given fields replaced by the non-null parameter values.
@@ -409,7 +428,8 @@ class _Envelope implements Envelope {
             (identical(other.sortOrder, sortOrder) ||
                 other.sortOrder == sortOrder) &&
             (identical(other.isArchived, isArchived) ||
-                other.isArchived == isArchived));
+                other.isArchived == isArchived) &&
+            (identical(other.color, color) || other.color == color));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -423,11 +443,12 @@ class _Envelope implements Envelope {
     createdAt,
     sortOrder,
     isArchived,
+    color,
   );
 
   @override
   String toString() {
-    return 'Envelope(id: $id, categoryGroupId: $categoryGroupId, budgetId: $budgetId, name: $name, createdAt: $createdAt, sortOrder: $sortOrder, isArchived: $isArchived)';
+    return 'Envelope(id: $id, categoryGroupId: $categoryGroupId, budgetId: $budgetId, name: $name, createdAt: $createdAt, sortOrder: $sortOrder, isArchived: $isArchived, color: $color)';
   }
 }
 
@@ -446,6 +467,7 @@ abstract mixin class _$EnvelopeCopyWith<$Res>
     DateTime createdAt,
     int sortOrder,
     bool isArchived,
+    String? color,
   });
 }
 
@@ -468,6 +490,7 @@ class __$EnvelopeCopyWithImpl<$Res> implements _$EnvelopeCopyWith<$Res> {
     Object? createdAt = null,
     Object? sortOrder = null,
     Object? isArchived = null,
+    Object? color = freezed,
   }) {
     return _then(
       _Envelope(
@@ -499,6 +522,10 @@ class __$EnvelopeCopyWithImpl<$Res> implements _$EnvelopeCopyWith<$Res> {
             ? _self.isArchived
             : isArchived // ignore: cast_nullable_to_non_nullable
                   as bool,
+        color: freezed == color
+            ? _self.color
+            : color // ignore: cast_nullable_to_non_nullable
+                  as String?,
       ),
     );
   }

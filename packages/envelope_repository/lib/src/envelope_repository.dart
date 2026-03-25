@@ -220,6 +220,7 @@ class EnvelopeRepository {
     required String categoryGroupId,
     required String budgetId,
     required String name,
+    String? color,
   }) async {
     try {
       final dto = EnvelopeDto(
@@ -227,6 +228,7 @@ class EnvelopeRepository {
         categoryGroupId: categoryGroupId,
         budgetId: budgetId,
         name: name,
+        color: color,
         createdAt: DateTime.now(),
       );
 
@@ -611,6 +613,7 @@ class EnvelopeRepository {
       name: dto.name,
       sortOrder: dto.sortOrder,
       isArchived: dto.isArchived,
+      color: dto.color,
       createdAt: dto.createdAt,
     );
   }
@@ -623,6 +626,7 @@ class EnvelopeRepository {
       name: row.name,
       sortOrder: row.sortOrder,
       isArchived: row.isArchived,
+      color: row.color,
       createdAt: row.createdAt,
     );
   }
@@ -635,6 +639,7 @@ class EnvelopeRepository {
       name: envelope.name,
       sortOrder: envelope.sortOrder,
       isArchived: envelope.isArchived,
+      color: envelope.color,
       createdAt: envelope.createdAt,
     );
   }
@@ -716,6 +721,7 @@ class EnvelopeRepository {
       name: dto.name,
       sortOrder: Value(dto.sortOrder),
       isArchived: Value(dto.isArchived),
+      color: Value(dto.color),
       createdAt: dto.createdAt,
     );
   }
