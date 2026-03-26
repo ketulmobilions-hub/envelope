@@ -215,11 +215,15 @@ class _EnvelopesViewState extends State<EnvelopesView> {
         .toList();
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
-        builder: (_) => EnvelopeFormPage(
-          envelopeRepository: context.read<EnvelopeRepository>(),
-          budgetId: widget.budgetId,
-          categoryGroups: activeGroups,
-          initialCategoryGroupId: initialGroupId,
+        builder: (_) => BlocProvider(
+          create: (_) => EnvelopeFormCubit(
+            envelopeRepository: context.read<EnvelopeRepository>(),
+            budgetId: widget.budgetId,
+          ),
+          child: EnvelopeFormPage(
+            categoryGroups: activeGroups,
+            initialCategoryGroupId: initialGroupId,
+          ),
         ),
       ),
     );
@@ -238,11 +242,16 @@ class _EnvelopesViewState extends State<EnvelopesView> {
         .toList();
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
-        builder: (_) => EnvelopeFormPage(
-          envelopeRepository: context.read<EnvelopeRepository>(),
-          budgetId: widget.budgetId,
-          categoryGroups: activeGroups,
-          envelope: envelope,
+        builder: (_) => BlocProvider(
+          create: (_) => EnvelopeFormCubit(
+            envelopeRepository: context.read<EnvelopeRepository>(),
+            budgetId: widget.budgetId,
+            envelope: envelope,
+          ),
+          child: EnvelopeFormPage(
+            categoryGroups: activeGroups,
+            envelope: envelope,
+          ),
         ),
       ),
     );

@@ -3,6 +3,7 @@ import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/transactions/bloc/bloc.dart';
+import 'package:envelope/transactions/cubit/cubit.dart';
 import 'package:envelope/transactions/view/transaction_form_page.dart';
 import 'package:envelope/transactions/view/transaction_search_page.dart';
 import 'package:envelope/transactions/widgets/widgets.dart';
@@ -114,17 +115,19 @@ class TransactionsView extends StatelessWidget {
     if (!context.mounted) return;
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
-        builder: (_) => TransactionFormPage(
-          transactionRepository:
-              context.read<TransactionRepository>(),
-          accountRepository: context.read<AccountRepository>(),
-          envelopeRepository:
-              context.read<EnvelopeRepository>(),
-          budgetRepository: budgetRepository,
-          budgetId: budgetId,
-          userId:
-              context.read<AuthBloc>().state.user?.id ?? '',
-          budgetPeriodId: periodId,
+        builder: (_) => BlocProvider(
+          create: (_) => TransactionFormCubit(
+            transactionRepository:
+                context.read<TransactionRepository>(),
+            accountRepository: context.read<AccountRepository>(),
+            envelopeRepository:
+                context.read<EnvelopeRepository>(),
+            budgetId: budgetId,
+            userId:
+                context.read<AuthBloc>().state.user?.id ?? '',
+            budgetPeriodId: periodId,
+          ),
+          child: const TransactionFormPage(),
         ),
       ),
     );
@@ -225,17 +228,19 @@ class _TransactionsList extends StatelessWidget {
     if (!context.mounted) return;
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
-        builder: (_) => TransactionFormPage(
-          transactionRepository:
-              context.read<TransactionRepository>(),
-          accountRepository: context.read<AccountRepository>(),
-          envelopeRepository:
-              context.read<EnvelopeRepository>(),
-          budgetRepository: budgetRepository,
-          budgetId: budgetId,
-          userId: transaction.createdBy,
-          budgetPeriodId: periodId,
-          transaction: transaction,
+        builder: (_) => BlocProvider(
+          create: (_) => TransactionFormCubit(
+            transactionRepository:
+                context.read<TransactionRepository>(),
+            accountRepository: context.read<AccountRepository>(),
+            envelopeRepository:
+                context.read<EnvelopeRepository>(),
+            budgetId: budgetId,
+            userId: transaction.createdBy,
+            budgetPeriodId: periodId,
+            transaction: transaction,
+          ),
+          child: TransactionFormPage(transaction: transaction),
         ),
       ),
     );

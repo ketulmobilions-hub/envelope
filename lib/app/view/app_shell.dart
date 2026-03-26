@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:account_repository/account_repository.dart';
-import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
+import 'package:envelope/transactions/cubit/cubit.dart';
 import 'package:envelope/transactions/view/transaction_form_page.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
@@ -65,13 +65,15 @@ class AppShell extends StatelessWidget {
     unawaited(
       Navigator.of(context).push<bool>(
         MaterialPageRoute(
-          builder: (_) => TransactionFormPage(
-            transactionRepository: context.read<TransactionRepository>(),
-            accountRepository: context.read<AccountRepository>(),
-            envelopeRepository: context.read<EnvelopeRepository>(),
-            budgetRepository: context.read<BudgetRepository>(),
-            budgetId: budgetId,
-            userId: user.id,
+          builder: (_) => BlocProvider(
+            create: (_) => TransactionFormCubit(
+              transactionRepository: context.read<TransactionRepository>(),
+              accountRepository: context.read<AccountRepository>(),
+              envelopeRepository: context.read<EnvelopeRepository>(),
+              budgetId: budgetId,
+              userId: user.id,
+            ),
+            child: const TransactionFormPage(),
           ),
         ),
       ),

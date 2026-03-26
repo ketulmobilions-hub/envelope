@@ -1,7 +1,9 @@
+import 'package:envelope/envelopes/cubit/cubit.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Page for adding or editing an envelope.
 ///
@@ -10,16 +12,12 @@ import 'package:flutter/material.dart';
 /// [initialCategoryGroupId] pre-selects a group when adding a new envelope.
 class EnvelopeFormPage extends StatefulWidget {
   const EnvelopeFormPage({
-    required this.envelopeRepository,
-    required this.budgetId,
     required this.categoryGroups,
     this.initialCategoryGroupId,
     this.envelope,
     super.key,
   });
 
-  final EnvelopeRepository envelopeRepository;
-  final String budgetId;
   final List<CategoryGroup> categoryGroups;
   final String? initialCategoryGroupId;
   final Envelope? envelope;
@@ -33,7 +31,6 @@ class _EnvelopeFormPageState extends State<EnvelopeFormPage> {
   late final TextEditingController _nameController;
   late String _selectedGroupId;
   String? _selectedColor;
-  bool _isSubmitting = false;
 
   /// Predefined warm color swatches — visually distinct medium tones with
   /// ≥ 4.5:1 contrast ratio against white text (WCAG AA compliant).
@@ -74,125 +71,154 @@ class _EnvelopeFormPageState extends State<EnvelopeFormPage> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          _isEditing ? l10n.envelopesEditEnvelope : l10n.envelopesAddEnvelope,
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 500),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TextFormField(
-                  controller: _nameController,
-                  decoration: InputDecoration(
-                    labelText: l10n.envelopesEnvelopeNameLabel,
-                    prefixIcon: const Icon(Icons.folder_outlined),
-                  ),
-                  textInputAction: TextInputAction.next,
-                  textCapitalization: TextCapitalization.words,
-                  autofocus: true,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return l10n.envelopesEnvelopeNameRequired;
-                    }
-                    return null;
-                  },
+    return BlocListener<EnvelopeFormCubit, EnvelopeFormState>(
+      listener: (context, state) {
+        if (state.status == EnvelopeFormStatus.success) {
+          Navigator.of(context).pop(true);
+        } else if (state.status == EnvelopeFormStatus.failure) {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(
+                  state.errorMessage ?? l10n.envelopesErrorUpdateFailed,
                 ),
-                const SizedBox(height: 16),
-                if (widget.categoryGroups.isNotEmpty)
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedGroupId.isNotEmpty
-                        ? _selectedGroupId
-                        : null,
+              ),
+            );
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            _isEditing
+                ? l10n.envelopesEditEnvelope
+                : l10n.envelopesAddEnvelope,
+          ),
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextFormField(
+                    controller: _nameController,
                     decoration: InputDecoration(
-                      labelText: l10n.envelopesCategoryGroupLabel,
-                      prefixIcon: const Icon(Icons.category_outlined),
+                      labelText: l10n.envelopesEnvelopeNameLabel,
+                      prefixIcon: const Icon(Icons.folder_outlined),
                     ),
-                    items: widget.categoryGroups.map((group) {
-                      return DropdownMenuItem(
-                        value: group.id,
-                        child: Text(group.name),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() => _selectedGroupId = value);
+                    textInputAction: TextInputAction.next,
+                    textCapitalization: TextCapitalization.words,
+                    autofocus: true,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return l10n.envelopesEnvelopeNameRequired;
                       }
+                      return null;
                     },
                   ),
-                const SizedBox(height: 16),
-                Text(
-                  l10n.envelopesColorLabel,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.secondaryText,
+                  const SizedBox(height: 16),
+                  if (widget.categoryGroups.isNotEmpty)
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedGroupId.isNotEmpty
+                          ? _selectedGroupId
+                          : null,
+                      decoration: InputDecoration(
+                        labelText: l10n.envelopesCategoryGroupLabel,
+                        prefixIcon: const Icon(Icons.category_outlined),
+                      ),
+                      items: widget.categoryGroups.map((group) {
+                        return DropdownMenuItem(
+                          value: group.id,
+                          child: Text(group.name),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() => _selectedGroupId = value);
+                        }
+                      },
+                    ),
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.envelopesColorLabel,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.secondaryText,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: _colorSwatches.map((swatch) {
-                    final isSelected = _selectedColor == swatch.hex;
-                    return Semantics(
-                      label: swatch.label,
-                      selected: isSelected,
-                      button: true,
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedColor = isSelected ? null : swatch.hex;
-                          });
-                        },
-                        child: Tooltip(
-                          message: swatch.label,
-                          child: Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: swatch.color,
-                              shape: BoxShape.circle,
-                              border: isSelected
-                                  ? Border.all(
-                                      color: AppColors.charcoal,
-                                      width: 2.5,
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: _colorSwatches.map((swatch) {
+                      final isSelected = _selectedColor == swatch.hex;
+                      return Semantics(
+                        label: swatch.label,
+                        selected: isSelected,
+                        button: true,
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedColor =
+                                  isSelected ? null : swatch.hex;
+                            });
+                          },
+                          child: Tooltip(
+                            message: swatch.label,
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: swatch.color,
+                                shape: BoxShape.circle,
+                                border: isSelected
+                                    ? Border.all(
+                                        color: AppColors.charcoal,
+                                        width: 2.5,
+                                      )
+                                    : null,
+                              ),
+                              child: isSelected
+                                  ? const Icon(
+                                      Icons.check,
+                                      color: Colors.white,
+                                      size: 18,
                                     )
                                   : null,
                             ),
-                            child: isSelected
-                                ? const Icon(
-                                    Icons.check,
-                                    color: Colors.white,
-                                    size: 18,
-                                  )
-                                : null,
                           ),
                         ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 32),
-                FilledButton(
-                  onPressed: _isSubmitting ? null : _submit,
-                  child: _isSubmitting
-                      ? const SizedBox.square(
-                          dimension: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(
-                          _isEditing
-                              ? l10n.envelopesSaveButton
-                              : l10n.envelopesCreateButton,
-                        ),
-                ),
-              ],
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 32),
+                  BlocBuilder<EnvelopeFormCubit, EnvelopeFormState>(
+                    buildWhen: (prev, curr) => prev.status != curr.status,
+                    builder: (context, state) {
+                      final isSubmitting =
+                          state.status == EnvelopeFormStatus.submitting;
+                      return FilledButton(
+                        onPressed: isSubmitting ? null : _submit,
+                        child: isSubmitting
+                            ? const SizedBox.square(
+                                dimension: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                _isEditing
+                                    ? l10n.envelopesSaveButton
+                                    : l10n.envelopesCreateButton,
+                              ),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -200,7 +226,7 @@ class _EnvelopeFormPageState extends State<EnvelopeFormPage> {
     );
   }
 
-  Future<void> _submit() async {
+  void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_selectedGroupId.isEmpty) {
       ScaffoldMessenger.of(context)
@@ -211,34 +237,10 @@ class _EnvelopeFormPageState extends State<EnvelopeFormPage> {
       return;
     }
 
-    setState(() => _isSubmitting = true);
-
-    try {
-      if (_isEditing) {
-        final updated = widget.envelope!.copyWith(
-          name: _nameController.text.trim(),
-          categoryGroupId: _selectedGroupId,
-          color: _selectedColor,
-        );
-        await widget.envelopeRepository.updateEnvelope(updated);
-      } else {
-        await widget.envelopeRepository.createEnvelope(
-          budgetId: widget.budgetId,
-          categoryGroupId: _selectedGroupId,
-          name: _nameController.text.trim(),
-          color: _selectedColor,
-        );
-      }
-
-      if (mounted) Navigator.of(context).pop(true);
-    } on EnvelopeException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(e.message)));
-      }
-    } finally {
-      if (mounted) setState(() => _isSubmitting = false);
-    }
+    context.read<EnvelopeFormCubit>().submit(
+      name: _nameController.text.trim(),
+      categoryGroupId: _selectedGroupId,
+      color: _selectedColor,
+    );
   }
 }

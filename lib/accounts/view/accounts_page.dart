@@ -96,10 +96,13 @@ class AccountsView extends StatelessWidget {
     final bloc = context.read<AccountsBloc>();
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
-        builder: (_) => AccountFormPage(
-          accountRepository: context.read<AccountRepository>(),
-          budgetRepository: context.read<BudgetRepository>(),
-          budgetId: budgetId,
+        builder: (_) => BlocProvider(
+          create: (_) => AccountFormCubit(
+            accountRepository: context.read<AccountRepository>(),
+            budgetRepository: context.read<BudgetRepository>(),
+            budgetId: budgetId,
+          ),
+          child: const AccountFormPage(),
         ),
       ),
     );

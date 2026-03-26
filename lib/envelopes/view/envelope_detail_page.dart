@@ -51,11 +51,16 @@ class EnvelopeDetailPage extends StatelessWidget {
     final cubit = context.read<EnvelopeDetailCubit>();
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
-        builder: (_) => EnvelopeFormPage(
-          envelopeRepository: context.read<EnvelopeRepository>(),
-          budgetId: envelope.budgetId,
-          categoryGroups: categoryGroups,
-          envelope: envelope,
+        builder: (_) => BlocProvider(
+          create: (_) => EnvelopeFormCubit(
+            envelopeRepository: context.read<EnvelopeRepository>(),
+            budgetId: envelope.budgetId,
+            envelope: envelope,
+          ),
+          child: EnvelopeFormPage(
+            categoryGroups: categoryGroups,
+            envelope: envelope,
+          ),
         ),
       ),
     );

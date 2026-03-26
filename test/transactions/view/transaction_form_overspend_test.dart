@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:account_repository/account_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
+import 'package:envelope/transactions/cubit/cubit.dart';
 import 'package:envelope/transactions/view/transaction_form_page.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:transaction_repository/transaction_repository.dart';
@@ -119,16 +121,21 @@ void main() {
   });
 
   Widget buildSubject({String? budgetPeriodId}) {
-    return Navigator(
-      onGenerateRoute: (_) => MaterialPageRoute<void>(
-        builder: (_) => TransactionFormPage(
-          transactionRepository: transactionRepo,
-          accountRepository: accountRepo,
-          envelopeRepository: envelopeRepo,
-          budgetRepository: budgetRepo,
-          budgetId: 'budget-1',
-          userId: 'user-1',
-          budgetPeriodId: budgetPeriodId,
+    return RepositoryProvider<BudgetRepository>.value(
+      value: budgetRepo,
+      child: Navigator(
+        onGenerateRoute: (_) => MaterialPageRoute<void>(
+          builder: (_) => BlocProvider(
+            create: (_) => TransactionFormCubit(
+              transactionRepository: transactionRepo,
+              accountRepository: accountRepo,
+              envelopeRepository: envelopeRepo,
+              budgetId: 'budget-1',
+              userId: 'user-1',
+              budgetPeriodId: budgetPeriodId,
+            ),
+            child: const TransactionFormPage(),
+          ),
         ),
       ),
     );
