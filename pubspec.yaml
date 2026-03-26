@@ -37,6 +37,7 @@ dependencies:
     path: packages/notification_repository
   report_repository:
     path: packages/report_repository
+  share_plus: ^10.1.4
   shared_preferences: ^2.5.0
   sharing_repository:
     path: packages/sharing_repository

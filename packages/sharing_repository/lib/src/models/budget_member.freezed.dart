@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 mixin _$BudgetMember {
   String get id;
   String get budgetId;
-  String get userId;
+  String? get userId;
   String get invitedVia;
   DateTime get createdAt;
   String get role;
@@ -81,7 +81,7 @@ abstract mixin class $BudgetMemberCopyWith<$Res> {
   $Res call({
     String id,
     String budgetId,
-    String userId,
+    String? userId,
     String invitedVia,
     DateTime createdAt,
     String role,
@@ -103,7 +103,7 @@ class _$BudgetMemberCopyWithImpl<$Res> implements $BudgetMemberCopyWith<$Res> {
   $Res call({
     Object? id = null,
     Object? budgetId = null,
-    Object? userId = null,
+    Object? userId = freezed,
     Object? invitedVia = null,
     Object? createdAt = null,
     Object? role = null,
@@ -119,10 +119,10 @@ class _$BudgetMemberCopyWithImpl<$Res> implements $BudgetMemberCopyWith<$Res> {
             ? _self.budgetId
             : budgetId // ignore: cast_nullable_to_non_nullable
                   as String,
-        userId: null == userId
+        userId: freezed == userId
             ? _self.userId
             : userId // ignore: cast_nullable_to_non_nullable
-                  as String,
+                  as String?,
         invitedVia: null == invitedVia
             ? _self.invitedVia
             : invitedVia // ignore: cast_nullable_to_non_nullable
@@ -240,7 +240,7 @@ extension BudgetMemberPatterns on BudgetMember {
     TResult Function(
       String id,
       String budgetId,
-      String userId,
+      String? userId,
       String invitedVia,
       DateTime createdAt,
       String role,
@@ -284,7 +284,7 @@ extension BudgetMemberPatterns on BudgetMember {
     TResult Function(
       String id,
       String budgetId,
-      String userId,
+      String? userId,
       String invitedVia,
       DateTime createdAt,
       String role,
@@ -326,7 +326,7 @@ extension BudgetMemberPatterns on BudgetMember {
     TResult? Function(
       String id,
       String budgetId,
-      String userId,
+      String? userId,
       String invitedVia,
       DateTime createdAt,
       String role,
@@ -358,7 +358,7 @@ class _BudgetMember implements BudgetMember {
   const _BudgetMember({
     required this.id,
     required this.budgetId,
-    required this.userId,
+    this.userId,
     required this.invitedVia,
     required this.createdAt,
     this.role = 'viewer',
@@ -372,7 +372,7 @@ class _BudgetMember implements BudgetMember {
   @override
   final String budgetId;
   @override
-  final String userId;
+  final String? userId;
   @override
   final String invitedVia;
   @override
@@ -445,7 +445,7 @@ abstract mixin class _$BudgetMemberCopyWith<$Res>
   $Res call({
     String id,
     String budgetId,
-    String userId,
+    String? userId,
     String invitedVia,
     DateTime createdAt,
     String role,
@@ -468,7 +468,7 @@ class __$BudgetMemberCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? budgetId = null,
-    Object? userId = null,
+    Object? userId = freezed,
     Object? invitedVia = null,
     Object? createdAt = null,
     Object? role = null,
@@ -484,10 +484,10 @@ class __$BudgetMemberCopyWithImpl<$Res>
             ? _self.budgetId
             : budgetId // ignore: cast_nullable_to_non_nullable
                   as String,
-        userId: null == userId
+        userId: freezed == userId
             ? _self.userId
             : userId // ignore: cast_nullable_to_non_nullable
-                  as String,
+                  as String?,
         invitedVia: null == invitedVia
             ? _self.invitedVia
             : invitedVia // ignore: cast_nullable_to_non_nullable

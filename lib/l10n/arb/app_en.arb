@@ -1591,5 +1591,202 @@
     "dashboardErrorAllocation": "Failed to save allocation",
     "@dashboardErrorAllocation": {
         "description": "Error message when quick allocation fails"
+    },
+    "sharedBudgetTitle": "Members",
+    "@sharedBudgetTitle": {
+        "description": "Title for the shared budget members page"
+    },
+    "sharedBudgetEmptyTitle": "No members yet",
+    "@sharedBudgetEmptyTitle": {
+        "description": "Title shown when no budget members exist"
+    },
+    "sharedBudgetEmptySubtitle": "Invite someone to share this budget",
+    "@sharedBudgetEmptySubtitle": {
+        "description": "Subtitle shown when no budget members exist"
+    },
+    "sharedBudgetInvite": "Invite",
+    "@sharedBudgetInvite": {
+        "description": "Label for invite action"
+    },
+    "sharedBudgetInviteByEmail": "Invite by Email",
+    "@sharedBudgetInviteByEmail": {
+        "description": "Section title for email invite"
+    },
+    "sharedBudgetInviteByLink": "Invite by Link",
+    "@sharedBudgetInviteByLink": {
+        "description": "Section title for link invite"
+    },
+    "sharedBudgetEmailLabel": "Email address",
+    "@sharedBudgetEmailLabel": {
+        "description": "Label for email input when inviting"
+    },
+    "sharedBudgetRoleLabel": "Role",
+    "@sharedBudgetRoleLabel": {
+        "description": "Label for role selection"
+    },
+    "sharedBudgetRoleOwner": "Owner",
+    "@sharedBudgetRoleOwner": {
+        "description": "Owner role label"
+    },
+    "sharedBudgetRoleEditor": "Editor",
+    "@sharedBudgetRoleEditor": {
+        "description": "Editor role label"
+    },
+    "sharedBudgetRoleViewer": "Viewer",
+    "@sharedBudgetRoleViewer": {
+        "description": "Viewer role label"
+    },
+    "sharedBudgetSendInvite": "Send Invite",
+    "@sharedBudgetSendInvite": {
+        "description": "Button text to send email invite"
+    },
+    "sharedBudgetGenerateLink": "Generate Link",
+    "@sharedBudgetGenerateLink": {
+        "description": "Button text to generate invite link"
+    },
+    "sharedBudgetShareLink": "Share Link",
+    "@sharedBudgetShareLink": {
+        "description": "Button text to share generated link"
+    },
+    "sharedBudgetChangeRole": "Change Role",
+    "@sharedBudgetChangeRole": {
+        "description": "Menu option to change member role"
+    },
+    "sharedBudgetRemoveMember": "Remove Member",
+    "@sharedBudgetRemoveMember": {
+        "description": "Menu option to remove a member"
+    },
+    "sharedBudgetRemoveConfirmTitle": "Remove Member",
+    "@sharedBudgetRemoveConfirmTitle": {
+        "description": "Title for remove member confirmation dialog"
+    },
+    "sharedBudgetRemoveConfirmMessage": "Are you sure you want to remove this member? They will lose access to the budget.",
+    "@sharedBudgetRemoveConfirmMessage": {
+        "description": "Message for remove member confirmation dialog"
+    },
+    "sharedBudgetErrorLoadFailed": "Failed to load members",
+    "@sharedBudgetErrorLoadFailed": {
+        "description": "Error message when loading members fails"
+    },
+    "sharedBudgetErrorInviteFailed": "Failed to send invite",
+    "@sharedBudgetErrorInviteFailed": {
+        "description": "Error message when invite fails"
+    },
+    "sharedBudgetErrorUpdateRoleFailed": "Failed to update role",
+    "@sharedBudgetErrorUpdateRoleFailed": {
+        "description": "Error message when role update fails"
+    },
+    "sharedBudgetErrorRemoveFailed": "Failed to remove member",
+    "@sharedBudgetErrorRemoveFailed": {
+        "description": "Error message when member removal fails"
+    },
+    "sharedBudgetErrorMemberLimit": "Free plan supports up to 2 members. Upgrade for more.",
+    "@sharedBudgetErrorMemberLimit": {
+        "description": "Error message when member limit is reached"
+    },
+    "sharedBudgetInviteSent": "Invite sent successfully",
+    "@sharedBudgetInviteSent": {
+        "description": "Success message after sending invite"
+    },
+    "sharedBudgetLinkCopied": "Invite link copied",
+    "@sharedBudgetLinkCopied": {
+        "description": "Success message after copying invite link"
+    },
+    "sharedBudgetPending": "Pending",
+    "@sharedBudgetPending": {
+        "description": "Status label for unaccepted invites"
+    },
+    "activityLogTitle": "Activity Log",
+    "@activityLogTitle": {
+        "description": "Title for the activity log page"
+    },
+    "activityLogEmpty": "No activity yet",
+    "@activityLogEmpty": {
+        "description": "Message when activity log is empty"
+    },
+    "activityLogFilterByMember": "Filter by member",
+    "@activityLogFilterByMember": {
+        "description": "Label for member filter in activity log"
+    },
+    "activityLogFilterByAction": "Filter by action",
+    "@activityLogFilterByAction": {
+        "description": "Label for action filter in activity log"
+    },
+    "activityLogErrorLoadFailed": "Failed to load activity log",
+    "@activityLogErrorLoadFailed": {
+        "description": "Error message when loading activity log fails"
+    },
+    "activityLogInvitedUser": "Invited {userId}",
+    "@activityLogInvitedUser": {
+        "description": "Activity log entry for inviting a user",
+        "placeholders": {
+            "userId": { "type": "String" }
+        }
+    },
+    "activityLogUpdatedRole": "Updated role for {userId}",
+    "@activityLogUpdatedRole": {
+        "description": "Activity log entry for updating a role",
+        "placeholders": {
+            "userId": { "type": "String" }
+        }
+    },
+    "activityLogRemovedUser": "Removed {userId}",
+    "@activityLogRemovedUser": {
+        "description": "Activity log entry for removing a user",
+        "placeholders": {
+            "userId": { "type": "String" }
+        }
+    },
+    "activityLogAcceptedInvitation": "{userId} accepted invitation",
+    "@activityLogAcceptedInvitation": {
+        "description": "Activity log entry for accepting an invitation",
+        "placeholders": {
+            "userId": { "type": "String" }
+        }
+    },
+    "activityLogActionByUser": "{action} by {userId}",
+    "@activityLogActionByUser": {
+        "description": "Fallback activity log entry",
+        "placeholders": {
+            "action": { "type": "String" },
+            "userId": { "type": "String" }
+        }
+    },
+    "relativeTimeDaysAgo": "{count}d ago",
+    "@relativeTimeDaysAgo": {
+        "description": "Relative time in days",
+        "placeholders": {
+            "count": { "type": "int" }
+        }
+    },
+    "relativeTimeHoursAgo": "{count}h ago",
+    "@relativeTimeHoursAgo": {
+        "description": "Relative time in hours",
+        "placeholders": {
+            "count": { "type": "int" }
+        }
+    },
+    "relativeTimeMinutesAgo": "{count}m ago",
+    "@relativeTimeMinutesAgo": {
+        "description": "Relative time in minutes",
+        "placeholders": {
+            "count": { "type": "int" }
+        }
+    },
+    "relativeTimeJustNow": "Just now",
+    "@relativeTimeJustNow": {
+        "description": "Relative time for very recent events"
+    },
+    "filterAll": "All",
+    "@filterAll": {
+        "description": "Label for 'All' option in filter dropdowns"
+    },
+    "sharedBudgetUpgrade": "Upgrade",
+    "@sharedBudgetUpgrade": {
+        "description": "Button text for upgrade CTA"
+    },
+    "sharedBudgetInvalidEmail": "Please enter a valid email address",
+    "@sharedBudgetInvalidEmail": {
+        "description": "Error message for invalid email format"
     }
 }

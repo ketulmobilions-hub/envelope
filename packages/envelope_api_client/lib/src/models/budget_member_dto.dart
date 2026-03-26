@@ -9,7 +9,7 @@ abstract class BudgetMemberDto with _$BudgetMemberDto {
   const factory BudgetMemberDto({
     required String id,
     @JsonKey(name: 'budget_id') required String budgetId,
-    @JsonKey(name: 'user_id') required String userId,
+    @JsonKey(name: 'user_id') String? userId,
     @JsonKey(name: 'invited_via') required String invitedVia,
     @JsonKey(name: 'created_at') required DateTime createdAt,
     @Default('viewer') String role,

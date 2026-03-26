@@ -1123,9 +1123,9 @@ class $BudgetMembersTable extends BudgetMembers
   late final GeneratedColumn<String> userId = GeneratedColumn<String>(
     'user_id',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _roleMeta = const VerificationMeta('role');
   @override
@@ -1210,8 +1210,6 @@ class $BudgetMembersTable extends BudgetMembers
         _userIdMeta,
         userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
       );
-    } else if (isInserting) {
-      context.missing(_userIdMeta);
     }
     if (data.containsKey('role')) {
       context.handle(
@@ -1261,7 +1259,7 @@ class $BudgetMembersTable extends BudgetMembers
       userId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}user_id'],
-      )!,
+      ),
       role: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}role'],
@@ -1290,7 +1288,7 @@ class $BudgetMembersTable extends BudgetMembers
 class BudgetMember extends DataClass implements Insertable<BudgetMember> {
   final String id;
   final String budgetId;
-  final String userId;
+  final String? userId;
   final String role;
   final String invitedVia;
   final DateTime? acceptedAt;
@@ -1298,7 +1296,7 @@ class BudgetMember extends DataClass implements Insertable<BudgetMember> {
   const BudgetMember({
     required this.id,
     required this.budgetId,
-    required this.userId,
+    this.userId,
     required this.role,
     required this.invitedVia,
     this.acceptedAt,
@@ -1309,7 +1307,9 @@ class BudgetMember extends DataClass implements Insertable<BudgetMember> {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['budget_id'] = Variable<String>(budgetId);
-    map['user_id'] = Variable<String>(userId);
+    if (!nullToAbsent || userId != null) {
+      map['user_id'] = Variable<String>(userId);
+    }
     map['role'] = Variable<String>(role);
     map['invited_via'] = Variable<String>(invitedVia);
     if (!nullToAbsent || acceptedAt != null) {
@@ -1323,7 +1323,9 @@ class BudgetMember extends DataClass implements Insertable<BudgetMember> {
     return BudgetMembersCompanion(
       id: Value(id),
       budgetId: Value(budgetId),
-      userId: Value(userId),
+      userId: userId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(userId),
       role: Value(role),
       invitedVia: Value(invitedVia),
       acceptedAt: acceptedAt == null && nullToAbsent
@@ -1341,7 +1343,7 @@ class BudgetMember extends DataClass implements Insertable<BudgetMember> {
     return BudgetMember(
       id: serializer.fromJson<String>(json['id']),
       budgetId: serializer.fromJson<String>(json['budgetId']),
-      userId: serializer.fromJson<String>(json['userId']),
+      userId: serializer.fromJson<String?>(json['userId']),
       role: serializer.fromJson<String>(json['role']),
       invitedVia: serializer.fromJson<String>(json['invitedVia']),
       acceptedAt: serializer.fromJson<DateTime?>(json['acceptedAt']),
@@ -1354,7 +1356,7 @@ class BudgetMember extends DataClass implements Insertable<BudgetMember> {
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'budgetId': serializer.toJson<String>(budgetId),
-      'userId': serializer.toJson<String>(userId),
+      'userId': serializer.toJson<String?>(userId),
       'role': serializer.toJson<String>(role),
       'invitedVia': serializer.toJson<String>(invitedVia),
       'acceptedAt': serializer.toJson<DateTime?>(acceptedAt),
@@ -1365,7 +1367,7 @@ class BudgetMember extends DataClass implements Insertable<BudgetMember> {
   BudgetMember copyWith({
     String? id,
     String? budgetId,
-    String? userId,
+    Value<String?> userId = const Value.absent(),
     String? role,
     String? invitedVia,
     Value<DateTime?> acceptedAt = const Value.absent(),
@@ -1373,7 +1375,7 @@ class BudgetMember extends DataClass implements Insertable<BudgetMember> {
   }) => BudgetMember(
     id: id ?? this.id,
     budgetId: budgetId ?? this.budgetId,
-    userId: userId ?? this.userId,
+    userId: userId.present ? userId.value : this.userId,
     role: role ?? this.role,
     invitedVia: invitedVia ?? this.invitedVia,
     acceptedAt: acceptedAt.present ? acceptedAt.value : this.acceptedAt,
@@ -1435,7 +1437,7 @@ class BudgetMember extends DataClass implements Insertable<BudgetMember> {
 class BudgetMembersCompanion extends UpdateCompanion<BudgetMember> {
   final Value<String> id;
   final Value<String> budgetId;
-  final Value<String> userId;
+  final Value<String?> userId;
   final Value<String> role;
   final Value<String> invitedVia;
   final Value<DateTime?> acceptedAt;
@@ -1454,7 +1456,7 @@ class BudgetMembersCompanion extends UpdateCompanion<BudgetMember> {
   BudgetMembersCompanion.insert({
     required String id,
     required String budgetId,
-    required String userId,
+    this.userId = const Value.absent(),
     this.role = const Value.absent(),
     required String invitedVia,
     this.acceptedAt = const Value.absent(),
@@ -1462,7 +1464,6 @@ class BudgetMembersCompanion extends UpdateCompanion<BudgetMember> {
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        budgetId = Value(budgetId),
-       userId = Value(userId),
        invitedVia = Value(invitedVia),
        createdAt = Value(createdAt);
   static Insertable<BudgetMember> custom({
@@ -1490,7 +1491,7 @@ class BudgetMembersCompanion extends UpdateCompanion<BudgetMember> {
   BudgetMembersCompanion copyWith({
     Value<String>? id,
     Value<String>? budgetId,
-    Value<String>? userId,
+    Value<String?>? userId,
     Value<String>? role,
     Value<String>? invitedVia,
     Value<DateTime?>? acceptedAt,
@@ -11923,7 +11924,7 @@ typedef $$BudgetMembersTableCreateCompanionBuilder =
     BudgetMembersCompanion Function({
       required String id,
       required String budgetId,
-      required String userId,
+      Value<String?> userId,
       Value<String> role,
       required String invitedVia,
       Value<DateTime?> acceptedAt,
@@ -11934,7 +11935,7 @@ typedef $$BudgetMembersTableUpdateCompanionBuilder =
     BudgetMembersCompanion Function({
       Value<String> id,
       Value<String> budgetId,
-      Value<String> userId,
+      Value<String?> userId,
       Value<String> role,
       Value<String> invitedVia,
       Value<DateTime?> acceptedAt,
@@ -12100,7 +12101,7 @@ class $$BudgetMembersTableTableManager
               ({
                 Value<String> id = const Value.absent(),
                 Value<String> budgetId = const Value.absent(),
-                Value<String> userId = const Value.absent(),
+                Value<String?> userId = const Value.absent(),
                 Value<String> role = const Value.absent(),
                 Value<String> invitedVia = const Value.absent(),
                 Value<DateTime?> acceptedAt = const Value.absent(),
@@ -12120,7 +12121,7 @@ class $$BudgetMembersTableTableManager
               ({
                 required String id,
                 required String budgetId,
-                required String userId,
+                Value<String?> userId = const Value.absent(),
                 Value<String> role = const Value.absent(),
                 required String invitedVia,
                 Value<DateTime?> acceptedAt = const Value.absent(),
