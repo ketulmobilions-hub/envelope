@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sharing_repository/sharing_repository.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 
 /// Home/dashboard page with aggregated budget summary.
@@ -54,6 +55,7 @@ class HomePage extends StatelessWidget {
             accountRepository: context.read(),
             envelopeRepository: context.read(),
             transactionRepository: context.read(),
+            sharingRepository: context.read<SharingRepository>(),
             budgetId: budgetId,
           )..add(const DashboardStarted()),
         ),
@@ -85,17 +87,33 @@ class _HomeView extends StatelessWidget {
           const SyncStatusIndicator(),
         ],
       ),
-      body: BlocListener<DashboardBloc, DashboardState>(
-        listenWhen: (prev, curr) =>
-            prev.error != curr.error && curr.error != null,
-        listener: (context, state) {
-          final message = state.error == DashboardError.allocationFailed
-              ? l10n.dashboardErrorAllocation
-              : l10n.dashboardErrorLoad;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(message)),
-          );
-        },
+      body: MultiBlocListener(
+        listeners: [
+          BlocListener<DashboardBloc, DashboardState>(
+            listenWhen: (prev, curr) =>
+                prev.error != curr.error && curr.error != null,
+            listener: (context, state) {
+              final message = state.error == DashboardError.allocationFailed
+                  ? l10n.dashboardErrorAllocation
+                  : l10n.dashboardErrorLoad;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(message)),
+              );
+            },
+          ),
+          BlocListener<DashboardBloc, DashboardState>(
+            listenWhen: (prev, curr) =>
+                !prev.hasRemoteUpdate && curr.hasRemoteUpdate,
+            listener: (context, state) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(l10n.realtimeChangeReceived),
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            },
+          ),
+        ],
         child: BlocBuilder<DashboardBloc, DashboardState>(
           builder: (context, state) {
             if (state.status == DashboardStatus.initial ||

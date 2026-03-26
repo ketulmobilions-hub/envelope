@@ -5,6 +5,8 @@ import 'package:bloc/bloc.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
+import 'package:sharing_repository/sharing_repository.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 
 part 'dashboard_event.dart';
@@ -17,11 +19,13 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     required EnvelopeRepository envelopeRepository,
     required TransactionRepository transactionRepository,
     required String budgetId,
+    SharingRepository? sharingRepository,
   }) : _budgetRepository = budgetRepository,
        _accountRepository = accountRepository,
        _envelopeRepository = envelopeRepository,
        _transactionRepository = transactionRepository,
        _budgetId = budgetId,
+       _sharingRepository = sharingRepository,
        super(const DashboardState()) {
     on<DashboardStarted>(_onStarted);
     on<_PeriodsUpdated>(_onPeriodsUpdated);
@@ -30,6 +34,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     on<_EnvelopesUpdated>(_onEnvelopesUpdated);
     on<_CategoryGroupsUpdated>(_onCategoryGroupsUpdated);
     on<_RecentTransactionsUpdated>(_onRecentTransactionsUpdated);
+    on<_RemoteChangeReceived>(_onRemoteChangeReceived);
     on<_DashboardStreamError>(_onStreamError);
     on<DashboardRefreshRequested>(_onRefreshRequested);
     on<QuickAllocationRequested>(_onQuickAllocationRequested);
@@ -40,6 +45,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   final EnvelopeRepository _envelopeRepository;
   final TransactionRepository _transactionRepository;
   final String _budgetId;
+  final SharingRepository? _sharingRepository;
 
   StreamSubscription<List<BudgetPeriod>>? _periodsSubscription;
   StreamSubscription<List<Account>>? _accountsSubscription;
@@ -47,6 +53,11 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   StreamSubscription<List<CategoryGroup>>? _groupsSubscription;
   StreamSubscription<List<EnvelopeAllocation>>? _allocationsSubscription;
   StreamSubscription<List<Transaction>>? _transactionsSubscription;
+  StreamSubscription<void>? _remoteChangeSubscription;
+  StreamController<void>? _remoteChangeMergeController;
+
+  List<RealtimeChannel> _realtimeChannels = [];
+  RealtimeChannel? _allocationRealtimeChannel;
 
   int _generation = 0;
   int _allocationsGeneration = 0;
@@ -126,6 +137,28 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
           (transactions) => add(_RecentTransactionsUpdated(transactions, gen)),
           onError: (Object _) => add(const _DashboardStreamError()),
         );
+
+    // Subscribe to Supabase Realtime channels.
+    for (final ch in _realtimeChannels) {
+      ch.unsubscribe();
+    }
+    _realtimeChannels = [
+      _accountRepository.subscribeToRealtimeChanges(_budgetId),
+      _budgetRepository.subscribeToBudgetChanges(_budgetId),
+      _budgetRepository.subscribeToPeriodChanges(_budgetId),
+      _envelopeRepository.subscribeToEnvelopeChanges(_budgetId),
+      _envelopeRepository.subscribeToCategoryGroupChanges(_budgetId),
+      _transactionRepository.subscribeToTransactionChanges(_budgetId),
+      _sharingRepository?.subscribeToBudgetChanges(_budgetId),
+    ].whereType<RealtimeChannel>().toList();
+
+    // Merge all remote change streams for the indicator.
+    await _remoteChangeSubscription?.cancel();
+    _remoteChangeMergeController?.close();
+    _remoteChangeSubscription = _mergeRemoteChangeStreams().listen(
+      (_) => add(const _RemoteChangeReceived()),
+      onError: (Object _) {/* Ignore merge stream errors. */},
+    );
 
     await Future.wait([
       _safeRefresh(
@@ -403,6 +436,11 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     _allocationsGeneration++;
     await _allocationsSubscription?.cancel();
 
+    // Resubscribe allocation Realtime channel for the new period.
+    _allocationRealtimeChannel?.unsubscribe();
+    _allocationRealtimeChannel =
+        _envelopeRepository.subscribeToAllocationChanges(periodId);
+
     final gen = _allocationsGeneration;
     _allocationsSubscription = _envelopeRepository
         .watchAllocations(periodId)
@@ -418,8 +456,52 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     }
   }
 
+  Future<void> _onRemoteChangeReceived(
+    _RemoteChangeReceived event,
+    Emitter<DashboardState> emit,
+  ) async {
+    emit(state.copyWith(hasRemoteUpdate: true));
+    await Future<void>.delayed(const Duration(seconds: 3));
+    if (!isClosed) {
+      emit(state.copyWith(hasRemoteUpdate: false));
+    }
+  }
+
+  Stream<void> _mergeRemoteChangeStreams() {
+    final streams = <Stream<void>>[
+      _accountRepository.onRemoteChange,
+      _budgetRepository.onRemoteChange,
+      _envelopeRepository.onRemoteChange,
+      _transactionRepository.onRemoteChange,
+    ];
+    final subscriptions = <StreamSubscription<void>>[];
+    late final StreamController<void> controller;
+    controller = StreamController<void>.broadcast(
+      onListen: () {
+        for (final stream in streams) {
+          subscriptions.add(stream.listen((_) => controller.add(null)));
+        }
+      },
+      onCancel: () {
+        for (final sub in subscriptions) {
+          sub.cancel();
+        }
+      },
+    );
+    _remoteChangeMergeController = controller;
+    return controller.stream;
+  }
+
   @override
   Future<void> close() async {
+    // Unsubscribe Realtime channels.
+    for (final ch in _realtimeChannels) {
+      ch.unsubscribe();
+    }
+    _allocationRealtimeChannel?.unsubscribe();
+    await _remoteChangeSubscription?.cancel();
+    await _remoteChangeMergeController?.close();
+
     await _periodsSubscription?.cancel();
     await _accountsSubscription?.cancel();
     await _envelopesSubscription?.cancel();
