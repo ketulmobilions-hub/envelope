@@ -228,18 +228,15 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                   controller: _amountController,
                   decoration: InputDecoration(
                     hintText: r'$0.00',
-                    hintStyle: Theme.of(context)
-                        .textTheme
-                        .displaySmall
+                    hintStyle: Theme.of(context).textTheme.displaySmall
                         ?.copyWith(
                           color: Theme.of(context).colorScheme.outline,
                         ),
                     border: InputBorder.none,
                   ),
-                  style: Theme.of(context)
-                      .textTheme
-                      .displaySmall
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                   textAlign: TextAlign.center,
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
@@ -489,8 +486,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
         final alloc = allocations
             .where((a) => a.envelopeId == envId)
             .firstOrNull;
-        if (alloc != null &&
-            EnvelopeRepository.calculateRollover(alloc) < 0) {
+        if (alloc != null && EnvelopeRepository.calculateRollover(alloc) < 0) {
           overspent = alloc;
           break;
         }
@@ -499,11 +495,11 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
 
       if (!mounted) return;
 
-      final available =
-          EnvelopeRepository.calculateRollover(overspent);
+      final available = EnvelopeRepository.calculateRollover(overspent);
 
       // Find envelope name.
-      final envelopeName = _envelopes
+      final envelopeName =
+          _envelopes
               .where((e) => e.id == overspent!.envelopeId)
               .firstOrNull
               ?.name ??
@@ -592,12 +588,15 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     }
 
     // Editing: diff the tags.
-    final existing = await widget.transactionRepository
-        .getTagIdsForTransaction(transactionId);
-    final toAdd =
-        _selectedTagIds.where((id) => !existing.contains(id)).toList();
-    final toRemove =
-        existing.where((id) => !_selectedTagIds.contains(id)).toList();
+    final existing = await widget.transactionRepository.getTagIdsForTransaction(
+      transactionId,
+    );
+    final toAdd = _selectedTagIds
+        .where((id) => !existing.contains(id))
+        .toList();
+    final toRemove = existing
+        .where((id) => !_selectedTagIds.contains(id))
+        .toList();
 
     for (final tagId in toAdd) {
       await widget.transactionRepository.addTagToTransaction(

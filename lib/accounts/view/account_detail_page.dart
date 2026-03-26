@@ -1,4 +1,5 @@
 import 'package:account_repository/account_repository.dart';
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/accounts/cubit/cubit.dart';
 import 'package:envelope/accounts/view/account_form_page.dart';
 import 'package:envelope/accounts/widgets/widgets.dart';
@@ -171,6 +172,7 @@ class AccountDetailPage extends StatelessWidget {
       MaterialPageRoute<bool>(
         builder: (_) => AccountFormPage(
           accountRepository: context.read<AccountRepository>(),
+          budgetRepository: context.read<BudgetRepository>(),
           budgetId: account.budgetId,
           account: account,
         ),

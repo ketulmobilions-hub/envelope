@@ -1,4 +1,5 @@
 import 'package:account_repository/account_repository.dart';
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/accounts/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:flutter/material.dart';
@@ -11,12 +12,14 @@ class AccountFormPage extends StatefulWidget {
   const AccountFormPage({
     required this.accountRepository,
     required this.budgetId,
+    this.budgetRepository,
     this.account,
     super.key,
   });
 
   final AccountRepository accountRepository;
   final String budgetId;
+  final BudgetRepository? budgetRepository;
   final Account? account;
 
   @override
@@ -29,6 +32,7 @@ class _AccountFormPageState extends State<AccountFormPage> {
   late final TextEditingController _balanceController;
   late String _selectedType;
   late String _selectedCurrency;
+  late bool _isOnBudget;
   bool _isSubmitting = false;
 
   bool get _isEditing => widget.account != null;
@@ -53,6 +57,8 @@ class _AccountFormPageState extends State<AccountFormPage> {
     );
     _selectedType = widget.account?.type ?? _accountTypes.first;
     _selectedCurrency = widget.account?.currency ?? 'USD';
+    _isOnBudget = widget.account?.isOnBudget ??
+        defaultIsOnBudget(_selectedType);
   }
 
   @override
@@ -111,7 +117,12 @@ class _AccountFormPageState extends State<AccountFormPage> {
                   }).toList(),
                   onChanged: (value) {
                     if (value != null) {
-                      setState(() => _selectedType = value);
+                      setState(() {
+                        _selectedType = value;
+                        if (!_isEditing) {
+                          _isOnBudget = defaultIsOnBudget(value);
+                        }
+                      });
                     }
                   },
                 ),
@@ -130,6 +141,13 @@ class _AccountFormPageState extends State<AccountFormPage> {
                     ),
                   ],
                   textInputAction: TextInputAction.done,
+                ),
+                const SizedBox(height: 16),
+                SwitchListTile(
+                  title: Text(l10n.accountsOnBudgetLabel),
+                  subtitle: Text(l10n.accountsOnBudgetDescription),
+                  value: _isOnBudget,
+                  onChanged: (value) => setState(() => _isOnBudget = value),
                 ),
                 const SizedBox(height: 32),
                 FilledButton(
@@ -161,16 +179,35 @@ class _AccountFormPageState extends State<AccountFormPage> {
     try {
       final balanceCents = parseCents(_balanceController.text) ?? 0;
 
-
       if (_isEditing) {
-        final updated = widget.account!.copyWith(
+        final oldAccount = widget.account!;
+        final updated = oldAccount.copyWith(
           name: _nameController.text.trim(),
           type: _selectedType,
           startingBalance: balanceCents,
           currency: _selectedCurrency,
+          isOnBudget: _isOnBudget,
           updatedAt: DateTime.now(),
         );
         await widget.accountRepository.updateAccount(updated);
+
+        // Adjust income when isOnBudget changes on an existing account.
+        if (widget.budgetRepository != null &&
+            oldAccount.isOnBudget != _isOnBudget) {
+          if (_isOnBudget && oldAccount.startingBalance > 0) {
+            // Switched to on-budget: add starting balance as income.
+            await widget.budgetRepository!.addIncomeToCurrentPeriod(
+              budgetId: widget.budgetId,
+              amount: oldAccount.startingBalance,
+            );
+          } else if (!_isOnBudget && oldAccount.startingBalance > 0) {
+            // Switched to off-budget: remove starting balance from income.
+            await widget.budgetRepository!.addIncomeToCurrentPeriod(
+              budgetId: widget.budgetId,
+              amount: -oldAccount.startingBalance,
+            );
+          }
+        }
       } else {
         await widget.accountRepository.createAccount(
           budgetId: widget.budgetId,
@@ -178,11 +215,27 @@ class _AccountFormPageState extends State<AccountFormPage> {
           type: _selectedType,
           currency: _selectedCurrency,
           startingBalance: balanceCents,
+          isOnBudget: _isOnBudget,
         );
+
+        if (balanceCents > 0 &&
+            _isOnBudget &&
+            widget.budgetRepository != null) {
+          await widget.budgetRepository!.addIncomeToCurrentPeriod(
+            budgetId: widget.budgetId,
+            amount: balanceCents,
+          );
+        }
       }
 
       if (mounted) Navigator.of(context).pop(true);
     } on AccountException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    } on BudgetException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()

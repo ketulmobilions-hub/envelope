@@ -17,6 +17,7 @@ abstract class AccountDto with _$AccountDto {
     @JsonKey(name: 'starting_balance') @Default(0) int startingBalance,
     @JsonKey(name: 'current_balance') @Default(0) int currentBalance,
     @JsonKey(name: 'is_archived') @Default(false) bool isArchived,
+    @JsonKey(name: 'is_on_budget') @Default(true) bool isOnBudget,
   }) = _AccountDto;
 
   factory AccountDto.fromJson(Map<String, dynamic> json) =>

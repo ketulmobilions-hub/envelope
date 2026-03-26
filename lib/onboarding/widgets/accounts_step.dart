@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:envelope/accounts/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/cubit.dart';
 import 'package:flutter/material.dart';
@@ -46,7 +47,9 @@ class AccountsStep extends StatelessWidget {
                         subtitle: Text(
                           '${_localizedAccountType(l10n, account.type)}'
                           ' • ${account.currency}'
-                          ' • ${account.startingBalance}',
+                          ' • ${account.startingBalance}'
+                          '${account.isOnBudget ? '' : ' • '
+                              '${l10n.accountsOffBudgetIndicator}'}',
                         ),
                         trailing: IconButton(
                           icon: const Icon(Icons.delete_outline),
@@ -91,6 +94,7 @@ class AccountsStep extends StatelessWidget {
     final nameController = TextEditingController();
     final balanceController = TextEditingController(text: '0');
     var selectedType = _accountTypes.first;
+    var isOnBudget = defaultIsOnBudget(selectedType);
 
     unawaited(showModalBottomSheet<void>(
       context: context,
@@ -136,7 +140,10 @@ class AccountsStep extends StatelessWidget {
                     }).toList(),
                     onChanged: (value) {
                       if (value != null) {
-                        setSheetState(() => selectedType = value);
+                        setSheetState(() {
+                          selectedType = value;
+                          isOnBudget = defaultIsOnBudget(value);
+                        });
                       }
                     },
                   ),
@@ -156,6 +163,14 @@ class AccountsStep extends StatelessWidget {
                       }
                     },
                   ),
+                  const SizedBox(height: 12),
+                  SwitchListTile(
+                    title: Text(l10n.accountsOnBudgetLabel),
+                    subtitle: Text(l10n.accountsOnBudgetDescription),
+                    value: isOnBudget,
+                    onChanged: (value) =>
+                        setSheetState(() => isOnBudget = value),
+                  ),
                   const SizedBox(height: 16),
                   FilledButton(
                     onPressed: () {
@@ -168,6 +183,7 @@ class AccountsStep extends StatelessWidget {
                           currency: cubit.state.baseCurrency,
                           startingBalance:
                               double.tryParse(balanceController.text) ?? 0,
+                          isOnBudget: isOnBudget,
                         ),
                       );
                       Navigator.of(sheetContext).pop();

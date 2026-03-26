@@ -182,6 +182,63 @@ class BudgetRepository {
     }
   }
 
+  /// Updates an existing budget period.
+  ///
+  /// Sends the update to the API and syncs locally.
+  Future<void> updateBudgetPeriod(BudgetPeriod period) async {
+    try {
+      final dto = BudgetPeriodDto(
+        id: period.id,
+        budgetId: period.budgetId,
+        startDate: period.startDate,
+        endDate: period.endDate,
+        totalIncome: period.totalIncome,
+        totalAllocated: period.totalAllocated,
+        isClosed: period.isClosed,
+        createdAt: period.createdAt,
+      );
+      final updated = await _apiClient.budgets.updateBudgetPeriod(dto);
+      await _cacheBudgetPeriod(updated);
+    } on EnvelopeApiException catch (e) {
+      throw BudgetException(
+        'Failed to update budget period',
+        error: e,
+      );
+    }
+  }
+
+  /// Adds income to the current (latest) budget period.
+  ///
+  /// Finds the most recent period by start date, increments its
+  /// `totalIncome` by [amount], and persists via the API + local cache.
+  Future<void> addIncomeToCurrentPeriod({
+    required String budgetId,
+    required int amount,
+  }) async {
+    try {
+      final periods = await _localDatabase.budgetsDao
+          .getPeriodsByBudgetId(budgetId);
+      if (periods.isEmpty) return;
+
+      final current = periods.reduce(
+        (a, b) => a.startDate.isAfter(b.startDate) ? a : b,
+      );
+
+      final updatedPeriod = _mapBudgetPeriodFromLocal(current).copyWith(
+        totalIncome: current.totalIncome + amount,
+      );
+
+      await updateBudgetPeriod(updatedPeriod);
+    } on BudgetException {
+      rethrow;
+    } on Exception catch (e) {
+      throw BudgetException(
+        'Failed to add income to current period',
+        error: e,
+      );
+    }
+  }
+
   /// Watches all budget periods for a [budgetId].
   ///
   /// Returns a reactive stream from local storage.
