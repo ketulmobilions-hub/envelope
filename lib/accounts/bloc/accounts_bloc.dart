@@ -11,9 +11,9 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   AccountsBloc({
     required AccountRepository accountRepository,
     required String budgetId,
-  })  : _accountRepository = accountRepository,
-        _budgetId = budgetId,
-        super(const AccountsState()) {
+  }) : _accountRepository = accountRepository,
+       _budgetId = budgetId,
+       super(const AccountsState()) {
     on<AccountsStarted>(_onStarted);
     on<_AccountsUpdated>(_onUpdated);
     on<_AccountsStreamError>(_onStreamError);

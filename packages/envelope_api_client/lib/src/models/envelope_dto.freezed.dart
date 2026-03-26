@@ -25,6 +25,7 @@ mixin _$EnvelopeDto {
   int get sortOrder;
   @JsonKey(name: 'is_archived')
   bool get isArchived;
+  String? get color;
 
   /// Create a copy of EnvelopeDto
   /// with the given fields replaced by the non-null parameter values.
@@ -52,7 +53,8 @@ mixin _$EnvelopeDto {
             (identical(other.sortOrder, sortOrder) ||
                 other.sortOrder == sortOrder) &&
             (identical(other.isArchived, isArchived) ||
-                other.isArchived == isArchived));
+                other.isArchived == isArchived) &&
+            (identical(other.color, color) || other.color == color));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -66,11 +68,12 @@ mixin _$EnvelopeDto {
     createdAt,
     sortOrder,
     isArchived,
+    color,
   );
 
   @override
   String toString() {
-    return 'EnvelopeDto(id: $id, categoryGroupId: $categoryGroupId, budgetId: $budgetId, name: $name, createdAt: $createdAt, sortOrder: $sortOrder, isArchived: $isArchived)';
+    return 'EnvelopeDto(id: $id, categoryGroupId: $categoryGroupId, budgetId: $budgetId, name: $name, createdAt: $createdAt, sortOrder: $sortOrder, isArchived: $isArchived, color: $color)';
   }
 }
 
@@ -89,6 +92,7 @@ abstract mixin class $EnvelopeDtoCopyWith<$Res> {
     @JsonKey(name: 'created_at') DateTime createdAt,
     @JsonKey(name: 'sort_order') int sortOrder,
     @JsonKey(name: 'is_archived') bool isArchived,
+    String? color,
   });
 }
 
@@ -111,6 +115,7 @@ class _$EnvelopeDtoCopyWithImpl<$Res> implements $EnvelopeDtoCopyWith<$Res> {
     Object? createdAt = null,
     Object? sortOrder = null,
     Object? isArchived = null,
+    Object? color = freezed,
   }) {
     return _then(
       _self.copyWith(
@@ -142,6 +147,10 @@ class _$EnvelopeDtoCopyWithImpl<$Res> implements $EnvelopeDtoCopyWith<$Res> {
             ? _self.isArchived
             : isArchived // ignore: cast_nullable_to_non_nullable
                   as bool,
+        color: freezed == color
+            ? _self.color
+            : color // ignore: cast_nullable_to_non_nullable
+                  as String?,
       ),
     );
   }
@@ -248,6 +257,7 @@ extension EnvelopeDtoPatterns on EnvelopeDto {
       @JsonKey(name: 'created_at') DateTime createdAt,
       @JsonKey(name: 'sort_order') int sortOrder,
       @JsonKey(name: 'is_archived') bool isArchived,
+      String? color,
     )?
     $default, {
     required TResult orElse(),
@@ -263,6 +273,7 @@ extension EnvelopeDtoPatterns on EnvelopeDto {
           _that.createdAt,
           _that.sortOrder,
           _that.isArchived,
+          _that.color,
         );
       case _:
         return orElse();
@@ -292,6 +303,7 @@ extension EnvelopeDtoPatterns on EnvelopeDto {
       @JsonKey(name: 'created_at') DateTime createdAt,
       @JsonKey(name: 'sort_order') int sortOrder,
       @JsonKey(name: 'is_archived') bool isArchived,
+      String? color,
     )
     $default,
   ) {
@@ -306,6 +318,7 @@ extension EnvelopeDtoPatterns on EnvelopeDto {
           _that.createdAt,
           _that.sortOrder,
           _that.isArchived,
+          _that.color,
         );
       case _:
         throw StateError('Unexpected subclass');
@@ -334,6 +347,7 @@ extension EnvelopeDtoPatterns on EnvelopeDto {
       @JsonKey(name: 'created_at') DateTime createdAt,
       @JsonKey(name: 'sort_order') int sortOrder,
       @JsonKey(name: 'is_archived') bool isArchived,
+      String? color,
     )?
     $default,
   ) {
@@ -348,6 +362,7 @@ extension EnvelopeDtoPatterns on EnvelopeDto {
           _that.createdAt,
           _that.sortOrder,
           _that.isArchived,
+          _that.color,
         );
       case _:
         return null;
@@ -366,6 +381,7 @@ class _EnvelopeDto implements EnvelopeDto {
     @JsonKey(name: 'created_at') required this.createdAt,
     @JsonKey(name: 'sort_order') this.sortOrder = 0,
     @JsonKey(name: 'is_archived') this.isArchived = false,
+    this.color = null,
   });
   factory _EnvelopeDto.fromJson(Map<String, dynamic> json) =>
       _$EnvelopeDtoFromJson(json);
@@ -389,6 +405,9 @@ class _EnvelopeDto implements EnvelopeDto {
   @override
   @JsonKey(name: 'is_archived')
   final bool isArchived;
+  @override
+  @JsonKey()
+  final String? color;
 
   /// Create a copy of EnvelopeDto
   /// with the given fields replaced by the non-null parameter values.
@@ -419,7 +438,8 @@ class _EnvelopeDto implements EnvelopeDto {
             (identical(other.sortOrder, sortOrder) ||
                 other.sortOrder == sortOrder) &&
             (identical(other.isArchived, isArchived) ||
-                other.isArchived == isArchived));
+                other.isArchived == isArchived) &&
+            (identical(other.color, color) || other.color == color));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -433,11 +453,12 @@ class _EnvelopeDto implements EnvelopeDto {
     createdAt,
     sortOrder,
     isArchived,
+    color,
   );
 
   @override
   String toString() {
-    return 'EnvelopeDto(id: $id, categoryGroupId: $categoryGroupId, budgetId: $budgetId, name: $name, createdAt: $createdAt, sortOrder: $sortOrder, isArchived: $isArchived)';
+    return 'EnvelopeDto(id: $id, categoryGroupId: $categoryGroupId, budgetId: $budgetId, name: $name, createdAt: $createdAt, sortOrder: $sortOrder, isArchived: $isArchived, color: $color)';
   }
 }
 
@@ -458,6 +479,7 @@ abstract mixin class _$EnvelopeDtoCopyWith<$Res>
     @JsonKey(name: 'created_at') DateTime createdAt,
     @JsonKey(name: 'sort_order') int sortOrder,
     @JsonKey(name: 'is_archived') bool isArchived,
+    String? color,
   });
 }
 
@@ -480,6 +502,7 @@ class __$EnvelopeDtoCopyWithImpl<$Res> implements _$EnvelopeDtoCopyWith<$Res> {
     Object? createdAt = null,
     Object? sortOrder = null,
     Object? isArchived = null,
+    Object? color = freezed,
   }) {
     return _then(
       _EnvelopeDto(
@@ -511,6 +534,10 @@ class __$EnvelopeDtoCopyWithImpl<$Res> implements _$EnvelopeDtoCopyWith<$Res> {
             ? _self.isArchived
             : isArchived // ignore: cast_nullable_to_non_nullable
                   as bool,
+        color: freezed == color
+            ? _self.color
+            : color // ignore: cast_nullable_to_non_nullable
+                  as String?,
       ),
     );
   }

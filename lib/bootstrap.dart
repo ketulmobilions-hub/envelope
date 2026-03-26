@@ -68,21 +68,26 @@ Future<void> bootstrap({
   }
 
   final authRepository = AuthRepository(apiClient: apiClient);
+  final supabaseClient = Supabase.instance.client;
   final accountRepository = AccountRepository(
     apiClient: apiClient,
     localDatabase: localDatabase,
+    supabaseClient: supabaseClient,
   );
   final budgetRepository = BudgetRepository(
     apiClient: apiClient,
     localDatabase: localDatabase,
+    supabaseClient: supabaseClient,
   );
   final envelopeRepository = EnvelopeRepository(
     apiClient: apiClient,
     localDatabase: localDatabase,
+    supabaseClient: supabaseClient,
   );
   final transactionRepository = TransactionRepository(
     apiClient: apiClient,
     localDatabase: localDatabase,
+    supabaseClient: supabaseClient,
   );
   final goalRepository = GoalRepository(
     apiClient: apiClient,
@@ -99,6 +104,7 @@ Future<void> bootstrap({
   final sharingRepository = SharingRepository(
     apiClient: apiClient,
     localDatabase: localDatabase,
+    supabaseClient: Supabase.instance.client,
   );
   final subscriptionRepository = SubscriptionRepository(
     apiClient: apiClient,

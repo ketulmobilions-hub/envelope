@@ -53,7 +53,6 @@ class _CurrencyStepState extends State<CurrencyStep> {
                 decoration: InputDecoration(
                   hintText: l10n.onboardingCurrencySearch,
                   prefixIcon: const Icon(Icons.search),
-                  border: const OutlineInputBorder(),
                 ),
                 onChanged: (value) =>
                     setState(() => _searchQuery = value),

@@ -43,13 +43,19 @@ class ReportsApiClient {
   }
 
   /// Creates a new net worth snapshot.
+  ///
+  /// Server-generated fields (`id`, `created_at`) are stripped so Supabase
+  /// applies its defaults.
   Future<NetWorthSnapshotDto> createNetWorthSnapshot(
     NetWorthSnapshotDto snapshot,
   ) async {
     try {
+      final json = snapshot.toJson()
+        ..remove('id')
+        ..remove('created_at');
       final response = await _supabaseClient
           .from('net_worth_snapshots')
-          .insert(snapshot.toJson())
+          .insert(json)
           .select()
           .single();
       return NetWorthSnapshotDto.fromJson(response);
@@ -100,11 +106,17 @@ class ReportsApiClient {
   }
 
   /// Creates a new activity log entry.
+  ///
+  /// Server-generated fields (`id`, `created_at`) are stripped so Supabase
+  /// applies its defaults.
   Future<ActivityLogDto> createActivityLog(ActivityLogDto log) async {
     try {
+      final json = log.toJson()
+        ..remove('id')
+        ..remove('created_at');
       final response = await _supabaseClient
           .from('activity_log')
-          .insert(log.toJson())
+          .insert(json)
           .select()
           .single();
       return ActivityLogDto.fromJson(response);

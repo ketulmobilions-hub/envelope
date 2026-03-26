@@ -40,9 +40,13 @@ class GoalsApiClient {
   /// Creates a new goal.
   Future<GoalDto> createGoal(GoalDto goal) async {
     try {
+      final json = goal.toJson()
+        ..remove('id')
+        ..remove('created_at')
+        ..remove('updated_at');
       final response = await _supabaseClient
           .from('goals')
-          .insert(goal.toJson())
+          .insert(json)
           .select()
           .single();
       return GoalDto.fromJson(response);

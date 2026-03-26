@@ -47,8 +47,20 @@ class ReportsDao extends DatabaseAccessor<AppDatabase>
   Future<List<ActivityLogData>> getActivityLogsByUserId(String userId) =>
       (select(activityLog)..where((t) => t.userId.equals(userId))).get();
 
-  Future<int> insertActivityLog(ActivityLogCompanion log) =>
-      into(activityLog).insert(log);
+  Future<int> insertActivityLog(
+    ActivityLogCompanion log, {
+    InsertMode mode = InsertMode.insert,
+  }) =>
+      into(activityLog).insert(log, mode: mode);
+
+  Future<void> batchInsertActivityLogs(
+    List<ActivityLogCompanion> entries, {
+    InsertMode mode = InsertMode.insert,
+  }) async {
+    await batch((b) {
+      b.insertAll(activityLog, entries, mode: mode);
+    });
+  }
 
   Future<int> deleteActivityLog(String id) =>
       (delete(activityLog)..where((t) => t.id.equals(id))).go();

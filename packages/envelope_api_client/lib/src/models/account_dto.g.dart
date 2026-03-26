@@ -17,6 +17,7 @@ _AccountDto _$AccountDtoFromJson(Map<String, dynamic> json) => _AccountDto(
   startingBalance: (json['starting_balance'] as num?)?.toInt() ?? 0,
   currentBalance: (json['current_balance'] as num?)?.toInt() ?? 0,
   isArchived: json['is_archived'] as bool? ?? false,
+  isOnBudget: json['is_on_budget'] as bool? ?? true,
 );
 
 Map<String, dynamic> _$AccountDtoToJson(_AccountDto instance) =>
@@ -31,4 +32,5 @@ Map<String, dynamic> _$AccountDtoToJson(_AccountDto instance) =>
       'starting_balance': instance.startingBalance,
       'current_balance': instance.currentBalance,
       'is_archived': instance.isArchived,
+      'is_on_budget': instance.isOnBudget,
     };

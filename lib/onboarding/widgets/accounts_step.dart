@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:envelope/accounts/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/cubit.dart';
 import 'package:flutter/material.dart';
@@ -40,13 +41,18 @@ class AccountsStep extends StatelessWidget {
                   itemCount: state.accounts.length,
                   itemBuilder: (context, index) {
                     final account = state.accounts[index];
+                    final balance = account.startingBalance
+                        .abs()
+                        .toStringAsFixed(2);
                     return Card(
                       child: ListTile(
                         title: Text(account.name),
                         subtitle: Text(
                           '${_localizedAccountType(l10n, account.type)}'
                           ' • ${account.currency}'
-                          ' • ${account.startingBalance}',
+                          ' • \$$balance'
+                          '${account.isOnBudget ? '' : ' • '
+                              '${l10n.accountsOffBudgetIndicator}'}',
                         ),
                         trailing: IconButton(
                           icon: const Icon(Icons.delete_outline),
@@ -91,6 +97,7 @@ class AccountsStep extends StatelessWidget {
     final nameController = TextEditingController();
     final balanceController = TextEditingController(text: '0');
     var selectedType = _accountTypes.first;
+    var isOnBudget = defaultIsOnBudget(selectedType);
 
     unawaited(showModalBottomSheet<void>(
       context: context,
@@ -118,7 +125,6 @@ class AccountsStep extends StatelessWidget {
                     controller: nameController,
                     decoration: InputDecoration(
                       labelText: l10n.onboardingAccountName,
-                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -126,7 +132,6 @@ class AccountsStep extends StatelessWidget {
                     initialValue: selectedType,
                     decoration: InputDecoration(
                       labelText: l10n.onboardingAccountType,
-                      border: const OutlineInputBorder(),
                     ),
                     items: _accountTypes.map((type) {
                       return DropdownMenuItem(
@@ -138,7 +143,10 @@ class AccountsStep extends StatelessWidget {
                     }).toList(),
                     onChanged: (value) {
                       if (value != null) {
-                        setSheetState(() => selectedType = value);
+                        setSheetState(() {
+                          selectedType = value;
+                          isOnBudget = defaultIsOnBudget(value);
+                        });
                       }
                     },
                   ),
@@ -146,8 +154,9 @@ class AccountsStep extends StatelessWidget {
                   TextField(
                     controller: balanceController,
                     decoration: InputDecoration(
-                      labelText: l10n.onboardingStartingBalance,
-                      border: const OutlineInputBorder(),
+                      labelText: isCreditCard(selectedType)
+                          ? l10n.accountsAmountOwedLabel
+                          : l10n.onboardingStartingBalance,
                     ),
                     keyboardType:
                         const TextInputType.numberWithOptions(
@@ -159,18 +168,32 @@ class AccountsStep extends StatelessWidget {
                       }
                     },
                   ),
+                  const SizedBox(height: 12),
+                  SwitchListTile(
+                    title: Text(l10n.accountsOnBudgetLabel),
+                    subtitle: Text(l10n.accountsOnBudgetDescription),
+                    value: isOnBudget,
+                    onChanged: (value) =>
+                        setSheetState(() => isOnBudget = value),
+                  ),
                   const SizedBox(height: 16),
                   FilledButton(
                     onPressed: () {
                       final name = nameController.text.trim();
                       if (name.isEmpty) return;
+                      var startingBalance =
+                          double.tryParse(balanceController.text) ?? 0;
+                      if (isCreditCard(selectedType) &&
+                          startingBalance > 0) {
+                        startingBalance = -startingBalance;
+                      }
                       cubit.addAccount(
                         OnboardingAccount(
                           name: name,
                           type: selectedType,
                           currency: cubit.state.baseCurrency,
-                          startingBalance:
-                              double.tryParse(balanceController.text) ?? 0,
+                          startingBalance: startingBalance,
+                          isOnBudget: isOnBudget,
                         ),
                       );
                       Navigator.of(sheetContext).pop();

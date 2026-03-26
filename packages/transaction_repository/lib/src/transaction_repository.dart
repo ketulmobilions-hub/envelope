@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart' show InsertMode, Value;
 import 'package:envelope_api_client/envelope_api_client.dart';
 import 'package:envelope_local_storage/envelope_local_storage.dart'
     hide BillReminder, RecurringRule, Tag, Transaction, TransactionSplit;
 import 'package:envelope_local_storage/envelope_local_storage.dart' as storage;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 
 /// Repository for transaction, recurring rule, bill reminder, and tag
@@ -13,14 +16,28 @@ import 'package:transaction_repository/transaction_repository.dart';
 /// local storage for reactive UI updates.
 class TransactionRepository {
   /// Creates a [TransactionRepository].
-  const TransactionRepository({
+  ///
+  /// An optional [supabaseClient] can be provided for Realtime
+  /// subscriptions via [subscribeToTransactionChanges].
+  TransactionRepository({
     required EnvelopeApiClient apiClient,
     required AppDatabase localDatabase,
-  })  : _apiClient = apiClient,
-        _localDatabase = localDatabase;
+    SupabaseClient? supabaseClient,
+  }) : _apiClient = apiClient,
+       _localDatabase = localDatabase,
+       _supabaseClient = supabaseClient;
 
   final EnvelopeApiClient _apiClient;
   final AppDatabase _localDatabase;
+  final SupabaseClient? _supabaseClient;
+
+  final StreamController<void> _remoteChangeController =
+      StreamController<void>.broadcast();
+
+  /// Emits when a remote collaborator's change is received via Realtime.
+  Stream<void> get onRemoteChange => _remoteChangeController.stream;
+
+  int _localWriteCount = 0;
 
   // ---------------------------------------------------------------------------
   // Transactions
@@ -44,6 +61,7 @@ class TransactionRepository {
     String? recurringRuleId,
     String? transferPairId,
   }) async {
+    _beginLocalWrite();
     try {
       final dto = TransactionDto(
         id: '',
@@ -65,8 +83,10 @@ class TransactionRepository {
       );
       final created = await _apiClient.transactions.createTransaction(dto);
       await _cacheTransaction(created);
+      _endLocalWrite();
       return _mapTransactionFromDto(created);
     } on EnvelopeApiException catch (e) {
+      _endLocalWrite();
       throw TransactionException('Failed to create transaction', error: e);
     }
   }
@@ -110,8 +130,9 @@ class TransactionRepository {
             (rows) => rows.where((r) => r.envelopeId == envelopeId).toList(),
           );
     } else {
-      stream =
-          _localDatabase.transactionsDao.watchTransactionsByBudgetId(budgetId);
+      stream = _localDatabase.transactionsDao.watchTransactionsByBudgetId(
+        budgetId,
+      );
     }
 
     return stream
@@ -128,11 +149,14 @@ class TransactionRepository {
   ///
   /// Sends the update to the API and syncs locally.
   Future<void> updateTransaction(Transaction transaction) async {
+    _beginLocalWrite();
     try {
       final dto = _mapTransactionToDto(transaction);
       final updated = await _apiClient.transactions.updateTransaction(dto);
       await _cacheTransaction(updated);
+      _endLocalWrite();
     } on EnvelopeApiException catch (e) {
+      _endLocalWrite();
       throw TransactionException('Failed to update transaction', error: e);
     }
   }
@@ -141,9 +165,11 @@ class TransactionRepository {
   ///
   /// Removes from the API first. Local cache removal is best-effort.
   Future<void> deleteTransaction(String id) async {
+    _beginLocalWrite();
     try {
       await _apiClient.transactions.deleteTransaction(id);
     } on EnvelopeApiException catch (e) {
+      _endLocalWrite();
       throw TransactionException('Failed to delete transaction', error: e);
     }
     try {
@@ -151,13 +177,15 @@ class TransactionRepository {
     } on Exception {
       // Stale local entry will be cleaned up on next refresh.
     }
+    _endLocalWrite();
   }
 
   /// Fetches transactions from the API and syncs to local storage.
   Future<void> refreshTransactions(String budgetId) async {
     try {
-      final remote =
-          await _apiClient.transactions.getTransactionsByBudget(budgetId);
+      final remote = await _apiClient.transactions.getTransactionsByBudget(
+        budgetId,
+      );
       final companions = remote.map(_toTransactionCompanion).toList();
       for (final companion in companions) {
         await _localDatabase.transactionsDao.insertTransaction(
@@ -189,8 +217,9 @@ class TransactionRepository {
           envelopeId: split.envelopeId,
           amount: split.amount.toDouble(),
         );
-        final created =
-            await _apiClient.transactions.createTransactionSplit(dto);
+        final created = await _apiClient.transactions.createTransactionSplit(
+          dto,
+        );
         await _localDatabase.transactionsDao.insertTransactionSplit(
           _toTransactionSplitCompanion(created),
           mode: InsertMode.insertOrReplace,
@@ -214,8 +243,9 @@ class TransactionRepository {
       if (local.isNotEmpty) {
         return local.map(_mapTransactionSplitFromLocal).toList();
       }
-      final remote =
-          await _apiClient.transactions.getTransactionSplits(transactionId);
+      final remote = await _apiClient.transactions.getTransactionSplits(
+        transactionId,
+      );
       for (final dto in remote) {
         await _localDatabase.transactionsDao.insertTransactionSplit(
           _toTransactionSplitCompanion(dto),
@@ -242,8 +272,9 @@ class TransactionRepository {
       throw TransactionException('Failed to replace splits', error: e);
     }
     try {
-      await _localDatabase.transactionsDao
-          .deleteSplitsByTransactionId(transactionId);
+      await _localDatabase.transactionsDao.deleteSplitsByTransactionId(
+        transactionId,
+      );
     } on Exception {
       // Stale local splits will be cleaned up on next refresh.
     }
@@ -260,8 +291,9 @@ class TransactionRepository {
   /// Fetches recurring rules from the API and syncs to local storage.
   Future<void> refreshRecurringRules(String budgetId) async {
     try {
-      final remote =
-          await _apiClient.recurring.getRecurringRulesByBudget(budgetId);
+      final remote = await _apiClient.recurring.getRecurringRulesByBudget(
+        budgetId,
+      );
       for (final dto in remote) {
         await _localDatabase.recurringDao.insertRecurringRule(
           _toRecurringRuleCompanion(dto),
@@ -410,8 +442,9 @@ class TransactionRepository {
   /// Fetches bill reminders from the API and syncs to local storage.
   Future<void> refreshBillReminders(String budgetId) async {
     try {
-      final remote =
-          await _apiClient.recurring.getBillRemindersByBudget(budgetId);
+      final remote = await _apiClient.recurring.getBillRemindersByBudget(
+        budgetId,
+      );
       for (final dto in remote) {
         await _localDatabase.recurringDao.insertBillReminder(
           _toBillReminderCompanion(dto),
@@ -529,8 +562,9 @@ class TransactionRepository {
   /// Gets all tags for a [budgetId].
   Future<List<Tag>> getTags(String budgetId) async {
     try {
-      final local =
-          await _localDatabase.transactionsDao.getTagsByBudgetId(budgetId);
+      final local = await _localDatabase.transactionsDao.getTagsByBudgetId(
+        budgetId,
+      );
       if (local.isNotEmpty) {
         return local.map(_mapTagFromLocal).toList();
       }
@@ -614,13 +648,15 @@ class TransactionRepository {
   /// Gets all tag IDs associated with a transaction.
   Future<List<String>> getTagIdsForTransaction(String transactionId) async {
     try {
-      final local = await _localDatabase.transactionsDao
-          .getTagsByTransactionId(transactionId);
+      final local = await _localDatabase.transactionsDao.getTagsByTransactionId(
+        transactionId,
+      );
       if (local.isNotEmpty) {
         return local.map((r) => r.tagId).toList();
       }
-      final tagIds =
-          await _apiClient.transactions.getTransactionTags(transactionId);
+      final tagIds = await _apiClient.transactions.getTransactionTags(
+        transactionId,
+      );
       for (final tagId in tagIds) {
         await _localDatabase.transactionsDao.insertTransactionTag(
           storage.TransactionTagsCompanion.insert(
@@ -637,6 +673,79 @@ class TransactionRepository {
         error: e,
       );
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Realtime
+  // ---------------------------------------------------------------------------
+
+  /// Subscribes to real-time changes on the `transactions` table
+  /// filtered by [budgetId].
+  RealtimeChannel? subscribeToTransactionChanges(String budgetId) {
+    final client = _supabaseClient;
+    if (client == null) return null;
+
+    final channel = client
+        .channel('transactions:$budgetId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'transactions',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'budget_id',
+            value: budgetId,
+          ),
+          callback: (payload) async {
+            try {
+              final newRecord = payload.newRecord;
+              final oldRecord = payload.oldRecord;
+
+              switch (payload.eventType) {
+                case PostgresChangeEvent.insert:
+                case PostgresChangeEvent.update:
+                  if (newRecord.isNotEmpty) {
+                    final dto = TransactionDto.fromJson(newRecord);
+                    await _cacheTransaction(dto);
+                    if (_localWriteCount == 0) {
+                      _remoteChangeController.add(null);
+                    }
+                  }
+                case PostgresChangeEvent.delete:
+                  if (oldRecord.isNotEmpty) {
+                    final id = oldRecord['id'] as String?;
+                    if (id != null) {
+                      await _localDatabase.transactionsDao
+                          .deleteTransaction(id);
+                      if (_localWriteCount == 0) {
+                        _remoteChangeController.add(null);
+                      }
+                    }
+                  }
+                case PostgresChangeEvent.all:
+                  break;
+              }
+            } on Exception {
+              // Prevent malformed payload from breaking the channel.
+            }
+          },
+        )
+        .subscribe();
+
+    return channel;
+  }
+
+  void _beginLocalWrite() => _localWriteCount++;
+
+  void _endLocalWrite() {
+    Future<void>.delayed(const Duration(seconds: 2), () {
+      if (_localWriteCount > 0) _localWriteCount--;
+    });
+  }
+
+  /// Closes resources held by this repository.
+  void dispose() {
+    _remoteChangeController.close();
   }
 
   // ---------------------------------------------------------------------------

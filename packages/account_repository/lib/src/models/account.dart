@@ -16,6 +16,7 @@ abstract class Account with _$Account {
     @Default(0) int startingBalance,
     @Default(0) int currentBalance,
     @Default(false) bool isArchived,
+    @Default(true) bool isOnBudget,
   }) = _Account;
 
   factory Account.fromJson(Map<String, dynamic> json) =>

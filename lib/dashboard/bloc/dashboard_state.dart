@@ -2,7 +2,7 @@ part of 'dashboard_bloc.dart';
 
 enum DashboardStatus { initial, loading, loaded, error }
 
-enum DashboardError { loadFailed }
+enum DashboardError { loadFailed, allocationFailed }
 
 /// Summary of an envelope with its allocation for the current period.
 final class EnvelopeSummary extends Equatable {
@@ -36,6 +36,7 @@ final class DashboardState extends Equatable {
     this.categoryGroups = const [],
     this.allocations = const [],
     this.recentTransactions = const [],
+    this.hasRemoteUpdate = false,
   });
 
   final DashboardStatus status;
@@ -47,6 +48,7 @@ final class DashboardState extends Equatable {
   final List<CategoryGroup> categoryGroups;
   final List<EnvelopeAllocation> allocations;
   final List<Transaction> recentTransactions;
+  final bool hasRemoteUpdate;
 
   /// Sum of non-archived account balances.
   int get totalBalance => accounts
@@ -58,19 +60,16 @@ final class DashboardState extends Equatable {
     final groupMap = {
       for (final g in categoryGroups) g.id: g.name,
     };
-    return envelopes
-        .where((e) => !e.isArchived)
-        .map((e) {
-          final allocation = allocations
-              .where((a) => a.envelopeId == e.id)
-              .firstOrNull;
-          return EnvelopeSummary(
-            envelope: e,
-            categoryGroupName: groupMap[e.categoryGroupId] ?? '',
-            allocation: allocation,
-          );
-        })
-        .toList();
+    return envelopes.where((e) => !e.isArchived).map((e) {
+      final allocation = allocations
+          .where((a) => a.envelopeId == e.id)
+          .firstOrNull;
+      return EnvelopeSummary(
+        envelope: e,
+        categoryGroupName: groupMap[e.categoryGroupId] ?? '',
+        allocation: allocation,
+      );
+    }).toList();
   }
 
   DashboardState copyWith({
@@ -83,6 +82,7 @@ final class DashboardState extends Equatable {
     List<CategoryGroup>? categoryGroups,
     List<EnvelopeAllocation>? allocations,
     List<Transaction>? recentTransactions,
+    bool? hasRemoteUpdate,
   }) {
     return DashboardState(
       status: status ?? this.status,
@@ -96,6 +96,7 @@ final class DashboardState extends Equatable {
       categoryGroups: categoryGroups ?? this.categoryGroups,
       allocations: allocations ?? this.allocations,
       recentTransactions: recentTransactions ?? this.recentTransactions,
+      hasRemoteUpdate: hasRemoteUpdate ?? this.hasRemoteUpdate,
     );
   }
 
@@ -103,14 +104,15 @@ final class DashboardState extends Equatable {
 
   @override
   List<Object?> get props => [
-        status,
-        error,
-        selectedPeriod,
-        readyToAssign,
-        accounts,
-        envelopes,
-        categoryGroups,
-        allocations,
-        recentTransactions,
-      ];
+    status,
+    error,
+    selectedPeriod,
+    readyToAssign,
+    accounts,
+    envelopes,
+    categoryGroups,
+    allocations,
+    recentTransactions,
+    hasRemoteUpdate,
+  ];
 }

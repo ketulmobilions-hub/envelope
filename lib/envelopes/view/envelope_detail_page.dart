@@ -1,17 +1,16 @@
+import 'dart:async';
+
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/envelopes/cubit/cubit.dart';
 import 'package:envelope/envelopes/view/envelope_form_page.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/theme/app_colors.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-/// Detail page for a single envelope showing allocation info and history.
-///
-/// Expects an [EnvelopeDetailCubit] to be provided above this widget.
-/// [categoryGroups] is passed to the edit form so the group dropdown is
-/// populated; supply the active (non-archived) groups from the parent page.
+/// Detail page for a single envelope with terracotta header.
 class EnvelopeDetailPage extends StatelessWidget {
   const EnvelopeDetailPage({
     required this.categoryGroups,
@@ -22,167 +21,22 @@ class EnvelopeDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-
     return BlocBuilder<EnvelopeDetailCubit, EnvelopeDetailState>(
       builder: (context, state) {
-        final envelope = state.envelope;
-
+        final envelopeColor =
+            AppColors.fromHex(state.envelope.color) ?? AppColors.primary;
         return Scaffold(
-          appBar: AppBar(
-            title: Text(envelope.name),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.edit_outlined),
-                tooltip: l10n.envelopesEditEnvelope,
-                onPressed: () => _openEdit(context, envelope),
+          backgroundColor: envelopeColor,
+          body: CustomScrollView(
+            slivers: [
+              _EnvelopeAppBar(
+                state: state,
+                envelopeColor: envelopeColor,
+                heroTag: 'envelope_${state.envelope.id}',
+                onEdit: () => _openEdit(context, state.envelope),
+                onDelete: () => _confirmDelete(context),
               ),
-            ],
-          ),
-          body: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              // Allocation summary card.
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      Text(
-                        l10n.envelopesDetailAvailable,
-                        style:
-                            Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.outline,
-                                ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        formatCents(0),
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineLarge
-                            ?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _AllocationDetail(
-                            label: l10n.envelopesDetailAllocated,
-                            amount: 0,
-                          ),
-                          _AllocationDetail(
-                            label: l10n.envelopesDetailSpent,
-                            amount: 0,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Envelope info card.
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (envelope.isArchived) ...[
-                        _InfoRow(
-                          label: l10n.envelopesStatusLabel,
-                          // Dedicated key for the status value (different
-                          // semantic from the "Archived" section header).
-                          value: l10n.envelopesStatusArchived,
-                        ),
-                        const Divider(),
-                      ],
-                      _InfoRow(
-                        label: l10n.envelopesCreatedAtLabel,
-                        value: DateFormat.yMd().format(envelope.createdAt),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Allocation history placeholder.
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      Text(
-                        l10n.envelopesDetailAllocationHistory,
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 16),
-                      Icon(
-                        Icons.history_outlined,
-                        size: 48,
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n.envelopesDetailAllocationHistoryPlaceholder,
-                        style:
-                            Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.outline,
-                                ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Transactions placeholder.
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.receipt_long_outlined,
-                        size: 48,
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n.envelopesDetailTransactionsPlaceholder,
-                        style:
-                            Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.outline,
-                                ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Goal progress placeholder.
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.flag_outlined,
-                        size: 48,
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n.envelopesDetailGoalProgressPlaceholder,
-                        style:
-                            Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.outline,
-                                ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              _EnvelopeContent(envelopeColor: envelopeColor),
             ],
           ),
         );
@@ -190,15 +44,23 @@ class EnvelopeDetailPage extends StatelessWidget {
     );
   }
 
-  Future<void> _openEdit(BuildContext context, Envelope envelope) async {
+  Future<void> _openEdit(
+    BuildContext context,
+    Envelope envelope,
+  ) async {
     final cubit = context.read<EnvelopeDetailCubit>();
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
-        builder: (_) => EnvelopeFormPage(
-          envelopeRepository: context.read<EnvelopeRepository>(),
-          budgetId: envelope.budgetId,
-          categoryGroups: categoryGroups,
-          envelope: envelope,
+        builder: (_) => BlocProvider(
+          create: (_) => EnvelopeFormCubit(
+            envelopeRepository: context.read<EnvelopeRepository>(),
+            budgetId: envelope.budgetId,
+            envelope: envelope,
+          ),
+          child: EnvelopeFormPage(
+            categoryGroups: categoryGroups,
+            envelope: envelope,
+          ),
         ),
       ),
     );
@@ -206,10 +68,398 @@ class EnvelopeDetailPage extends StatelessWidget {
       await cubit.refresh();
     }
   }
+
+  Future<void> _confirmDelete(BuildContext context) async {
+    final l10n = context.l10n;
+    final cubit = context.read<EnvelopeDetailCubit>();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(
+          l10n.envelopesDeleteEnvelopeConfirmTitle,
+        ),
+        content: Text(
+          l10n.envelopesDeleteEnvelopeConfirmMessage,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.envelopesCancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+            ),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l10n.envelopesDelete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && context.mounted) {
+      final success = await cubit.deleteEnvelope();
+      if (context.mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                l10n.envelopesDetailDeleteSuccess,
+              ),
+            ),
+          );
+          Navigator.of(context).pop();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                l10n.envelopesDetailDeleteError,
+              ),
+            ),
+          );
+        }
+      }
+    }
+  }
 }
 
-class _AllocationDetail extends StatelessWidget {
-  const _AllocationDetail({required this.label, required this.amount});
+// ── App bar with hero + slide-in animations ──────────────────
+
+class _EnvelopeAppBar extends StatefulWidget {
+  const _EnvelopeAppBar({
+    required this.state,
+    required this.envelopeColor,
+    required this.heroTag,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final EnvelopeDetailState state;
+  final Color envelopeColor;
+  final String heroTag;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  State<_EnvelopeAppBar> createState() => _EnvelopeAppBarState();
+}
+
+class _EnvelopeAppBarState extends State<_EnvelopeAppBar>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final CurvedAnimation _slideCurve;
+  late final CurvedAnimation _opacityCurve;
+  late final Animation<Offset> _slideLeft;
+  late final Animation<Offset> _slideRight;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _slideCurve = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    );
+    _opacityCurve = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+    _slideLeft = Tween<Offset>(
+      begin: const Offset(-1, 0),
+      end: Offset.zero,
+    ).animate(_slideCurve);
+    _slideRight = Tween<Offset>(
+      begin: const Offset(1, 0),
+      end: Offset.zero,
+    ).animate(_slideCurve);
+
+    // Start content animation after the route transition completes.
+    _startAfterRouteTransition();
+  }
+
+  void _startAfterRouteTransition() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final animation = ModalRoute.of(context)?.animation;
+      if (animation == null || animation.status == AnimationStatus.completed) {
+        unawaited(_controller.forward());
+      } else {
+        void listener(AnimationStatus status) {
+          if (status == AnimationStatus.completed && mounted) {
+            animation.removeStatusListener(listener);
+            unawaited(_controller.forward());
+          }
+        }
+
+        animation.addStatusListener(listener);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _opacityCurve.dispose();
+    _slideCurve.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final state = widget.state;
+    final envelope = state.envelope;
+
+    return SliverAppBar(
+      expandedHeight: 200,
+      pinned: true,
+      backgroundColor: widget.envelopeColor,
+      iconTheme: const IconThemeData(color: AppColors.onPrimary),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.edit_outlined),
+          tooltip: l10n.envelopesEditEnvelope,
+          onPressed: widget.onEdit,
+        ),
+        IconButton(
+          icon: const Icon(Icons.delete_outline),
+          tooltip: l10n.envelopesDetailDeleteEnvelope,
+          onPressed: widget.onDelete,
+        ),
+      ],
+      flexibleSpace: FlexibleSpaceBar(
+        centerTitle: true,
+        title: Text(
+          envelope.name.toUpperCase(),
+          style: const TextStyle(
+            color: AppColors.onPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.8,
+          ),
+        ),
+        background: Hero(
+          tag: widget.heroTag,
+          child: Material(
+            type: MaterialType.transparency,
+            child: Container(
+              color: widget.envelopeColor,
+              padding: const EdgeInsets.fromLTRB(
+                24,
+                80,
+                24,
+                48,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    l10n.envelopesDetailAvailable.toUpperCase(),
+                    style: const TextStyle(
+                      color: AppColors.onPrimary,
+                      fontSize: 13,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    formatCents(state.available),
+                    style: GoogleFonts.playfairDisplay(
+                      color: AppColors.onPrimary,
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SlideTransition(
+                        position: _slideLeft,
+                        child: FadeTransition(
+                          opacity: _opacityCurve,
+                          child: _HeaderDetail(
+                            label: l10n.envelopesDetailAllocated,
+                            amount: state.allocated,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 32),
+                      SlideTransition(
+                        position: _slideRight,
+                        child: FadeTransition(
+                          opacity: _opacityCurve,
+                          child: _HeaderDetail(
+                            label: l10n.envelopesDetailSpent,
+                            amount: state.spent,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Content section with slide-up animation ──────────────────
+
+class _EnvelopeContent extends StatefulWidget {
+  const _EnvelopeContent({required this.envelopeColor});
+
+  final Color envelopeColor;
+
+  @override
+  State<_EnvelopeContent> createState() => _EnvelopeContentState();
+}
+
+class _EnvelopeContentState extends State<_EnvelopeContent>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final CurvedAnimation _opacityCurve;
+  late final CurvedAnimation _slideCurve;
+  late final Animation<Offset> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _opacityCurve = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+    _slideCurve = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    );
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 0.15),
+      end: Offset.zero,
+    ).animate(_slideCurve);
+
+    // Start content animation after the route transition completes.
+    _startAfterRouteTransition();
+  }
+
+  void _startAfterRouteTransition() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final animation = ModalRoute.of(context)?.animation;
+      if (animation == null || animation.status == AnimationStatus.completed) {
+        unawaited(_controller.forward());
+      } else {
+        void listener(AnimationStatus status) {
+          if (status == AnimationStatus.completed && mounted) {
+            animation.removeStatusListener(listener);
+            unawaited(_controller.forward());
+          }
+        }
+
+        animation.addStatusListener(listener);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _slideCurve.dispose();
+    _opacityCurve.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final mutedStyle = theme.textTheme.bodyMedium?.copyWith(
+      color: AppColors.onPrimary.withValues(alpha: 0.85),
+    );
+    final sectionTitle = theme.textTheme.titleSmall?.copyWith(
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.8,
+      color: AppColors.onPrimary,
+    );
+
+    return SliverToBoxAdapter(
+      child: SlideTransition(
+        position: _slide,
+        child: FadeTransition(
+          opacity: _opacityCurve,
+          child: Container(
+            color: widget.envelopeColor,
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                // Transactions.
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      const Icon(
+                        Icons.receipt_long_outlined,
+                        size: 48,
+                        color: AppColors.primaryDark,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        l10n.envelopesDetailTransactionsPlaceholder
+                            .toUpperCase(),
+                        style: mutedStyle,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(
+                  color: AppColors.onPrimary.withValues(alpha: 0.2),
+                ),
+                // Goal progress.
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      const Icon(
+                        Icons.flag_outlined,
+                        size: 48,
+                        color: AppColors.primaryDark,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        l10n.envelopesDetailGoalProgressPlaceholder
+                            .toUpperCase(),
+                        style: mutedStyle,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Small helper widgets ─────────────────────────────────────
+
+class _HeaderDetail extends StatelessWidget {
+  const _HeaderDetail({
+    required this.label,
+    required this.amount,
+  });
 
   final String label;
   final int amount;
@@ -219,43 +469,22 @@ class _AllocationDetail extends StatelessWidget {
     return Column(
       children: [
         Text(
-          label,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Theme.of(context).colorScheme.outline,
-              ),
+          label.toUpperCase(),
+          style: TextStyle(
+            color: AppColors.onPrimary.withValues(alpha: 0.8),
+            fontSize: 11,
+            letterSpacing: 0.8,
+          ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         Text(
           formatCents(amount),
-          style: Theme.of(context).textTheme.titleMedium,
+          style: const TextStyle(
+            color: AppColors.onPrimary,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ],
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
-          ),
-          Text(value, style: Theme.of(context).textTheme.bodyMedium),
-        ],
-      ),
     );
   }
 }

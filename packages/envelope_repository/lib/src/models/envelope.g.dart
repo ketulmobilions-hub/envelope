@@ -14,6 +14,7 @@ _Envelope _$EnvelopeFromJson(Map<String, dynamic> json) => _Envelope(
   createdAt: DateTime.parse(json['createdAt'] as String),
   sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
   isArchived: json['isArchived'] as bool? ?? false,
+  color: json['color'] as String? ?? null,
 );
 
 Map<String, dynamic> _$EnvelopeToJson(_Envelope instance) => <String, dynamic>{
@@ -24,4 +25,5 @@ Map<String, dynamic> _$EnvelopeToJson(_Envelope instance) => <String, dynamic>{
   'createdAt': instance.createdAt.toIso8601String(),
   'sortOrder': instance.sortOrder,
   'isArchived': instance.isArchived,
+  'color': instance.color,
 };

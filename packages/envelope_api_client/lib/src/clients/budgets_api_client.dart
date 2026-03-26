@@ -6,7 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class BudgetsApiClient {
   /// Creates a [BudgetsApiClient] with the given [SupabaseClient].
   const BudgetsApiClient({required SupabaseClient supabaseClient})
-      : _supabaseClient = supabaseClient;
+    : _supabaseClient = supabaseClient;
 
   final SupabaseClient _supabaseClient;
 
@@ -42,9 +42,13 @@ class BudgetsApiClient {
   /// Creates a new budget.
   Future<BudgetDto> createBudget(BudgetDto budget) async {
     try {
+      final json = budget.toJson()
+        ..remove('id')
+        ..remove('created_at')
+        ..remove('updated_at');
       final response = await _supabaseClient
           .from('budgets')
-          .insert(budget.toJson())
+          .insert(json)
           .select()
           .single();
       return BudgetDto.fromJson(response);
@@ -95,9 +99,12 @@ class BudgetsApiClient {
   /// Adds a member to a budget.
   Future<BudgetMemberDto> addBudgetMember(BudgetMemberDto member) async {
     try {
+      final json = member.toJson()
+        ..remove('id')
+        ..remove('created_at');
       final response = await _supabaseClient
           .from('budget_members')
-          .insert(member.toJson())
+          .insert(json)
           .select()
           .single();
       return BudgetMemberDto.fromJson(response);
@@ -130,6 +137,28 @@ class BudgetsApiClient {
     }
   }
 
+  /// Invokes the `send-invite-email` Edge Function to send an invitation.
+  Future<void> invokeSendInviteEmail({
+    required String email,
+    required String budgetName,
+    required String inviterName,
+    required String inviteId,
+  }) async {
+    try {
+      await _supabaseClient.functions.invoke(
+        'send-invite-email',
+        body: {
+          'email': email,
+          'budgetName': budgetName,
+          'inviterName': inviterName,
+          'inviteId': inviteId,
+        },
+      );
+    } catch (error) {
+      throw EnvelopeApiException.fromPostgrestException(error);
+    }
+  }
+
   // --- Budget Periods ---
 
   /// Fetches all periods for a budget.
@@ -148,9 +177,12 @@ class BudgetsApiClient {
   /// Creates a new budget period.
   Future<BudgetPeriodDto> createBudgetPeriod(BudgetPeriodDto period) async {
     try {
+      final json = period.toJson()
+        ..remove('id')
+        ..remove('created_at');
       final response = await _supabaseClient
           .from('budget_periods')
-          .insert(period.toJson())
+          .insert(json)
           .select()
           .single();
       return BudgetPeriodDto.fromJson(response);

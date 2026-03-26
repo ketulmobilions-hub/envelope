@@ -6,7 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class EnvelopesApiClient {
   /// Creates an [EnvelopesApiClient] with the given [SupabaseClient].
   const EnvelopesApiClient({required SupabaseClient supabaseClient})
-      : _supabaseClient = supabaseClient;
+    : _supabaseClient = supabaseClient;
 
   final SupabaseClient _supabaseClient;
 
@@ -47,9 +47,13 @@ class EnvelopesApiClient {
     CategoryGroupDto categoryGroup,
   ) async {
     try {
+      final json = categoryGroup.toJson()
+        ..remove('id')
+        ..remove('created_at')
+        ..remove('updated_at');
       final response = await _supabaseClient
           .from('category_groups')
-          .insert(categoryGroup.toJson())
+          .insert(json)
           .select()
           .single();
       return CategoryGroupDto.fromJson(response);
@@ -133,9 +137,13 @@ class EnvelopesApiClient {
   /// Creates a new envelope.
   Future<EnvelopeDto> createEnvelope(EnvelopeDto envelope) async {
     try {
+      final json = envelope.toJson()
+        ..remove('id')
+        ..remove('created_at')
+        ..remove('updated_at');
       final response = await _supabaseClient
           .from('envelopes')
-          .insert(envelope.toJson())
+          .insert(json)
           .select()
           .single();
       return EnvelopeDto.fromJson(response);
@@ -219,9 +227,12 @@ class EnvelopesApiClient {
     EnvelopeAllocationDto allocation,
   ) async {
     try {
+      final json = allocation.toJson()
+        ..remove('id')
+        ..remove('created_at');
       final response = await _supabaseClient
           .from('envelope_allocations')
-          .insert(allocation.toJson())
+          .insert(json)
           .select()
           .single();
       return EnvelopeAllocationDto.fromJson(response);
@@ -288,13 +299,19 @@ class EnvelopesApiClient {
   }
 
   /// Creates a new allocation template.
+  ///
+  /// Server-generated fields (`id`, `created_at`) are stripped so Supabase
+  /// applies its defaults.
   Future<AllocationTemplateDto> createAllocationTemplate(
     AllocationTemplateDto template,
   ) async {
     try {
+      final json = template.toJson()
+        ..remove('id')
+        ..remove('created_at');
       final response = await _supabaseClient
           .from('allocation_templates')
-          .insert(template.toJson())
+          .insert(json)
           .select()
           .single();
       return AllocationTemplateDto.fromJson(response);
@@ -347,13 +364,16 @@ class EnvelopesApiClient {
   }
 
   /// Creates a new allocation template item.
+  ///
+  /// Server-generated field (`id`) is stripped so Supabase applies its default.
   Future<AllocationTemplateItemDto> createAllocationTemplateItem(
     AllocationTemplateItemDto item,
   ) async {
     try {
+      final json = item.toJson()..remove('id');
       final response = await _supabaseClient
           .from('allocation_template_items')
-          .insert(item.toJson())
+          .insert(json)
           .select()
           .single();
       return AllocationTemplateItemDto.fromJson(response);

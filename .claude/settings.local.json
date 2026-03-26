@@ -1,7 +1,27 @@
 {
   "permissions": {
     "allow": [
-      "Bash(flutter gen-l10n:*)"
+      "Bash(flutter gen-l10n:*)",
+      "Bash(gh issue:*)",
+      "Bash(dart analyze:*)",
+      "Bash(grep:*)",
+      "Bash(head:*)",
+      "Bash(for dir in auth_repository budget_repository account_repository envelope_repository transaction_repository goal_repository sharing_repository notification_repository report_repository sync_repository subscription_repository)",
+      "Bash(do echo \"=== $dir ===\")",
+      "Read(//Users/mobilions/development/envelope/packages/$dir/**)",
+      "Bash(done)",
+      "Bash(git:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(flutter test:*)",
+      "Bash(dart run:*)",
+      "Bash(flutter pub:*)",
+      "Bash(cd /Users/mobilions/development/envelope/packages/envelope_repository && dart pub get 2>&1)",
+      "Bash(dart test:*)",
+      "Bash(very_good analyze:*)",
+      "Bash(very_good test:*)",
+      "Bash(cd /Users/mobilions/development/envelope/packages/transaction_repository && dart pub get 2>&1)",
+      "Bash(dart pub:*)",
+      "Bash(flutter --version 2>/dev/null | head -3)"
     ]
   }
 }

@@ -1,19 +1,18 @@
 import 'dart:async';
 
-import 'package:account_repository/account_repository.dart';
-import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/app/routes/app_router.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/dashboard/bloc/bloc.dart';
 import 'package:envelope/dashboard/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
 import 'package:envelope/recurring/cubit/recurring_check_cubit.dart';
 import 'package:envelope/sync/sync.dart';
-import 'package:envelope/transactions/transactions.dart';
-import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sharing_repository/sharing_repository.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 
 /// Home/dashboard page with aggregated budget summary.
@@ -33,9 +32,8 @@ class HomePage extends StatelessWidget {
       );
     }
 
-    // TODO(budget): Replace with actual budget ID once budget selection
-    // is implemented. Using user ID as a placeholder.
-    final budgetId = user.id;
+    final budgetId =
+        context.read<SharedPreferences>().getString(activeBudgetIdKey) ?? '';
     final userId = user.id;
 
     return MultiBlocProvider(
@@ -57,40 +55,20 @@ class HomePage extends StatelessWidget {
             accountRepository: context.read(),
             envelopeRepository: context.read(),
             transactionRepository: context.read(),
+            sharingRepository: context.read<SharingRepository>(),
             budgetId: budgetId,
           )..add(const DashboardStarted()),
         ),
       ],
-      child: _HomeView(budgetId: budgetId, userId: userId),
+      child: _HomeView(budgetId: budgetId),
     );
   }
 }
 
 class _HomeView extends StatelessWidget {
-  const _HomeView({required this.budgetId, required this.userId});
+  const _HomeView({required this.budgetId});
 
   final String budgetId;
-  final String userId;
-
-  void _openAddTransaction(BuildContext context) {
-    final dashboardState = context.read<DashboardBloc>().state;
-    unawaited(
-      Navigator.of(context).push<bool>(
-        MaterialPageRoute(
-          builder: (_) => TransactionFormPage(
-            transactionRepository:
-                context.read<TransactionRepository>(),
-            accountRepository: context.read<AccountRepository>(),
-            envelopeRepository: context.read<EnvelopeRepository>(),
-            budgetRepository: context.read<BudgetRepository>(),
-            budgetId: budgetId,
-            userId: userId,
-            budgetPeriodId: dashboardState.selectedPeriod?.id,
-          ),
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,22 +77,43 @@ class _HomeView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.homeTitle),
-        actions: const [
-          SyncStatusIndicator(),
+        actions: [
+          IconButton(
+            onPressed: () => context.go(
+              '${AppRoutes.sharedBudget}?budgetId=$budgetId',
+            ),
+            icon: const Icon(Icons.group),
+          ),
+          const SyncStatusIndicator(),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _openAddTransaction(context),
-        child: const Icon(Icons.add),
-      ),
-      body: BlocListener<DashboardBloc, DashboardState>(
-        listenWhen: (prev, curr) =>
-            prev.error != curr.error && curr.error != null,
-        listener: (context, state) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.dashboardErrorLoad)),
-          );
-        },
+      body: MultiBlocListener(
+        listeners: [
+          BlocListener<DashboardBloc, DashboardState>(
+            listenWhen: (prev, curr) =>
+                prev.error != curr.error && curr.error != null,
+            listener: (context, state) {
+              final message = state.error == DashboardError.allocationFailed
+                  ? l10n.dashboardErrorAllocation
+                  : l10n.dashboardErrorLoad;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(message)),
+              );
+            },
+          ),
+          BlocListener<DashboardBloc, DashboardState>(
+            listenWhen: (prev, curr) =>
+                !prev.hasRemoteUpdate && curr.hasRemoteUpdate,
+            listener: (context, state) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(l10n.realtimeChangeReceived),
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            },
+          ),
+        ],
         child: BlocBuilder<DashboardBloc, DashboardState>(
           builder: (context, state) {
             if (state.status == DashboardStatus.initial ||
@@ -124,9 +123,9 @@ class _HomeView extends StatelessWidget {
 
             return RefreshIndicator(
               onRefresh: () async {
-                context
-                    .read<DashboardBloc>()
-                    .add(const DashboardRefreshRequested());
+                context.read<DashboardBloc>().add(
+                  const DashboardRefreshRequested(),
+                );
               },
               child: ListView(
                 children: [
@@ -153,8 +152,7 @@ class _HomeView extends StatelessWidget {
                             ),
                           if (recurringState.upcomingBills.isNotEmpty)
                             MaterialBanner(
-                              content:
-                                  Text(l10n.recurringUpcomingBillsBanner),
+                              content: Text(l10n.recurringUpcomingBillsBanner),
                               leading: const Icon(Icons.receipt_outlined),
                               actions: [
                                 TextButton(
@@ -178,21 +176,10 @@ class _HomeView extends StatelessWidget {
                     ),
                   ),
 
-                  // Quick Actions
-                  QuickActionsRow(
-                    onAddTransaction: () =>
-                        _openAddTransaction(context),
-                    onViewBudget: () => context.go(
-                      '${AppRoutes.budget}?budgetId=$budgetId',
-                    ),
-                    onViewAccounts: () => context.go(
-                      '${AppRoutes.accounts}?budgetId=$budgetId',
-                    ),
-                  ),
-
                   // Envelope Summaries
                   EnvelopeSummaryCard(
                     summaries: state.envelopeSummaries,
+                    categoryGroups: state.categoryGroups,
                     onViewAll: () => context.go(
                       '${AppRoutes.envelopes}?budgetId=$budgetId',
                     ),

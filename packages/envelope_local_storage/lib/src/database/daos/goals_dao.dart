@@ -22,7 +22,20 @@ class GoalsDao extends DatabaseAccessor<AppDatabase> with _$GoalsDaoMixin {
   Stream<Goal> watchGoal(String id) =>
       (select(goals)..where((t) => t.id.equals(id))).watchSingle();
 
-  Future<int> insertGoal(GoalsCompanion goal) => into(goals).insert(goal);
+  Future<int> insertGoal(
+    GoalsCompanion goal, {
+    InsertMode mode = InsertMode.insert,
+  }) =>
+      into(goals).insert(goal, mode: mode);
+
+  Future<void> batchInsertGoals(
+    List<GoalsCompanion> entries, {
+    InsertMode mode = InsertMode.insert,
+  }) async {
+    await batch((b) {
+      b.insertAll(goals, entries, mode: mode);
+    });
+  }
 
   Future<bool> updateGoal(GoalsCompanion goal) => update(goals).replace(goal);
 

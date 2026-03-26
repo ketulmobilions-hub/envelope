@@ -1,7 +1,10 @@
 export 'cover_overspend_dialog.dart';
+export 'horizontal_date_picker.dart';
 export 'overspend_warning_dialog.dart';
 export 'split_rows.dart';
 export 'tag_picker.dart';
+export 'timeline_date_header.dart';
+export 'timeline_transaction_tile.dart';
 export 'transaction_date_group.dart';
 export 'transaction_filter_bar.dart';
 export 'transaction_helpers.dart';

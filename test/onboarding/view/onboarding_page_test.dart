@@ -1,8 +1,13 @@
+import 'package:account_repository/account_repository.dart';
+import 'package:auth_repository/auth_repository.dart';
 import 'package:bloc_test/bloc_test.dart';
+import 'package:budget_repository/budget_repository.dart';
+import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/cubit.dart';
 import 'package:envelope/onboarding/view/onboarding_page.dart';
 import 'package:envelope/onboarding/widgets/widgets.dart';
+import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,24 +17,68 @@ import 'package:shared_preferences/shared_preferences.dart';
 class MockOnboardingCubit extends MockCubit<OnboardingState>
     implements OnboardingCubit {}
 
+class MockEnvelopeRepository extends Mock implements EnvelopeRepository {}
+
+class MockAccountRepository extends Mock implements AccountRepository {}
+
+class MockBudgetRepository extends Mock implements BudgetRepository {}
+
+class MockAuthBloc extends MockBloc<AuthEvent, AuthState>
+    implements AuthBloc {}
+
 void main() {
   group('OnboardingPage', () {
     late SharedPreferences prefs;
+    late MockEnvelopeRepository envelopeRepository;
+    late MockAccountRepository accountRepository;
+    late MockBudgetRepository budgetRepository;
+    late MockAuthBloc authBloc;
 
     setUp(() async {
       SharedPreferences.setMockInitialValues({});
       prefs = await SharedPreferences.getInstance();
+      envelopeRepository = MockEnvelopeRepository();
+      accountRepository = MockAccountRepository();
+      budgetRepository = MockBudgetRepository();
+      authBloc = MockAuthBloc();
+
+      final now = DateTime.now();
+      when(() => authBloc.state).thenReturn(
+        AuthState.authenticated(
+          User(
+            id: 'test-user-id',
+            email: 'test@test.com',
+            displayName: 'Test',
+            createdAt: now,
+            updatedAt: now,
+          ),
+        ),
+      );
     });
 
     testWidgets('renders OnboardingView', (tester) async {
       await tester.pumpWidget(
-        RepositoryProvider<SharedPreferences>.value(
-          value: prefs,
-          child: MaterialApp(
-            localizationsDelegates:
-                AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: const OnboardingPage(),
+        MultiRepositoryProvider(
+          providers: [
+            RepositoryProvider<SharedPreferences>.value(value: prefs),
+            RepositoryProvider<EnvelopeRepository>.value(
+              value: envelopeRepository,
+            ),
+            RepositoryProvider<AccountRepository>.value(
+              value: accountRepository,
+            ),
+            RepositoryProvider<BudgetRepository>.value(
+              value: budgetRepository,
+            ),
+          ],
+          child: BlocProvider<AuthBloc>.value(
+            value: authBloc,
+            child: MaterialApp(
+              localizationsDelegates:
+                  AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: const OnboardingPage(),
+            ),
           ),
         ),
       );
@@ -174,6 +223,24 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Continue'));
       verify(() => cubit.nextStep()).called(1);
+    });
+
+    testWidgets('shows snackbar on failure with error',
+        (tester) async {
+      when(() => cubit.state).thenReturn(const OnboardingState());
+      whenListen(
+        cubit,
+        Stream.fromIterable([
+          const OnboardingState(
+            status: OnboardingStatus.failure,
+            error: OnboardingError.completionFailed,
+          ),
+        ]),
+        initialState: const OnboardingState(),
+      );
+      await tester.pumpWidget(buildSubject());
+      await tester.pump();
+      expect(find.byType(SnackBar), findsOneWidget);
     });
   });
 }

@@ -42,13 +42,20 @@ class RecurringApiClient {
   }
 
   /// Creates a new recurring rule.
+  ///
+  /// Server-generated fields (`id`, `created_at`, `updated_at`) are
+  /// stripped from the payload so Supabase applies its defaults.
   Future<RecurringRuleDto> createRecurringRule(
     RecurringRuleDto rule,
   ) async {
     try {
+      final json = rule.toJson()
+        ..remove('id')
+        ..remove('created_at')
+        ..remove('updated_at');
       final response = await _supabaseClient
           .from('recurring_rules')
-          .insert(rule.toJson())
+          .insert(json)
           .select()
           .single();
       return RecurringRuleDto.fromJson(response);
@@ -115,13 +122,19 @@ class RecurringApiClient {
   }
 
   /// Creates a new bill reminder.
+  ///
+  /// Server-generated fields (`id`, `created_at`) are stripped so Supabase
+  /// applies its defaults.
   Future<BillReminderDto> createBillReminder(
     BillReminderDto reminder,
   ) async {
     try {
+      final json = reminder.toJson()
+        ..remove('id')
+        ..remove('created_at');
       final response = await _supabaseClient
           .from('bill_reminders')
-          .insert(reminder.toJson())
+          .insert(json)
           .select()
           .single();
       return BillReminderDto.fromJson(response);

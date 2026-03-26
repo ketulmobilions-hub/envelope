@@ -1123,9 +1123,9 @@ class $BudgetMembersTable extends BudgetMembers
   late final GeneratedColumn<String> userId = GeneratedColumn<String>(
     'user_id',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _roleMeta = const VerificationMeta('role');
   @override
@@ -1210,8 +1210,6 @@ class $BudgetMembersTable extends BudgetMembers
         _userIdMeta,
         userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
       );
-    } else if (isInserting) {
-      context.missing(_userIdMeta);
     }
     if (data.containsKey('role')) {
       context.handle(
@@ -1261,7 +1259,7 @@ class $BudgetMembersTable extends BudgetMembers
       userId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}user_id'],
-      )!,
+      ),
       role: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}role'],
@@ -1290,7 +1288,7 @@ class $BudgetMembersTable extends BudgetMembers
 class BudgetMember extends DataClass implements Insertable<BudgetMember> {
   final String id;
   final String budgetId;
-  final String userId;
+  final String? userId;
   final String role;
   final String invitedVia;
   final DateTime? acceptedAt;
@@ -1298,7 +1296,7 @@ class BudgetMember extends DataClass implements Insertable<BudgetMember> {
   const BudgetMember({
     required this.id,
     required this.budgetId,
-    required this.userId,
+    this.userId,
     required this.role,
     required this.invitedVia,
     this.acceptedAt,
@@ -1309,7 +1307,9 @@ class BudgetMember extends DataClass implements Insertable<BudgetMember> {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['budget_id'] = Variable<String>(budgetId);
-    map['user_id'] = Variable<String>(userId);
+    if (!nullToAbsent || userId != null) {
+      map['user_id'] = Variable<String>(userId);
+    }
     map['role'] = Variable<String>(role);
     map['invited_via'] = Variable<String>(invitedVia);
     if (!nullToAbsent || acceptedAt != null) {
@@ -1323,7 +1323,9 @@ class BudgetMember extends DataClass implements Insertable<BudgetMember> {
     return BudgetMembersCompanion(
       id: Value(id),
       budgetId: Value(budgetId),
-      userId: Value(userId),
+      userId: userId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(userId),
       role: Value(role),
       invitedVia: Value(invitedVia),
       acceptedAt: acceptedAt == null && nullToAbsent
@@ -1341,7 +1343,7 @@ class BudgetMember extends DataClass implements Insertable<BudgetMember> {
     return BudgetMember(
       id: serializer.fromJson<String>(json['id']),
       budgetId: serializer.fromJson<String>(json['budgetId']),
-      userId: serializer.fromJson<String>(json['userId']),
+      userId: serializer.fromJson<String?>(json['userId']),
       role: serializer.fromJson<String>(json['role']),
       invitedVia: serializer.fromJson<String>(json['invitedVia']),
       acceptedAt: serializer.fromJson<DateTime?>(json['acceptedAt']),
@@ -1354,7 +1356,7 @@ class BudgetMember extends DataClass implements Insertable<BudgetMember> {
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'budgetId': serializer.toJson<String>(budgetId),
-      'userId': serializer.toJson<String>(userId),
+      'userId': serializer.toJson<String?>(userId),
       'role': serializer.toJson<String>(role),
       'invitedVia': serializer.toJson<String>(invitedVia),
       'acceptedAt': serializer.toJson<DateTime?>(acceptedAt),
@@ -1365,7 +1367,7 @@ class BudgetMember extends DataClass implements Insertable<BudgetMember> {
   BudgetMember copyWith({
     String? id,
     String? budgetId,
-    String? userId,
+    Value<String?> userId = const Value.absent(),
     String? role,
     String? invitedVia,
     Value<DateTime?> acceptedAt = const Value.absent(),
@@ -1373,7 +1375,7 @@ class BudgetMember extends DataClass implements Insertable<BudgetMember> {
   }) => BudgetMember(
     id: id ?? this.id,
     budgetId: budgetId ?? this.budgetId,
-    userId: userId ?? this.userId,
+    userId: userId.present ? userId.value : this.userId,
     role: role ?? this.role,
     invitedVia: invitedVia ?? this.invitedVia,
     acceptedAt: acceptedAt.present ? acceptedAt.value : this.acceptedAt,
@@ -1435,7 +1437,7 @@ class BudgetMember extends DataClass implements Insertable<BudgetMember> {
 class BudgetMembersCompanion extends UpdateCompanion<BudgetMember> {
   final Value<String> id;
   final Value<String> budgetId;
-  final Value<String> userId;
+  final Value<String?> userId;
   final Value<String> role;
   final Value<String> invitedVia;
   final Value<DateTime?> acceptedAt;
@@ -1454,7 +1456,7 @@ class BudgetMembersCompanion extends UpdateCompanion<BudgetMember> {
   BudgetMembersCompanion.insert({
     required String id,
     required String budgetId,
-    required String userId,
+    this.userId = const Value.absent(),
     this.role = const Value.absent(),
     required String invitedVia,
     this.acceptedAt = const Value.absent(),
@@ -1462,7 +1464,6 @@ class BudgetMembersCompanion extends UpdateCompanion<BudgetMember> {
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        budgetId = Value(budgetId),
-       userId = Value(userId),
        invitedVia = Value(invitedVia),
        createdAt = Value(createdAt);
   static Insertable<BudgetMember> custom({
@@ -1490,7 +1491,7 @@ class BudgetMembersCompanion extends UpdateCompanion<BudgetMember> {
   BudgetMembersCompanion copyWith({
     Value<String>? id,
     Value<String>? budgetId,
-    Value<String>? userId,
+    Value<String?>? userId,
     Value<String>? role,
     Value<String>? invitedVia,
     Value<DateTime?>? acceptedAt,
@@ -2167,6 +2168,21 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _isOnBudgetMeta = const VerificationMeta(
+    'isOnBudget',
+  );
+  @override
+  late final GeneratedColumn<bool> isOnBudget = GeneratedColumn<bool>(
+    'is_on_budget',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_on_budget" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -2199,6 +2215,7 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     currentBalance,
     currency,
     isArchived,
+    isOnBudget,
     createdAt,
     updatedAt,
   ];
@@ -2275,6 +2292,15 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         isArchived.isAcceptableOrUnknown(data['is_archived']!, _isArchivedMeta),
       );
     }
+    if (data.containsKey('is_on_budget')) {
+      context.handle(
+        _isOnBudgetMeta,
+        isOnBudget.isAcceptableOrUnknown(
+          data['is_on_budget']!,
+          _isOnBudgetMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -2332,6 +2358,10 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         DriftSqlType.bool,
         data['${effectivePrefix}is_archived'],
       )!,
+      isOnBudget: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_on_budget'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -2358,6 +2388,7 @@ class Account extends DataClass implements Insertable<Account> {
   final int currentBalance;
   final String currency;
   final bool isArchived;
+  final bool isOnBudget;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Account({
@@ -2369,6 +2400,7 @@ class Account extends DataClass implements Insertable<Account> {
     required this.currentBalance,
     required this.currency,
     required this.isArchived,
+    required this.isOnBudget,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -2383,6 +2415,7 @@ class Account extends DataClass implements Insertable<Account> {
     map['current_balance'] = Variable<int>(currentBalance);
     map['currency'] = Variable<String>(currency);
     map['is_archived'] = Variable<bool>(isArchived);
+    map['is_on_budget'] = Variable<bool>(isOnBudget);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -2398,6 +2431,7 @@ class Account extends DataClass implements Insertable<Account> {
       currentBalance: Value(currentBalance),
       currency: Value(currency),
       isArchived: Value(isArchived),
+      isOnBudget: Value(isOnBudget),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -2417,6 +2451,7 @@ class Account extends DataClass implements Insertable<Account> {
       currentBalance: serializer.fromJson<int>(json['currentBalance']),
       currency: serializer.fromJson<String>(json['currency']),
       isArchived: serializer.fromJson<bool>(json['isArchived']),
+      isOnBudget: serializer.fromJson<bool>(json['isOnBudget']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -2433,6 +2468,7 @@ class Account extends DataClass implements Insertable<Account> {
       'currentBalance': serializer.toJson<int>(currentBalance),
       'currency': serializer.toJson<String>(currency),
       'isArchived': serializer.toJson<bool>(isArchived),
+      'isOnBudget': serializer.toJson<bool>(isOnBudget),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -2447,6 +2483,7 @@ class Account extends DataClass implements Insertable<Account> {
     int? currentBalance,
     String? currency,
     bool? isArchived,
+    bool? isOnBudget,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => Account(
@@ -2458,6 +2495,7 @@ class Account extends DataClass implements Insertable<Account> {
     currentBalance: currentBalance ?? this.currentBalance,
     currency: currency ?? this.currency,
     isArchived: isArchived ?? this.isArchived,
+    isOnBudget: isOnBudget ?? this.isOnBudget,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -2477,6 +2515,9 @@ class Account extends DataClass implements Insertable<Account> {
       isArchived: data.isArchived.present
           ? data.isArchived.value
           : this.isArchived,
+      isOnBudget: data.isOnBudget.present
+          ? data.isOnBudget.value
+          : this.isOnBudget,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -2493,6 +2534,7 @@ class Account extends DataClass implements Insertable<Account> {
           ..write('currentBalance: $currentBalance, ')
           ..write('currency: $currency, ')
           ..write('isArchived: $isArchived, ')
+          ..write('isOnBudget: $isOnBudget, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -2509,6 +2551,7 @@ class Account extends DataClass implements Insertable<Account> {
     currentBalance,
     currency,
     isArchived,
+    isOnBudget,
     createdAt,
     updatedAt,
   );
@@ -2524,6 +2567,7 @@ class Account extends DataClass implements Insertable<Account> {
           other.currentBalance == this.currentBalance &&
           other.currency == this.currency &&
           other.isArchived == this.isArchived &&
+          other.isOnBudget == this.isOnBudget &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -2537,6 +2581,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
   final Value<int> currentBalance;
   final Value<String> currency;
   final Value<bool> isArchived;
+  final Value<bool> isOnBudget;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -2549,6 +2594,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     this.currentBalance = const Value.absent(),
     this.currency = const Value.absent(),
     this.isArchived = const Value.absent(),
+    this.isOnBudget = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -2562,6 +2608,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     this.currentBalance = const Value.absent(),
     required String currency,
     this.isArchived = const Value.absent(),
+    this.isOnBudget = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
@@ -2581,6 +2628,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Expression<int>? currentBalance,
     Expression<String>? currency,
     Expression<bool>? isArchived,
+    Expression<bool>? isOnBudget,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -2594,6 +2642,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       if (currentBalance != null) 'current_balance': currentBalance,
       if (currency != null) 'currency': currency,
       if (isArchived != null) 'is_archived': isArchived,
+      if (isOnBudget != null) 'is_on_budget': isOnBudget,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -2609,6 +2658,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Value<int>? currentBalance,
     Value<String>? currency,
     Value<bool>? isArchived,
+    Value<bool>? isOnBudget,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
@@ -2622,6 +2672,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       currentBalance: currentBalance ?? this.currentBalance,
       currency: currency ?? this.currency,
       isArchived: isArchived ?? this.isArchived,
+      isOnBudget: isOnBudget ?? this.isOnBudget,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -2655,6 +2706,9 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     if (isArchived.present) {
       map['is_archived'] = Variable<bool>(isArchived.value);
     }
+    if (isOnBudget.present) {
+      map['is_on_budget'] = Variable<bool>(isOnBudget.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -2678,6 +2732,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
           ..write('currentBalance: $currentBalance, ')
           ..write('currency: $currency, ')
           ..write('isArchived: $isArchived, ')
+          ..write('isOnBudget: $isOnBudget, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -3223,6 +3278,15 @@ class $EnvelopesTable extends Envelopes
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<String> color = GeneratedColumn<String>(
+    'color',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -3242,6 +3306,7 @@ class $EnvelopesTable extends Envelopes
     name,
     sortOrder,
     isArchived,
+    color,
     createdAt,
   ];
   @override
@@ -3300,6 +3365,12 @@ class $EnvelopesTable extends Envelopes
         isArchived.isAcceptableOrUnknown(data['is_archived']!, _isArchivedMeta),
       );
     }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -3341,6 +3412,10 @@ class $EnvelopesTable extends Envelopes
         DriftSqlType.bool,
         data['${effectivePrefix}is_archived'],
       )!,
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}color'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -3361,6 +3436,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
   final String name;
   final int sortOrder;
   final bool isArchived;
+  final String? color;
   final DateTime createdAt;
   const Envelope({
     required this.id,
@@ -3369,6 +3445,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
     required this.name,
     required this.sortOrder,
     required this.isArchived,
+    this.color,
     required this.createdAt,
   });
   @override
@@ -3380,6 +3457,9 @@ class Envelope extends DataClass implements Insertable<Envelope> {
     map['name'] = Variable<String>(name);
     map['sort_order'] = Variable<int>(sortOrder);
     map['is_archived'] = Variable<bool>(isArchived);
+    if (!nullToAbsent || color != null) {
+      map['color'] = Variable<String>(color);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -3392,6 +3472,9 @@ class Envelope extends DataClass implements Insertable<Envelope> {
       name: Value(name),
       sortOrder: Value(sortOrder),
       isArchived: Value(isArchived),
+      color: color == null && nullToAbsent
+          ? const Value.absent()
+          : Value(color),
       createdAt: Value(createdAt),
     );
   }
@@ -3408,6 +3491,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
       name: serializer.fromJson<String>(json['name']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
       isArchived: serializer.fromJson<bool>(json['isArchived']),
+      color: serializer.fromJson<String?>(json['color']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -3421,6 +3505,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
       'name': serializer.toJson<String>(name),
       'sortOrder': serializer.toJson<int>(sortOrder),
       'isArchived': serializer.toJson<bool>(isArchived),
+      'color': serializer.toJson<String?>(color),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -3432,6 +3517,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
     String? name,
     int? sortOrder,
     bool? isArchived,
+    Value<String?> color = const Value.absent(),
     DateTime? createdAt,
   }) => Envelope(
     id: id ?? this.id,
@@ -3440,6 +3526,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
     name: name ?? this.name,
     sortOrder: sortOrder ?? this.sortOrder,
     isArchived: isArchived ?? this.isArchived,
+    color: color.present ? color.value : this.color,
     createdAt: createdAt ?? this.createdAt,
   );
   Envelope copyWithCompanion(EnvelopesCompanion data) {
@@ -3454,6 +3541,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
       isArchived: data.isArchived.present
           ? data.isArchived.value
           : this.isArchived,
+      color: data.color.present ? data.color.value : this.color,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -3467,6 +3555,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
           ..write('name: $name, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('isArchived: $isArchived, ')
+          ..write('color: $color, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -3480,6 +3569,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
     name,
     sortOrder,
     isArchived,
+    color,
     createdAt,
   );
   @override
@@ -3492,6 +3582,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
           other.name == this.name &&
           other.sortOrder == this.sortOrder &&
           other.isArchived == this.isArchived &&
+          other.color == this.color &&
           other.createdAt == this.createdAt);
 }
 
@@ -3502,6 +3593,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
   final Value<String> name;
   final Value<int> sortOrder;
   final Value<bool> isArchived;
+  final Value<String?> color;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
   const EnvelopesCompanion({
@@ -3511,6 +3603,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
     this.name = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.isArchived = const Value.absent(),
+    this.color = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -3521,6 +3614,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
     required String name,
     this.sortOrder = const Value.absent(),
     this.isArchived = const Value.absent(),
+    this.color = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -3535,6 +3629,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
     Expression<String>? name,
     Expression<int>? sortOrder,
     Expression<bool>? isArchived,
+    Expression<String>? color,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -3545,6 +3640,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
       if (name != null) 'name': name,
       if (sortOrder != null) 'sort_order': sortOrder,
       if (isArchived != null) 'is_archived': isArchived,
+      if (color != null) 'color': color,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -3557,6 +3653,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
     Value<String>? name,
     Value<int>? sortOrder,
     Value<bool>? isArchived,
+    Value<String?>? color,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
   }) {
@@ -3567,6 +3664,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
       name: name ?? this.name,
       sortOrder: sortOrder ?? this.sortOrder,
       isArchived: isArchived ?? this.isArchived,
+      color: color ?? this.color,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -3593,6 +3691,9 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
     if (isArchived.present) {
       map['is_archived'] = Variable<bool>(isArchived.value);
     }
+    if (color.present) {
+      map['color'] = Variable<String>(color.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -3611,6 +3712,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
           ..write('name: $name, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('isArchived: $isArchived, ')
+          ..write('color: $color, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -11876,7 +11978,7 @@ typedef $$BudgetMembersTableCreateCompanionBuilder =
     BudgetMembersCompanion Function({
       required String id,
       required String budgetId,
-      required String userId,
+      Value<String?> userId,
       Value<String> role,
       required String invitedVia,
       Value<DateTime?> acceptedAt,
@@ -11887,7 +11989,7 @@ typedef $$BudgetMembersTableUpdateCompanionBuilder =
     BudgetMembersCompanion Function({
       Value<String> id,
       Value<String> budgetId,
-      Value<String> userId,
+      Value<String?> userId,
       Value<String> role,
       Value<String> invitedVia,
       Value<DateTime?> acceptedAt,
@@ -12053,7 +12155,7 @@ class $$BudgetMembersTableTableManager
               ({
                 Value<String> id = const Value.absent(),
                 Value<String> budgetId = const Value.absent(),
-                Value<String> userId = const Value.absent(),
+                Value<String?> userId = const Value.absent(),
                 Value<String> role = const Value.absent(),
                 Value<String> invitedVia = const Value.absent(),
                 Value<DateTime?> acceptedAt = const Value.absent(),
@@ -12073,7 +12175,7 @@ class $$BudgetMembersTableTableManager
               ({
                 required String id,
                 required String budgetId,
-                required String userId,
+                Value<String?> userId = const Value.absent(),
                 Value<String> role = const Value.absent(),
                 required String invitedVia,
                 Value<DateTime?> acceptedAt = const Value.absent(),
@@ -12385,6 +12487,7 @@ typedef $$AccountsTableCreateCompanionBuilder =
       Value<int> currentBalance,
       required String currency,
       Value<bool> isArchived,
+      Value<bool> isOnBudget,
       required DateTime createdAt,
       required DateTime updatedAt,
       Value<int> rowid,
@@ -12399,6 +12502,7 @@ typedef $$AccountsTableUpdateCompanionBuilder =
       Value<int> currentBalance,
       Value<String> currency,
       Value<bool> isArchived,
+      Value<bool> isOnBudget,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
@@ -12450,6 +12554,11 @@ class $$AccountsTableFilterComposer
 
   ColumnFilters<bool> get isArchived => $composableBuilder(
     column: $table.isArchived,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isOnBudget => $composableBuilder(
+    column: $table.isOnBudget,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -12513,6 +12622,11 @@ class $$AccountsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get isOnBudget => $composableBuilder(
+    column: $table.isOnBudget,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -12563,6 +12677,11 @@ class $$AccountsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<bool> get isOnBudget => $composableBuilder(
+    column: $table.isOnBudget,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -12606,6 +12725,7 @@ class $$AccountsTableTableManager
                 Value<int> currentBalance = const Value.absent(),
                 Value<String> currency = const Value.absent(),
                 Value<bool> isArchived = const Value.absent(),
+                Value<bool> isOnBudget = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -12618,6 +12738,7 @@ class $$AccountsTableTableManager
                 currentBalance: currentBalance,
                 currency: currency,
                 isArchived: isArchived,
+                isOnBudget: isOnBudget,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -12632,6 +12753,7 @@ class $$AccountsTableTableManager
                 Value<int> currentBalance = const Value.absent(),
                 required String currency,
                 Value<bool> isArchived = const Value.absent(),
+                Value<bool> isOnBudget = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -12644,6 +12766,7 @@ class $$AccountsTableTableManager
                 currentBalance: currentBalance,
                 currency: currency,
                 isArchived: isArchived,
+                isOnBudget: isOnBudget,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -12920,6 +13043,7 @@ typedef $$EnvelopesTableCreateCompanionBuilder =
       required String name,
       Value<int> sortOrder,
       Value<bool> isArchived,
+      Value<String?> color,
       required DateTime createdAt,
       Value<int> rowid,
     });
@@ -12931,6 +13055,7 @@ typedef $$EnvelopesTableUpdateCompanionBuilder =
       Value<String> name,
       Value<int> sortOrder,
       Value<bool> isArchived,
+      Value<String?> color,
       Value<DateTime> createdAt,
       Value<int> rowid,
     });
@@ -12971,6 +13096,11 @@ class $$EnvelopesTableFilterComposer
 
   ColumnFilters<bool> get isArchived => $composableBuilder(
     column: $table.isArchived,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get color => $composableBuilder(
+    column: $table.color,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13019,6 +13149,11 @@ class $$EnvelopesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -13055,6 +13190,9 @@ class $$EnvelopesTableAnnotationComposer
     column: $table.isArchived,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -13094,6 +13232,7 @@ class $$EnvelopesTableTableManager
                 Value<String> name = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
                 Value<bool> isArchived = const Value.absent(),
+                Value<String?> color = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => EnvelopesCompanion(
@@ -13103,6 +13242,7 @@ class $$EnvelopesTableTableManager
                 name: name,
                 sortOrder: sortOrder,
                 isArchived: isArchived,
+                color: color,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -13114,6 +13254,7 @@ class $$EnvelopesTableTableManager
                 required String name,
                 Value<int> sortOrder = const Value.absent(),
                 Value<bool> isArchived = const Value.absent(),
+                Value<String?> color = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
               }) => EnvelopesCompanion.insert(
@@ -13123,6 +13264,7 @@ class $$EnvelopesTableTableManager
                 name: name,
                 sortOrder: sortOrder,
                 isArchived: isArchived,
+                color: color,
                 createdAt: createdAt,
                 rowid: rowid,
               ),

@@ -79,9 +79,6 @@ class EnvelopesStep extends StatelessWidget {
           content: TextField(
             controller: controller,
             autofocus: true,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-            ),
           ),
           actions: [
             TextButton(
@@ -181,9 +178,6 @@ class _CategoryGroupCard extends StatelessWidget {
           content: TextField(
             controller: controller,
             autofocus: true,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-            ),
           ),
           actions: [
             TextButton(

@@ -1,4 +1,5 @@
 import 'package:account_repository/account_repository.dart';
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/accounts/cubit/cubit.dart';
 import 'package:envelope/accounts/view/account_form_page.dart';
 import 'package:envelope/accounts/widgets/widgets.dart';
@@ -169,10 +170,14 @@ class AccountDetailPage extends StatelessWidget {
     final cubit = context.read<AccountDetailCubit>();
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
-        builder: (_) => AccountFormPage(
-          accountRepository: context.read<AccountRepository>(),
-          budgetId: account.budgetId,
-          account: account,
+        builder: (_) => BlocProvider(
+          create: (_) => AccountFormCubit(
+            accountRepository: context.read<AccountRepository>(),
+            budgetRepository: context.read<BudgetRepository>(),
+            budgetId: account.budgetId,
+            account: account,
+          ),
+          child: AccountFormPage(account: account),
         ),
       ),
     );
@@ -209,14 +214,18 @@ class AccountDetailPage extends StatelessWidget {
               TextField(
                 controller: controller,
                 decoration: InputDecoration(
-                  labelText: l10n.accountsReconcileActualBalance,
+                  labelText: isCreditCard(account.type)
+                      ? l10n.accountsAmountOwedLabel
+                      : l10n.accountsReconcileActualBalance,
                   prefixIcon: const Icon(Icons.attach_money),
                 ),
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(
-                    RegExp(r'^\-?\d*\.?\d{0,2}'),
+                    isCreditCard(account.type)
+                        ? RegExp(r'^\d*\.?\d{0,2}')
+                        : RegExp(r'^\-?\d*\.?\d{0,2}'),
                   ),
                 ],
                 autofocus: true,
@@ -230,8 +239,11 @@ class AccountDetailPage extends StatelessWidget {
             ),
             FilledButton(
               onPressed: () {
-                final cents = parseCents(controller.text);
+                var cents = parseCents(controller.text);
                 if (cents == null) return;
+                if (isCreditCard(account.type) && cents > 0) {
+                  cents = -cents;
+                }
                 Navigator.of(dialogContext).pop(cents);
               },
               child: Text(l10n.accountsReconcileConfirm),

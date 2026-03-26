@@ -1,5 +1,6 @@
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 /// Displays the "Ready to Assign" amount on the dashboard.
@@ -22,9 +23,9 @@ class DashboardReadyToAssignCard extends StatelessWidget {
 
     final Color color;
     if (readyToAssign > 0) {
-      color = Colors.green;
+      color = AppColors.income;
     } else if (readyToAssign == 0) {
-      color = Colors.amber;
+      color = AppColors.warning;
     } else {
       color = colorScheme.error;
     }

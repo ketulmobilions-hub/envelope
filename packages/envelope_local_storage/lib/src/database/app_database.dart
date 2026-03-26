@@ -48,13 +48,41 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) => m.createAll(),
         onUpgrade: (m, from, to) async {
-          // Future migrations will be added here
+          if (from < 2) {
+            await m.addColumn(envelopes, envelopes.color);
+          }
+          if (from < 3) {
+            // Make user_id nullable on budget_members for pending invites.
+            await customStatement(
+              'CREATE TABLE budget_members_tmp ('
+              'id TEXT NOT NULL PRIMARY KEY, '
+              'budget_id TEXT NOT NULL, '
+              'user_id TEXT, '
+              'role TEXT NOT NULL DEFAULT \'viewer\', '
+              'invited_via TEXT NOT NULL, '
+              'accepted_at INTEGER, '
+              'created_at INTEGER NOT NULL'
+              ')',
+            );
+            await customStatement(
+              'INSERT INTO budget_members_tmp '
+              'SELECT * FROM budget_members',
+            );
+            await customStatement('DROP TABLE budget_members');
+            await customStatement(
+              'ALTER TABLE budget_members_tmp '
+              'RENAME TO budget_members',
+            );
+          }
+          if (from < 4) {
+            await m.addColumn(accounts, accounts.isOnBudget);
+          }
         },
       );
 }

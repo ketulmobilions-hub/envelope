@@ -72,8 +72,9 @@ class App extends StatelessWidget {
             create: (_) => AuthBloc(authRepository: authRepository),
           ),
           BlocProvider(
-            create: (_) => SyncBloc(syncRepository: syncRepository)
-              ..add(const SyncStarted()),
+            create: (_) =>
+                SyncBloc(syncRepository: syncRepository)
+                  ..add(const SyncStarted()),
           ),
         ],
         child: AppView(sharedPreferences: sharedPreferences),
@@ -114,7 +115,6 @@ class _AppViewState extends State<AppView> {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: _router,

@@ -39,13 +39,16 @@ class SyncApiClient {
   }
 
   /// Creates a new sync metadata entry.
+  ///
+  /// Server-generated field (`id`) is stripped so Supabase applies its default.
   Future<SyncMetadataDto> createSyncMetadata(
     SyncMetadataDto metadata,
   ) async {
     try {
+      final json = metadata.toJson()..remove('id');
       final response = await _supabaseClient
           .from('sync_metadata')
-          .insert(metadata.toJson())
+          .insert(json)
           .select()
           .single();
       return SyncMetadataDto.fromJson(response);

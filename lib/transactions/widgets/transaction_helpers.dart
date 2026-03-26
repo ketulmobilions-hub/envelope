@@ -1,4 +1,5 @@
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -28,7 +29,7 @@ IconData iconForTransactionType(String type) {
 /// Returns a color for a transaction type.
 Color colorForTransactionType(String type, ColorScheme colorScheme) {
   return switch (type) {
-    'income' => Colors.green,
+    'income' => AppColors.income,
     'expense' => colorScheme.error,
     'transfer' => colorScheme.tertiary,
     _ => colorScheme.onSurface,

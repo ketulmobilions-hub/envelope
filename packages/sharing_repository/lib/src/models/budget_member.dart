@@ -8,7 +8,7 @@ abstract class BudgetMember with _$BudgetMember {
   const factory BudgetMember({
     required String id,
     required String budgetId,
-    required String userId,
+    String? userId,
     required String invitedVia,
     required DateTime createdAt,
     @Default('viewer') String role,

@@ -422,6 +422,10 @@
     "@accountsReconcileDescription": {
         "description": "Description text in reconciliation dialog"
     },
+    "accountsAmountOwedLabel": "Amount Owed",
+    "@accountsAmountOwedLabel": {
+        "description": "Label for credit card balance input (amount owed)"
+    },
     "accountsReconcileActualBalance": "Actual Balance",
     "@accountsReconcileActualBalance": {
         "description": "Label for actual balance input in reconciliation"
@@ -558,6 +562,10 @@
     "envelopesSaveButton": "Save",
     "@envelopesSaveButton": {
         "description": "Button to save edits"
+    },
+    "envelopesColorLabel": "Color",
+    "@envelopesColorLabel": {
+        "description": "Label for the envelope color picker"
     },
     "envelopesReorder": "Reorder",
     "@envelopesReorder": {
@@ -1389,5 +1397,416 @@
     "overspendCoverInsufficientFunds": "Amount exceeds available funds",
     "@overspendCoverInsufficientFunds": {
         "description": "Validation when cover amount exceeds source allocation"
+    },
+    "goalsTitle": "Goals",
+    "@goalsTitle": {
+        "description": "Title for the goals page"
+    },
+    "goalsAddGoal": "Add Goal",
+    "@goalsAddGoal": {
+        "description": "Button text to add a new goal"
+    },
+    "goalsEditGoal": "Edit Goal",
+    "@goalsEditGoal": {
+        "description": "Button text to edit a goal"
+    },
+    "goalsNameLabel": "Goal Name",
+    "@goalsNameLabel": {
+        "description": "Label for goal name input"
+    },
+    "goalsTypeLabel": "Goal Type",
+    "@goalsTypeLabel": {
+        "description": "Label for goal type dropdown"
+    },
+    "goalsTargetAmountLabel": "Target Amount",
+    "@goalsTargetAmountLabel": {
+        "description": "Label for target amount input"
+    },
+    "goalsTargetDateLabel": "Target Date",
+    "@goalsTargetDateLabel": {
+        "description": "Label for target date picker"
+    },
+    "goalsMonthlyContributionLabel": "Monthly Contribution",
+    "@goalsMonthlyContributionLabel": {
+        "description": "Label for monthly contribution input"
+    },
+    "goalsTypeSavingsTarget": "Savings Target",
+    "@goalsTypeSavingsTarget": {
+        "description": "Display name for savings target goal type"
+    },
+    "goalsTypeMonthlyContribution": "Monthly Contribution",
+    "@goalsTypeMonthlyContribution": {
+        "description": "Display name for monthly contribution goal type"
+    },
+    "goalsTypeDebtPayoff": "Debt Payoff",
+    "@goalsTypeDebtPayoff": {
+        "description": "Display name for debt payoff goal type"
+    },
+    "goalsEmptyTitle": "No goals yet",
+    "@goalsEmptyTitle": {
+        "description": "Title shown when no goals exist"
+    },
+    "goalsEmptySubtitle": "Create a goal to start tracking your progress",
+    "@goalsEmptySubtitle": {
+        "description": "Subtitle shown when no goals exist"
+    },
+    "goalsCreateButton": "Create Goal",
+    "@goalsCreateButton": {
+        "description": "Button text to create a goal"
+    },
+    "goalsSaveButton": "Save Goal",
+    "@goalsSaveButton": {
+        "description": "Button text to save goal changes"
+    },
+    "goalsComplete": "Mark Complete",
+    "@goalsComplete": {
+        "description": "Button text to mark a goal as complete"
+    },
+    "goalsUncomplete": "Mark Incomplete",
+    "@goalsUncomplete": {
+        "description": "Button text to mark a goal as incomplete"
+    },
+    "goalsCompleted": "Completed",
+    "@goalsCompleted": {
+        "description": "Section header for completed goals"
+    },
+    "goalsDelete": "Delete",
+    "@goalsDelete": {
+        "description": "Button text to delete a goal"
+    },
+    "goalsCancel": "Cancel",
+    "@goalsCancel": {
+        "description": "Button text to cancel a goal action"
+    },
+    "goalsErrorLoadFailed": "Failed to load goals",
+    "@goalsErrorLoadFailed": {
+        "description": "Error message when goals fail to load"
+    },
+    "goalsErrorUpdateFailed": "Failed to update goal",
+    "@goalsErrorUpdateFailed": {
+        "description": "Error message when goal update fails"
+    },
+    "goalsErrorDeleteFailed": "Failed to delete goal",
+    "@goalsErrorDeleteFailed": {
+        "description": "Error message when goal deletion fails"
+    },
+    "goalsProgress": "Progress",
+    "@goalsProgress": {
+        "description": "Label for goal progress section"
+    },
+    "goalsCurrentAmount": "Current",
+    "@goalsCurrentAmount": {
+        "description": "Label for current amount in goal detail"
+    },
+    "goalsTargetAmount": "Target",
+    "@goalsTargetAmount": {
+        "description": "Label for target amount in goal detail"
+    },
+    "goalsMonthlyNeeded": "Monthly needed",
+    "@goalsMonthlyNeeded": {
+        "description": "Label for monthly contribution needed"
+    },
+    "goalsStatusLabel": "Status",
+    "@goalsStatusLabel": {
+        "description": "Label for goal status"
+    },
+    "goalsDeleteConfirmTitle": "Delete Goal?",
+    "@goalsDeleteConfirmTitle": {
+        "description": "Title for delete goal confirmation dialog"
+    },
+    "goalsDeleteConfirmMessage": "This action cannot be undone. Are you sure you want to delete this goal?",
+    "@goalsDeleteConfirmMessage": {
+        "description": "Message for delete goal confirmation dialog"
+    },
+    "goalsPerMonth": "{amount} / month",
+    "@goalsPerMonth": {
+        "description": "Monthly contribution display format",
+        "placeholders": {
+            "amount": {
+                "type": "String",
+                "example": "$200.00"
+            }
+        }
+    },
+    "goalsMarkedComplete": "Goal marked as complete",
+    "@goalsMarkedComplete": {
+        "description": "Snackbar confirmation after marking a goal complete"
+    },
+    "goalsMarkedIncomplete": "Goal marked as incomplete",
+    "@goalsMarkedIncomplete": {
+        "description": "Snackbar confirmation after marking a goal incomplete"
+    },
+    "goalsNameRequired": "Please enter a goal name",
+    "@goalsNameRequired": {
+        "description": "Validation message when goal name is empty"
+    },
+    "goalsTargetAmountRequired": "Please enter a target amount",
+    "@goalsTargetAmountRequired": {
+        "description": "Validation message when target amount is empty"
+    },
+    "dashboardAllocated": "Allocated",
+    "@dashboardAllocated": {
+        "description": "Column header for allocated amount in category group summary"
+    },
+    "envelopesDetailDeleteEnvelope": "Delete Envelope",
+    "@envelopesDetailDeleteEnvelope": {
+        "description": "Tooltip for delete button on envelope detail page"
+    },
+    "envelopesDetailDeleteSuccess": "Envelope deleted",
+    "@envelopesDetailDeleteSuccess": {
+        "description": "Snackbar message after successfully deleting an envelope"
+    },
+    "envelopesDetailDeleteError": "Failed to delete envelope",
+    "@envelopesDetailDeleteError": {
+        "description": "Snackbar message when envelope deletion fails"
+    },
+    "envelopeCardOfAllocated": "of {amount}",
+    "@envelopeCardOfAllocated": {
+        "description": "Subtitle on envelope card showing allocated amount",
+        "placeholders": {
+            "amount": {
+                "type": "String",
+                "example": "$500.00"
+            }
+        }
+    },
+    "quickAllocateTitle": "Allocate to {envelopeName}",
+    "@quickAllocateTitle": {
+        "description": "Title for the quick allocate dialog",
+        "placeholders": {
+            "envelopeName": {
+                "type": "String",
+                "example": "Groceries"
+            }
+        }
+    },
+    "quickAllocateHint": "Amount",
+    "@quickAllocateHint": {
+        "description": "Hint text for the amount input in quick allocate dialog"
+    },
+    "quickAllocateSave": "Save",
+    "@quickAllocateSave": {
+        "description": "Save button in quick allocate dialog"
+    },
+    "quickAllocateCancel": "Cancel",
+    "@quickAllocateCancel": {
+        "description": "Cancel button in quick allocate dialog"
+    },
+    "dashboardErrorAllocation": "Failed to save allocation",
+    "@dashboardErrorAllocation": {
+        "description": "Error message when quick allocation fails"
+    },
+    "sharedBudgetTitle": "Members",
+    "@sharedBudgetTitle": {
+        "description": "Title for the shared budget members page"
+    },
+    "sharedBudgetEmptyTitle": "No members yet",
+    "@sharedBudgetEmptyTitle": {
+        "description": "Title shown when no budget members exist"
+    },
+    "sharedBudgetEmptySubtitle": "Invite someone to share this budget",
+    "@sharedBudgetEmptySubtitle": {
+        "description": "Subtitle shown when no budget members exist"
+    },
+    "sharedBudgetInvite": "Invite",
+    "@sharedBudgetInvite": {
+        "description": "Label for invite action"
+    },
+    "sharedBudgetInviteByEmail": "Invite by Email",
+    "@sharedBudgetInviteByEmail": {
+        "description": "Section title for email invite"
+    },
+    "sharedBudgetInviteByLink": "Invite by Link",
+    "@sharedBudgetInviteByLink": {
+        "description": "Section title for link invite"
+    },
+    "sharedBudgetEmailLabel": "Email address",
+    "@sharedBudgetEmailLabel": {
+        "description": "Label for email input when inviting"
+    },
+    "sharedBudgetRoleLabel": "Role",
+    "@sharedBudgetRoleLabel": {
+        "description": "Label for role selection"
+    },
+    "sharedBudgetRoleOwner": "Owner",
+    "@sharedBudgetRoleOwner": {
+        "description": "Owner role label"
+    },
+    "sharedBudgetRoleEditor": "Editor",
+    "@sharedBudgetRoleEditor": {
+        "description": "Editor role label"
+    },
+    "sharedBudgetRoleViewer": "Viewer",
+    "@sharedBudgetRoleViewer": {
+        "description": "Viewer role label"
+    },
+    "sharedBudgetSendInvite": "Send Invite",
+    "@sharedBudgetSendInvite": {
+        "description": "Button text to send email invite"
+    },
+    "sharedBudgetGenerateLink": "Generate Link",
+    "@sharedBudgetGenerateLink": {
+        "description": "Button text to generate invite link"
+    },
+    "sharedBudgetShareLink": "Share Link",
+    "@sharedBudgetShareLink": {
+        "description": "Button text to share generated link"
+    },
+    "sharedBudgetChangeRole": "Change Role",
+    "@sharedBudgetChangeRole": {
+        "description": "Menu option to change member role"
+    },
+    "sharedBudgetRemoveMember": "Remove Member",
+    "@sharedBudgetRemoveMember": {
+        "description": "Menu option to remove a member"
+    },
+    "sharedBudgetRemoveConfirmTitle": "Remove Member",
+    "@sharedBudgetRemoveConfirmTitle": {
+        "description": "Title for remove member confirmation dialog"
+    },
+    "sharedBudgetRemoveConfirmMessage": "Are you sure you want to remove this member? They will lose access to the budget.",
+    "@sharedBudgetRemoveConfirmMessage": {
+        "description": "Message for remove member confirmation dialog"
+    },
+    "sharedBudgetErrorLoadFailed": "Failed to load members",
+    "@sharedBudgetErrorLoadFailed": {
+        "description": "Error message when loading members fails"
+    },
+    "sharedBudgetErrorInviteFailed": "Failed to send invite",
+    "@sharedBudgetErrorInviteFailed": {
+        "description": "Error message when invite fails"
+    },
+    "sharedBudgetErrorUpdateRoleFailed": "Failed to update role",
+    "@sharedBudgetErrorUpdateRoleFailed": {
+        "description": "Error message when role update fails"
+    },
+    "sharedBudgetErrorRemoveFailed": "Failed to remove member",
+    "@sharedBudgetErrorRemoveFailed": {
+        "description": "Error message when member removal fails"
+    },
+    "sharedBudgetErrorMemberLimit": "Free plan supports up to 2 members. Upgrade for more.",
+    "@sharedBudgetErrorMemberLimit": {
+        "description": "Error message when member limit is reached"
+    },
+    "sharedBudgetInviteSent": "Invite sent successfully",
+    "@sharedBudgetInviteSent": {
+        "description": "Success message after sending invite"
+    },
+    "sharedBudgetLinkCopied": "Invite link copied",
+    "@sharedBudgetLinkCopied": {
+        "description": "Success message after copying invite link"
+    },
+    "sharedBudgetPending": "Pending",
+    "@sharedBudgetPending": {
+        "description": "Status label for unaccepted invites"
+    },
+    "activityLogTitle": "Activity Log",
+    "@activityLogTitle": {
+        "description": "Title for the activity log page"
+    },
+    "activityLogEmpty": "No activity yet",
+    "@activityLogEmpty": {
+        "description": "Message when activity log is empty"
+    },
+    "activityLogFilterByMember": "Filter by member",
+    "@activityLogFilterByMember": {
+        "description": "Label for member filter in activity log"
+    },
+    "activityLogFilterByAction": "Filter by action",
+    "@activityLogFilterByAction": {
+        "description": "Label for action filter in activity log"
+    },
+    "activityLogErrorLoadFailed": "Failed to load activity log",
+    "@activityLogErrorLoadFailed": {
+        "description": "Error message when loading activity log fails"
+    },
+    "activityLogInvitedUser": "Invited {userId}",
+    "@activityLogInvitedUser": {
+        "description": "Activity log entry for inviting a user",
+        "placeholders": {
+            "userId": { "type": "String" }
+        }
+    },
+    "activityLogUpdatedRole": "Updated role for {userId}",
+    "@activityLogUpdatedRole": {
+        "description": "Activity log entry for updating a role",
+        "placeholders": {
+            "userId": { "type": "String" }
+        }
+    },
+    "activityLogRemovedUser": "Removed {userId}",
+    "@activityLogRemovedUser": {
+        "description": "Activity log entry for removing a user",
+        "placeholders": {
+            "userId": { "type": "String" }
+        }
+    },
+    "activityLogAcceptedInvitation": "{userId} accepted invitation",
+    "@activityLogAcceptedInvitation": {
+        "description": "Activity log entry for accepting an invitation",
+        "placeholders": {
+            "userId": { "type": "String" }
+        }
+    },
+    "activityLogActionByUser": "{action} by {userId}",
+    "@activityLogActionByUser": {
+        "description": "Fallback activity log entry",
+        "placeholders": {
+            "action": { "type": "String" },
+            "userId": { "type": "String" }
+        }
+    },
+    "relativeTimeDaysAgo": "{count}d ago",
+    "@relativeTimeDaysAgo": {
+        "description": "Relative time in days",
+        "placeholders": {
+            "count": { "type": "int" }
+        }
+    },
+    "relativeTimeHoursAgo": "{count}h ago",
+    "@relativeTimeHoursAgo": {
+        "description": "Relative time in hours",
+        "placeholders": {
+            "count": { "type": "int" }
+        }
+    },
+    "relativeTimeMinutesAgo": "{count}m ago",
+    "@relativeTimeMinutesAgo": {
+        "description": "Relative time in minutes",
+        "placeholders": {
+            "count": { "type": "int" }
+        }
+    },
+    "relativeTimeJustNow": "Just now",
+    "@relativeTimeJustNow": {
+        "description": "Relative time for very recent events"
+    },
+    "filterAll": "All",
+    "@filterAll": {
+        "description": "Label for 'All' option in filter dropdowns"
+    },
+    "sharedBudgetUpgrade": "Upgrade",
+    "@sharedBudgetUpgrade": {
+        "description": "Button text for upgrade CTA"
+    },
+    "sharedBudgetInvalidEmail": "Please enter a valid email address",
+    "@sharedBudgetInvalidEmail": {
+        "description": "Error message for invalid email format"
+    },
+    "accountsOnBudgetLabel": "On Budget",
+    "@accountsOnBudgetLabel": {
+        "description": "Label for the on-budget toggle switch"
+    },
+    "accountsOnBudgetDescription": "Include this account's balance in your budget",
+    "@accountsOnBudgetDescription": {
+        "description": "Description for the on-budget toggle switch"
+    },
+    "accountsOffBudgetIndicator": "Off-budget",
+    "@accountsOffBudgetIndicator": {
+        "description": "Indicator shown on off-budget account tiles"
+    },
+    "realtimeChangeReceived": "Budget updated by a collaborator",
+    "@realtimeChangeReceived": {
+        "description": "SnackBar message when a remote collaborator makes changes"
     }
 }

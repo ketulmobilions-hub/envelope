@@ -102,11 +102,14 @@ class AccountsApiClient {
   }
 
   /// Creates a new debt account.
+  ///
+  /// Server-generated field (`id`) is stripped so Supabase applies its default.
   Future<DebtAccountDto> createDebtAccount(DebtAccountDto debtAccount) async {
     try {
+      final json = debtAccount.toJson()..remove('id');
       final response = await _supabaseClient
           .from('debt_accounts')
-          .insert(debtAccount.toJson())
+          .insert(json)
           .select()
           .single();
       return DebtAccountDto.fromJson(response);

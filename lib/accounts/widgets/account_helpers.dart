@@ -13,6 +13,19 @@ String localizedAccountType(String type, AppLocalizations l10n) {
   };
 }
 
+/// Returns whether the given account type is a credit card.
+///
+/// Handles both camelCase (`'creditCard'`) and snake_case (`'credit_card'`).
+bool isCreditCard(String type) =>
+    type == 'credit_card' || type == 'creditCard';
+
+/// Returns whether the given account type should default to on-budget.
+///
+/// Credit cards and investments are off-budget by default.
+/// Handles both camelCase (`'creditCard'`) and snake_case (`'credit_card'`).
+bool defaultIsOnBudget(String type) =>
+    !isCreditCard(type) && type != 'investment';
+
 /// Returns the icon for the given account type.
 IconData iconForAccountType(String type) {
   return switch (type) {
