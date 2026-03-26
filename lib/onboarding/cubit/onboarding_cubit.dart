@@ -237,14 +237,16 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       final periodStart = DateTime(now.year, now.month);
       final periodEnd = DateTime(now.year, now.month + 1)
           .subtract(const Duration(days: 1));
-      await _budgetRepository.createBudgetPeriod(
+      final period = await _budgetRepository.createBudgetPeriod(
         budgetId: budgetId,
         startDate: periodStart,
         endDate: periodEnd,
         totalIncome: totalStartingBalance,
       );
 
-      // Create category groups and their envelopes
+      // Create category groups and their envelopes, persisting any
+      // allocations the user set during the onboarding allocation step.
+      var groupIndex = 0;
       for (final group in state.categoryGroups) {
         final createdGroup = await _envelopeRepository.createCategoryGroup(
           budgetId: budgetId,
@@ -252,12 +254,24 @@ class OnboardingCubit extends Cubit<OnboardingState> {
         );
 
         for (final envelopeName in group.envelopes) {
-          await _envelopeRepository.createEnvelope(
+          final createdEnvelope = await _envelopeRepository.createEnvelope(
             categoryGroupId: createdGroup.id,
             budgetId: budgetId,
             name: envelopeName,
           );
+
+          final key = '$groupIndex:$envelopeName';
+          final allocationAmount = state.allocations[key] ?? 0;
+          if (allocationAmount > 0) {
+            final amountCents = (allocationAmount * 100).round();
+            await _envelopeRepository.allocate(
+              envelopeId: createdEnvelope.id,
+              budgetPeriodId: period.id,
+              amount: amountCents,
+            );
+          }
         }
+        groupIndex++;
       }
 
       await _prefs.setString(activeBudgetIdKey, budgetId);
