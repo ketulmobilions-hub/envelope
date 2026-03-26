@@ -85,9 +85,10 @@ Uses `very_good_analysis` + `bloc_lint`. Config in `analysis_options.yaml`. Gene
    - Data flow explanation (how data moves through the layers)
    - Key decisions and patterns used
 7. **Wait for user approval** before committing. Do NOT commit until the user explicitly clears it.
-8. After approval, commit and merge feature branch into `dev` with `--no-ff`
-9. **Move issue to "Done"**: `gh issue close <number>` and update project board status to "Done"
-10. Only after an entire phase is complete, merge `dev` into `main`
+8. **Pull latest `dev` before merging**: `git checkout dev && git pull && git checkout - && git merge dev`. If there are merge conflicts, resolve them on the feature branch first, test that everything works, then proceed.
+9. After approval, commit and merge feature branch into `dev` with `--no-ff`
+10. **Move issue to "Done"**: `gh issue close <number>` and update project board status to "Done"
+11. Only after an entire phase is complete, merge `dev` into `main`
 
 ## Testing
 

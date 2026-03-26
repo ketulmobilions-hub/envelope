@@ -92,9 +92,12 @@ class GoalsView extends StatelessWidget {
     final bloc = context.read<GoalsBloc>();
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
-        builder: (_) => GoalFormPage(
-          goalRepository: context.read<GoalRepository>(),
-          budgetId: budgetId,
+        builder: (_) => BlocProvider(
+          create: (_) => GoalFormCubit(
+            goalRepository: context.read<GoalRepository>(),
+            budgetId: budgetId,
+          ),
+          child: const GoalFormPage(),
         ),
       ),
     );
@@ -232,10 +235,13 @@ class _GoalsList extends StatelessWidget {
     final bloc = context.read<GoalsBloc>();
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
-        builder: (_) => GoalFormPage(
-          goalRepository: context.read<GoalRepository>(),
-          budgetId: budgetId,
-          goal: goal,
+        builder: (_) => BlocProvider(
+          create: (_) => GoalFormCubit(
+            goalRepository: context.read<GoalRepository>(),
+            budgetId: budgetId,
+            goal: goal,
+          ),
+          child: GoalFormPage(goal: goal),
         ),
       ),
     );
