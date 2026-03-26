@@ -422,6 +422,10 @@
     "@accountsReconcileDescription": {
         "description": "Description text in reconciliation dialog"
     },
+    "accountsAmountOwedLabel": "Amount Owed",
+    "@accountsAmountOwedLabel": {
+        "description": "Label for credit card balance input (amount owed)"
+    },
     "accountsReconcileActualBalance": "Actual Balance",
     "@accountsReconcileActualBalance": {
         "description": "Label for actual balance input in reconciliation"

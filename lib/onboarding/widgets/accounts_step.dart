@@ -41,13 +41,16 @@ class AccountsStep extends StatelessWidget {
                   itemCount: state.accounts.length,
                   itemBuilder: (context, index) {
                     final account = state.accounts[index];
+                    final balance = account.startingBalance
+                        .abs()
+                        .toStringAsFixed(2);
                     return Card(
                       child: ListTile(
                         title: Text(account.name),
                         subtitle: Text(
                           '${_localizedAccountType(l10n, account.type)}'
                           ' • ${account.currency}'
-                          ' • ${account.startingBalance}'
+                          ' • \$$balance'
                           '${account.isOnBudget ? '' : ' • '
                               '${l10n.accountsOffBudgetIndicator}'}',
                         ),
@@ -151,7 +154,9 @@ class AccountsStep extends StatelessWidget {
                   TextField(
                     controller: balanceController,
                     decoration: InputDecoration(
-                      labelText: l10n.onboardingStartingBalance,
+                      labelText: isCreditCard(selectedType)
+                          ? l10n.accountsAmountOwedLabel
+                          : l10n.onboardingStartingBalance,
                     ),
                     keyboardType:
                         const TextInputType.numberWithOptions(
@@ -176,13 +181,18 @@ class AccountsStep extends StatelessWidget {
                     onPressed: () {
                       final name = nameController.text.trim();
                       if (name.isEmpty) return;
+                      var startingBalance =
+                          double.tryParse(balanceController.text) ?? 0;
+                      if (isCreditCard(selectedType) &&
+                          startingBalance > 0) {
+                        startingBalance = -startingBalance;
+                      }
                       cubit.addAccount(
                         OnboardingAccount(
                           name: name,
                           type: selectedType,
                           currency: cubit.state.baseCurrency,
-                          startingBalance:
-                              double.tryParse(balanceController.text) ?? 0,
+                          startingBalance: startingBalance,
                           isOnBudget: isOnBudget,
                         ),
                       );
