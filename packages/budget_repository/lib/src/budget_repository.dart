@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:math' show min;
 
 import 'package:budget_repository/budget_repository.dart';
 import 'package:drift/drift.dart' show InsertMode, Value;
 import 'package:envelope_api_client/envelope_api_client.dart';
 import 'package:envelope_local_storage/envelope_local_storage.dart' as storage;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Repository for budget operations.
 ///
@@ -12,14 +14,29 @@ import 'package:envelope_local_storage/envelope_local_storage.dart' as storage;
 /// local storage for reactive UI updates.
 class BudgetRepository {
   /// Creates a [BudgetRepository].
-  const BudgetRepository({
+  ///
+  /// An optional [supabaseClient] can be provided for Realtime
+  /// subscriptions via [subscribeToBudgetChanges] and
+  /// [subscribeToPeriodChanges].
+  BudgetRepository({
     required EnvelopeApiClient apiClient,
     required storage.AppDatabase localDatabase,
+    SupabaseClient? supabaseClient,
   })  : _apiClient = apiClient,
-        _localDatabase = localDatabase;
+        _localDatabase = localDatabase,
+        _supabaseClient = supabaseClient;
 
   final EnvelopeApiClient _apiClient;
   final storage.AppDatabase _localDatabase;
+  final SupabaseClient? _supabaseClient;
+
+  final StreamController<void> _remoteChangeController =
+      StreamController<void>.broadcast();
+
+  /// Emits when a remote collaborator's change is received via Realtime.
+  Stream<void> get onRemoteChange => _remoteChangeController.stream;
+
+  int _localWriteCount = 0;
 
   // ---------------------------------------------------------------------------
   // Budget CRUD
@@ -33,6 +50,7 @@ class BudgetRepository {
     String periodType = 'monthly',
     int periodStartDay = 1,
   }) async {
+    _beginLocalWrite();
     try {
       final dto = BudgetDto(
         id: '',
@@ -47,8 +65,10 @@ class BudgetRepository {
 
       final created = await _apiClient.budgets.createBudget(dto);
       await _cacheBudget(created);
+      _endLocalWrite();
       return _mapBudgetFromDto(created);
     } on EnvelopeApiException catch (e) {
+      _endLocalWrite();
       throw BudgetException('Failed to create budget', error: e);
     }
   }
@@ -92,11 +112,14 @@ class BudgetRepository {
   ///
   /// Sends the update to the API and syncs locally.
   Future<void> updateBudget(Budget budget) async {
+    _beginLocalWrite();
     try {
       final dto = _mapBudgetToDto(budget);
       final updated = await _apiClient.budgets.updateBudget(dto);
       await _cacheBudget(updated);
+      _endLocalWrite();
     } on EnvelopeApiException catch (e) {
+      _endLocalWrite();
       throw BudgetException('Failed to update budget', error: e);
     }
   }
@@ -105,9 +128,11 @@ class BudgetRepository {
   ///
   /// Removes from the API first. Local cache removal is best-effort.
   Future<void> deleteBudget(String id) async {
+    _beginLocalWrite();
     try {
       await _apiClient.budgets.deleteBudget(id);
     } on EnvelopeApiException catch (e) {
+      _endLocalWrite();
       throw BudgetException('Failed to delete budget', error: e);
     }
     try {
@@ -115,6 +140,7 @@ class BudgetRepository {
     } on Exception {
       // Stale local entry will be cleaned up on next refresh.
     }
+    _endLocalWrite();
   }
 
   /// Archives a budget by its [id].
@@ -778,6 +804,133 @@ class BudgetRepository {
         error: e,
       );
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Realtime
+  // ---------------------------------------------------------------------------
+
+  /// Subscribes to real-time changes on the `budgets` table
+  /// filtered by [budgetId].
+  RealtimeChannel? subscribeToBudgetChanges(String budgetId) {
+    final client = _supabaseClient;
+    if (client == null) return null;
+
+    final channel = client
+        .channel('budgets:$budgetId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'budgets',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'id',
+            value: budgetId,
+          ),
+          callback: (payload) async {
+            try {
+              final newRecord = payload.newRecord;
+              final oldRecord = payload.oldRecord;
+
+              switch (payload.eventType) {
+                case PostgresChangeEvent.insert:
+                case PostgresChangeEvent.update:
+                  if (newRecord.isNotEmpty) {
+                    final dto = BudgetDto.fromJson(newRecord);
+                    await _cacheBudget(dto);
+                    if (_localWriteCount == 0) {
+                      _remoteChangeController.add(null);
+                    }
+                  }
+                case PostgresChangeEvent.delete:
+                  if (oldRecord.isNotEmpty) {
+                    final id = oldRecord['id'] as String?;
+                    if (id != null) {
+                      await _localDatabase.budgetsDao.deleteBudget(id);
+                      if (_localWriteCount == 0) {
+                        _remoteChangeController.add(null);
+                      }
+                    }
+                  }
+                case PostgresChangeEvent.all:
+                  break;
+              }
+            } on Exception {
+              // Prevent malformed payload from breaking the channel.
+            }
+          },
+        )
+        .subscribe();
+
+    return channel;
+  }
+
+  /// Subscribes to real-time changes on the `budget_periods` table
+  /// filtered by [budgetId].
+  RealtimeChannel? subscribeToPeriodChanges(String budgetId) {
+    final client = _supabaseClient;
+    if (client == null) return null;
+
+    final channel = client
+        .channel('budget_periods:$budgetId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'budget_periods',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'budget_id',
+            value: budgetId,
+          ),
+          callback: (payload) async {
+            try {
+              final newRecord = payload.newRecord;
+              final oldRecord = payload.oldRecord;
+
+              switch (payload.eventType) {
+                case PostgresChangeEvent.insert:
+                case PostgresChangeEvent.update:
+                  if (newRecord.isNotEmpty) {
+                    final dto = BudgetPeriodDto.fromJson(newRecord);
+                    await _cacheBudgetPeriod(dto);
+                    if (_localWriteCount == 0) {
+                      _remoteChangeController.add(null);
+                    }
+                  }
+                case PostgresChangeEvent.delete:
+                  if (oldRecord.isNotEmpty) {
+                    final id = oldRecord['id'] as String?;
+                    if (id != null) {
+                      await _localDatabase.budgetsDao.deleteBudgetPeriod(id);
+                      if (_localWriteCount == 0) {
+                        _remoteChangeController.add(null);
+                      }
+                    }
+                  }
+                case PostgresChangeEvent.all:
+                  break;
+              }
+            } on Exception {
+              // Prevent malformed payload from breaking the channel.
+            }
+          },
+        )
+        .subscribe();
+
+    return channel;
+  }
+
+  void _beginLocalWrite() => _localWriteCount++;
+
+  void _endLocalWrite() {
+    Future<void>.delayed(const Duration(seconds: 2), () {
+      if (_localWriteCount > 0) _localWriteCount--;
+    });
+  }
+
+  /// Closes resources held by this repository.
+  void dispose() {
+    _remoteChangeController.close();
   }
 
   // ---------------------------------------------------------------------------

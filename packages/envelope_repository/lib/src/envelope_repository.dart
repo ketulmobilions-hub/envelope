@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart' show InsertMode, Value;
 import 'package:envelope_api_client/envelope_api_client.dart';
 import 'package:envelope_local_storage/envelope_local_storage.dart' as storage;
 import 'package:envelope_repository/envelope_repository.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Repository for envelope and category group operations.
 ///
@@ -10,14 +13,28 @@ import 'package:envelope_repository/envelope_repository.dart';
 /// local storage for reactive UI updates.
 class EnvelopeRepository {
   /// Creates an [EnvelopeRepository].
-  const EnvelopeRepository({
+  ///
+  /// An optional [supabaseClient] can be provided for Realtime
+  /// subscriptions.
+  EnvelopeRepository({
     required EnvelopeApiClient apiClient,
     required storage.AppDatabase localDatabase,
+    SupabaseClient? supabaseClient,
   }) : _apiClient = apiClient,
-       _localDatabase = localDatabase;
+       _localDatabase = localDatabase,
+       _supabaseClient = supabaseClient;
 
   final EnvelopeApiClient _apiClient;
   final storage.AppDatabase _localDatabase;
+  final SupabaseClient? _supabaseClient;
+
+  final StreamController<void> _remoteChangeController =
+      StreamController<void>.broadcast();
+
+  /// Emits when a remote collaborator's change is received via Realtime.
+  Stream<void> get onRemoteChange => _remoteChangeController.stream;
+
+  int _localWriteCount = 0;
 
   // ---------------------------------------------------------------------------
   // Category Groups
@@ -28,6 +45,7 @@ class EnvelopeRepository {
     required String budgetId,
     required String name,
   }) async {
+    _beginLocalWrite();
     try {
       final dto = CategoryGroupDto(
         id: '',
@@ -38,8 +56,10 @@ class EnvelopeRepository {
 
       final created = await _apiClient.envelopes.createCategoryGroup(dto);
       await _cacheCategoryGroup(created);
+      _endLocalWrite();
       return _mapCategoryGroupFromDto(created);
     } on EnvelopeApiException catch (e) {
+      _endLocalWrite();
       throw EnvelopeException(
         'Failed to create category group',
         error: e,
@@ -89,11 +109,14 @@ class EnvelopeRepository {
   ///
   /// Sends the update to the API and syncs locally.
   Future<void> updateCategoryGroup(CategoryGroup group) async {
+    _beginLocalWrite();
     try {
       final dto = _mapCategoryGroupToDto(group);
       final updated = await _apiClient.envelopes.updateCategoryGroup(dto);
       await _cacheCategoryGroup(updated);
+      _endLocalWrite();
     } on EnvelopeApiException catch (e) {
+      _endLocalWrite();
       throw EnvelopeException(
         'Failed to update category group',
         error: e,
@@ -105,9 +128,11 @@ class EnvelopeRepository {
   ///
   /// Removes from the API first. Local cache removal is best-effort.
   Future<void> deleteCategoryGroup(String id) async {
+    _beginLocalWrite();
     try {
       await _apiClient.envelopes.deleteCategoryGroup(id);
     } on EnvelopeApiException catch (e) {
+      _endLocalWrite();
       throw EnvelopeException(
         'Failed to delete category group',
         error: e,
@@ -118,6 +143,7 @@ class EnvelopeRepository {
     } on Exception {
       // Stale local entry will be cleaned up on next refresh.
     }
+    _endLocalWrite();
   }
 
   /// Archives a category group by its [id].
@@ -222,6 +248,7 @@ class EnvelopeRepository {
     required String name,
     String? color,
   }) async {
+    _beginLocalWrite();
     try {
       final dto = EnvelopeDto(
         id: '',
@@ -234,8 +261,10 @@ class EnvelopeRepository {
 
       final created = await _apiClient.envelopes.createEnvelope(dto);
       await _cacheEnvelope(created);
+      _endLocalWrite();
       return _mapEnvelopeFromDto(created);
     } on EnvelopeApiException catch (e) {
+      _endLocalWrite();
       throw EnvelopeException(
         'Failed to create envelope',
         error: e,
@@ -304,11 +333,14 @@ class EnvelopeRepository {
   ///
   /// Sends the update to the API and syncs locally.
   Future<void> updateEnvelope(Envelope envelope) async {
+    _beginLocalWrite();
     try {
       final dto = _mapEnvelopeToDto(envelope);
       final updated = await _apiClient.envelopes.updateEnvelope(dto);
       await _cacheEnvelope(updated);
+      _endLocalWrite();
     } on EnvelopeApiException catch (e) {
+      _endLocalWrite();
       throw EnvelopeException(
         'Failed to update envelope',
         error: e,
@@ -320,9 +352,11 @@ class EnvelopeRepository {
   ///
   /// Removes from the API first. Local cache removal is best-effort.
   Future<void> deleteEnvelope(String id) async {
+    _beginLocalWrite();
     try {
       await _apiClient.envelopes.deleteEnvelope(id);
     } on EnvelopeApiException catch (e) {
+      _endLocalWrite();
       throw EnvelopeException(
         'Failed to delete envelope',
         error: e,
@@ -333,6 +367,7 @@ class EnvelopeRepository {
     } on Exception {
       // Stale local entry will be cleaned up on next refresh.
     }
+    _endLocalWrite();
   }
 
   /// Archives an envelope by its [id].
@@ -453,6 +488,7 @@ class EnvelopeRepository {
     required String budgetPeriodId,
     required int amount,
   }) async {
+    _beginLocalWrite();
     try {
       final dto = EnvelopeAllocationDto(
         id: '',
@@ -464,8 +500,10 @@ class EnvelopeRepository {
 
       final created = await _apiClient.envelopes.createEnvelopeAllocation(dto);
       await _cacheAllocation(created);
+      _endLocalWrite();
       return _mapAllocationFromDto(created);
     } on EnvelopeApiException catch (e) {
+      _endLocalWrite();
       throw EnvelopeException(
         'Failed to create allocation',
         error: e,
@@ -498,11 +536,14 @@ class EnvelopeRepository {
   Future<void> updateAllocation(
     EnvelopeAllocation allocation,
   ) async {
+    _beginLocalWrite();
     try {
       final dto = _mapAllocationToDto(allocation);
       final updated = await _apiClient.envelopes.updateEnvelopeAllocation(dto);
       await _cacheAllocation(updated);
+      _endLocalWrite();
     } on EnvelopeApiException catch (e) {
+      _endLocalWrite();
       throw EnvelopeException(
         'Failed to update allocation',
         error: e,
@@ -514,9 +555,11 @@ class EnvelopeRepository {
   ///
   /// Removes from the API first. Local cache removal is best-effort.
   Future<void> deleteAllocation(String id) async {
+    _beginLocalWrite();
     try {
       await _apiClient.envelopes.deleteEnvelopeAllocation(id);
     } on EnvelopeApiException catch (e) {
+      _endLocalWrite();
       throw EnvelopeException(
         'Failed to delete allocation',
         error: e,
@@ -527,6 +570,7 @@ class EnvelopeRepository {
     } on Exception {
       // Stale local entry will be cleaned up on next refresh.
     }
+    _endLocalWrite();
   }
 
   /// Fetches allocations from the API and syncs to local storage.
@@ -557,6 +601,191 @@ class EnvelopeRepository {
     return allocation.allocatedAmount -
         allocation.spentAmount +
         allocation.rolloverAmount;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Realtime
+  // ---------------------------------------------------------------------------
+
+  /// Subscribes to real-time changes on the `envelopes` table
+  /// filtered by [budgetId].
+  RealtimeChannel? subscribeToEnvelopeChanges(String budgetId) {
+    final client = _supabaseClient;
+    if (client == null) return null;
+
+    final channel = client
+        .channel('envelopes:$budgetId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'envelopes',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'budget_id',
+            value: budgetId,
+          ),
+          callback: (payload) async {
+            try {
+              final newRecord = payload.newRecord;
+              final oldRecord = payload.oldRecord;
+
+              switch (payload.eventType) {
+                case PostgresChangeEvent.insert:
+                case PostgresChangeEvent.update:
+                  if (newRecord.isNotEmpty) {
+                    final dto = EnvelopeDto.fromJson(newRecord);
+                    await _cacheEnvelope(dto);
+                    if (_localWriteCount == 0) {
+                      _remoteChangeController.add(null);
+                    }
+                  }
+                case PostgresChangeEvent.delete:
+                  if (oldRecord.isNotEmpty) {
+                    final id = oldRecord['id'] as String?;
+                    if (id != null) {
+                      await _localDatabase.envelopesDao.deleteEnvelope(id);
+                      if (_localWriteCount == 0) {
+                        _remoteChangeController.add(null);
+                      }
+                    }
+                  }
+                case PostgresChangeEvent.all:
+                  break;
+              }
+            } on Exception {
+              // Prevent malformed payload from breaking the channel.
+            }
+          },
+        )
+        .subscribe();
+
+    return channel;
+  }
+
+  /// Subscribes to real-time changes on the `category_groups` table
+  /// filtered by [budgetId].
+  RealtimeChannel? subscribeToCategoryGroupChanges(String budgetId) {
+    final client = _supabaseClient;
+    if (client == null) return null;
+
+    final channel = client
+        .channel('category_groups:$budgetId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'category_groups',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'budget_id',
+            value: budgetId,
+          ),
+          callback: (payload) async {
+            try {
+              final newRecord = payload.newRecord;
+              final oldRecord = payload.oldRecord;
+
+              switch (payload.eventType) {
+                case PostgresChangeEvent.insert:
+                case PostgresChangeEvent.update:
+                  if (newRecord.isNotEmpty) {
+                    final dto = CategoryGroupDto.fromJson(newRecord);
+                    await _cacheCategoryGroup(dto);
+                    if (_localWriteCount == 0) {
+                      _remoteChangeController.add(null);
+                    }
+                  }
+                case PostgresChangeEvent.delete:
+                  if (oldRecord.isNotEmpty) {
+                    final id = oldRecord['id'] as String?;
+                    if (id != null) {
+                      await _localDatabase.envelopesDao.deleteCategoryGroup(id);
+                      if (_localWriteCount == 0) {
+                        _remoteChangeController.add(null);
+                      }
+                    }
+                  }
+                case PostgresChangeEvent.all:
+                  break;
+              }
+            } on Exception {
+              // Prevent malformed payload from breaking the channel.
+            }
+          },
+        )
+        .subscribe();
+
+    return channel;
+  }
+
+  /// Subscribes to real-time changes on the `envelope_allocations` table
+  /// filtered by [budgetPeriodId].
+  ///
+  /// Note: `envelope_allocations` has no `budget_id` column, so must
+  /// filter by `budget_period_id`.
+  RealtimeChannel? subscribeToAllocationChanges(String budgetPeriodId) {
+    final client = _supabaseClient;
+    if (client == null) return null;
+
+    final channel = client
+        .channel('envelope_allocations:$budgetPeriodId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'envelope_allocations',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'budget_period_id',
+            value: budgetPeriodId,
+          ),
+          callback: (payload) async {
+            try {
+              final newRecord = payload.newRecord;
+              final oldRecord = payload.oldRecord;
+
+              switch (payload.eventType) {
+                case PostgresChangeEvent.insert:
+                case PostgresChangeEvent.update:
+                  if (newRecord.isNotEmpty) {
+                    final dto = EnvelopeAllocationDto.fromJson(newRecord);
+                    await _cacheAllocation(dto);
+                    if (_localWriteCount == 0) {
+                      _remoteChangeController.add(null);
+                    }
+                  }
+                case PostgresChangeEvent.delete:
+                  if (oldRecord.isNotEmpty) {
+                    final id = oldRecord['id'] as String?;
+                    if (id != null) {
+                      await _localDatabase.envelopesDao.deleteAllocation(id);
+                      if (_localWriteCount == 0) {
+                        _remoteChangeController.add(null);
+                      }
+                    }
+                  }
+                case PostgresChangeEvent.all:
+                  break;
+              }
+            } on Exception {
+              // Prevent malformed payload from breaking the channel.
+            }
+          },
+        )
+        .subscribe();
+
+    return channel;
+  }
+
+  void _beginLocalWrite() => _localWriteCount++;
+
+  void _endLocalWrite() {
+    Future<void>.delayed(const Duration(seconds: 2), () {
+      if (_localWriteCount > 0) _localWriteCount--;
+    });
+  }
+
+  /// Closes resources held by this repository.
+  void dispose() {
+    _remoteChangeController.close();
   }
 
   // ---------------------------------------------------------------------------

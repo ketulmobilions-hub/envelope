@@ -97,6 +97,14 @@ final class QuickAllocationRequested extends DashboardEvent {
   List<Object?> get props => [envelopeId, amount];
 }
 
+/// Internal event when a remote collaborator change is received.
+final class _RemoteChangeReceived extends DashboardEvent {
+  const _RemoteChangeReceived();
+
+  @override
+  List<Object?> get props => [];
+}
+
 /// Internal event when any stream errors.
 final class _DashboardStreamError extends DashboardEvent {
   const _DashboardStreamError();

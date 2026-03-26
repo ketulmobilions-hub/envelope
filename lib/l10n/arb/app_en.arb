@@ -1804,5 +1804,9 @@
     "accountsOffBudgetIndicator": "Off-budget",
     "@accountsOffBudgetIndicator": {
         "description": "Indicator shown on off-budget account tiles"
+    },
+    "realtimeChangeReceived": "Budget updated by a collaborator",
+    "@realtimeChangeReceived": {
+        "description": "SnackBar message when a remote collaborator makes changes"
     }
 }

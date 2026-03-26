@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:account_repository/src/exceptions.dart';
 import 'package:account_repository/src/models/models.dart';
 import 'package:drift/drift.dart' show InsertMode, Value;
 import 'package:envelope_api_client/envelope_api_client.dart';
 import 'package:envelope_local_storage/envelope_local_storage.dart' as storage;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Repository for account operations.
 ///
@@ -11,14 +14,30 @@ import 'package:envelope_local_storage/envelope_local_storage.dart' as storage;
 /// local storage for reactive UI updates.
 class AccountRepository {
   /// Creates an [AccountRepository].
-  const AccountRepository({
+  ///
+  /// An optional [supabaseClient] can be provided for Realtime
+  /// subscriptions via [subscribeToRealtimeChanges].
+  AccountRepository({
     required EnvelopeApiClient apiClient,
     required storage.AppDatabase localDatabase,
-  })  : _apiClient = apiClient,
-        _localDatabase = localDatabase;
+    SupabaseClient? supabaseClient,
+  }) : _apiClient = apiClient,
+       _localDatabase = localDatabase,
+       _supabaseClient = supabaseClient;
 
   final EnvelopeApiClient _apiClient;
   final storage.AppDatabase _localDatabase;
+  final SupabaseClient? _supabaseClient;
+
+  final StreamController<void> _remoteChangeController =
+      StreamController<void>.broadcast();
+
+  /// Emits when a remote collaborator's change is received via Realtime.
+  Stream<void> get onRemoteChange => _remoteChangeController.stream;
+
+  /// Tracks the number of local writes in progress to suppress self-change
+  /// notifications. Only emits remote changes when count reaches zero.
+  int _localWriteCount = 0;
 
   // ---------------------------------------------------------------------------
   // Accounts
@@ -35,6 +54,7 @@ class AccountRepository {
     int startingBalance = 0,
     bool isOnBudget = true,
   }) async {
+    _beginLocalWrite();
     try {
       final dto = AccountDto(
         id: '',
@@ -51,8 +71,10 @@ class AccountRepository {
 
       final created = await _apiClient.accounts.createAccount(dto);
       await _cacheAccount(created);
+      _endLocalWrite();
       return _mapAccountFromDto(created);
     } on EnvelopeApiException catch (e) {
+      _endLocalWrite();
       throw AccountException('Failed to create account', error: e);
     }
   }
@@ -91,8 +113,9 @@ class AccountRepository {
   /// Fetches accounts from the API and syncs them to local storage.
   Future<void> refreshAccounts(String budgetId) async {
     try {
-      final remoteAccounts =
-          await _apiClient.accounts.getAccountsByBudget(budgetId);
+      final remoteAccounts = await _apiClient.accounts.getAccountsByBudget(
+        budgetId,
+      );
       final companions = remoteAccounts.map(_toAccountCompanion).toList();
       await _localDatabase.accountsDao.batchInsertAccounts(
         companions,
@@ -107,11 +130,14 @@ class AccountRepository {
   ///
   /// Sends the update to the API and syncs locally.
   Future<void> updateAccount(Account account) async {
+    _beginLocalWrite();
     try {
       final dto = _mapAccountToDto(account);
       final updated = await _apiClient.accounts.updateAccount(dto);
       await _cacheAccount(updated);
+      _endLocalWrite();
     } on EnvelopeApiException catch (e) {
+      _endLocalWrite();
       throw AccountException('Failed to update account', error: e);
     }
   }
@@ -120,9 +146,11 @@ class AccountRepository {
   ///
   /// Removes from the API first. Local cache removal is best-effort.
   Future<void> deleteAccount(String id) async {
+    _beginLocalWrite();
     try {
       await _apiClient.accounts.deleteAccount(id);
     } on EnvelopeApiException catch (e) {
+      _endLocalWrite();
       throw AccountException('Failed to delete account', error: e);
     }
     // Best-effort local cleanup — remote is already deleted.
@@ -131,6 +159,7 @@ class AccountRepository {
     } on Exception {
       // Stale local entry will be cleaned up on next refresh.
     }
+    _endLocalWrite();
   }
 
   /// Archives an account by its [id].
@@ -220,8 +249,7 @@ class AccountRepository {
   /// Returns `null` if no debt account exists for the given account.
   Future<DebtAccount?> getDebtAccount(String accountId) async {
     try {
-      final local =
-          await _localDatabase.accountsDao.getDebtAccount(accountId);
+      final local = await _localDatabase.accountsDao.getDebtAccount(accountId);
       if (local != null) {
         return _mapDebtAccountFromLocal(local);
       }
@@ -260,6 +288,85 @@ class AccountRepository {
     } on Exception {
       // Stale local entry will be cleaned up on next refresh.
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Realtime
+  // ---------------------------------------------------------------------------
+
+  /// Subscribes to real-time changes on the `accounts` table
+  /// filtered by [budgetId].
+  ///
+  /// Returns the [RealtimeChannel] so the caller (bloc) can call
+  /// `.unsubscribe()` on dispose.
+  ///
+  /// Requires a [SupabaseClient] to be passed to the constructor.
+  RealtimeChannel? subscribeToRealtimeChanges(String budgetId) {
+    final client = _supabaseClient;
+    if (client == null) return null;
+
+    final channel = client
+        .channel('accounts:$budgetId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'accounts',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'budget_id',
+            value: budgetId,
+          ),
+          callback: (payload) async {
+            try {
+              final newRecord = payload.newRecord;
+              final oldRecord = payload.oldRecord;
+
+              switch (payload.eventType) {
+                case PostgresChangeEvent.insert:
+                case PostgresChangeEvent.update:
+                  if (newRecord.isNotEmpty) {
+                    final dto = AccountDto.fromJson(newRecord);
+                    await _cacheAccount(dto);
+                    if (_localWriteCount == 0) {
+                      _remoteChangeController.add(null);
+                    }
+                  }
+                case PostgresChangeEvent.delete:
+                  if (oldRecord.isNotEmpty) {
+                    final id = oldRecord['id'] as String?;
+                    if (id != null) {
+                      await _localDatabase.accountsDao.deleteAccount(id);
+                      if (_localWriteCount == 0) {
+                        _remoteChangeController.add(null);
+                      }
+                    }
+                  }
+                case PostgresChangeEvent.all:
+                  break;
+              }
+            } on Exception {
+              // Prevent malformed payload from breaking the channel.
+            }
+          },
+        )
+        .subscribe();
+
+    return channel;
+  }
+
+  /// Marks a local write as in progress to suppress self-change notifications.
+  void _beginLocalWrite() => _localWriteCount++;
+
+  /// Decrements the local write counter after a short debounce.
+  void _endLocalWrite() {
+    Future<void>.delayed(const Duration(seconds: 2), () {
+      if (_localWriteCount > 0) _localWriteCount--;
+    });
+  }
+
+  /// Closes resources held by this repository.
+  void dispose() {
+    _remoteChangeController.close();
   }
 
   // ---------------------------------------------------------------------------
