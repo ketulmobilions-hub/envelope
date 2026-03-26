@@ -23,6 +23,7 @@ mixin _$Account {
   int get startingBalance;
   int get currentBalance;
   bool get isArchived;
+  bool get isOnBudget;
 
   /// Create a copy of Account
   /// with the given fields replaced by the non-null parameter values.
@@ -55,7 +56,9 @@ mixin _$Account {
             (identical(other.currentBalance, currentBalance) ||
                 other.currentBalance == currentBalance) &&
             (identical(other.isArchived, isArchived) ||
-                other.isArchived == isArchived));
+                other.isArchived == isArchived) &&
+            (identical(other.isOnBudget, isOnBudget) ||
+                other.isOnBudget == isOnBudget));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -72,11 +75,12 @@ mixin _$Account {
     startingBalance,
     currentBalance,
     isArchived,
+    isOnBudget,
   );
 
   @override
   String toString() {
-    return 'Account(id: $id, budgetId: $budgetId, name: $name, type: $type, currency: $currency, createdAt: $createdAt, updatedAt: $updatedAt, startingBalance: $startingBalance, currentBalance: $currentBalance, isArchived: $isArchived)';
+    return 'Account(id: $id, budgetId: $budgetId, name: $name, type: $type, currency: $currency, createdAt: $createdAt, updatedAt: $updatedAt, startingBalance: $startingBalance, currentBalance: $currentBalance, isArchived: $isArchived, isOnBudget: $isOnBudget)';
   }
 }
 
@@ -96,6 +100,7 @@ abstract mixin class $AccountCopyWith<$Res> {
     int startingBalance,
     int currentBalance,
     bool isArchived,
+    bool isOnBudget,
   });
 }
 
@@ -121,6 +126,7 @@ class _$AccountCopyWithImpl<$Res> implements $AccountCopyWith<$Res> {
     Object? startingBalance = null,
     Object? currentBalance = null,
     Object? isArchived = null,
+    Object? isOnBudget = null,
   }) {
     return _then(
       _self.copyWith(
@@ -163,6 +169,10 @@ class _$AccountCopyWithImpl<$Res> implements $AccountCopyWith<$Res> {
         isArchived: null == isArchived
             ? _self.isArchived
             : isArchived // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        isOnBudget: null == isOnBudget
+            ? _self.isOnBudget
+            : isOnBudget // ignore: cast_nullable_to_non_nullable
                   as bool,
       ),
     );
@@ -273,6 +283,7 @@ extension AccountPatterns on Account {
       int startingBalance,
       int currentBalance,
       bool isArchived,
+      bool isOnBudget,
     )?
     $default, {
     required TResult orElse(),
@@ -291,6 +302,7 @@ extension AccountPatterns on Account {
           _that.startingBalance,
           _that.currentBalance,
           _that.isArchived,
+          _that.isOnBudget,
         );
       case _:
         return orElse();
@@ -323,6 +335,7 @@ extension AccountPatterns on Account {
       int startingBalance,
       int currentBalance,
       bool isArchived,
+      bool isOnBudget,
     )
     $default,
   ) {
@@ -340,6 +353,7 @@ extension AccountPatterns on Account {
           _that.startingBalance,
           _that.currentBalance,
           _that.isArchived,
+          _that.isOnBudget,
         );
       case _:
         throw StateError('Unexpected subclass');
@@ -371,6 +385,7 @@ extension AccountPatterns on Account {
       int startingBalance,
       int currentBalance,
       bool isArchived,
+      bool isOnBudget,
     )?
     $default,
   ) {
@@ -388,6 +403,7 @@ extension AccountPatterns on Account {
           _that.startingBalance,
           _that.currentBalance,
           _that.isArchived,
+          _that.isOnBudget,
         );
       case _:
         return null;
@@ -409,6 +425,7 @@ class _Account implements Account {
     this.startingBalance = 0,
     this.currentBalance = 0,
     this.isArchived = false,
+    this.isOnBudget = true,
   });
   factory _Account.fromJson(Map<String, dynamic> json) =>
       _$AccountFromJson(json);
@@ -436,6 +453,9 @@ class _Account implements Account {
   @override
   @JsonKey()
   final bool isArchived;
+  @override
+  @JsonKey()
+  final bool isOnBudget;
 
   /// Create a copy of Account
   /// with the given fields replaced by the non-null parameter values.
@@ -471,7 +491,9 @@ class _Account implements Account {
             (identical(other.currentBalance, currentBalance) ||
                 other.currentBalance == currentBalance) &&
             (identical(other.isArchived, isArchived) ||
-                other.isArchived == isArchived));
+                other.isArchived == isArchived) &&
+            (identical(other.isOnBudget, isOnBudget) ||
+                other.isOnBudget == isOnBudget));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -488,11 +510,12 @@ class _Account implements Account {
     startingBalance,
     currentBalance,
     isArchived,
+    isOnBudget,
   );
 
   @override
   String toString() {
-    return 'Account(id: $id, budgetId: $budgetId, name: $name, type: $type, currency: $currency, createdAt: $createdAt, updatedAt: $updatedAt, startingBalance: $startingBalance, currentBalance: $currentBalance, isArchived: $isArchived)';
+    return 'Account(id: $id, budgetId: $budgetId, name: $name, type: $type, currency: $currency, createdAt: $createdAt, updatedAt: $updatedAt, startingBalance: $startingBalance, currentBalance: $currentBalance, isArchived: $isArchived, isOnBudget: $isOnBudget)';
   }
 }
 
@@ -513,6 +536,7 @@ abstract mixin class _$AccountCopyWith<$Res> implements $AccountCopyWith<$Res> {
     int startingBalance,
     int currentBalance,
     bool isArchived,
+    bool isOnBudget,
   });
 }
 
@@ -538,6 +562,7 @@ class __$AccountCopyWithImpl<$Res> implements _$AccountCopyWith<$Res> {
     Object? startingBalance = null,
     Object? currentBalance = null,
     Object? isArchived = null,
+    Object? isOnBudget = null,
   }) {
     return _then(
       _Account(
@@ -580,6 +605,10 @@ class __$AccountCopyWithImpl<$Res> implements _$AccountCopyWith<$Res> {
         isArchived: null == isArchived
             ? _self.isArchived
             : isArchived // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        isOnBudget: null == isOnBudget
+            ? _self.isOnBudget
+            : isOnBudget // ignore: cast_nullable_to_non_nullable
                   as bool,
       ),
     );

@@ -1788,5 +1788,17 @@
     "sharedBudgetInvalidEmail": "Please enter a valid email address",
     "@sharedBudgetInvalidEmail": {
         "description": "Error message for invalid email format"
+    },
+    "accountsOnBudgetLabel": "On Budget",
+    "@accountsOnBudgetLabel": {
+        "description": "Label for the on-budget toggle switch"
+    },
+    "accountsOnBudgetDescription": "Include this account's balance in your budget",
+    "@accountsOnBudgetDescription": {
+        "description": "Description for the on-budget toggle switch"
+    },
+    "accountsOffBudgetIndicator": "Off-budget",
+    "@accountsOffBudgetIndicator": {
+        "description": "Indicator shown on off-budget account tiles"
     }
 }

@@ -16,8 +16,8 @@ class TransactionRepository {
   const TransactionRepository({
     required EnvelopeApiClient apiClient,
     required AppDatabase localDatabase,
-  })  : _apiClient = apiClient,
-        _localDatabase = localDatabase;
+  }) : _apiClient = apiClient,
+       _localDatabase = localDatabase;
 
   final EnvelopeApiClient _apiClient;
   final AppDatabase _localDatabase;
@@ -110,8 +110,9 @@ class TransactionRepository {
             (rows) => rows.where((r) => r.envelopeId == envelopeId).toList(),
           );
     } else {
-      stream =
-          _localDatabase.transactionsDao.watchTransactionsByBudgetId(budgetId);
+      stream = _localDatabase.transactionsDao.watchTransactionsByBudgetId(
+        budgetId,
+      );
     }
 
     return stream
@@ -156,8 +157,9 @@ class TransactionRepository {
   /// Fetches transactions from the API and syncs to local storage.
   Future<void> refreshTransactions(String budgetId) async {
     try {
-      final remote =
-          await _apiClient.transactions.getTransactionsByBudget(budgetId);
+      final remote = await _apiClient.transactions.getTransactionsByBudget(
+        budgetId,
+      );
       final companions = remote.map(_toTransactionCompanion).toList();
       for (final companion in companions) {
         await _localDatabase.transactionsDao.insertTransaction(
@@ -189,8 +191,9 @@ class TransactionRepository {
           envelopeId: split.envelopeId,
           amount: split.amount.toDouble(),
         );
-        final created =
-            await _apiClient.transactions.createTransactionSplit(dto);
+        final created = await _apiClient.transactions.createTransactionSplit(
+          dto,
+        );
         await _localDatabase.transactionsDao.insertTransactionSplit(
           _toTransactionSplitCompanion(created),
           mode: InsertMode.insertOrReplace,
@@ -214,8 +217,9 @@ class TransactionRepository {
       if (local.isNotEmpty) {
         return local.map(_mapTransactionSplitFromLocal).toList();
       }
-      final remote =
-          await _apiClient.transactions.getTransactionSplits(transactionId);
+      final remote = await _apiClient.transactions.getTransactionSplits(
+        transactionId,
+      );
       for (final dto in remote) {
         await _localDatabase.transactionsDao.insertTransactionSplit(
           _toTransactionSplitCompanion(dto),
@@ -242,8 +246,9 @@ class TransactionRepository {
       throw TransactionException('Failed to replace splits', error: e);
     }
     try {
-      await _localDatabase.transactionsDao
-          .deleteSplitsByTransactionId(transactionId);
+      await _localDatabase.transactionsDao.deleteSplitsByTransactionId(
+        transactionId,
+      );
     } on Exception {
       // Stale local splits will be cleaned up on next refresh.
     }
@@ -260,8 +265,9 @@ class TransactionRepository {
   /// Fetches recurring rules from the API and syncs to local storage.
   Future<void> refreshRecurringRules(String budgetId) async {
     try {
-      final remote =
-          await _apiClient.recurring.getRecurringRulesByBudget(budgetId);
+      final remote = await _apiClient.recurring.getRecurringRulesByBudget(
+        budgetId,
+      );
       for (final dto in remote) {
         await _localDatabase.recurringDao.insertRecurringRule(
           _toRecurringRuleCompanion(dto),
@@ -410,8 +416,9 @@ class TransactionRepository {
   /// Fetches bill reminders from the API and syncs to local storage.
   Future<void> refreshBillReminders(String budgetId) async {
     try {
-      final remote =
-          await _apiClient.recurring.getBillRemindersByBudget(budgetId);
+      final remote = await _apiClient.recurring.getBillRemindersByBudget(
+        budgetId,
+      );
       for (final dto in remote) {
         await _localDatabase.recurringDao.insertBillReminder(
           _toBillReminderCompanion(dto),
@@ -529,8 +536,9 @@ class TransactionRepository {
   /// Gets all tags for a [budgetId].
   Future<List<Tag>> getTags(String budgetId) async {
     try {
-      final local =
-          await _localDatabase.transactionsDao.getTagsByBudgetId(budgetId);
+      final local = await _localDatabase.transactionsDao.getTagsByBudgetId(
+        budgetId,
+      );
       if (local.isNotEmpty) {
         return local.map(_mapTagFromLocal).toList();
       }
@@ -614,13 +622,15 @@ class TransactionRepository {
   /// Gets all tag IDs associated with a transaction.
   Future<List<String>> getTagIdsForTransaction(String transactionId) async {
     try {
-      final local = await _localDatabase.transactionsDao
-          .getTagsByTransactionId(transactionId);
+      final local = await _localDatabase.transactionsDao.getTagsByTransactionId(
+        transactionId,
+      );
       if (local.isNotEmpty) {
         return local.map((r) => r.tagId).toList();
       }
-      final tagIds =
-          await _apiClient.transactions.getTransactionTags(transactionId);
+      final tagIds = await _apiClient.transactions.getTransactionTags(
+        transactionId,
+      );
       for (final tagId in tagIds) {
         await _localDatabase.transactionsDao.insertTransactionTag(
           storage.TransactionTagsCompanion.insert(

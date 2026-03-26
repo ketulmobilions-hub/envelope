@@ -59,11 +59,18 @@ class TransactionsApiClient {
   }
 
   /// Creates a new transaction.
+  ///
+  /// Server-generated fields (`id`, `created_at`, `updated_at`) are
+  /// stripped from the payload so Supabase applies its defaults.
   Future<TransactionDto> createTransaction(TransactionDto transaction) async {
     try {
+      final json = transaction.toJson()
+        ..remove('id')
+        ..remove('created_at')
+        ..remove('updated_at');
       final response = await _supabaseClient
           .from('transactions')
-          .insert(transaction.toJson())
+          .insert(json)
           .select()
           .single();
       return TransactionDto.fromJson(response);
@@ -114,13 +121,16 @@ class TransactionsApiClient {
   }
 
   /// Creates a new transaction split.
+  ///
+  /// Server-generated field (`id`) is stripped so Supabase applies its default.
   Future<TransactionSplitDto> createTransactionSplit(
     TransactionSplitDto split,
   ) async {
     try {
+      final json = split.toJson()..remove('id');
       final response = await _supabaseClient
           .from('transaction_splits')
-          .insert(split.toJson())
+          .insert(json)
           .select()
           .single();
       return TransactionSplitDto.fromJson(response);
@@ -157,11 +167,14 @@ class TransactionsApiClient {
   }
 
   /// Creates a new tag.
+  ///
+  /// Server-generated field (`id`) is stripped so Supabase applies its default.
   Future<TagDto> createTag(TagDto tag) async {
     try {
+      final json = tag.toJson()..remove('id');
       final response = await _supabaseClient
           .from('tags')
-          .insert(tag.toJson())
+          .insert(json)
           .select()
           .single();
       return TagDto.fromJson(response);

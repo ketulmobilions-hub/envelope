@@ -2168,6 +2168,21 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _isOnBudgetMeta = const VerificationMeta(
+    'isOnBudget',
+  );
+  @override
+  late final GeneratedColumn<bool> isOnBudget = GeneratedColumn<bool>(
+    'is_on_budget',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_on_budget" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -2200,6 +2215,7 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     currentBalance,
     currency,
     isArchived,
+    isOnBudget,
     createdAt,
     updatedAt,
   ];
@@ -2276,6 +2292,15 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         isArchived.isAcceptableOrUnknown(data['is_archived']!, _isArchivedMeta),
       );
     }
+    if (data.containsKey('is_on_budget')) {
+      context.handle(
+        _isOnBudgetMeta,
+        isOnBudget.isAcceptableOrUnknown(
+          data['is_on_budget']!,
+          _isOnBudgetMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -2333,6 +2358,10 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         DriftSqlType.bool,
         data['${effectivePrefix}is_archived'],
       )!,
+      isOnBudget: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_on_budget'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -2359,6 +2388,7 @@ class Account extends DataClass implements Insertable<Account> {
   final int currentBalance;
   final String currency;
   final bool isArchived;
+  final bool isOnBudget;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Account({
@@ -2370,6 +2400,7 @@ class Account extends DataClass implements Insertable<Account> {
     required this.currentBalance,
     required this.currency,
     required this.isArchived,
+    required this.isOnBudget,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -2384,6 +2415,7 @@ class Account extends DataClass implements Insertable<Account> {
     map['current_balance'] = Variable<int>(currentBalance);
     map['currency'] = Variable<String>(currency);
     map['is_archived'] = Variable<bool>(isArchived);
+    map['is_on_budget'] = Variable<bool>(isOnBudget);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -2399,6 +2431,7 @@ class Account extends DataClass implements Insertable<Account> {
       currentBalance: Value(currentBalance),
       currency: Value(currency),
       isArchived: Value(isArchived),
+      isOnBudget: Value(isOnBudget),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -2418,6 +2451,7 @@ class Account extends DataClass implements Insertable<Account> {
       currentBalance: serializer.fromJson<int>(json['currentBalance']),
       currency: serializer.fromJson<String>(json['currency']),
       isArchived: serializer.fromJson<bool>(json['isArchived']),
+      isOnBudget: serializer.fromJson<bool>(json['isOnBudget']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -2434,6 +2468,7 @@ class Account extends DataClass implements Insertable<Account> {
       'currentBalance': serializer.toJson<int>(currentBalance),
       'currency': serializer.toJson<String>(currency),
       'isArchived': serializer.toJson<bool>(isArchived),
+      'isOnBudget': serializer.toJson<bool>(isOnBudget),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -2448,6 +2483,7 @@ class Account extends DataClass implements Insertable<Account> {
     int? currentBalance,
     String? currency,
     bool? isArchived,
+    bool? isOnBudget,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => Account(
@@ -2459,6 +2495,7 @@ class Account extends DataClass implements Insertable<Account> {
     currentBalance: currentBalance ?? this.currentBalance,
     currency: currency ?? this.currency,
     isArchived: isArchived ?? this.isArchived,
+    isOnBudget: isOnBudget ?? this.isOnBudget,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -2478,6 +2515,9 @@ class Account extends DataClass implements Insertable<Account> {
       isArchived: data.isArchived.present
           ? data.isArchived.value
           : this.isArchived,
+      isOnBudget: data.isOnBudget.present
+          ? data.isOnBudget.value
+          : this.isOnBudget,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -2494,6 +2534,7 @@ class Account extends DataClass implements Insertable<Account> {
           ..write('currentBalance: $currentBalance, ')
           ..write('currency: $currency, ')
           ..write('isArchived: $isArchived, ')
+          ..write('isOnBudget: $isOnBudget, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -2510,6 +2551,7 @@ class Account extends DataClass implements Insertable<Account> {
     currentBalance,
     currency,
     isArchived,
+    isOnBudget,
     createdAt,
     updatedAt,
   );
@@ -2525,6 +2567,7 @@ class Account extends DataClass implements Insertable<Account> {
           other.currentBalance == this.currentBalance &&
           other.currency == this.currency &&
           other.isArchived == this.isArchived &&
+          other.isOnBudget == this.isOnBudget &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -2538,6 +2581,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
   final Value<int> currentBalance;
   final Value<String> currency;
   final Value<bool> isArchived;
+  final Value<bool> isOnBudget;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -2550,6 +2594,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     this.currentBalance = const Value.absent(),
     this.currency = const Value.absent(),
     this.isArchived = const Value.absent(),
+    this.isOnBudget = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -2563,6 +2608,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     this.currentBalance = const Value.absent(),
     required String currency,
     this.isArchived = const Value.absent(),
+    this.isOnBudget = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
@@ -2582,6 +2628,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Expression<int>? currentBalance,
     Expression<String>? currency,
     Expression<bool>? isArchived,
+    Expression<bool>? isOnBudget,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -2595,6 +2642,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       if (currentBalance != null) 'current_balance': currentBalance,
       if (currency != null) 'currency': currency,
       if (isArchived != null) 'is_archived': isArchived,
+      if (isOnBudget != null) 'is_on_budget': isOnBudget,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -2610,6 +2658,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Value<int>? currentBalance,
     Value<String>? currency,
     Value<bool>? isArchived,
+    Value<bool>? isOnBudget,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
@@ -2623,6 +2672,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       currentBalance: currentBalance ?? this.currentBalance,
       currency: currency ?? this.currency,
       isArchived: isArchived ?? this.isArchived,
+      isOnBudget: isOnBudget ?? this.isOnBudget,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -2656,6 +2706,9 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     if (isArchived.present) {
       map['is_archived'] = Variable<bool>(isArchived.value);
     }
+    if (isOnBudget.present) {
+      map['is_on_budget'] = Variable<bool>(isOnBudget.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -2679,6 +2732,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
           ..write('currentBalance: $currentBalance, ')
           ..write('currency: $currency, ')
           ..write('isArchived: $isArchived, ')
+          ..write('isOnBudget: $isOnBudget, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -12433,6 +12487,7 @@ typedef $$AccountsTableCreateCompanionBuilder =
       Value<int> currentBalance,
       required String currency,
       Value<bool> isArchived,
+      Value<bool> isOnBudget,
       required DateTime createdAt,
       required DateTime updatedAt,
       Value<int> rowid,
@@ -12447,6 +12502,7 @@ typedef $$AccountsTableUpdateCompanionBuilder =
       Value<int> currentBalance,
       Value<String> currency,
       Value<bool> isArchived,
+      Value<bool> isOnBudget,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
@@ -12498,6 +12554,11 @@ class $$AccountsTableFilterComposer
 
   ColumnFilters<bool> get isArchived => $composableBuilder(
     column: $table.isArchived,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isOnBudget => $composableBuilder(
+    column: $table.isOnBudget,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -12561,6 +12622,11 @@ class $$AccountsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get isOnBudget => $composableBuilder(
+    column: $table.isOnBudget,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -12611,6 +12677,11 @@ class $$AccountsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<bool> get isOnBudget => $composableBuilder(
+    column: $table.isOnBudget,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -12654,6 +12725,7 @@ class $$AccountsTableTableManager
                 Value<int> currentBalance = const Value.absent(),
                 Value<String> currency = const Value.absent(),
                 Value<bool> isArchived = const Value.absent(),
+                Value<bool> isOnBudget = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -12666,6 +12738,7 @@ class $$AccountsTableTableManager
                 currentBalance: currentBalance,
                 currency: currency,
                 isArchived: isArchived,
+                isOnBudget: isOnBudget,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -12680,6 +12753,7 @@ class $$AccountsTableTableManager
                 Value<int> currentBalance = const Value.absent(),
                 required String currency,
                 Value<bool> isArchived = const Value.absent(),
+                Value<bool> isOnBudget = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -12692,6 +12766,7 @@ class $$AccountsTableTableManager
                 currentBalance: currentBalance,
                 currency: currency,
                 isArchived: isArchived,
+                isOnBudget: isOnBudget,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,

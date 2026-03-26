@@ -217,13 +217,16 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       var totalStartingBalance = 0;
       for (final account in state.accounts) {
         final balanceCents = (account.startingBalance * 100).round();
-        totalStartingBalance += balanceCents;
+        if (account.isOnBudget) {
+          totalStartingBalance += balanceCents;
+        }
         await _accountRepository.createAccount(
           budgetId: budgetId,
           name: account.name,
           type: account.type,
           currency: account.currency,
           startingBalance: balanceCents,
+          isOnBudget: account.isOnBudget,
         );
       }
 

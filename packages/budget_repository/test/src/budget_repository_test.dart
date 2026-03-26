@@ -1561,6 +1561,167 @@ void main() {
     });
 
     // -----------------------------------------------------------------
+    // updateBudgetPeriod
+    // -----------------------------------------------------------------
+    group('updateBudgetPeriod', () {
+      test('updates via API and caches locally', () async {
+        final period = BudgetPeriod(
+          id: 'period-1',
+          budgetId: 'budget-1',
+          startDate: DateTime(2024),
+          endDate: DateTime(2024, 1, 31),
+          totalIncome: 600000,
+          totalAllocated: 300000,
+          isClosed: false,
+          createdAt: now,
+        );
+
+        when(() => budgetsApiClient.updateBudgetPeriod(any()))
+            .thenAnswer((_) async => testBudgetPeriodDto);
+        when(
+          () => budgetsDao.insertBudgetPeriod(
+            any(),
+            mode: any(named: 'mode'),
+          ),
+        ).thenAnswer((_) async => 1);
+
+        await repository.updateBudgetPeriod(period);
+
+        verify(() => budgetsApiClient.updateBudgetPeriod(any()))
+            .called(1);
+        verify(
+          () => budgetsDao.insertBudgetPeriod(
+            any(),
+            mode: any(named: 'mode'),
+          ),
+        ).called(1);
+      });
+
+      test('throws BudgetException on API failure', () async {
+        final period = BudgetPeriod(
+          id: 'period-1',
+          budgetId: 'budget-1',
+          startDate: DateTime(2024),
+          endDate: DateTime(2024, 1, 31),
+          totalIncome: 600000,
+          totalAllocated: 300000,
+          isClosed: false,
+          createdAt: now,
+        );
+
+        when(() => budgetsApiClient.updateBudgetPeriod(any()))
+            .thenThrow(const EnvelopeApiException('API error'));
+
+        expect(
+          () => repository.updateBudgetPeriod(period),
+          throwsA(isA<BudgetException>()),
+        );
+      });
+    });
+
+    // -----------------------------------------------------------------
+    // addIncomeToCurrentPeriod
+    // -----------------------------------------------------------------
+    group('addIncomeToCurrentPeriod', () {
+      test(
+        'finds latest period and increments totalIncome',
+        () async {
+          when(() => budgetsDao.getPeriodsByBudgetId('budget-1'))
+              .thenAnswer((_) async => [testLocalBudgetPeriod]);
+          when(() => budgetsApiClient.updateBudgetPeriod(any()))
+              .thenAnswer((_) async => testBudgetPeriodDto);
+          when(
+            () => budgetsDao.insertBudgetPeriod(
+              any(),
+              mode: any(named: 'mode'),
+            ),
+          ).thenAnswer((_) async => 1);
+
+          await repository.addIncomeToCurrentPeriod(
+            budgetId: 'budget-1',
+            amount: 10000,
+          );
+
+          final captured = verify(
+            () => budgetsApiClient.updateBudgetPeriod(captureAny()),
+          ).captured.single as BudgetPeriodDto;
+          expect(captured.totalIncome, equals(510000));
+        },
+      );
+
+      test('does nothing when no periods exist', () async {
+        when(() => budgetsDao.getPeriodsByBudgetId('budget-1'))
+            .thenAnswer((_) async => []);
+
+        await repository.addIncomeToCurrentPeriod(
+          budgetId: 'budget-1',
+          amount: 10000,
+        );
+
+        verifyNever(
+          () => budgetsApiClient.updateBudgetPeriod(any()),
+        );
+      });
+
+      test(
+        'picks latest period when multiple exist',
+        () async {
+          final olderPeriod = storage.BudgetPeriod(
+            id: 'period-0',
+            budgetId: 'budget-1',
+            startDate: DateTime(2023, 12),
+            endDate: DateTime(2023, 12, 31),
+            totalIncome: 400000,
+            totalAllocated: 200000,
+            isClosed: true,
+            createdAt: now,
+          );
+
+          when(() => budgetsDao.getPeriodsByBudgetId('budget-1'))
+              .thenAnswer(
+            (_) async => [olderPeriod, testLocalBudgetPeriod],
+          );
+          when(() => budgetsApiClient.updateBudgetPeriod(any()))
+              .thenAnswer((_) async => testBudgetPeriodDto);
+          when(
+            () => budgetsDao.insertBudgetPeriod(
+              any(),
+              mode: any(named: 'mode'),
+            ),
+          ).thenAnswer((_) async => 1);
+
+          await repository.addIncomeToCurrentPeriod(
+            budgetId: 'budget-1',
+            amount: 10000,
+          );
+
+          final captured = verify(
+            () => budgetsApiClient.updateBudgetPeriod(captureAny()),
+          ).captured.single as BudgetPeriodDto;
+          // Should update period-1 (Jan 2024), not period-0 (Dec 2023)
+          expect(captured.id, equals('period-1'));
+          expect(captured.totalIncome, equals(510000));
+        },
+      );
+
+      test(
+        'throws BudgetException on failure',
+        () async {
+          when(() => budgetsDao.getPeriodsByBudgetId('budget-1'))
+              .thenThrow(Exception('DB error'));
+
+          expect(
+            () => repository.addIncomeToCurrentPeriod(
+              budgetId: 'budget-1',
+              amount: 10000,
+            ),
+            throwsA(isA<BudgetException>()),
+          );
+        },
+      );
+    });
+
+    // -----------------------------------------------------------------
     // Exceptions
     // -----------------------------------------------------------------
     group('BudgetException', () {

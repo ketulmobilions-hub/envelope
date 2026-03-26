@@ -366,8 +366,9 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
 
       // Recompute ready to assign after allocation change.
       try {
-        final readyToAssign =
-            await _budgetRepository.calculateReadyToAssign(periodId);
+        final readyToAssign = await _budgetRepository.calculateReadyToAssign(
+          periodId,
+        );
         emit(state.copyWith(readyToAssign: readyToAssign));
       } on BudgetException {
         // Keep previous value.

@@ -33,6 +33,7 @@ class AccountRepository {
     required String type,
     required String currency,
     int startingBalance = 0,
+    bool isOnBudget = true,
   }) async {
     try {
       final dto = AccountDto(
@@ -43,6 +44,7 @@ class AccountRepository {
         currency: currency,
         startingBalance: startingBalance,
         currentBalance: startingBalance,
+        isOnBudget: isOnBudget,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -274,6 +276,7 @@ class AccountRepository {
       startingBalance: dto.startingBalance,
       currentBalance: dto.currentBalance,
       isArchived: dto.isArchived,
+      isOnBudget: dto.isOnBudget,
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
     );
@@ -289,6 +292,7 @@ class AccountRepository {
       startingBalance: row.startingBalance,
       currentBalance: row.currentBalance,
       isArchived: row.isArchived,
+      isOnBudget: row.isOnBudget,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     );
@@ -304,6 +308,7 @@ class AccountRepository {
       startingBalance: account.startingBalance,
       currentBalance: account.currentBalance,
       isArchived: account.isArchived,
+      isOnBudget: account.isOnBudget,
       createdAt: account.createdAt,
       updatedAt: account.updatedAt,
     );
@@ -353,6 +358,7 @@ class AccountRepository {
       startingBalance: Value(dto.startingBalance),
       currentBalance: Value(dto.currentBalance),
       isArchived: Value(dto.isArchived),
+      isOnBudget: Value(dto.isOnBudget),
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
     );

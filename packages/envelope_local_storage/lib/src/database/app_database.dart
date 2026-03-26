@@ -48,7 +48,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -79,6 +79,9 @@ class AppDatabase extends _$AppDatabase {
               'ALTER TABLE budget_members_tmp '
               'RENAME TO budget_members',
             );
+          }
+          if (from < 4) {
+            await m.addColumn(accounts, accounts.isOnBudget);
           }
         },
       );

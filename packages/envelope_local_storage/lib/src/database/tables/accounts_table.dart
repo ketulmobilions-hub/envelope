@@ -12,6 +12,8 @@ class Accounts extends Table {
   TextColumn get currency => text()();
   BoolColumn get isArchived =>
       boolean().named('is_archived').withDefault(const Constant(false))();
+  BoolColumn get isOnBudget =>
+      boolean().named('is_on_budget').withDefault(const Constant(true))();
   DateTimeColumn get createdAt => dateTime().named('created_at')();
   DateTimeColumn get updatedAt => dateTime().named('updated_at')();
 

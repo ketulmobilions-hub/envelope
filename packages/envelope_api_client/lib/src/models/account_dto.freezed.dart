@@ -29,6 +29,8 @@ mixin _$AccountDto {
   int get currentBalance;
   @JsonKey(name: 'is_archived')
   bool get isArchived;
+  @JsonKey(name: 'is_on_budget')
+  bool get isOnBudget;
 
   /// Create a copy of AccountDto
   /// with the given fields replaced by the non-null parameter values.
@@ -61,7 +63,9 @@ mixin _$AccountDto {
             (identical(other.currentBalance, currentBalance) ||
                 other.currentBalance == currentBalance) &&
             (identical(other.isArchived, isArchived) ||
-                other.isArchived == isArchived));
+                other.isArchived == isArchived) &&
+            (identical(other.isOnBudget, isOnBudget) ||
+                other.isOnBudget == isOnBudget));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -78,11 +82,12 @@ mixin _$AccountDto {
     startingBalance,
     currentBalance,
     isArchived,
+    isOnBudget,
   );
 
   @override
   String toString() {
-    return 'AccountDto(id: $id, budgetId: $budgetId, name: $name, type: $type, currency: $currency, createdAt: $createdAt, updatedAt: $updatedAt, startingBalance: $startingBalance, currentBalance: $currentBalance, isArchived: $isArchived)';
+    return 'AccountDto(id: $id, budgetId: $budgetId, name: $name, type: $type, currency: $currency, createdAt: $createdAt, updatedAt: $updatedAt, startingBalance: $startingBalance, currentBalance: $currentBalance, isArchived: $isArchived, isOnBudget: $isOnBudget)';
   }
 }
 
@@ -104,6 +109,7 @@ abstract mixin class $AccountDtoCopyWith<$Res> {
     @JsonKey(name: 'starting_balance') int startingBalance,
     @JsonKey(name: 'current_balance') int currentBalance,
     @JsonKey(name: 'is_archived') bool isArchived,
+    @JsonKey(name: 'is_on_budget') bool isOnBudget,
   });
 }
 
@@ -129,6 +135,7 @@ class _$AccountDtoCopyWithImpl<$Res> implements $AccountDtoCopyWith<$Res> {
     Object? startingBalance = null,
     Object? currentBalance = null,
     Object? isArchived = null,
+    Object? isOnBudget = null,
   }) {
     return _then(
       _self.copyWith(
@@ -171,6 +178,10 @@ class _$AccountDtoCopyWithImpl<$Res> implements $AccountDtoCopyWith<$Res> {
         isArchived: null == isArchived
             ? _self.isArchived
             : isArchived // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        isOnBudget: null == isOnBudget
+            ? _self.isOnBudget
+            : isOnBudget // ignore: cast_nullable_to_non_nullable
                   as bool,
       ),
     );
@@ -281,6 +292,7 @@ extension AccountDtoPatterns on AccountDto {
       @JsonKey(name: 'starting_balance') int startingBalance,
       @JsonKey(name: 'current_balance') int currentBalance,
       @JsonKey(name: 'is_archived') bool isArchived,
+      @JsonKey(name: 'is_on_budget') bool isOnBudget,
     )?
     $default, {
     required TResult orElse(),
@@ -299,6 +311,7 @@ extension AccountDtoPatterns on AccountDto {
           _that.startingBalance,
           _that.currentBalance,
           _that.isArchived,
+          _that.isOnBudget,
         );
       case _:
         return orElse();
@@ -331,6 +344,7 @@ extension AccountDtoPatterns on AccountDto {
       @JsonKey(name: 'starting_balance') int startingBalance,
       @JsonKey(name: 'current_balance') int currentBalance,
       @JsonKey(name: 'is_archived') bool isArchived,
+      @JsonKey(name: 'is_on_budget') bool isOnBudget,
     )
     $default,
   ) {
@@ -348,6 +362,7 @@ extension AccountDtoPatterns on AccountDto {
           _that.startingBalance,
           _that.currentBalance,
           _that.isArchived,
+          _that.isOnBudget,
         );
       case _:
         throw StateError('Unexpected subclass');
@@ -379,6 +394,7 @@ extension AccountDtoPatterns on AccountDto {
       @JsonKey(name: 'starting_balance') int startingBalance,
       @JsonKey(name: 'current_balance') int currentBalance,
       @JsonKey(name: 'is_archived') bool isArchived,
+      @JsonKey(name: 'is_on_budget') bool isOnBudget,
     )?
     $default,
   ) {
@@ -396,6 +412,7 @@ extension AccountDtoPatterns on AccountDto {
           _that.startingBalance,
           _that.currentBalance,
           _that.isArchived,
+          _that.isOnBudget,
         );
       case _:
         return null;
@@ -417,6 +434,7 @@ class _AccountDto implements AccountDto {
     @JsonKey(name: 'starting_balance') this.startingBalance = 0,
     @JsonKey(name: 'current_balance') this.currentBalance = 0,
     @JsonKey(name: 'is_archived') this.isArchived = false,
+    @JsonKey(name: 'is_on_budget') this.isOnBudget = true,
   });
   factory _AccountDto.fromJson(Map<String, dynamic> json) =>
       _$AccountDtoFromJson(json);
@@ -447,6 +465,9 @@ class _AccountDto implements AccountDto {
   @override
   @JsonKey(name: 'is_archived')
   final bool isArchived;
+  @override
+  @JsonKey(name: 'is_on_budget')
+  final bool isOnBudget;
 
   /// Create a copy of AccountDto
   /// with the given fields replaced by the non-null parameter values.
@@ -482,7 +503,9 @@ class _AccountDto implements AccountDto {
             (identical(other.currentBalance, currentBalance) ||
                 other.currentBalance == currentBalance) &&
             (identical(other.isArchived, isArchived) ||
-                other.isArchived == isArchived));
+                other.isArchived == isArchived) &&
+            (identical(other.isOnBudget, isOnBudget) ||
+                other.isOnBudget == isOnBudget));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -499,11 +522,12 @@ class _AccountDto implements AccountDto {
     startingBalance,
     currentBalance,
     isArchived,
+    isOnBudget,
   );
 
   @override
   String toString() {
-    return 'AccountDto(id: $id, budgetId: $budgetId, name: $name, type: $type, currency: $currency, createdAt: $createdAt, updatedAt: $updatedAt, startingBalance: $startingBalance, currentBalance: $currentBalance, isArchived: $isArchived)';
+    return 'AccountDto(id: $id, budgetId: $budgetId, name: $name, type: $type, currency: $currency, createdAt: $createdAt, updatedAt: $updatedAt, startingBalance: $startingBalance, currentBalance: $currentBalance, isArchived: $isArchived, isOnBudget: $isOnBudget)';
   }
 }
 
@@ -527,6 +551,7 @@ abstract mixin class _$AccountDtoCopyWith<$Res>
     @JsonKey(name: 'starting_balance') int startingBalance,
     @JsonKey(name: 'current_balance') int currentBalance,
     @JsonKey(name: 'is_archived') bool isArchived,
+    @JsonKey(name: 'is_on_budget') bool isOnBudget,
   });
 }
 
@@ -552,6 +577,7 @@ class __$AccountDtoCopyWithImpl<$Res> implements _$AccountDtoCopyWith<$Res> {
     Object? startingBalance = null,
     Object? currentBalance = null,
     Object? isArchived = null,
+    Object? isOnBudget = null,
   }) {
     return _then(
       _AccountDto(
@@ -594,6 +620,10 @@ class __$AccountDtoCopyWithImpl<$Res> implements _$AccountDtoCopyWith<$Res> {
         isArchived: null == isArchived
             ? _self.isArchived
             : isArchived // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        isOnBudget: null == isOnBudget
+            ? _self.isOnBudget
+            : isOnBudget // ignore: cast_nullable_to_non_nullable
                   as bool,
       ),
     );
