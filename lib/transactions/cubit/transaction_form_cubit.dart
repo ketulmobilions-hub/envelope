@@ -143,6 +143,16 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
       // Handle tags.
       await _saveTags(transactionId, selectedTagIds);
 
+      // Refresh allocations so the local Drift cache reflects the updated
+      // spent_amount computed by the database trigger.
+      if (budgetPeriodId != null) {
+        try {
+          await _envelopeRepository.refreshAllocations(budgetPeriodId!);
+        } on Exception {
+          // Best-effort; Realtime will eventually sync.
+        }
+      }
+
       // Check for overspend on expense transactions.
       final overspendData = await _checkOverspend(
         type: type,
@@ -266,7 +276,6 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     if (affectedEnvelopeIds.isEmpty) return null;
 
     try {
-      await _envelopeRepository.refreshAllocations(periodId);
       final allocations = await _envelopeRepository
           .watchAllocations(periodId)
           .first;
