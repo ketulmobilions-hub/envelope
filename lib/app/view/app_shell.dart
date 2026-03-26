@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:account_repository/account_repository.dart';
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
@@ -62,6 +63,13 @@ class AppShell extends StatelessWidget {
     final budgetId =
         context.read<SharedPreferences>().getString(activeBudgetIdKey) ?? '';
 
+    final periodId = await _getCurrentPeriodId(
+      context.read<BudgetRepository>(),
+      budgetId,
+    );
+
+    if (!context.mounted) return;
+
     unawaited(
       Navigator.of(context).push<bool>(
         MaterialPageRoute(
@@ -71,6 +79,7 @@ class AppShell extends StatelessWidget {
               accountRepository: context.read<AccountRepository>(),
               envelopeRepository: context.read<EnvelopeRepository>(),
               budgetId: budgetId,
+              budgetPeriodId: periodId,
               userId: user.id,
             ),
             child: const TransactionFormPage(),
@@ -121,5 +130,29 @@ class AppShell extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Resolves the current (open) budget period ID.
+Future<String?> _getCurrentPeriodId(
+  BudgetRepository budgetRepository,
+  String budgetId,
+) async {
+  try {
+    final periods =
+        await budgetRepository.watchBudgetPeriods(budgetId).first;
+    if (periods.isEmpty) return null;
+    final now = DateTime.now();
+    final current = periods.firstWhere(
+      (p) =>
+          !p.isClosed &&
+          !p.startDate.isAfter(now) &&
+          !p.endDate.isBefore(now),
+      orElse: () =>
+          periods.where((p) => !p.isClosed).lastOrNull ?? periods.last,
+    );
+    return current.id;
+  } on Exception {
+    return null;
   }
 }
