@@ -19,9 +19,9 @@ class SharingRepository {
     required EnvelopeApiClient apiClient,
     required storage.AppDatabase localDatabase,
     SupabaseClient? supabaseClient,
-  })  : _apiClient = apiClient,
-        _localDatabase = localDatabase,
-        _supabaseClient = supabaseClient;
+  }) : _apiClient = apiClient,
+       _localDatabase = localDatabase,
+       _supabaseClient = supabaseClient;
 
   final EnvelopeApiClient _apiClient;
   final storage.AppDatabase _localDatabase;
@@ -34,6 +34,10 @@ class SharingRepository {
   // ---------------------------------------------------------------------------
 
   /// Invites a member to a budget by email.
+  ///
+  /// [userId] is left `null` — the invited email is stored in
+  /// [BudgetMemberDto.invitedVia] as `email:<address>`. When the
+  /// invitee signs up / accepts, `userId` is set to their real ID.
   Future<BudgetMember> inviteMember({
     required String budgetId,
     required String email,
@@ -43,8 +47,7 @@ class SharingRepository {
       final dto = BudgetMemberDto(
         id: '',
         budgetId: budgetId,
-        userId: email,
-        invitedVia: 'email',
+        invitedVia: 'email:$email',
         role: role,
         createdAt: DateTime.now(),
       );
@@ -63,34 +66,29 @@ class SharingRepository {
       return _mapMemberFromDto(created);
     } on EnvelopeApiException catch (e) {
       throw SharingException('Failed to invite member', error: e);
+    } on Exception catch (e) {
+      throw SharingException('Failed to invite member', error: e);
     }
   }
 
-  /// Generates an invite link for a budget by creating a placeholder member.
+  /// Generates a shareable invite token for a budget.
   ///
-  /// Returns the member ID which can be used to build a deep link
-  /// on the presentation side.
-  Future<String> generateInviteLink({
+  /// The token encodes the budget ID and role so that when a recipient
+  /// opens the deep link, the app can call [inviteMember] with their
+  /// actual user ID. No placeholder row is inserted into `budget_members`.
+  String generateInviteLink({
     required String budgetId,
     String role = 'viewer',
-  }) async {
-    try {
-      final dto = BudgetMemberDto(
-        id: '',
-        budgetId: budgetId,
-        userId: 'pending-link-${_uuid.v4()}',
-        invitedVia: 'link',
-        role: role,
-        createdAt: DateTime.now(),
-      );
-
-      final created = await _apiClient.budgets.addBudgetMember(dto);
-      await _cacheMember(created);
-
-      return created.id;
-    } on EnvelopeApiException catch (e) {
-      throw SharingException('Failed to generate invite link', error: e);
-    }
+  }) {
+    // Token format: budgetId:role:nonce (plaintext, not secure).
+    // TODO(sharing): Replace with a server-side `budget_invites` table.
+    // See https://github.com/ketulmobilions-hub/envelope/issues/49
+    // The invite table approach (id, budget_id, role, created_by,
+    // expires_at, redeemed_at) enables expiration, single-use enforcement,
+    // revocation, and audit trails. Requires a DB migration + Supabase
+    // Edge Function to verify and redeem invites.
+    final nonce = _uuid.v4();
+    return '$budgetId:$role:$nonce';
   }
 
   /// Watches the list of members for a budget.
@@ -150,7 +148,7 @@ class SharingRepository {
 
       await _logActivity(
         budgetId: updated.budgetId,
-        userId: updated.userId,
+        userId: updated.userId ?? memberId,
         action: 'update_role',
         entityType: 'budget_member',
         entityId: memberId,
@@ -200,7 +198,7 @@ class SharingRepository {
 
       await _logActivity(
         budgetId: updated.budgetId,
-        userId: updated.userId,
+        userId: updated.userId ?? memberId,
         action: 'accept_invitation',
         entityType: 'budget_member',
         entityId: memberId,
@@ -350,7 +348,7 @@ class SharingRepository {
     return storage.BudgetMembersCompanion.insert(
       id: dto.id,
       budgetId: dto.budgetId,
-      userId: dto.userId,
+      userId: dto.userId != null ? Value(dto.userId) : const Value.absent(),
       invitedVia: dto.invitedVia,
       role: Value(dto.role),
       acceptedAt: dto.acceptedAt != null
@@ -383,9 +381,7 @@ class SharingRepository {
       action: dto.action,
       entityType: dto.entityType,
       entityId: dto.entityId,
-      details: dto.details != null
-          ? Value(dto.details)
-          : const Value.absent(),
+      details: dto.details != null ? Value(dto.details) : const Value.absent(),
       createdAt: dto.createdAt,
     );
   }

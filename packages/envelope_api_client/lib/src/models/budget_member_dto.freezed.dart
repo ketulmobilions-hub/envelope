@@ -17,7 +17,7 @@ mixin _$BudgetMemberDto {
   @JsonKey(name: 'budget_id')
   String get budgetId;
   @JsonKey(name: 'user_id')
-  String get userId;
+  String? get userId;
   @JsonKey(name: 'invited_via')
   String get invitedVia;
   @JsonKey(name: 'created_at')
@@ -86,7 +86,7 @@ abstract mixin class $BudgetMemberDtoCopyWith<$Res> {
   $Res call({
     String id,
     @JsonKey(name: 'budget_id') String budgetId,
-    @JsonKey(name: 'user_id') String userId,
+    @JsonKey(name: 'user_id') String? userId,
     @JsonKey(name: 'invited_via') String invitedVia,
     @JsonKey(name: 'created_at') DateTime createdAt,
     String role,
@@ -109,7 +109,7 @@ class _$BudgetMemberDtoCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? budgetId = null,
-    Object? userId = null,
+    Object? userId = freezed,
     Object? invitedVia = null,
     Object? createdAt = null,
     Object? role = null,
@@ -125,10 +125,10 @@ class _$BudgetMemberDtoCopyWithImpl<$Res>
             ? _self.budgetId
             : budgetId // ignore: cast_nullable_to_non_nullable
                   as String,
-        userId: null == userId
+        userId: freezed == userId
             ? _self.userId
             : userId // ignore: cast_nullable_to_non_nullable
-                  as String,
+                  as String?,
         invitedVia: null == invitedVia
             ? _self.invitedVia
             : invitedVia // ignore: cast_nullable_to_non_nullable
@@ -246,7 +246,7 @@ extension BudgetMemberDtoPatterns on BudgetMemberDto {
     TResult Function(
       String id,
       @JsonKey(name: 'budget_id') String budgetId,
-      @JsonKey(name: 'user_id') String userId,
+      @JsonKey(name: 'user_id') String? userId,
       @JsonKey(name: 'invited_via') String invitedVia,
       @JsonKey(name: 'created_at') DateTime createdAt,
       String role,
@@ -290,7 +290,7 @@ extension BudgetMemberDtoPatterns on BudgetMemberDto {
     TResult Function(
       String id,
       @JsonKey(name: 'budget_id') String budgetId,
-      @JsonKey(name: 'user_id') String userId,
+      @JsonKey(name: 'user_id') String? userId,
       @JsonKey(name: 'invited_via') String invitedVia,
       @JsonKey(name: 'created_at') DateTime createdAt,
       String role,
@@ -332,7 +332,7 @@ extension BudgetMemberDtoPatterns on BudgetMemberDto {
     TResult? Function(
       String id,
       @JsonKey(name: 'budget_id') String budgetId,
-      @JsonKey(name: 'user_id') String userId,
+      @JsonKey(name: 'user_id') String? userId,
       @JsonKey(name: 'invited_via') String invitedVia,
       @JsonKey(name: 'created_at') DateTime createdAt,
       String role,
@@ -364,7 +364,7 @@ class _BudgetMemberDto implements BudgetMemberDto {
   const _BudgetMemberDto({
     required this.id,
     @JsonKey(name: 'budget_id') required this.budgetId,
-    @JsonKey(name: 'user_id') required this.userId,
+    @JsonKey(name: 'user_id') this.userId,
     @JsonKey(name: 'invited_via') required this.invitedVia,
     @JsonKey(name: 'created_at') required this.createdAt,
     this.role = 'viewer',
@@ -380,7 +380,7 @@ class _BudgetMemberDto implements BudgetMemberDto {
   final String budgetId;
   @override
   @JsonKey(name: 'user_id')
-  final String userId;
+  final String? userId;
   @override
   @JsonKey(name: 'invited_via')
   final String invitedVia;
@@ -456,7 +456,7 @@ abstract mixin class _$BudgetMemberDtoCopyWith<$Res>
   $Res call({
     String id,
     @JsonKey(name: 'budget_id') String budgetId,
-    @JsonKey(name: 'user_id') String userId,
+    @JsonKey(name: 'user_id') String? userId,
     @JsonKey(name: 'invited_via') String invitedVia,
     @JsonKey(name: 'created_at') DateTime createdAt,
     String role,
@@ -479,7 +479,7 @@ class __$BudgetMemberDtoCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? budgetId = null,
-    Object? userId = null,
+    Object? userId = freezed,
     Object? invitedVia = null,
     Object? createdAt = null,
     Object? role = null,
@@ -495,10 +495,10 @@ class __$BudgetMemberDtoCopyWithImpl<$Res>
             ? _self.budgetId
             : budgetId // ignore: cast_nullable_to_non_nullable
                   as String,
-        userId: null == userId
+        userId: freezed == userId
             ? _self.userId
             : userId // ignore: cast_nullable_to_non_nullable
-                  as String,
+                  as String?,
         invitedVia: null == invitedVia
             ? _self.invitedVia
             : invitedVia // ignore: cast_nullable_to_non_nullable

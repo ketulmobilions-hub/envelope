@@ -75,8 +75,14 @@ class _HomeView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.homeTitle),
-        actions: const [
-          SyncStatusIndicator(),
+        actions: [
+          IconButton(
+            onPressed: () => context.go(
+              '${AppRoutes.sharedBudget}?budgetId=$budgetId',
+            ),
+            icon: const Icon(Icons.group),
+          ),
+          const SyncStatusIndicator(),
         ],
       ),
       body: BlocListener<DashboardBloc, DashboardState>(

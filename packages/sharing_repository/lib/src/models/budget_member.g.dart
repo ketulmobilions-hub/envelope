@@ -10,7 +10,7 @@ _BudgetMember _$BudgetMemberFromJson(Map<String, dynamic> json) =>
     _BudgetMember(
       id: json['id'] as String,
       budgetId: json['budgetId'] as String,
-      userId: json['userId'] as String,
+      userId: json['userId'] as String?,
       invitedVia: json['invitedVia'] as String,
       createdAt: DateTime.parse(json['createdAt'] as String),
       role: json['role'] as String? ?? 'viewer',

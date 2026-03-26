@@ -10,7 +10,7 @@ _BudgetMemberDto _$BudgetMemberDtoFromJson(Map<String, dynamic> json) =>
     _BudgetMemberDto(
       id: json['id'] as String,
       budgetId: json['budget_id'] as String,
-      userId: json['user_id'] as String,
+      userId: json['user_id'] as String?,
       invitedVia: json['invited_via'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
       role: json['role'] as String? ?? 'viewer',
