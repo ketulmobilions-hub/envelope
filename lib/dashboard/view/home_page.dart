@@ -80,6 +80,12 @@ class _HomeView extends StatelessWidget {
         actions: [
           IconButton(
             onPressed: () => context.go(
+              '${AppRoutes.reports}?budgetId=$budgetId',
+            ),
+            icon: const Icon(Icons.bar_chart),
+          ),
+          IconButton(
+            onPressed: () => context.go(
               '${AppRoutes.sharedBudget}?budgetId=$budgetId',
             ),
             icon: const Icon(Icons.group),

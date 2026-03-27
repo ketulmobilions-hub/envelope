@@ -23,6 +23,7 @@ dependencies:
   envelope_repository:
     path: packages/envelope_repository
   equatable: ^2.0.7
+  fl_chart: ^0.70.2
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.1
@@ -35,6 +36,7 @@ dependencies:
   intl: ^0.20.2
   notification_repository:
     path: packages/notification_repository
+  path_provider: ^2.1.0
   report_repository:
     path: packages/report_repository
   share_plus: ^10.1.4
