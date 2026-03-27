@@ -23,6 +23,8 @@ dependencies:
   envelope_repository:
     path: packages/envelope_repository
   equatable: ^2.0.7
+  firebase_core: ^3.12.1
+  firebase_messaging: ^15.2.5
   fl_chart: ^0.70.2
   flutter:
     sdk: flutter

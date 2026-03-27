@@ -1968,5 +1968,53 @@
     "reportsExportSuccess": "Report exported successfully",
     "@reportsExportSuccess": {
         "description": "Success message after exporting report"
+    },
+    "notificationSettingsTitle": "Notification Settings",
+    "@notificationSettingsTitle": {
+        "description": "Title for the notification settings page"
+    },
+    "notificationPushSectionTitle": "Push Notifications",
+    "@notificationPushSectionTitle": {
+        "description": "Section header for push notification settings"
+    },
+    "notificationPushEnabled": "Enable Push Notifications",
+    "@notificationPushEnabled": {
+        "description": "Toggle label for enabling push notifications"
+    },
+    "notificationEmailSectionTitle": "Email Notifications",
+    "@notificationEmailSectionTitle": {
+        "description": "Section header for email notification settings"
+    },
+    "notificationEmailEnabled": "Enable Email Notifications",
+    "@notificationEmailEnabled": {
+        "description": "Toggle label for enabling email notifications"
+    },
+    "notificationOverspendAlerts": "Overspend Alerts",
+    "@notificationOverspendAlerts": {
+        "description": "Toggle label for overspend alert notifications"
+    },
+    "notificationBillReminders": "Bill Reminders",
+    "@notificationBillReminders": {
+        "description": "Toggle label for bill reminder notifications"
+    },
+    "notificationDailyLoggingReminder": "Daily Logging Reminder",
+    "@notificationDailyLoggingReminder": {
+        "description": "Toggle label for daily logging reminder notifications"
+    },
+    "notificationRecurringAlerts": "Recurring Transaction Alerts",
+    "@notificationRecurringAlerts": {
+        "description": "Toggle label for recurring transaction alert notifications"
+    },
+    "notificationSharedBudgetActivity": "Shared Budget Activity",
+    "@notificationSharedBudgetActivity": {
+        "description": "Toggle label for shared budget activity notifications"
+    },
+    "notificationPermissionDenied": "Notification permission was denied. Please enable it in your device settings.",
+    "@notificationPermissionDenied": {
+        "description": "Message when notification permission is denied"
+    },
+    "notificationError": "Failed to load notification preferences.",
+    "@notificationError": {
+        "description": "Error message when loading notification preferences fails"
     }
 }

@@ -13,6 +13,7 @@ export 'envelopes_table.dart';
 export 'goals_table.dart';
 export 'net_worth_snapshots_table.dart';
 export 'notification_preferences_table.dart';
+export 'push_tokens_table.dart';
 export 'recurring_rules_table.dart';
 export 'sync_metadata_table.dart';
 export 'tags_table.dart';

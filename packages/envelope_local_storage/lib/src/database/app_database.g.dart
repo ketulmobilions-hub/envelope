@@ -10431,6 +10431,412 @@ class NotificationPreferencesCompanion
   }
 }
 
+class $PushTokensTable extends PushTokens
+    with TableInfo<$PushTokensTable, PushToken> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PushTokensTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tokenMeta = const VerificationMeta('token');
+  @override
+  late final GeneratedColumn<String> token = GeneratedColumn<String>(
+    'token',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _platformMeta = const VerificationMeta(
+    'platform',
+  );
+  @override
+  late final GeneratedColumn<String> platform = GeneratedColumn<String>(
+    'platform',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    token,
+    platform,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'push_tokens';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PushToken> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('token')) {
+      context.handle(
+        _tokenMeta,
+        token.isAcceptableOrUnknown(data['token']!, _tokenMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tokenMeta);
+    }
+    if (data.containsKey('platform')) {
+      context.handle(
+        _platformMeta,
+        platform.isAcceptableOrUnknown(data['platform']!, _platformMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_platformMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PushToken map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PushToken(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      token: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}token'],
+      )!,
+      platform: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}platform'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $PushTokensTable createAlias(String alias) {
+    return $PushTokensTable(attachedDatabase, alias);
+  }
+}
+
+class PushToken extends DataClass implements Insertable<PushToken> {
+  final String id;
+  final String userId;
+  final String token;
+  final String platform;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const PushToken({
+    required this.id,
+    required this.userId,
+    required this.token,
+    required this.platform,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['token'] = Variable<String>(token);
+    map['platform'] = Variable<String>(platform);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  PushTokensCompanion toCompanion(bool nullToAbsent) {
+    return PushTokensCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      token: Value(token),
+      platform: Value(platform),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory PushToken.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PushToken(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      token: serializer.fromJson<String>(json['token']),
+      platform: serializer.fromJson<String>(json['platform']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'token': serializer.toJson<String>(token),
+      'platform': serializer.toJson<String>(platform),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  PushToken copyWith({
+    String? id,
+    String? userId,
+    String? token,
+    String? platform,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => PushToken(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    token: token ?? this.token,
+    platform: platform ?? this.platform,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  PushToken copyWithCompanion(PushTokensCompanion data) {
+    return PushToken(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      token: data.token.present ? data.token.value : this.token,
+      platform: data.platform.present ? data.platform.value : this.platform,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PushToken(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('token: $token, ')
+          ..write('platform: $platform, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, userId, token, platform, createdAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PushToken &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.token == this.token &&
+          other.platform == this.platform &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class PushTokensCompanion extends UpdateCompanion<PushToken> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<String> token;
+  final Value<String> platform;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const PushTokensCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.token = const Value.absent(),
+    this.platform = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PushTokensCompanion.insert({
+    required String id,
+    required String userId,
+    required String token,
+    required String platform,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       userId = Value(userId),
+       token = Value(token),
+       platform = Value(platform),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<PushToken> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<String>? token,
+    Expression<String>? platform,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (token != null) 'token': token,
+      if (platform != null) 'platform': platform,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PushTokensCompanion copyWith({
+    Value<String>? id,
+    Value<String>? userId,
+    Value<String>? token,
+    Value<String>? platform,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return PushTokensCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      token: token ?? this.token,
+      platform: platform ?? this.platform,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (token.present) {
+      map['token'] = Variable<String>(token.value);
+    }
+    if (platform.present) {
+      map['platform'] = Variable<String>(platform.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PushTokensCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('token: $token, ')
+          ..write('platform: $platform, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $NetWorthSnapshotsTable extends NetWorthSnapshots
     with TableInfo<$NetWorthSnapshotsTable, NetWorthSnapshot> {
   @override
@@ -11396,6 +11802,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ActivityLogTable activityLog = $ActivityLogTable(this);
   late final $NotificationPreferencesTable notificationPreferences =
       $NotificationPreferencesTable(this);
+  late final $PushTokensTable pushTokens = $PushTokensTable(this);
   late final $NetWorthSnapshotsTable netWorthSnapshots =
       $NetWorthSnapshotsTable(this);
   late final $SyncMetadataTable syncMetadata = $SyncMetadataTable(this);
@@ -11435,6 +11842,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     debtAccounts,
     activityLog,
     notificationPreferences,
+    pushTokens,
     netWorthSnapshots,
     syncMetadata,
   ];
@@ -16751,6 +17159,222 @@ typedef $$NotificationPreferencesTableProcessedTableManager =
       NotificationPreference,
       PrefetchHooks Function()
     >;
+typedef $$PushTokensTableCreateCompanionBuilder =
+    PushTokensCompanion Function({
+      required String id,
+      required String userId,
+      required String token,
+      required String platform,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$PushTokensTableUpdateCompanionBuilder =
+    PushTokensCompanion Function({
+      Value<String> id,
+      Value<String> userId,
+      Value<String> token,
+      Value<String> platform,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$PushTokensTableFilterComposer
+    extends Composer<_$AppDatabase, $PushTokensTable> {
+  $$PushTokensTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get token => $composableBuilder(
+    column: $table.token,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get platform => $composableBuilder(
+    column: $table.platform,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PushTokensTableOrderingComposer
+    extends Composer<_$AppDatabase, $PushTokensTable> {
+  $$PushTokensTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get token => $composableBuilder(
+    column: $table.token,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get platform => $composableBuilder(
+    column: $table.platform,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PushTokensTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PushTokensTable> {
+  $$PushTokensTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get token =>
+      $composableBuilder(column: $table.token, builder: (column) => column);
+
+  GeneratedColumn<String> get platform =>
+      $composableBuilder(column: $table.platform, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$PushTokensTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PushTokensTable,
+          PushToken,
+          $$PushTokensTableFilterComposer,
+          $$PushTokensTableOrderingComposer,
+          $$PushTokensTableAnnotationComposer,
+          $$PushTokensTableCreateCompanionBuilder,
+          $$PushTokensTableUpdateCompanionBuilder,
+          (
+            PushToken,
+            BaseReferences<_$AppDatabase, $PushTokensTable, PushToken>,
+          ),
+          PushToken,
+          PrefetchHooks Function()
+        > {
+  $$PushTokensTableTableManager(_$AppDatabase db, $PushTokensTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PushTokensTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PushTokensTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PushTokensTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<String> token = const Value.absent(),
+                Value<String> platform = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PushTokensCompanion(
+                id: id,
+                userId: userId,
+                token: token,
+                platform: platform,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String userId,
+                required String token,
+                required String platform,
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => PushTokensCompanion.insert(
+                id: id,
+                userId: userId,
+                token: token,
+                platform: platform,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PushTokensTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PushTokensTable,
+      PushToken,
+      $$PushTokensTableFilterComposer,
+      $$PushTokensTableOrderingComposer,
+      $$PushTokensTableAnnotationComposer,
+      $$PushTokensTableCreateCompanionBuilder,
+      $$PushTokensTableUpdateCompanionBuilder,
+      (PushToken, BaseReferences<_$AppDatabase, $PushTokensTable, PushToken>),
+      PushToken,
+      PrefetchHooks Function()
+    >;
 typedef $$NetWorthSnapshotsTableCreateCompanionBuilder =
     NetWorthSnapshotsCompanion Function({
       required String id,
@@ -17297,6 +17921,8 @@ class $AppDatabaseManager {
         _db,
         _db.notificationPreferences,
       );
+  $$PushTokensTableTableManager get pushTokens =>
+      $$PushTokensTableTableManager(_db, _db.pushTokens);
   $$NetWorthSnapshotsTableTableManager get netWorthSnapshots =>
       $$NetWorthSnapshotsTableTableManager(_db, _db.netWorthSnapshots);
   $$SyncMetadataTableTableManager get syncMetadata =>
