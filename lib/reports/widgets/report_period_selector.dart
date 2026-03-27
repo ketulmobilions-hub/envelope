@@ -24,11 +24,26 @@ class ReportDateRangeSelector extends StatelessWidget {
 
     return InkWell(
       onTap: () async {
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        // Strip time from dates so they don't exceed lastDate.
+        final clampedEnd = DateTime(
+          endDate.year,
+          endDate.month,
+          endDate.day,
+        );
         final picked = await showDateRangePicker(
           context: context,
           firstDate: DateTime(2020),
-          lastDate: DateTime.now(),
-          initialDateRange: DateTimeRange(start: startDate, end: endDate),
+          lastDate: today,
+          initialDateRange: DateTimeRange(
+            start: DateTime(
+              startDate.year,
+              startDate.month,
+              startDate.day,
+            ),
+            end: clampedEnd.isAfter(today) ? today : clampedEnd,
+          ),
         );
         if (picked != null) {
           onDateRangeSelected(picked.start, picked.end);
