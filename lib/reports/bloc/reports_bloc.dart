@@ -393,6 +393,8 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
     } on Exception {
       // Sharing cancelled or failed — not critical.
     }
+    // Clear the path so the next export triggers the BlocListener again.
+    emit(state.copyWith(exportedFilePath: null));
   }
 
   @override
