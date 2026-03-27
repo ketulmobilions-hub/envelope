@@ -13,6 +13,7 @@ export 'envelope_dto.dart';
 export 'goal_dto.dart';
 export 'net_worth_snapshot_dto.dart';
 export 'notification_preferences_dto.dart';
+export 'push_token_dto.dart';
 export 'recurring_rule_dto.dart';
 export 'sync_metadata_dto.dart';
 export 'tag_dto.dart';

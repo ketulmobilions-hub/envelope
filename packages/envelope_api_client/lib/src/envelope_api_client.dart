@@ -18,7 +18,8 @@ class EnvelopeApiClient {
         recurring = RecurringApiClient(supabaseClient: supabaseClient),
         goals = GoalsApiClient(supabaseClient: supabaseClient),
         reports = ReportsApiClient(supabaseClient: supabaseClient),
-        sync = SyncApiClient(supabaseClient: supabaseClient);
+        sync = SyncApiClient(supabaseClient: supabaseClient),
+        notifications = NotificationsApiClient(supabaseClient: supabaseClient);
 
   /// API client for authentication operations.
   final AuthApiClient auth;
@@ -49,4 +50,7 @@ class EnvelopeApiClient {
 
   /// API client for sync operations.
   final SyncApiClient sync;
+
+  /// API client for push notification token operations.
+  final NotificationsApiClient notifications;
 }

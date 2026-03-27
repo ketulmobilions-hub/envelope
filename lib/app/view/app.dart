@@ -1,12 +1,16 @@
+import 'dart:async';
+
 import 'package:account_repository/account_repository.dart';
 import 'package:auth_repository/auth_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/app/routes/routes.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/notifications/services/fcm_service.dart';
 import 'package:envelope/sync/sync.dart';
 import 'package:envelope/theme/theme.dart';
 import 'package:envelope_repository/envelope_repository.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -77,8 +81,76 @@ class App extends StatelessWidget {
                   ..add(const SyncStarted()),
           ),
         ],
-        child: AppView(sharedPreferences: sharedPreferences),
+        child: _FcmAuthListener(
+          notificationRepository: notificationRepository,
+          child: AppView(sharedPreferences: sharedPreferences),
+        ),
       ),
+    );
+  }
+}
+
+/// Listens to auth state changes and manages FCM token lifecycle.
+class _FcmAuthListener extends StatefulWidget {
+  const _FcmAuthListener({
+    required this.notificationRepository,
+    required this.child,
+  });
+
+  final NotificationRepository notificationRepository;
+  final Widget child;
+
+  @override
+  State<_FcmAuthListener> createState() => _FcmAuthListenerState();
+}
+
+class _FcmAuthListenerState extends State<_FcmAuthListener> {
+  final FcmService _fcmService = FcmService();
+
+  String _currentPlatform() {
+    if (kIsWeb) return 'web';
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return 'android';
+      case TargetPlatform.iOS:
+        return 'ios';
+      case TargetPlatform.fuchsia:
+      case TargetPlatform.linux:
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+        return defaultTargetPlatform.name;
+    }
+  }
+
+  void _onAuthStateChanged(BuildContext context, AuthState state) {
+    if (state.status == AuthStatus.authenticated && state.user != null) {
+      unawaited(
+        _fcmService.initialize(
+          userId: state.user!.id,
+          repository: widget.notificationRepository,
+          platform: _currentPlatform(),
+        ),
+      );
+    } else if (state.status == AuthStatus.unauthenticated) {
+      unawaited(
+        _fcmService.unregisterCurrentToken(
+          repository: widget.notificationRepository,
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    unawaited(_fcmService.dispose());
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<AuthBloc, AuthState>(
+      listener: _onAuthStateChanged,
+      child: widget.child,
     );
   }
 }
