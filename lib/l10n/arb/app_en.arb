@@ -1808,5 +1808,165 @@
     "realtimeChangeReceived": "Budget updated by a collaborator",
     "@realtimeChangeReceived": {
         "description": "SnackBar message when a remote collaborator makes changes"
+    },
+    "reportsTitle": "Reports",
+    "@reportsTitle": {
+        "description": "Title for the reports hub page"
+    },
+    "reportsSubtitle": "Analyze your spending and track progress",
+    "@reportsSubtitle": {
+        "description": "Subtitle for the reports hub page"
+    },
+    "reportsSpendingTitle": "Spending",
+    "@reportsSpendingTitle": {
+        "description": "Title for the spending report card"
+    },
+    "reportsSpendingSubtitle": "See where your money goes",
+    "@reportsSpendingSubtitle": {
+        "description": "Subtitle for the spending report card"
+    },
+    "reportsTrendsTitle": "Trends",
+    "@reportsTrendsTitle": {
+        "description": "Title for the trends report card"
+    },
+    "reportsTrendsSubtitle": "Income vs expenses over time",
+    "@reportsTrendsSubtitle": {
+        "description": "Subtitle for the trends report card"
+    },
+    "reportsBudgetVsActualTitle": "Budget vs Actual",
+    "@reportsBudgetVsActualTitle": {
+        "description": "Title for the budget vs actual report card"
+    },
+    "reportsBudgetVsActualSubtitle": "Compare planned to actual spending",
+    "@reportsBudgetVsActualSubtitle": {
+        "description": "Subtitle for the budget vs actual report card"
+    },
+    "reportsNetWorthTitle": "Net Worth",
+    "@reportsNetWorthTitle": {
+        "description": "Title for the net worth report card"
+    },
+    "reportsNetWorthSubtitle": "Track your financial position",
+    "@reportsNetWorthSubtitle": {
+        "description": "Subtitle for the net worth report card"
+    },
+    "reportsExportTitle": "Export",
+    "@reportsExportTitle": {
+        "description": "Title for the export report page"
+    },
+    "reportsExportSubtitle": "Download reports as CSV or PDF",
+    "@reportsExportSubtitle": {
+        "description": "Subtitle for the export card"
+    },
+    "reportsDateRange": "Date Range",
+    "@reportsDateRange": {
+        "description": "Label for date range selector"
+    },
+    "reportsMonths": "Months",
+    "@reportsMonths": {
+        "description": "Label for months selector"
+    },
+    "reportsPeriod": "Period",
+    "@reportsPeriod": {
+        "description": "Label for budget period selector"
+    },
+    "reportsNoData": "No data available",
+    "@reportsNoData": {
+        "description": "Message when no report data is available"
+    },
+    "reportsNoDataSubtitle": "Add some transactions to see your reports",
+    "@reportsNoDataSubtitle": {
+        "description": "Subtitle for the empty report state"
+    },
+    "reportsErrorLoad": "Failed to load report",
+    "@reportsErrorLoad": {
+        "description": "Error message when report loading fails"
+    },
+    "reportsErrorExport": "Failed to export report",
+    "@reportsErrorExport": {
+        "description": "Error message when report export fails"
+    },
+    "reportsTotalSpent": "Total Spent",
+    "@reportsTotalSpent": {
+        "description": "Label for total spent amount"
+    },
+    "reportsTotalIncome": "Total Income",
+    "@reportsTotalIncome": {
+        "description": "Label for total income amount"
+    },
+    "reportsIncome": "Income",
+    "@reportsIncome": {
+        "description": "Label for income"
+    },
+    "reportsExpenses": "Expenses",
+    "@reportsExpenses": {
+        "description": "Label for expenses"
+    },
+    "reportsNetSavings": "Net Savings",
+    "@reportsNetSavings": {
+        "description": "Label for net savings"
+    },
+    "reportsAllocated": "Allocated",
+    "@reportsAllocated": {
+        "description": "Label for allocated amount"
+    },
+    "reportsSpent": "Spent",
+    "@reportsSpent": {
+        "description": "Label for spent amount"
+    },
+    "reportsRemaining": "Remaining",
+    "@reportsRemaining": {
+        "description": "Label for remaining amount"
+    },
+    "reportsOverBudget": "Over Budget",
+    "@reportsOverBudget": {
+        "description": "Label for over budget indicator"
+    },
+    "reportsUnderBudget": "Under Budget",
+    "@reportsUnderBudget": {
+        "description": "Label for under budget indicator"
+    },
+    "reportsAssets": "Assets",
+    "@reportsAssets": {
+        "description": "Label for assets"
+    },
+    "reportsLiabilities": "Liabilities",
+    "@reportsLiabilities": {
+        "description": "Label for liabilities"
+    },
+    "reportsNetWorth": "Net Worth",
+    "@reportsNetWorth": {
+        "description": "Label for net worth"
+    },
+    "reportsRecordSnapshot": "Record Snapshot",
+    "@reportsRecordSnapshot": {
+        "description": "Button text for recording net worth snapshot"
+    },
+    "reportsSnapshotRecorded": "Net worth snapshot recorded",
+    "@reportsSnapshotRecorded": {
+        "description": "Success message after recording snapshot"
+    },
+    "reportsExportCsv": "CSV",
+    "@reportsExportCsv": {
+        "description": "Label for CSV export format"
+    },
+    "reportsExportPdf": "PDF",
+    "@reportsExportPdf": {
+        "description": "Label for PDF export format"
+    },
+    "reportsExportFormat": "Format",
+    "@reportsExportFormat": {
+        "description": "Label for export format selector"
+    },
+    "reportsExportReportType": "Report Type",
+    "@reportsExportReportType": {
+        "description": "Label for report type selector on export page"
+    },
+    "reportsShare": "Share",
+    "@reportsShare": {
+        "description": "Button text for sharing exported report"
+    },
+    "reportsExportSuccess": "Report exported successfully",
+    "@reportsExportSuccess": {
+        "description": "Success message after exporting report"
     }
 }
