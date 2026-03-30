@@ -15,6 +15,9 @@ abstract class UserDto with _$UserDto {
     @JsonKey(name: 'base_currency') @Default('USD') String baseCurrency,
     @JsonKey(name: 'theme_mode') @Default('system') String themeMode,
     @JsonKey(name: 'accent_color') String? accentColor,
+    @JsonKey(name: 'privacy_accepted_at') DateTime? privacyAcceptedAt,
+    @JsonKey(name: 'terms_accepted_at') DateTime? termsAcceptedAt,
+    @JsonKey(name: 'consent_version') String? consentVersion,
   }) = _UserDto;
 
   factory UserDto.fromJson(Map<String, dynamic> json) =>

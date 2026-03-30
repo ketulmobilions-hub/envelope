@@ -6,6 +6,8 @@ import 'package:envelope/notifications/notifications.dart';
 import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
 import 'package:envelope/onboarding/data/currencies.dart';
 import 'package:envelope/settings/cubit/cubit.dart';
+import 'package:envelope_api_client/envelope_api_client.dart';
+import 'package:envelope_local_storage/envelope_local_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -21,6 +23,8 @@ class SettingsPage extends StatelessWidget {
     return BlocProvider(
       create: (context) => SettingsCubit(
         authRepository: context.read<AuthRepository>(),
+        apiClient: context.read<EnvelopeApiClient>(),
+        localDatabase: context.read<AppDatabase>(),
       )..init(),
       child: const _SettingsView(),
     );
@@ -127,6 +131,14 @@ class _SettingsView extends StatelessWidget {
                           '${AppRoutes.reports}?budgetId=$budgetId',
                         );
                       },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.file_download_outlined),
+                      title: Text(l10n.settingsExportAllData),
+                      subtitle: Text(l10n.settingsExportAllDataSubtitle),
+                      onTap: () => context
+                          .read<SettingsCubit>()
+                          .exportAllData(user.id),
                     ),
                     const Divider(),
                     _SectionHeader(title: l10n.settingsAccount),
@@ -411,6 +423,10 @@ String _localizeMessage(String key, AppLocalizations l10n) {
       return l10n.settingsPasswordChangeFailed;
     case SettingsMessage.deleteAccountFailed:
       return l10n.settingsDeleteFailed;
+    case SettingsMessage.dataExported:
+      return l10n.settingsDataExported;
+    case SettingsMessage.dataExportFailed:
+      return l10n.settingsDataExportFailed;
     default:
       return key;
   }

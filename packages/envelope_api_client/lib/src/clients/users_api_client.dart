@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:envelope_api_client/src/exceptions.dart';
 import 'package:envelope_api_client/src/models/models.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -59,6 +61,143 @@ class UsersApiClient {
       await _supabaseClient.from('users').delete().eq('id', id);
     } catch (error) {
       throw EnvelopeApiException.fromPostgrestException(error);
+    }
+  }
+
+  /// Invokes the `delete-account` Edge Function to fully delete the
+  /// user's data and auth account (GDPR-compliant deletion).
+  Future<void> invokeDeleteAccount() async {
+    try {
+      final response = await _supabaseClient.functions.invoke(
+        'delete-account',
+      );
+      if (response.status != 200) {
+        throw EnvelopeApiException(
+          'Account deletion failed: ${response.data}',
+        );
+      }
+    } catch (error) {
+      if (error is EnvelopeApiException) rethrow;
+      throw EnvelopeApiException('Account deletion failed: $error');
+    }
+  }
+
+  /// Fetches all user data for GDPR data portability export.
+  /// Returns a JSON-encodable map of all user-associated data.
+  Future<String> exportAllUserData(String userId) async {
+    try {
+      final user = await getUser(userId);
+
+      // Fetch all budgets owned by user.
+      final budgets = await _supabaseClient
+          .from('budgets')
+          .select()
+          .eq('owner_id', userId);
+
+      final budgetIds =
+          (budgets as List).map((b) => b['id'] as String).toList();
+
+      // Fetch data for all user's budgets.
+      List<dynamic> accounts = [];
+      List<dynamic> envelopes = [];
+      List<dynamic> transactions = [];
+      List<dynamic> periods = [];
+      List<dynamic> allocations = [];
+      List<dynamic> goals = [];
+      List<dynamic> billReminders = [];
+      List<dynamic> recurringRules = [];
+      List<dynamic> activityLogs = [];
+
+      if (budgetIds.isNotEmpty) {
+        accounts = await _supabaseClient
+            .from('accounts')
+            .select()
+            .inFilter('budget_id', budgetIds);
+        envelopes = await _supabaseClient
+            .from('envelopes')
+            .select()
+            .inFilter('budget_id', budgetIds);
+        transactions = await _supabaseClient
+            .from('transactions')
+            .select()
+            .inFilter('budget_id', budgetIds);
+        periods = await _supabaseClient
+            .from('budget_periods')
+            .select()
+            .inFilter('budget_id', budgetIds);
+        goals = await _supabaseClient
+            .from('goals')
+            .select()
+            .inFilter('budget_id', budgetIds);
+        billReminders = await _supabaseClient
+            .from('bill_reminders')
+            .select()
+            .inFilter('budget_id', budgetIds);
+        recurringRules = await _supabaseClient
+            .from('recurring_rules')
+            .select()
+            .inFilter('budget_id', budgetIds);
+        activityLogs = await _supabaseClient
+            .from('activity_log')
+            .select()
+            .inFilter('budget_id', budgetIds);
+
+        final periodIds =
+            (periods as List).map((p) => p['id'] as String).toList();
+        if (periodIds.isNotEmpty) {
+          allocations = await _supabaseClient
+              .from('envelope_allocations')
+              .select()
+              .inFilter('period_id', periodIds);
+        }
+      }
+
+      // Fetch shared memberships.
+      final memberships = await _supabaseClient
+          .from('budget_members')
+          .select()
+          .eq('user_id', userId);
+
+      // Fetch notification preferences.
+      List<dynamic> notificationPrefs = [];
+      try {
+        final prefs = await _supabaseClient
+            .from('notification_preferences')
+            .select()
+            .eq('user_id', userId);
+        notificationPrefs = prefs;
+      } catch (_) {
+        // May not exist yet.
+      }
+
+      // Fetch email log.
+      final emailLog = await _supabaseClient
+          .from('email_log')
+          .select()
+          .eq('user_id', userId);
+
+      final exportData = {
+        'export_date': DateTime.now().toIso8601String(),
+        'user': user.toJson(),
+        'budgets': budgets,
+        'budget_periods': periods,
+        'accounts': accounts,
+        'envelopes': envelopes,
+        'envelope_allocations': allocations,
+        'transactions': transactions,
+        'goals': goals,
+        'bill_reminders': billReminders,
+        'recurring_rules': recurringRules,
+        'budget_memberships': memberships,
+        'activity_log': activityLogs,
+        'notification_preferences': notificationPrefs,
+        'email_log': emailLog,
+      };
+
+      return const JsonEncoder.withIndent('  ').convert(exportData);
+    } catch (error) {
+      if (error is EnvelopeApiException) rethrow;
+      throw EnvelopeApiException('Failed to export user data: $error');
     }
   }
 

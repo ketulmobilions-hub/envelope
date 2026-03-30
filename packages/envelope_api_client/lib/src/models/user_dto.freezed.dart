@@ -27,6 +27,12 @@ mixin _$UserDto {
   String get themeMode;
   @JsonKey(name: 'accent_color')
   String? get accentColor;
+  @JsonKey(name: 'privacy_accepted_at')
+  DateTime? get privacyAcceptedAt;
+  @JsonKey(name: 'terms_accepted_at')
+  DateTime? get termsAcceptedAt;
+  @JsonKey(name: 'consent_version')
+  String? get consentVersion;
 
   /// Create a copy of UserDto
   /// with the given fields replaced by the non-null parameter values.
@@ -56,7 +62,13 @@ mixin _$UserDto {
             (identical(other.themeMode, themeMode) ||
                 other.themeMode == themeMode) &&
             (identical(other.accentColor, accentColor) ||
-                other.accentColor == accentColor));
+                other.accentColor == accentColor) &&
+            (identical(other.privacyAcceptedAt, privacyAcceptedAt) ||
+                other.privacyAcceptedAt == privacyAcceptedAt) &&
+            (identical(other.termsAcceptedAt, termsAcceptedAt) ||
+                other.termsAcceptedAt == termsAcceptedAt) &&
+            (identical(other.consentVersion, consentVersion) ||
+                other.consentVersion == consentVersion));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -71,11 +83,14 @@ mixin _$UserDto {
     baseCurrency,
     themeMode,
     accentColor,
+    privacyAcceptedAt,
+    termsAcceptedAt,
+    consentVersion,
   );
 
   @override
   String toString() {
-    return 'UserDto(id: $id, email: $email, displayName: $displayName, createdAt: $createdAt, updatedAt: $updatedAt, baseCurrency: $baseCurrency, themeMode: $themeMode, accentColor: $accentColor)';
+    return 'UserDto(id: $id, email: $email, displayName: $displayName, createdAt: $createdAt, updatedAt: $updatedAt, baseCurrency: $baseCurrency, themeMode: $themeMode, accentColor: $accentColor, privacyAcceptedAt: $privacyAcceptedAt, termsAcceptedAt: $termsAcceptedAt, consentVersion: $consentVersion)';
   }
 }
 
@@ -93,6 +108,9 @@ abstract mixin class $UserDtoCopyWith<$Res> {
     @JsonKey(name: 'base_currency') String baseCurrency,
     @JsonKey(name: 'theme_mode') String themeMode,
     @JsonKey(name: 'accent_color') String? accentColor,
+    @JsonKey(name: 'privacy_accepted_at') DateTime? privacyAcceptedAt,
+    @JsonKey(name: 'terms_accepted_at') DateTime? termsAcceptedAt,
+    @JsonKey(name: 'consent_version') String? consentVersion,
   });
 }
 
@@ -116,6 +134,9 @@ class _$UserDtoCopyWithImpl<$Res> implements $UserDtoCopyWith<$Res> {
     Object? baseCurrency = null,
     Object? themeMode = null,
     Object? accentColor = freezed,
+    Object? privacyAcceptedAt = freezed,
+    Object? termsAcceptedAt = freezed,
+    Object? consentVersion = freezed,
   }) {
     return _then(
       _self.copyWith(
@@ -150,6 +171,18 @@ class _$UserDtoCopyWithImpl<$Res> implements $UserDtoCopyWith<$Res> {
         accentColor: freezed == accentColor
             ? _self.accentColor
             : accentColor // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        privacyAcceptedAt: freezed == privacyAcceptedAt
+            ? _self.privacyAcceptedAt
+            : privacyAcceptedAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        termsAcceptedAt: freezed == termsAcceptedAt
+            ? _self.termsAcceptedAt
+            : termsAcceptedAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        consentVersion: freezed == consentVersion
+            ? _self.consentVersion
+            : consentVersion // ignore: cast_nullable_to_non_nullable
                   as String?,
       ),
     );
@@ -258,6 +291,9 @@ extension UserDtoPatterns on UserDto {
       @JsonKey(name: 'base_currency') String baseCurrency,
       @JsonKey(name: 'theme_mode') String themeMode,
       @JsonKey(name: 'accent_color') String? accentColor,
+      @JsonKey(name: 'privacy_accepted_at') DateTime? privacyAcceptedAt,
+      @JsonKey(name: 'terms_accepted_at') DateTime? termsAcceptedAt,
+      @JsonKey(name: 'consent_version') String? consentVersion,
     )?
     $default, {
     required TResult orElse(),
@@ -274,6 +310,9 @@ extension UserDtoPatterns on UserDto {
           _that.baseCurrency,
           _that.themeMode,
           _that.accentColor,
+          _that.privacyAcceptedAt,
+          _that.termsAcceptedAt,
+          _that.consentVersion,
         );
       case _:
         return orElse();
@@ -304,6 +343,9 @@ extension UserDtoPatterns on UserDto {
       @JsonKey(name: 'base_currency') String baseCurrency,
       @JsonKey(name: 'theme_mode') String themeMode,
       @JsonKey(name: 'accent_color') String? accentColor,
+      @JsonKey(name: 'privacy_accepted_at') DateTime? privacyAcceptedAt,
+      @JsonKey(name: 'terms_accepted_at') DateTime? termsAcceptedAt,
+      @JsonKey(name: 'consent_version') String? consentVersion,
     )
     $default,
   ) {
@@ -319,6 +361,9 @@ extension UserDtoPatterns on UserDto {
           _that.baseCurrency,
           _that.themeMode,
           _that.accentColor,
+          _that.privacyAcceptedAt,
+          _that.termsAcceptedAt,
+          _that.consentVersion,
         );
       case _:
         throw StateError('Unexpected subclass');
@@ -348,6 +393,9 @@ extension UserDtoPatterns on UserDto {
       @JsonKey(name: 'base_currency') String baseCurrency,
       @JsonKey(name: 'theme_mode') String themeMode,
       @JsonKey(name: 'accent_color') String? accentColor,
+      @JsonKey(name: 'privacy_accepted_at') DateTime? privacyAcceptedAt,
+      @JsonKey(name: 'terms_accepted_at') DateTime? termsAcceptedAt,
+      @JsonKey(name: 'consent_version') String? consentVersion,
     )?
     $default,
   ) {
@@ -363,6 +411,9 @@ extension UserDtoPatterns on UserDto {
           _that.baseCurrency,
           _that.themeMode,
           _that.accentColor,
+          _that.privacyAcceptedAt,
+          _that.termsAcceptedAt,
+          _that.consentVersion,
         );
       case _:
         return null;
@@ -382,6 +433,9 @@ class _UserDto implements UserDto {
     @JsonKey(name: 'base_currency') this.baseCurrency = 'USD',
     @JsonKey(name: 'theme_mode') this.themeMode = 'system',
     @JsonKey(name: 'accent_color') this.accentColor,
+    @JsonKey(name: 'privacy_accepted_at') this.privacyAcceptedAt,
+    @JsonKey(name: 'terms_accepted_at') this.termsAcceptedAt,
+    @JsonKey(name: 'consent_version') this.consentVersion,
   });
   factory _UserDto.fromJson(Map<String, dynamic> json) =>
       _$UserDtoFromJson(json);
@@ -408,6 +462,15 @@ class _UserDto implements UserDto {
   @override
   @JsonKey(name: 'accent_color')
   final String? accentColor;
+  @override
+  @JsonKey(name: 'privacy_accepted_at')
+  final DateTime? privacyAcceptedAt;
+  @override
+  @JsonKey(name: 'terms_accepted_at')
+  final DateTime? termsAcceptedAt;
+  @override
+  @JsonKey(name: 'consent_version')
+  final String? consentVersion;
 
   /// Create a copy of UserDto
   /// with the given fields replaced by the non-null parameter values.
@@ -440,7 +503,13 @@ class _UserDto implements UserDto {
             (identical(other.themeMode, themeMode) ||
                 other.themeMode == themeMode) &&
             (identical(other.accentColor, accentColor) ||
-                other.accentColor == accentColor));
+                other.accentColor == accentColor) &&
+            (identical(other.privacyAcceptedAt, privacyAcceptedAt) ||
+                other.privacyAcceptedAt == privacyAcceptedAt) &&
+            (identical(other.termsAcceptedAt, termsAcceptedAt) ||
+                other.termsAcceptedAt == termsAcceptedAt) &&
+            (identical(other.consentVersion, consentVersion) ||
+                other.consentVersion == consentVersion));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -455,11 +524,14 @@ class _UserDto implements UserDto {
     baseCurrency,
     themeMode,
     accentColor,
+    privacyAcceptedAt,
+    termsAcceptedAt,
+    consentVersion,
   );
 
   @override
   String toString() {
-    return 'UserDto(id: $id, email: $email, displayName: $displayName, createdAt: $createdAt, updatedAt: $updatedAt, baseCurrency: $baseCurrency, themeMode: $themeMode, accentColor: $accentColor)';
+    return 'UserDto(id: $id, email: $email, displayName: $displayName, createdAt: $createdAt, updatedAt: $updatedAt, baseCurrency: $baseCurrency, themeMode: $themeMode, accentColor: $accentColor, privacyAcceptedAt: $privacyAcceptedAt, termsAcceptedAt: $termsAcceptedAt, consentVersion: $consentVersion)';
   }
 }
 
@@ -478,6 +550,9 @@ abstract mixin class _$UserDtoCopyWith<$Res> implements $UserDtoCopyWith<$Res> {
     @JsonKey(name: 'base_currency') String baseCurrency,
     @JsonKey(name: 'theme_mode') String themeMode,
     @JsonKey(name: 'accent_color') String? accentColor,
+    @JsonKey(name: 'privacy_accepted_at') DateTime? privacyAcceptedAt,
+    @JsonKey(name: 'terms_accepted_at') DateTime? termsAcceptedAt,
+    @JsonKey(name: 'consent_version') String? consentVersion,
   });
 }
 
@@ -501,6 +576,9 @@ class __$UserDtoCopyWithImpl<$Res> implements _$UserDtoCopyWith<$Res> {
     Object? baseCurrency = null,
     Object? themeMode = null,
     Object? accentColor = freezed,
+    Object? privacyAcceptedAt = freezed,
+    Object? termsAcceptedAt = freezed,
+    Object? consentVersion = freezed,
   }) {
     return _then(
       _UserDto(
@@ -535,6 +613,18 @@ class __$UserDtoCopyWithImpl<$Res> implements _$UserDtoCopyWith<$Res> {
         accentColor: freezed == accentColor
             ? _self.accentColor
             : accentColor // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        privacyAcceptedAt: freezed == privacyAcceptedAt
+            ? _self.privacyAcceptedAt
+            : privacyAcceptedAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        termsAcceptedAt: freezed == termsAcceptedAt
+            ? _self.termsAcceptedAt
+            : termsAcceptedAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        consentVersion: freezed == consentVersion
+            ? _self.consentVersion
+            : consentVersion // ignore: cast_nullable_to_non_nullable
                   as String?,
       ),
     );
