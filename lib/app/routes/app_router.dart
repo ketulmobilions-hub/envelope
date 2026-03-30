@@ -10,6 +10,7 @@ import 'package:envelope/goals/goals.dart';
 import 'package:envelope/onboarding/onboarding.dart';
 import 'package:envelope/recurring/recurring.dart';
 import 'package:envelope/reports/reports.dart';
+import 'package:envelope/settings/settings.dart';
 import 'package:envelope/shared_budget/shared_budget.dart';
 import 'package:envelope/splash/splash.dart';
 import 'package:envelope/transactions/transactions.dart';
@@ -33,6 +34,7 @@ abstract final class AppRoutes {
   static const String recurring = '/recurring';
   static const String reports = '/reports';
   static const String sharedBudget = '/sharedBudget';
+  static const String settings = '/settings';
 }
 
 /// Creates the application [GoRouter] with auth-based redirects.
@@ -192,6 +194,11 @@ GoRouter createRouter({
               final budgetId = state.uri.queryParameters['budgetId']!;
               return SharedBudgetPage(budgetId: budgetId);
             },
+          ),
+          GoRoute(
+            name: AppRoutes.settings,
+            path: AppRoutes.settings,
+            builder: (context, state) => const SettingsPage(),
           ),
         ],
       ),

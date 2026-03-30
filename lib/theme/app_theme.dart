@@ -1,6 +1,7 @@
 import 'package:envelope/theme/app_colors.dart';
 import 'package:envelope/theme/app_text_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Provides light and dark [ThemeData] for the Envelope app.
 abstract final class AppTheme {
@@ -135,6 +136,170 @@ abstract final class AppTheme {
     ),
   );
 
-  /// Dark theme — TODO: implement dark variant.
-  static final ThemeData dark = light;
+  /// Dark theme — warm dark aesthetic matching the light theme palette.
+  static final ThemeData dark = ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.dark,
+    colorScheme: const ColorScheme.dark(
+      primary: AppColors.primary,
+      onPrimary: AppColors.onPrimary,
+      secondary: Color(0xFFD0C8BC),
+      onSecondary: Color(0xFF1E1E1E),
+      surface: Color(0xFF2A2A2A),
+      onSurface: Color(0xFFE8E0D4),
+      error: AppColors.expense,
+      outline: Color(0xFF8A8478),
+    ),
+    scaffoldBackgroundColor: const Color(0xFF1E1E1E),
+    textTheme: _darkTextTheme,
+    inputDecorationTheme: const InputDecorationTheme(
+      border: UnderlineInputBorder(),
+      filled: false,
+      labelStyle: TextStyle(color: Color(0xFF8A8478)),
+      focusedBorder: UnderlineInputBorder(
+        borderSide: BorderSide(color: AppColors.primary, width: 2),
+      ),
+    ),
+    cardTheme: CardThemeData(
+      clipBehavior: Clip.antiAlias,
+      color: const Color(0xFF2A2A2A),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: const Color(0xFF3A3A3A).withValues(alpha: 0.5),
+        ),
+      ),
+      shadowColor: Colors.black.withValues(alpha: 0.2),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: const Color(0xFFE8E0D4),
+        foregroundColor: const Color(0xFF1E1E1E),
+        textStyle: TextStyle(
+          letterSpacing: AppSpacing.label,
+          fontWeight: FontWeight.w600,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: const Color(0xFFE8E0D4),
+        textStyle: TextStyle(
+          letterSpacing: AppSpacing.label,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+    chipTheme: const ChipThemeData(
+      shape: StadiumBorder(),
+      selectedColor: Color(0xFFE8E0D4),
+      backgroundColor: Color(0xFF2A2A2A),
+      side: BorderSide(color: Color(0xFF3A3A3A)),
+      labelStyle: TextStyle(color: Color(0xFFE8E0D4)),
+      secondaryLabelStyle: TextStyle(color: Color(0xFF1E1E1E)),
+    ),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      centerTitle: true,
+      titleTextStyle: TextStyle(
+        color: Color(0xFFE8E0D4),
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+      ),
+      iconTheme: IconThemeData(color: Color(0xFFE8E0D4)),
+    ),
+    dividerTheme: const DividerThemeData(
+      color: Color(0xFF3A3A3A),
+      thickness: 1,
+    ),
+    floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      backgroundColor: Color(0xFFE8E0D4),
+      foregroundColor: Color(0xFF1E1E1E),
+      elevation: 2,
+      shape: CircleBorder(),
+    ),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: const Color(0xFF252525),
+      indicatorColor: AppColors.primary.withValues(alpha: 0.2),
+      labelTextStyle: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return const TextStyle(
+            color: Color(0xFFE8E0D4),
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          );
+        }
+        return const TextStyle(
+          color: Color(0xFF8A8478),
+          fontSize: 12,
+        );
+      }),
+      iconTheme: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return const IconThemeData(color: Color(0xFFE8E0D4));
+        }
+        return const IconThemeData(color: Color(0xFF8A8478));
+      }),
+    ),
+    bottomSheetTheme: const BottomSheetThemeData(
+      backgroundColor: Color(0xFF2A2A2A),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+    ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: const Color(0xFF2A2A2A),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+    ),
+    snackBarTheme: SnackBarThemeData(
+      backgroundColor: const Color(0xFFE8E0D4),
+      contentTextStyle: const TextStyle(color: Color(0xFF1E1E1E)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      behavior: SnackBarBehavior.floating,
+    ),
+  );
+
+  static TextTheme get _darkTextTheme {
+    final serifStyle = GoogleFonts.playfairDisplay();
+    const textColor = Color(0xFFE8E0D4);
+    const mutedColor = Color(0xFF8A8478);
+
+    return TextTheme(
+      displayLarge: serifStyle.copyWith(color: textColor),
+      displayMedium: serifStyle.copyWith(color: textColor),
+      displaySmall: serifStyle.copyWith(color: textColor),
+      headlineLarge: serifStyle.copyWith(color: textColor),
+      headlineMedium: serifStyle.copyWith(color: textColor),
+      headlineSmall: serifStyle.copyWith(color: textColor),
+      titleLarge: serifStyle.copyWith(color: textColor),
+      titleMedium: const TextStyle(color: textColor),
+      titleSmall: const TextStyle(color: textColor),
+      bodyLarge: const TextStyle(color: textColor),
+      bodyMedium: const TextStyle(color: textColor),
+      bodySmall: const TextStyle(color: mutedColor),
+      labelLarge: TextStyle(
+        color: textColor,
+        letterSpacing: AppSpacing.label,
+      ),
+      labelMedium: TextStyle(
+        color: mutedColor,
+        letterSpacing: AppSpacing.label,
+      ),
+      labelSmall: TextStyle(
+        color: mutedColor,
+        letterSpacing: AppSpacing.label,
+      ),
+    );
+  }
 }
