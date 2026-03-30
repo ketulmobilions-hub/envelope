@@ -3298,6 +3298,17 @@ class $EnvelopesTable extends Envelopes
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -3308,6 +3319,7 @@ class $EnvelopesTable extends Envelopes
     isArchived,
     color,
     createdAt,
+    deletedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3379,6 +3391,12 @@ class $EnvelopesTable extends Envelopes
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -3420,6 +3438,10 @@ class $EnvelopesTable extends Envelopes
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
     );
   }
 
@@ -3438,6 +3460,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
   final bool isArchived;
   final String? color;
   final DateTime createdAt;
+  final DateTime? deletedAt;
   const Envelope({
     required this.id,
     required this.categoryGroupId,
@@ -3447,6 +3470,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
     required this.isArchived,
     this.color,
     required this.createdAt,
+    this.deletedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3461,6 +3485,9 @@ class Envelope extends DataClass implements Insertable<Envelope> {
       map['color'] = Variable<String>(color);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
     return map;
   }
 
@@ -3476,6 +3503,9 @@ class Envelope extends DataClass implements Insertable<Envelope> {
           ? const Value.absent()
           : Value(color),
       createdAt: Value(createdAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
     );
   }
 
@@ -3493,6 +3523,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
       isArchived: serializer.fromJson<bool>(json['isArchived']),
       color: serializer.fromJson<String?>(json['color']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
     );
   }
   @override
@@ -3507,6 +3538,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
       'isArchived': serializer.toJson<bool>(isArchived),
       'color': serializer.toJson<String?>(color),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
     };
   }
 
@@ -3519,6 +3551,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
     bool? isArchived,
     Value<String?> color = const Value.absent(),
     DateTime? createdAt,
+    Value<DateTime?> deletedAt = const Value.absent(),
   }) => Envelope(
     id: id ?? this.id,
     categoryGroupId: categoryGroupId ?? this.categoryGroupId,
@@ -3528,6 +3561,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
     isArchived: isArchived ?? this.isArchived,
     color: color.present ? color.value : this.color,
     createdAt: createdAt ?? this.createdAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
   );
   Envelope copyWithCompanion(EnvelopesCompanion data) {
     return Envelope(
@@ -3543,6 +3577,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
           : this.isArchived,
       color: data.color.present ? data.color.value : this.color,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
     );
   }
 
@@ -3556,7 +3591,8 @@ class Envelope extends DataClass implements Insertable<Envelope> {
           ..write('sortOrder: $sortOrder, ')
           ..write('isArchived: $isArchived, ')
           ..write('color: $color, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
   }
@@ -3571,6 +3607,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
     isArchived,
     color,
     createdAt,
+    deletedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -3583,7 +3620,8 @@ class Envelope extends DataClass implements Insertable<Envelope> {
           other.sortOrder == this.sortOrder &&
           other.isArchived == this.isArchived &&
           other.color == this.color &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.deletedAt == this.deletedAt);
 }
 
 class EnvelopesCompanion extends UpdateCompanion<Envelope> {
@@ -3595,6 +3633,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
   final Value<bool> isArchived;
   final Value<String?> color;
   final Value<DateTime> createdAt;
+  final Value<DateTime?> deletedAt;
   final Value<int> rowid;
   const EnvelopesCompanion({
     this.id = const Value.absent(),
@@ -3605,6 +3644,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
     this.isArchived = const Value.absent(),
     this.color = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   EnvelopesCompanion.insert({
@@ -3616,6 +3656,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
     this.isArchived = const Value.absent(),
     this.color = const Value.absent(),
     required DateTime createdAt,
+    this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        categoryGroupId = Value(categoryGroupId),
@@ -3631,6 +3672,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
     Expression<bool>? isArchived,
     Expression<String>? color,
     Expression<DateTime>? createdAt,
+    Expression<DateTime>? deletedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -3642,6 +3684,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
       if (isArchived != null) 'is_archived': isArchived,
       if (color != null) 'color': color,
       if (createdAt != null) 'created_at': createdAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -3655,6 +3698,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
     Value<bool>? isArchived,
     Value<String?>? color,
     Value<DateTime>? createdAt,
+    Value<DateTime?>? deletedAt,
     Value<int>? rowid,
   }) {
     return EnvelopesCompanion(
@@ -3666,6 +3710,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
       isArchived: isArchived ?? this.isArchived,
       color: color ?? this.color,
       createdAt: createdAt ?? this.createdAt,
+      deletedAt: deletedAt ?? this.deletedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -3697,6 +3742,9 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -3714,6 +3762,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
           ..write('isArchived: $isArchived, ')
           ..write('color: $color, ')
           ..write('createdAt: $createdAt, ')
+          ..write('deletedAt: $deletedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -4387,6 +4436,17 @@ class $TransactionsTable extends Transactions
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -4406,6 +4466,7 @@ class $TransactionsTable extends Transactions
     createdBy,
     createdAt,
     updatedAt,
+    deletedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4550,6 +4611,12 @@ class $TransactionsTable extends Transactions
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -4627,6 +4694,10 @@ class $TransactionsTable extends Transactions
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
       )!,
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
     );
   }
 
@@ -4654,6 +4725,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   final String createdBy;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final DateTime? deletedAt;
   const Transaction({
     required this.id,
     required this.budgetId,
@@ -4672,6 +4744,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     required this.createdBy,
     required this.createdAt,
     required this.updatedAt,
+    this.deletedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4703,6 +4776,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     map['created_by'] = Variable<String>(createdBy);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
     return map;
   }
 
@@ -4735,6 +4811,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       createdBy: Value(createdBy),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
     );
   }
 
@@ -4761,6 +4840,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       createdBy: serializer.fromJson<String>(json['createdBy']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
     );
   }
   @override
@@ -4784,6 +4864,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'createdBy': serializer.toJson<String>(createdBy),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
     };
   }
 
@@ -4805,6 +4886,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     String? createdBy,
     DateTime? createdAt,
     DateTime? updatedAt,
+    Value<DateTime?> deletedAt = const Value.absent(),
   }) => Transaction(
     id: id ?? this.id,
     budgetId: budgetId ?? this.budgetId,
@@ -4827,6 +4909,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     createdBy: createdBy ?? this.createdBy,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
   );
   Transaction copyWithCompanion(TransactionsCompanion data) {
     return Transaction(
@@ -4857,6 +4940,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       createdBy: data.createdBy.present ? data.createdBy.value : this.createdBy,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
     );
   }
 
@@ -4879,7 +4963,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('transferPairId: $transferPairId, ')
           ..write('createdBy: $createdBy, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
   }
@@ -4903,6 +4988,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     createdBy,
     createdAt,
     updatedAt,
+    deletedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -4924,7 +5010,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.transferPairId == this.transferPairId &&
           other.createdBy == this.createdBy &&
           other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt);
+          other.updatedAt == this.updatedAt &&
+          other.deletedAt == this.deletedAt);
 }
 
 class TransactionsCompanion extends UpdateCompanion<Transaction> {
@@ -4945,6 +5032,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<String> createdBy;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
+  final Value<DateTime?> deletedAt;
   final Value<int> rowid;
   const TransactionsCompanion({
     this.id = const Value.absent(),
@@ -4964,6 +5052,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.createdBy = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   TransactionsCompanion.insert({
@@ -4984,6 +5073,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     required String createdBy,
     required DateTime createdAt,
     required DateTime updatedAt,
+    this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        budgetId = Value(budgetId),
@@ -5013,6 +5103,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<String>? createdBy,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
+    Expression<DateTime>? deletedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -5033,6 +5124,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (createdBy != null) 'created_by': createdBy,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -5055,6 +5147,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Value<String>? createdBy,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
+    Value<DateTime?>? deletedAt,
     Value<int>? rowid,
   }) {
     return TransactionsCompanion(
@@ -5075,6 +5168,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       createdBy: createdBy ?? this.createdBy,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -5133,6 +5227,9 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -5159,6 +5256,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
           ..write('createdBy: $createdBy, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -13507,6 +13605,7 @@ typedef $$EnvelopesTableCreateCompanionBuilder =
       Value<bool> isArchived,
       Value<String?> color,
       required DateTime createdAt,
+      Value<DateTime?> deletedAt,
       Value<int> rowid,
     });
 typedef $$EnvelopesTableUpdateCompanionBuilder =
@@ -13519,6 +13618,7 @@ typedef $$EnvelopesTableUpdateCompanionBuilder =
       Value<bool> isArchived,
       Value<String?> color,
       Value<DateTime> createdAt,
+      Value<DateTime?> deletedAt,
       Value<int> rowid,
     });
 
@@ -13568,6 +13668,11 @@ class $$EnvelopesTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -13620,6 +13725,11 @@ class $$EnvelopesTableOrderingComposer
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$EnvelopesTableAnnotationComposer
@@ -13658,6 +13768,9 @@ class $$EnvelopesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
 }
 
 class $$EnvelopesTableTableManager
@@ -13696,6 +13809,7 @@ class $$EnvelopesTableTableManager
                 Value<bool> isArchived = const Value.absent(),
                 Value<String?> color = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => EnvelopesCompanion(
                 id: id,
@@ -13706,6 +13820,7 @@ class $$EnvelopesTableTableManager
                 isArchived: isArchived,
                 color: color,
                 createdAt: createdAt,
+                deletedAt: deletedAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -13718,6 +13833,7 @@ class $$EnvelopesTableTableManager
                 Value<bool> isArchived = const Value.absent(),
                 Value<String?> color = const Value.absent(),
                 required DateTime createdAt,
+                Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => EnvelopesCompanion.insert(
                 id: id,
@@ -13728,6 +13844,7 @@ class $$EnvelopesTableTableManager
                 isArchived: isArchived,
                 color: color,
                 createdAt: createdAt,
+                deletedAt: deletedAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -14035,6 +14152,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       required String createdBy,
       required DateTime createdAt,
       required DateTime updatedAt,
+      Value<DateTime?> deletedAt,
       Value<int> rowid,
     });
 typedef $$TransactionsTableUpdateCompanionBuilder =
@@ -14056,6 +14174,7 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<String> createdBy,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
+      Value<DateTime?> deletedAt,
       Value<int> rowid,
     });
 
@@ -14150,6 +14269,11 @@ class $$TransactionsTableFilterComposer
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -14247,6 +14371,11 @@ class $$TransactionsTableOrderingComposer
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$TransactionsTableAnnotationComposer
@@ -14318,6 +14447,9 @@ class $$TransactionsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
 }
 
 class $$TransactionsTableTableManager
@@ -14368,6 +14500,7 @@ class $$TransactionsTableTableManager
                 Value<String> createdBy = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TransactionsCompanion(
                 id: id,
@@ -14387,6 +14520,7 @@ class $$TransactionsTableTableManager
                 createdBy: createdBy,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
+                deletedAt: deletedAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -14408,6 +14542,7 @@ class $$TransactionsTableTableManager
                 required String createdBy,
                 required DateTime createdAt,
                 required DateTime updatedAt,
+                Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TransactionsCompanion.insert(
                 id: id,
@@ -14427,6 +14562,7 @@ class $$TransactionsTableTableManager
                 createdBy: createdBy,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
+                deletedAt: deletedAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

@@ -97,6 +97,11 @@ final class QuickAllocationRequested extends DashboardEvent {
   List<Object?> get props => [envelopeId, amount];
 }
 
+/// Delete the current budget and all its data.
+final class BudgetDeleteRequested extends DashboardEvent {
+  const BudgetDeleteRequested();
+}
+
 /// Internal event when a remote collaborator change is received.
 final class _RemoteChangeReceived extends DashboardEvent {
   const _RemoteChangeReceived();

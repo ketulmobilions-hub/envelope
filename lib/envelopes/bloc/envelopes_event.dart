@@ -96,6 +96,16 @@ final class CategoryGroupsReordered extends EnvelopesEvent {
   List<Object?> get props => [orderedIds];
 }
 
+/// Undo the last envelope archive toggle.
+final class EnvelopeUndoArchiveRequested extends EnvelopesEvent {
+  const EnvelopeUndoArchiveRequested();
+}
+
+/// Undo the last envelope deletion (restore soft-deleted envelope).
+final class EnvelopeUndoDeleteRequested extends EnvelopesEvent {
+  const EnvelopeUndoDeleteRequested();
+}
+
 /// Reorder envelopes within a group with the given ordered list of IDs.
 final class EnvelopesReordered extends EnvelopesEvent {
   const EnvelopesReordered(this.orderedIds);

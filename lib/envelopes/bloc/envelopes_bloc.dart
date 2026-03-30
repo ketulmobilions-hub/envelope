@@ -22,7 +22,9 @@ class EnvelopesBloc extends Bloc<EnvelopesEvent, EnvelopesState> {
     on<CategoryGroupArchiveToggled>(_onCategoryGroupArchiveToggled);
     on<CategoryGroupDeleted>(_onCategoryGroupDeleted);
     on<EnvelopeArchiveToggled>(_onEnvelopeArchiveToggled);
+    on<EnvelopeUndoArchiveRequested>(_onEnvelopeUndoArchiveRequested);
     on<EnvelopeDeleted>(_onEnvelopeDeleted);
+    on<EnvelopeUndoDeleteRequested>(_onEnvelopeUndoDeleteRequested);
     on<CategoryGroupsReordered>(_onCategoryGroupsReordered);
     on<EnvelopesReordered>(_onEnvelopesReordered);
   }
@@ -31,6 +33,12 @@ class EnvelopesBloc extends Bloc<EnvelopesEvent, EnvelopesState> {
   final String _budgetId;
   StreamSubscription<List<CategoryGroup>>? _groupsSubscription;
   StreamSubscription<List<Envelope>>? _envelopesSubscription;
+
+  /// Tracks the last archived/unarchived envelope for undo.
+  Envelope? _lastArchivedEnvelope;
+
+  /// Tracks the last deleted envelope ID for undo (soft-delete restore).
+  String? _lastDeletedEnvelopeId;
 
   // Incremented on each EnvelopesStarted to discard in-flight events from
   // a prior subscription after the bloc is restarted.
@@ -190,11 +198,40 @@ class EnvelopesBloc extends Bloc<EnvelopesEvent, EnvelopesState> {
     EnvelopeArchiveToggled event,
     Emitter<EnvelopesState> emit,
   ) async {
+    _lastArchivedEnvelope = event.envelope;
     try {
       if (event.envelope.isArchived) {
         await _envelopeRepository.unarchiveEnvelope(event.envelope.id);
       } else {
         await _envelopeRepository.archiveEnvelope(event.envelope.id);
+      }
+    } on EnvelopeException {
+      _lastArchivedEnvelope = null;
+      emit(
+        state.copyWith(
+          status: EnvelopesStatus.error,
+          error: EnvelopesError.updateFailed,
+        ),
+      );
+      emit(state.copyWith(status: EnvelopesStatus.loaded, error: null));
+    }
+  }
+
+  Future<void> _onEnvelopeUndoArchiveRequested(
+    EnvelopeUndoArchiveRequested event,
+    Emitter<EnvelopesState> emit,
+  ) async {
+    final envelope = _lastArchivedEnvelope;
+    if (envelope == null) return;
+    _lastArchivedEnvelope = null;
+    try {
+      // Reverse the toggle: if it was archived, unarchive it; if not, archive.
+      if (envelope.isArchived) {
+        // It was archived before toggle → toggle made it unarchived → undo = archive again
+        await _envelopeRepository.archiveEnvelope(envelope.id);
+      } else {
+        // It was not archived → toggle archived it → undo = unarchive
+        await _envelopeRepository.unarchiveEnvelope(envelope.id);
       }
     } on EnvelopeException {
       emit(
@@ -211,8 +248,31 @@ class EnvelopesBloc extends Bloc<EnvelopesEvent, EnvelopesState> {
     EnvelopeDeleted event,
     Emitter<EnvelopesState> emit,
   ) async {
+    _lastDeletedEnvelopeId = event.envelopeId;
     try {
       await _envelopeRepository.deleteEnvelope(event.envelopeId);
+    } on EnvelopeException {
+      _lastDeletedEnvelopeId = null;
+      emit(
+        state.copyWith(
+          status: EnvelopesStatus.error,
+          error: EnvelopesError.deleteFailed,
+        ),
+      );
+      emit(state.copyWith(status: EnvelopesStatus.loaded, error: null));
+    }
+  }
+
+  Future<void> _onEnvelopeUndoDeleteRequested(
+    EnvelopeUndoDeleteRequested event,
+    Emitter<EnvelopesState> emit,
+  ) async {
+    final envelopeId = _lastDeletedEnvelopeId;
+    if (envelopeId == null) return;
+    _lastDeletedEnvelopeId = null;
+    try {
+      await _envelopeRepository.restoreEnvelope(envelopeId);
+      await _envelopeRepository.refreshEnvelopes(_budgetId);
     } on EnvelopeException {
       emit(
         state.copyWith(

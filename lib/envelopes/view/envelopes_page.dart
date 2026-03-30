@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:envelope/envelopes/bloc/bloc.dart';
+import 'package:envelope/shared/widgets/confirm_delete_dialog.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/envelopes/cubit/cubit.dart';
 import 'package:envelope/envelopes/view/category_group_form_page.dart';
 import 'package:envelope/envelopes/view/envelope_detail_page.dart';
@@ -366,7 +368,15 @@ class _EnvelopesViewState extends State<EnvelopesView> {
       ),
     );
     if (confirmed == true && context.mounted) {
-      context.read<EnvelopesBloc>().add(EnvelopeArchiveToggled(envelope));
+      final bloc = context.read<EnvelopesBloc>();
+      bloc.add(EnvelopeArchiveToggled(envelope));
+      showUndoSnackBar(
+        context,
+        message: envelope.isArchived
+            ? l10n.envelopesUnarchived
+            : l10n.envelopesArchived,
+        onUndo: () => bloc.add(const EnvelopeUndoArchiveRequested()),
+      );
     }
   }
 
@@ -375,28 +385,21 @@ class _EnvelopesViewState extends State<EnvelopesView> {
     Envelope envelope,
   ) async {
     final l10n = context.l10n;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.envelopesDeleteEnvelopeConfirmTitle),
-        content: Text(l10n.envelopesDeleteEnvelopeConfirmMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(l10n.envelopesCancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(dialogContext).colorScheme.error,
-            ),
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(l10n.envelopesDelete),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDeleteDialog(
+      context,
+      title: l10n.envelopesDeleteEnvelopeConfirmTitle,
+      message: l10n.envelopesDeleteEnvelopeConfirmMessage,
+      cancelLabel: l10n.envelopesCancel,
+      confirmLabel: l10n.envelopesDelete,
     );
     if (confirmed == true && context.mounted) {
-      context.read<EnvelopesBloc>().add(EnvelopeDeleted(envelope.id));
+      final bloc = context.read<EnvelopesBloc>();
+      bloc.add(EnvelopeDeleted(envelope.id));
+      showUndoSnackBar(
+        context,
+        message: l10n.envelopesDeleted,
+        onUndo: () => bloc.add(const EnvelopeUndoDeleteRequested()),
+      );
     }
   }
 }

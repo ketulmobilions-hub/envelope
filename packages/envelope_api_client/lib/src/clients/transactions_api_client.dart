@@ -94,10 +94,25 @@ class TransactionsApiClient {
     }
   }
 
-  /// Deletes a transaction by [id].
+  /// Soft-deletes a transaction by setting `deleted_at`.
   Future<void> deleteTransaction(String id) async {
     try {
-      await _supabaseClient.from('transactions').delete().eq('id', id);
+      await _supabaseClient
+          .from('transactions')
+          .update({'deleted_at': DateTime.now().toIso8601String()})
+          .eq('id', id);
+    } catch (error) {
+      throw EnvelopeApiException.fromPostgrestException(error);
+    }
+  }
+
+  /// Restores a soft-deleted transaction by clearing `deleted_at`.
+  Future<void> restoreTransaction(String id) async {
+    try {
+      await _supabaseClient
+          .from('transactions')
+          .update({'deleted_at': null})
+          .eq('id', id);
     } catch (error) {
       throw EnvelopeApiException.fromPostgrestException(error);
     }

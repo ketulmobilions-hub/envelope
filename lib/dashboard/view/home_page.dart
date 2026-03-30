@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:envelope/app/routes/app_router.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/dashboard/bloc/bloc.dart';
+import 'package:envelope/shared/widgets/confirm_delete_dialog.dart';
 import 'package:envelope/dashboard/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
@@ -91,9 +92,42 @@ class _HomeView extends StatelessWidget {
             icon: const Icon(Icons.group),
           ),
           const SyncStatusIndicator(),
-          IconButton(
-            onPressed: () => context.go(AppRoutes.settings),
-            icon: const Icon(Icons.settings_outlined),
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'delete_budget') {
+                _confirmDeleteBudget(context);
+              } else if (value == 'settings') {
+                context.go(AppRoutes.settings);
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'settings',
+                child: ListTile(
+                  leading: const Icon(Icons.settings_outlined),
+                  title: Text(l10n.settingsTitle),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem(
+                value: 'delete_budget',
+                child: ListTile(
+                  leading: Icon(
+                    Icons.delete_forever,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  title: Text(
+                    l10n.budgetDeleteBudget,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -220,5 +254,21 @@ class _HomeView extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDeleteBudget(BuildContext context) async {
+    final l10n = context.l10n;
+    final confirmed = await showConfirmDeleteDialog(
+      context,
+      title: l10n.budgetDeleteBudget,
+      message: l10n.budgetDeleteConfirmMessage,
+      cancelLabel: l10n.settingsCancel,
+      confirmLabel: l10n.budgetDeleteBudget,
+    );
+    if (confirmed == true && context.mounted) {
+      context.read<DashboardBloc>().add(const BudgetDeleteRequested());
+      // Navigate back to home — the budget stream will update.
+      context.go(AppRoutes.home);
+    }
   }
 }
