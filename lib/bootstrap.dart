@@ -130,6 +130,8 @@ Future<void> bootstrap({
       subscriptionRepository: subscriptionRepository,
       syncRepository: syncRepository,
       sharedPreferences: prefs,
+      apiClient: apiClient,
+      localDatabase: localDatabase,
     ),
   );
 }

@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:account_repository/account_repository.dart';
 import 'package:auth_repository/auth_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
+import 'package:envelope_api_client/envelope_api_client.dart';
+import 'package:envelope_local_storage/envelope_local_storage.dart';
 import 'package:envelope/app/routes/routes.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
@@ -37,6 +39,8 @@ class App extends StatelessWidget {
     required this.subscriptionRepository,
     required this.syncRepository,
     required this.sharedPreferences,
+    required this.apiClient,
+    required this.localDatabase,
     super.key,
   });
 
@@ -52,6 +56,8 @@ class App extends StatelessWidget {
   final SubscriptionRepository subscriptionRepository;
   final SyncRepository syncRepository;
   final SharedPreferences sharedPreferences;
+  final EnvelopeApiClient apiClient;
+  final AppDatabase localDatabase;
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +75,8 @@ class App extends StatelessWidget {
         RepositoryProvider.value(value: subscriptionRepository),
         RepositoryProvider.value(value: syncRepository),
         RepositoryProvider<SharedPreferences>.value(value: sharedPreferences),
+        RepositoryProvider.value(value: apiClient),
+        RepositoryProvider.value(value: localDatabase),
       ],
       child: MultiBlocProvider(
         providers: [

@@ -84,7 +84,7 @@ class AuthRepository {
         );
       }
 
-      // Create user record in the users table.
+      // Create user record in the users table with consent tracking.
       final now = DateTime.now();
       await _apiClient.users.createUser(
         UserDto(
@@ -93,6 +93,9 @@ class AuthRepository {
           displayName: displayName,
           createdAt: now,
           updatedAt: now,
+          privacyAcceptedAt: now,
+          termsAcceptedAt: now,
+          consentVersion: '1.0',
         ),
       );
     } on SignUpWithEmailAndPasswordException {
@@ -340,15 +343,24 @@ class AuthRepository {
     }
   }
 
-  /// Deletes the current user's account and signs out.
+  /// Deletes the current user's account via the server-side Edge Function
+  /// (which handles both data cascade and auth user deletion) and signs out.
+  ///
+  /// Callers should clear the local database before or after calling this.
   Future<void> deleteAccount() async {
     try {
       final supabaseUser = _apiClient.auth.currentUser;
       if (supabaseUser == null) {
         throw const DeleteAccountException('No authenticated user found.');
       }
-      await _apiClient.users.deleteUser(supabaseUser.id);
-      await signOut();
+      await _apiClient.users.invokeDeleteAccount();
+      _cachedUser = User.empty;
+      // Sign out locally (session is already invalidated server-side).
+      try {
+        await _apiClient.auth.signOut();
+      } on Exception {
+        // If sign-out fails, that's OK — the auth user is already deleted.
+      }
     } on DeleteAccountException {
       rethrow;
     } on Exception {

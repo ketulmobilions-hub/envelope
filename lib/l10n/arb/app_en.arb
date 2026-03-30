@@ -2096,5 +2096,21 @@
     "settingsDeleteFailed": "Failed to delete account. Please try again.",
     "@settingsDeleteFailed": { "description": "Account deletion error" },
     "settingsPasswordTooShort": "Password must be at least 6 characters",
-    "@settingsPasswordTooShort": { "description": "Password too short error" }
+    "@settingsPasswordTooShort": { "description": "Password too short error" },
+    "settingsExportAllData": "Export All Data (JSON)",
+    "@settingsExportAllData": { "description": "Export all user data as JSON" },
+    "settingsExportAllDataSubtitle": "Download a complete copy of your data (GDPR)",
+    "@settingsExportAllDataSubtitle": { "description": "Subtitle for GDPR data export" },
+    "settingsDataExported": "Data exported successfully",
+    "@settingsDataExported": { "description": "Success message after data export" },
+    "settingsDataExportFailed": "Failed to export data. Please try again.",
+    "@settingsDataExportFailed": { "description": "Data export error" },
+    "consentPrefix": "I agree to the ",
+    "@consentPrefix": { "description": "Consent checkbox prefix text" },
+    "consentPrivacyPolicy": "Privacy Policy",
+    "@consentPrivacyPolicy": { "description": "Privacy policy link text in consent" },
+    "consentAnd": " and ",
+    "@consentAnd": { "description": "And conjunction in consent text" },
+    "consentTermsOfService": "Terms of Service",
+    "@consentTermsOfService": { "description": "Terms of service link text in consent" }
 }

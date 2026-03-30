@@ -10,6 +10,8 @@ abstract final class SettingsMessage {
   static const String updateFailed = 'updateFailed';
   static const String passwordChangeFailed = 'passwordChangeFailed';
   static const String deleteAccountFailed = 'deleteAccountFailed';
+  static const String dataExported = 'dataExported';
+  static const String dataExportFailed = 'dataExportFailed';
 }
 
 class SettingsState extends Equatable {
