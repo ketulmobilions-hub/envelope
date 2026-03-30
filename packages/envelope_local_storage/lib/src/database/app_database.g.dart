@@ -9969,6 +9969,21 @@ class $NotificationPreferencesTable extends NotificationPreferences
     ),
     defaultValue: const Constant(true),
   );
+  static const VerificationMeta _weeklySummaryMeta = const VerificationMeta(
+    'weeklySummary',
+  );
+  @override
+  late final GeneratedColumn<bool> weeklySummary = GeneratedColumn<bool>(
+    'weekly_summary',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("weekly_summary" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     userId,
@@ -9979,6 +9994,7 @@ class $NotificationPreferencesTable extends NotificationPreferences
     dailyLoggingReminder,
     recurringTransactionAlerts,
     sharedBudgetActivity,
+    weeklySummary,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -10063,6 +10079,15 @@ class $NotificationPreferencesTable extends NotificationPreferences
         ),
       );
     }
+    if (data.containsKey('weekly_summary')) {
+      context.handle(
+        _weeklySummaryMeta,
+        weeklySummary.isAcceptableOrUnknown(
+          data['weekly_summary']!,
+          _weeklySummaryMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -10104,6 +10129,10 @@ class $NotificationPreferencesTable extends NotificationPreferences
         DriftSqlType.bool,
         data['${effectivePrefix}shared_budget_activity'],
       )!,
+      weeklySummary: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}weekly_summary'],
+      )!,
     );
   }
 
@@ -10123,6 +10152,7 @@ class NotificationPreference extends DataClass
   final bool dailyLoggingReminder;
   final bool recurringTransactionAlerts;
   final bool sharedBudgetActivity;
+  final bool weeklySummary;
   const NotificationPreference({
     required this.userId,
     required this.pushEnabled,
@@ -10132,6 +10162,7 @@ class NotificationPreference extends DataClass
     required this.dailyLoggingReminder,
     required this.recurringTransactionAlerts,
     required this.sharedBudgetActivity,
+    required this.weeklySummary,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -10146,6 +10177,7 @@ class NotificationPreference extends DataClass
       recurringTransactionAlerts,
     );
     map['shared_budget_activity'] = Variable<bool>(sharedBudgetActivity);
+    map['weekly_summary'] = Variable<bool>(weeklySummary);
     return map;
   }
 
@@ -10159,6 +10191,7 @@ class NotificationPreference extends DataClass
       dailyLoggingReminder: Value(dailyLoggingReminder),
       recurringTransactionAlerts: Value(recurringTransactionAlerts),
       sharedBudgetActivity: Value(sharedBudgetActivity),
+      weeklySummary: Value(weeklySummary),
     );
   }
 
@@ -10182,6 +10215,7 @@ class NotificationPreference extends DataClass
       sharedBudgetActivity: serializer.fromJson<bool>(
         json['sharedBudgetActivity'],
       ),
+      weeklySummary: serializer.fromJson<bool>(json['weeklySummary']),
     );
   }
   @override
@@ -10198,6 +10232,7 @@ class NotificationPreference extends DataClass
         recurringTransactionAlerts,
       ),
       'sharedBudgetActivity': serializer.toJson<bool>(sharedBudgetActivity),
+      'weeklySummary': serializer.toJson<bool>(weeklySummary),
     };
   }
 
@@ -10210,6 +10245,7 @@ class NotificationPreference extends DataClass
     bool? dailyLoggingReminder,
     bool? recurringTransactionAlerts,
     bool? sharedBudgetActivity,
+    bool? weeklySummary,
   }) => NotificationPreference(
     userId: userId ?? this.userId,
     pushEnabled: pushEnabled ?? this.pushEnabled,
@@ -10220,6 +10256,7 @@ class NotificationPreference extends DataClass
     recurringTransactionAlerts:
         recurringTransactionAlerts ?? this.recurringTransactionAlerts,
     sharedBudgetActivity: sharedBudgetActivity ?? this.sharedBudgetActivity,
+    weeklySummary: weeklySummary ?? this.weeklySummary,
   );
   NotificationPreference copyWithCompanion(
     NotificationPreferencesCompanion data,
@@ -10247,6 +10284,9 @@ class NotificationPreference extends DataClass
       sharedBudgetActivity: data.sharedBudgetActivity.present
           ? data.sharedBudgetActivity.value
           : this.sharedBudgetActivity,
+      weeklySummary: data.weeklySummary.present
+          ? data.weeklySummary.value
+          : this.weeklySummary,
     );
   }
 
@@ -10260,7 +10300,8 @@ class NotificationPreference extends DataClass
           ..write('billReminders: $billReminders, ')
           ..write('dailyLoggingReminder: $dailyLoggingReminder, ')
           ..write('recurringTransactionAlerts: $recurringTransactionAlerts, ')
-          ..write('sharedBudgetActivity: $sharedBudgetActivity')
+          ..write('sharedBudgetActivity: $sharedBudgetActivity, ')
+          ..write('weeklySummary: $weeklySummary')
           ..write(')'))
         .toString();
   }
@@ -10275,6 +10316,7 @@ class NotificationPreference extends DataClass
     dailyLoggingReminder,
     recurringTransactionAlerts,
     sharedBudgetActivity,
+    weeklySummary,
   );
   @override
   bool operator ==(Object other) =>
@@ -10287,7 +10329,8 @@ class NotificationPreference extends DataClass
           other.billReminders == this.billReminders &&
           other.dailyLoggingReminder == this.dailyLoggingReminder &&
           other.recurringTransactionAlerts == this.recurringTransactionAlerts &&
-          other.sharedBudgetActivity == this.sharedBudgetActivity);
+          other.sharedBudgetActivity == this.sharedBudgetActivity &&
+          other.weeklySummary == this.weeklySummary);
 }
 
 class NotificationPreferencesCompanion
@@ -10300,6 +10343,7 @@ class NotificationPreferencesCompanion
   final Value<bool> dailyLoggingReminder;
   final Value<bool> recurringTransactionAlerts;
   final Value<bool> sharedBudgetActivity;
+  final Value<bool> weeklySummary;
   final Value<int> rowid;
   const NotificationPreferencesCompanion({
     this.userId = const Value.absent(),
@@ -10310,6 +10354,7 @@ class NotificationPreferencesCompanion
     this.dailyLoggingReminder = const Value.absent(),
     this.recurringTransactionAlerts = const Value.absent(),
     this.sharedBudgetActivity = const Value.absent(),
+    this.weeklySummary = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   NotificationPreferencesCompanion.insert({
@@ -10321,6 +10366,7 @@ class NotificationPreferencesCompanion
     this.dailyLoggingReminder = const Value.absent(),
     this.recurringTransactionAlerts = const Value.absent(),
     this.sharedBudgetActivity = const Value.absent(),
+    this.weeklySummary = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : userId = Value(userId);
   static Insertable<NotificationPreference> custom({
@@ -10332,6 +10378,7 @@ class NotificationPreferencesCompanion
     Expression<bool>? dailyLoggingReminder,
     Expression<bool>? recurringTransactionAlerts,
     Expression<bool>? sharedBudgetActivity,
+    Expression<bool>? weeklySummary,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -10346,6 +10393,7 @@ class NotificationPreferencesCompanion
         'recurring_transaction_alerts': recurringTransactionAlerts,
       if (sharedBudgetActivity != null)
         'shared_budget_activity': sharedBudgetActivity,
+      if (weeklySummary != null) 'weekly_summary': weeklySummary,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -10359,6 +10407,7 @@ class NotificationPreferencesCompanion
     Value<bool>? dailyLoggingReminder,
     Value<bool>? recurringTransactionAlerts,
     Value<bool>? sharedBudgetActivity,
+    Value<bool>? weeklySummary,
     Value<int>? rowid,
   }) {
     return NotificationPreferencesCompanion(
@@ -10371,6 +10420,7 @@ class NotificationPreferencesCompanion
       recurringTransactionAlerts:
           recurringTransactionAlerts ?? this.recurringTransactionAlerts,
       sharedBudgetActivity: sharedBudgetActivity ?? this.sharedBudgetActivity,
+      weeklySummary: weeklySummary ?? this.weeklySummary,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -10408,6 +10458,9 @@ class NotificationPreferencesCompanion
         sharedBudgetActivity.value,
       );
     }
+    if (weeklySummary.present) {
+      map['weekly_summary'] = Variable<bool>(weeklySummary.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -10425,6 +10478,7 @@ class NotificationPreferencesCompanion
           ..write('dailyLoggingReminder: $dailyLoggingReminder, ')
           ..write('recurringTransactionAlerts: $recurringTransactionAlerts, ')
           ..write('sharedBudgetActivity: $sharedBudgetActivity, ')
+          ..write('weeklySummary: $weeklySummary, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -16879,6 +16933,7 @@ typedef $$NotificationPreferencesTableCreateCompanionBuilder =
       Value<bool> dailyLoggingReminder,
       Value<bool> recurringTransactionAlerts,
       Value<bool> sharedBudgetActivity,
+      Value<bool> weeklySummary,
       Value<int> rowid,
     });
 typedef $$NotificationPreferencesTableUpdateCompanionBuilder =
@@ -16891,6 +16946,7 @@ typedef $$NotificationPreferencesTableUpdateCompanionBuilder =
       Value<bool> dailyLoggingReminder,
       Value<bool> recurringTransactionAlerts,
       Value<bool> sharedBudgetActivity,
+      Value<bool> weeklySummary,
       Value<int> rowid,
     });
 
@@ -16940,6 +16996,11 @@ class $$NotificationPreferencesTableFilterComposer
 
   ColumnFilters<bool> get sharedBudgetActivity => $composableBuilder(
     column: $table.sharedBudgetActivity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get weeklySummary => $composableBuilder(
+    column: $table.weeklySummary,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -16992,6 +17053,11 @@ class $$NotificationPreferencesTableOrderingComposer
     column: $table.sharedBudgetActivity,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get weeklySummary => $composableBuilder(
+    column: $table.weeklySummary,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$NotificationPreferencesTableAnnotationComposer
@@ -17038,6 +17104,11 @@ class $$NotificationPreferencesTableAnnotationComposer
 
   GeneratedColumn<bool> get sharedBudgetActivity => $composableBuilder(
     column: $table.sharedBudgetActivity,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get weeklySummary => $composableBuilder(
+    column: $table.weeklySummary,
     builder: (column) => column,
   );
 }
@@ -17096,6 +17167,7 @@ class $$NotificationPreferencesTableTableManager
                 Value<bool> dailyLoggingReminder = const Value.absent(),
                 Value<bool> recurringTransactionAlerts = const Value.absent(),
                 Value<bool> sharedBudgetActivity = const Value.absent(),
+                Value<bool> weeklySummary = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => NotificationPreferencesCompanion(
                 userId: userId,
@@ -17106,6 +17178,7 @@ class $$NotificationPreferencesTableTableManager
                 dailyLoggingReminder: dailyLoggingReminder,
                 recurringTransactionAlerts: recurringTransactionAlerts,
                 sharedBudgetActivity: sharedBudgetActivity,
+                weeklySummary: weeklySummary,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -17118,6 +17191,7 @@ class $$NotificationPreferencesTableTableManager
                 Value<bool> dailyLoggingReminder = const Value.absent(),
                 Value<bool> recurringTransactionAlerts = const Value.absent(),
                 Value<bool> sharedBudgetActivity = const Value.absent(),
+                Value<bool> weeklySummary = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => NotificationPreferencesCompanion.insert(
                 userId: userId,
@@ -17128,6 +17202,7 @@ class $$NotificationPreferencesTableTableManager
                 dailyLoggingReminder: dailyLoggingReminder,
                 recurringTransactionAlerts: recurringTransactionAlerts,
                 sharedBudgetActivity: sharedBudgetActivity,
+                weeklySummary: weeklySummary,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

@@ -2016,5 +2016,13 @@
     "notificationError": "Failed to load notification preferences.",
     "@notificationError": {
         "description": "Error message when loading notification preferences fails"
+    },
+    "notificationWeeklySummary": "Weekly Budget Summary",
+    "@notificationWeeklySummary": {
+        "description": "Toggle label for weekly budget summary email notifications"
+    },
+    "notificationEmailBillReminders": "Bill Reminder Emails",
+    "@notificationEmailBillReminders": {
+        "description": "Toggle label for bill reminder email notifications"
     }
 }

@@ -36,6 +36,7 @@ class NotificationRepository {
               recurringTransactionAlerts:
                   Value(prefs.recurringTransactionAlerts),
               sharedBudgetActivity: Value(prefs.sharedBudgetActivity),
+              weeklySummary: Value(prefs.weeklySummary),
             ),
           );
 
@@ -60,6 +61,7 @@ class NotificationRepository {
         dailyLoggingReminder: row.dailyLoggingReminder,
         recurringTransactionAlerts: row.recurringTransactionAlerts,
         sharedBudgetActivity: row.sharedBudgetActivity,
+        weeklySummary: row.weeklySummary,
       );
     }
   }
@@ -77,6 +79,7 @@ class NotificationRepository {
       dailyLoggingReminder: preferences.dailyLoggingReminder,
       recurringTransactionAlerts: preferences.recurringTransactionAlerts,
       sharedBudgetActivity: preferences.sharedBudgetActivity,
+      weeklySummary: preferences.weeklySummary,
     );
 
     await _apiClient.users.updateNotificationPreferences(dto);
@@ -94,6 +97,7 @@ class NotificationRepository {
         recurringTransactionAlerts:
             Value(preferences.recurringTransactionAlerts),
         sharedBudgetActivity: Value(preferences.sharedBudgetActivity),
+        weeklySummary: Value(preferences.weeklySummary),
       ),
     );
   }
@@ -157,6 +161,7 @@ class NotificationRepository {
       dailyLoggingReminder: dto.dailyLoggingReminder,
       recurringTransactionAlerts: dto.recurringTransactionAlerts,
       sharedBudgetActivity: dto.sharedBudgetActivity,
+      weeklySummary: dto.weeklySummary,
     );
   }
 }

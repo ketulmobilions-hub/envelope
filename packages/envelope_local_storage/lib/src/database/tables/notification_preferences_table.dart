@@ -19,6 +19,8 @@ class NotificationPreferences extends Table {
   BoolColumn get sharedBudgetActivity => boolean()
       .named('shared_budget_activity')
       .withDefault(const Constant(true))();
+  BoolColumn get weeklySummary =>
+      boolean().named('weekly_summary').withDefault(const Constant(true))();
 
   @override
   Set<Column> get primaryKey => {userId};

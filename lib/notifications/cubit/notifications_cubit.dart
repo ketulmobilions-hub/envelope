@@ -90,4 +90,10 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     if (prefs == null) return;
     await updatePreference(prefs.copyWith(sharedBudgetActivity: enabled));
   }
+
+  Future<void> toggleWeeklySummary({required bool enabled}) async {
+    final prefs = state.preferences;
+    if (prefs == null) return;
+    await updatePreference(prefs.copyWith(weeklySummary: enabled));
+  }
 }

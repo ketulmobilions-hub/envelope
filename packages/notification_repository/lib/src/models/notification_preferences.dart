@@ -14,6 +14,7 @@ abstract class NotificationPreferences with _$NotificationPreferences {
     @Default(true) bool dailyLoggingReminder,
     @Default(true) bool recurringTransactionAlerts,
     @Default(true) bool sharedBudgetActivity,
+    @Default(true) bool weeklySummary,
   }) = _NotificationPreferences;
 
   factory NotificationPreferences.fromJson(Map<String, dynamic> json) =>
