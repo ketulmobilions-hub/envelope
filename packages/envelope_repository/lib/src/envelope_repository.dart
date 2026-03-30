@@ -348,9 +348,9 @@ class EnvelopeRepository {
     }
   }
 
-  /// Deletes an envelope by its [id].
+  /// Soft-deletes an envelope by its [id].
   ///
-  /// Removes from the API first. Local cache removal is best-effort.
+  /// Sets `deleted_at` on the API. Local cache removal is best-effort.
   Future<void> deleteEnvelope(String id) async {
     _beginLocalWrite();
     try {
@@ -366,6 +366,21 @@ class EnvelopeRepository {
       await _localDatabase.envelopesDao.deleteEnvelope(id);
     } on Exception {
       // Stale local entry will be cleaned up on next refresh.
+    }
+    _endLocalWrite();
+  }
+
+  /// Restores a soft-deleted envelope by clearing `deleted_at`.
+  Future<void> restoreEnvelope(String id) async {
+    _beginLocalWrite();
+    try {
+      await _apiClient.envelopes.restoreEnvelope(id);
+    } on EnvelopeApiException catch (e) {
+      _endLocalWrite();
+      throw EnvelopeException(
+        'Failed to restore envelope',
+        error: e,
+      );
     }
     _endLocalWrite();
   }

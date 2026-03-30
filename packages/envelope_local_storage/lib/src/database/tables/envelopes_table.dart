@@ -11,6 +11,7 @@ class Envelopes extends Table {
       boolean().named('is_archived').withDefault(const Constant(false))();
   TextColumn get color => text().nullable()();
   DateTimeColumn get createdAt => dateTime().named('created_at')();
+  DateTimeColumn get deletedAt => dateTime().named('deleted_at').nullable()();
 
   @override
   Set<Column> get primaryKey => {id};

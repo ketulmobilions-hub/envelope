@@ -22,6 +22,7 @@ class Transactions extends Table {
   TextColumn get createdBy => text().named('created_by')();
   DateTimeColumn get createdAt => dateTime().named('created_at')();
   DateTimeColumn get updatedAt => dateTime().named('updated_at')();
+  DateTimeColumn get deletedAt => dateTime().named('deleted_at').nullable()();
 
   @override
   Set<Column> get primaryKey => {id};

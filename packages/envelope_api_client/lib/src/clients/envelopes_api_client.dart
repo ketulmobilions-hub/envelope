@@ -167,10 +167,25 @@ class EnvelopesApiClient {
     }
   }
 
-  /// Deletes an envelope by [id].
+  /// Soft-deletes an envelope by setting `deleted_at`.
   Future<void> deleteEnvelope(String id) async {
     try {
-      await _supabaseClient.from('envelopes').delete().eq('id', id);
+      await _supabaseClient
+          .from('envelopes')
+          .update({'deleted_at': DateTime.now().toIso8601String()})
+          .eq('id', id);
+    } catch (error) {
+      throw EnvelopeApiException.fromPostgrestException(error);
+    }
+  }
+
+  /// Restores a soft-deleted envelope by clearing `deleted_at`.
+  Future<void> restoreEnvelope(String id) async {
+    try {
+      await _supabaseClient
+          .from('envelopes')
+          .update({'deleted_at': null})
+          .eq('id', id);
     } catch (error) {
       throw EnvelopeApiException.fromPostgrestException(error);
     }

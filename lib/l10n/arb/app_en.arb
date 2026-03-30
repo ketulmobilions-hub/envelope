@@ -2112,5 +2112,15 @@
     "consentAnd": " and ",
     "@consentAnd": { "description": "And conjunction in consent text" },
     "consentTermsOfService": "Terms of Service",
-    "@consentTermsOfService": { "description": "Terms of service link text in consent" }
+    "@consentTermsOfService": { "description": "Terms of service link text in consent" },
+    "budgetDeleteBudget": "Delete Budget",
+    "@budgetDeleteBudget": { "description": "Delete budget menu option" },
+    "budgetDeleteConfirmMessage": "This will permanently delete this budget and all its accounts, envelopes, and transactions. This action cannot be undone.",
+    "@budgetDeleteConfirmMessage": { "description": "Budget deletion warning" },
+    "envelopesArchived": "Envelope archived",
+    "@envelopesArchived": { "description": "Snackbar message after archiving" },
+    "envelopesUnarchived": "Envelope unarchived",
+    "@envelopesUnarchived": { "description": "Snackbar message after unarchiving" },
+    "envelopesDeleted": "Envelope deleted",
+    "@envelopesDeleted": { "description": "Snackbar message after deleting envelope" }
 }
