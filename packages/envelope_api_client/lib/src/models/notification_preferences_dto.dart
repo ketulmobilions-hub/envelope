@@ -21,6 +21,7 @@ abstract class NotificationPreferencesDto with _$NotificationPreferencesDto {
     @JsonKey(name: 'shared_budget_activity')
     @Default(true)
     bool sharedBudgetActivity,
+    @JsonKey(name: 'weekly_summary') @Default(true) bool weeklySummary,
   }) = _NotificationPreferencesDto;
 
   factory NotificationPreferencesDto.fromJson(Map<String, dynamic> json) =>

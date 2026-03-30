@@ -41,6 +41,7 @@ class SharingRepository {
   Future<BudgetMember> inviteMember({
     required String budgetId,
     required String email,
+    required String inviterName,
     String role = 'viewer',
   }) async {
     try {
@@ -62,6 +63,19 @@ class SharingRepository {
         entityType: 'budget_member',
         entityId: created.id,
       );
+
+      // Send invitation email (best-effort).
+      try {
+        final budget = await _apiClient.budgets.getBudget(budgetId);
+        await _apiClient.budgets.invokeSendInviteEmail(
+          email: email,
+          budgetName: budget.name,
+          inviterName: inviterName,
+          inviteId: created.id,
+        );
+      } on Exception {
+        // Email sending is best-effort; don't fail the invite flow.
+      }
 
       return _mapMemberFromDto(created);
     } on EnvelopeApiException catch (e) {

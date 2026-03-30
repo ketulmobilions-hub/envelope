@@ -29,6 +29,8 @@ mixin _$NotificationPreferencesDto {
   bool get recurringTransactionAlerts;
   @JsonKey(name: 'shared_budget_activity')
   bool get sharedBudgetActivity;
+  @JsonKey(name: 'weekly_summary')
+  bool get weeklySummary;
 
   /// Create a copy of NotificationPreferencesDto
   /// with the given fields replaced by the non-null parameter values.
@@ -67,7 +69,9 @@ mixin _$NotificationPreferencesDto {
                 other.recurringTransactionAlerts ==
                     recurringTransactionAlerts) &&
             (identical(other.sharedBudgetActivity, sharedBudgetActivity) ||
-                other.sharedBudgetActivity == sharedBudgetActivity));
+                other.sharedBudgetActivity == sharedBudgetActivity) &&
+            (identical(other.weeklySummary, weeklySummary) ||
+                other.weeklySummary == weeklySummary));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -82,11 +86,12 @@ mixin _$NotificationPreferencesDto {
     dailyLoggingReminder,
     recurringTransactionAlerts,
     sharedBudgetActivity,
+    weeklySummary,
   );
 
   @override
   String toString() {
-    return 'NotificationPreferencesDto(userId: $userId, pushEnabled: $pushEnabled, emailEnabled: $emailEnabled, overspendAlerts: $overspendAlerts, billReminders: $billReminders, dailyLoggingReminder: $dailyLoggingReminder, recurringTransactionAlerts: $recurringTransactionAlerts, sharedBudgetActivity: $sharedBudgetActivity)';
+    return 'NotificationPreferencesDto(userId: $userId, pushEnabled: $pushEnabled, emailEnabled: $emailEnabled, overspendAlerts: $overspendAlerts, billReminders: $billReminders, dailyLoggingReminder: $dailyLoggingReminder, recurringTransactionAlerts: $recurringTransactionAlerts, sharedBudgetActivity: $sharedBudgetActivity, weeklySummary: $weeklySummary)';
   }
 }
 
@@ -107,6 +112,7 @@ abstract mixin class $NotificationPreferencesDtoCopyWith<$Res> {
     @JsonKey(name: 'recurring_transaction_alerts')
     bool recurringTransactionAlerts,
     @JsonKey(name: 'shared_budget_activity') bool sharedBudgetActivity,
+    @JsonKey(name: 'weekly_summary') bool weeklySummary,
   });
 }
 
@@ -131,6 +137,7 @@ class _$NotificationPreferencesDtoCopyWithImpl<$Res>
     Object? dailyLoggingReminder = null,
     Object? recurringTransactionAlerts = null,
     Object? sharedBudgetActivity = null,
+    Object? weeklySummary = null,
   }) {
     return _then(
       _self.copyWith(
@@ -165,6 +172,10 @@ class _$NotificationPreferencesDtoCopyWithImpl<$Res>
         sharedBudgetActivity: null == sharedBudgetActivity
             ? _self.sharedBudgetActivity
             : sharedBudgetActivity // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        weeklySummary: null == weeklySummary
+            ? _self.weeklySummary
+            : weeklySummary // ignore: cast_nullable_to_non_nullable
                   as bool,
       ),
     );
@@ -274,6 +285,7 @@ extension NotificationPreferencesDtoPatterns on NotificationPreferencesDto {
       @JsonKey(name: 'recurring_transaction_alerts')
       bool recurringTransactionAlerts,
       @JsonKey(name: 'shared_budget_activity') bool sharedBudgetActivity,
+      @JsonKey(name: 'weekly_summary') bool weeklySummary,
     )?
     $default, {
     required TResult orElse(),
@@ -290,6 +302,7 @@ extension NotificationPreferencesDtoPatterns on NotificationPreferencesDto {
           _that.dailyLoggingReminder,
           _that.recurringTransactionAlerts,
           _that.sharedBudgetActivity,
+          _that.weeklySummary,
         );
       case _:
         return orElse();
@@ -321,6 +334,7 @@ extension NotificationPreferencesDtoPatterns on NotificationPreferencesDto {
       @JsonKey(name: 'recurring_transaction_alerts')
       bool recurringTransactionAlerts,
       @JsonKey(name: 'shared_budget_activity') bool sharedBudgetActivity,
+      @JsonKey(name: 'weekly_summary') bool weeklySummary,
     )
     $default,
   ) {
@@ -336,6 +350,7 @@ extension NotificationPreferencesDtoPatterns on NotificationPreferencesDto {
           _that.dailyLoggingReminder,
           _that.recurringTransactionAlerts,
           _that.sharedBudgetActivity,
+          _that.weeklySummary,
         );
       case _:
         throw StateError('Unexpected subclass');
@@ -366,6 +381,7 @@ extension NotificationPreferencesDtoPatterns on NotificationPreferencesDto {
       @JsonKey(name: 'recurring_transaction_alerts')
       bool recurringTransactionAlerts,
       @JsonKey(name: 'shared_budget_activity') bool sharedBudgetActivity,
+      @JsonKey(name: 'weekly_summary') bool weeklySummary,
     )?
     $default,
   ) {
@@ -381,6 +397,7 @@ extension NotificationPreferencesDtoPatterns on NotificationPreferencesDto {
           _that.dailyLoggingReminder,
           _that.recurringTransactionAlerts,
           _that.sharedBudgetActivity,
+          _that.weeklySummary,
         );
       case _:
         return null;
@@ -401,6 +418,7 @@ class _NotificationPreferencesDto implements NotificationPreferencesDto {
     @JsonKey(name: 'recurring_transaction_alerts')
     this.recurringTransactionAlerts = true,
     @JsonKey(name: 'shared_budget_activity') this.sharedBudgetActivity = true,
+    @JsonKey(name: 'weekly_summary') this.weeklySummary = true,
   });
   factory _NotificationPreferencesDto.fromJson(Map<String, dynamic> json) =>
       _$NotificationPreferencesDtoFromJson(json);
@@ -429,6 +447,9 @@ class _NotificationPreferencesDto implements NotificationPreferencesDto {
   @override
   @JsonKey(name: 'shared_budget_activity')
   final bool sharedBudgetActivity;
+  @override
+  @JsonKey(name: 'weekly_summary')
+  final bool weeklySummary;
 
   /// Create a copy of NotificationPreferencesDto
   /// with the given fields replaced by the non-null parameter values.
@@ -470,7 +491,9 @@ class _NotificationPreferencesDto implements NotificationPreferencesDto {
                 other.recurringTransactionAlerts ==
                     recurringTransactionAlerts) &&
             (identical(other.sharedBudgetActivity, sharedBudgetActivity) ||
-                other.sharedBudgetActivity == sharedBudgetActivity));
+                other.sharedBudgetActivity == sharedBudgetActivity) &&
+            (identical(other.weeklySummary, weeklySummary) ||
+                other.weeklySummary == weeklySummary));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -485,11 +508,12 @@ class _NotificationPreferencesDto implements NotificationPreferencesDto {
     dailyLoggingReminder,
     recurringTransactionAlerts,
     sharedBudgetActivity,
+    weeklySummary,
   );
 
   @override
   String toString() {
-    return 'NotificationPreferencesDto(userId: $userId, pushEnabled: $pushEnabled, emailEnabled: $emailEnabled, overspendAlerts: $overspendAlerts, billReminders: $billReminders, dailyLoggingReminder: $dailyLoggingReminder, recurringTransactionAlerts: $recurringTransactionAlerts, sharedBudgetActivity: $sharedBudgetActivity)';
+    return 'NotificationPreferencesDto(userId: $userId, pushEnabled: $pushEnabled, emailEnabled: $emailEnabled, overspendAlerts: $overspendAlerts, billReminders: $billReminders, dailyLoggingReminder: $dailyLoggingReminder, recurringTransactionAlerts: $recurringTransactionAlerts, sharedBudgetActivity: $sharedBudgetActivity, weeklySummary: $weeklySummary)';
   }
 }
 
@@ -512,6 +536,7 @@ abstract mixin class _$NotificationPreferencesDtoCopyWith<$Res>
     @JsonKey(name: 'recurring_transaction_alerts')
     bool recurringTransactionAlerts,
     @JsonKey(name: 'shared_budget_activity') bool sharedBudgetActivity,
+    @JsonKey(name: 'weekly_summary') bool weeklySummary,
   });
 }
 
@@ -536,6 +561,7 @@ class __$NotificationPreferencesDtoCopyWithImpl<$Res>
     Object? dailyLoggingReminder = null,
     Object? recurringTransactionAlerts = null,
     Object? sharedBudgetActivity = null,
+    Object? weeklySummary = null,
   }) {
     return _then(
       _NotificationPreferencesDto(
@@ -570,6 +596,10 @@ class __$NotificationPreferencesDtoCopyWithImpl<$Res>
         sharedBudgetActivity: null == sharedBudgetActivity
             ? _self.sharedBudgetActivity
             : sharedBudgetActivity // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        weeklySummary: null == weeklySummary
+            ? _self.weeklySummary
+            : weeklySummary // ignore: cast_nullable_to_non_nullable
                   as bool,
       ),
     );

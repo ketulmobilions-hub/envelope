@@ -94,6 +94,18 @@ class NotificationSettingsView extends StatelessWidget {
                 value: prefs.emailEnabled,
                 onChanged: (v) => cubit.toggleEmail(enabled: v),
               ),
+              if (prefs.emailEnabled) ...[
+                SwitchListTile(
+                  title: Text(l10n.notificationEmailBillReminders),
+                  value: prefs.billReminders,
+                  onChanged: (v) => cubit.toggleBillReminders(enabled: v),
+                ),
+                SwitchListTile(
+                  title: Text(l10n.notificationWeeklySummary),
+                  value: prefs.weeklySummary,
+                  onChanged: (v) => cubit.toggleWeeklySummary(enabled: v),
+                ),
+              ],
             ],
           );
         },
