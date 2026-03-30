@@ -91,6 +91,10 @@ class _HomeView extends StatelessWidget {
             icon: const Icon(Icons.group),
           ),
           const SyncStatusIndicator(),
+          IconButton(
+            onPressed: () => context.go(AppRoutes.settings),
+            icon: const Icon(Icons.settings_outlined),
+          ),
         ],
       ),
       body: MultiBlocListener(

@@ -185,11 +185,31 @@ class _AppViewState extends State<AppView> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      theme: AppTheme.light,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      routerConfig: _router,
+    return BlocBuilder<AuthBloc, AuthState>(
+      buildWhen: (prev, curr) => prev.user?.themeMode != curr.user?.themeMode,
+      builder: (context, authState) {
+        return MaterialApp.router(
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: _themeModeFromString(
+            authState.user?.themeMode ?? 'system',
+          ),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: _router,
+        );
+      },
     );
+  }
+}
+
+ThemeMode _themeModeFromString(String mode) {
+  switch (mode) {
+    case 'light':
+      return ThemeMode.light;
+    case 'dark':
+      return ThemeMode.dark;
+    default:
+      return ThemeMode.system;
   }
 }
