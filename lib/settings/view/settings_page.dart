@@ -7,7 +7,8 @@ import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
 import 'package:envelope/onboarding/data/currencies.dart';
 import 'package:envelope/settings/cubit/cubit.dart';
 import 'package:envelope_api_client/envelope_api_client.dart';
-import 'package:envelope_local_storage/envelope_local_storage.dart';
+import 'package:envelope_local_storage/envelope_local_storage.dart'
+    hide User;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
