@@ -64,6 +64,10 @@ ARB files in `lib/l10n/arb/`. English only, architecture ready for i18n. Generat
 
 Uses `very_good_analysis` + `bloc_lint`. Config in `analysis_options.yaml`. Generated localization files are excluded from analysis.
 
+## Code Review Display (STRICT RULE)
+
+When displaying code review results, **always include the file name and line numbers** for every issue found. Use the format `file_path:line_number` so issues can be easily located in the source code.
+
 ## Git Workflow (STRICT RULE)
 
 **NEVER work directly on `main` or `dev`. Always create a feature branch.**

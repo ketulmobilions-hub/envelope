@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "767046810526",
+    "project_id": "white-board-3",
+    "storage_bucket": "white-board-3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:767046810526:android:090b7d06e58e33027b748f",
+        "android_client_info": {
+          "package_name": "com.envelope.envelope"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB16GwJg6lKafy_rONOLezg4KTeEGSHFNo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:767046810526:android:2592c1a6578b751f7b748f",
+        "android_client_info": {
+          "package_name": "com.example.white_board"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB16GwJg6lKafy_rONOLezg4KTeEGSHFNo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

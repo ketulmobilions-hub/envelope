@@ -41,6 +41,20 @@ class FcmService {
         return;
       }
 
+      // On iOS, wait for the APNs token before requesting the FCM token.
+      if (platform == 'ios') {
+        var apnsToken = await _messaging.getAPNSToken();
+        if (apnsToken == null) {
+          // APNs token isn't ready yet — wait briefly and retry.
+          await Future<void>.delayed(const Duration(seconds: 3));
+          apnsToken = await _messaging.getAPNSToken();
+          if (apnsToken == null) {
+            log('FCM: APNs token not available, skipping registration');
+            return;
+          }
+        }
+      }
+
       // Get and register the current token.
       final token = await _messaging.getToken();
       if (token != null) {
