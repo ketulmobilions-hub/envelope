@@ -84,9 +84,10 @@ class AuthRepository {
         );
       }
 
-      // Create user record in the users table with consent tracking.
+      // Update the user record created by the auth trigger with
+      // display name and consent tracking fields.
       final now = DateTime.now();
-      await _apiClient.users.createUser(
+      await _apiClient.users.updateUser(
         UserDto(
           id: supabaseUser.id,
           email: email,
