@@ -131,6 +131,9 @@ class _FcmAuthListenerState extends State<_FcmAuthListener> {
     }
   }
 
+  /// Sequenced so that clear always finishes before restore starts.
+  Future<void>? _sessionTask;
+
   void _onAuthStateChanged(BuildContext context, AuthState state) {
     if (state.status == AuthStatus.authenticated && state.user != null) {
       unawaited(
@@ -140,40 +143,41 @@ class _FcmAuthListenerState extends State<_FcmAuthListener> {
           platform: _currentPlatform(),
         ),
       );
-      // Restore onboarding flags if this user already has budgets.
-      unawaited(_restoreSessionForUser(context, state.user!.id));
+      // Chain after any pending clear so restore never races with it.
+      _sessionTask = (_sessionTask ?? Future.value())
+          .then((_) => _restoreSessionForUser(context, state.user!.id));
     } else if (state.status == AuthStatus.unauthenticated) {
       unawaited(
         _fcmService.unregisterCurrentToken(
           repository: widget.notificationRepository,
         ),
       );
-      // Clear all local data so the next sign-in starts clean.
-      unawaited(_clearLocalData(context));
+      _sessionTask = _clearLocalData(context);
     }
   }
 
-  /// On sign-in, checks if the authenticated user has budgets on the
-  /// server. If yes, sets the onboarding and budget flags so the router
-  /// sends them to home. If no budgets, ensures flags are clear for
-  /// onboarding. Then re-triggers the router to act on the updated flags.
+  /// On sign-in, clears stale flags, checks the server for budgets,
+  /// then sets the correct flags and re-triggers the router.
   Future<void> _restoreSessionForUser(
     BuildContext context,
     String userId,
   ) async {
     try {
       final prefs = context.read<SharedPreferences>();
+
+      // Always start fresh — clear any leftover flags from a prior user.
+      await prefs.remove('onboarding_complete');
+      await prefs.remove('active_budget_id');
+      await prefs.remove('session_checked');
+
       final apiClient = context.read<EnvelopeApiClient>();
       final budgets = await apiClient.budgets.getBudgetsByOwner(userId);
 
       if (budgets.isNotEmpty) {
         await prefs.setBool('onboarding_complete', true);
         await prefs.setString('active_budget_id', budgets.first.id);
-      } else {
-        // New user — ensure flags are clear for onboarding.
-        await prefs.remove('onboarding_complete');
-        await prefs.remove('active_budget_id');
       }
+
       // Mark session check as done so the router stops holding on splash.
       await prefs.setBool('session_checked', true);
 
@@ -184,8 +188,17 @@ class _FcmAuthListenerState extends State<_FcmAuthListener> {
         );
       }
     } on Exception {
-      // If the check fails, router falls through to whatever the
-      // current prefs state dictates.
+      // On failure, set session_checked so user isn't stuck on splash.
+      try {
+        context.read<SharedPreferences>().setBool('session_checked', true);
+        if (context.mounted) {
+          context.read<AuthBloc>().add(
+            AuthUserChanged(context.read<AuthBloc>().state.user!),
+          );
+        }
+      } on Exception {
+        // Give up — user will see onboarding.
+      }
     }
   }
 
