@@ -140,6 +140,8 @@ class _FcmAuthListenerState extends State<_FcmAuthListener> {
           platform: _currentPlatform(),
         ),
       );
+      // Restore onboarding flags if the user already has a budget.
+      unawaited(_restoreOnboardingIfNeeded(context, state.user!.id));
     } else if (state.status == AuthStatus.unauthenticated) {
       unawaited(
         _fcmService.unregisterCurrentToken(
@@ -148,6 +150,26 @@ class _FcmAuthListenerState extends State<_FcmAuthListener> {
       );
       // Clear local data so a new sign-in starts fresh.
       unawaited(_clearLocalData(context));
+    }
+  }
+
+  Future<void> _restoreOnboardingIfNeeded(
+    BuildContext context,
+    String userId,
+  ) async {
+    try {
+      final prefs = context.read<SharedPreferences>();
+      if (prefs.getBool('onboarding_complete') == true) return;
+
+      // Check if the user already has budgets on the server.
+      final apiClient = context.read<EnvelopeApiClient>();
+      final budgets = await apiClient.budgets.getBudgetsByOwner(userId);
+      if (budgets.isNotEmpty) {
+        await prefs.setBool('onboarding_complete', true);
+        await prefs.setString('active_budget_id', budgets.first.id);
+      }
+    } on Exception {
+      // Non-critical; router will show onboarding if flags aren't set.
     }
   }
 
