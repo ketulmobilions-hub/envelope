@@ -43,10 +43,11 @@ abstract final class AppRoutes {
 GoRouter createRouter({
   required AuthBloc authBloc,
   required SharedPreferences sharedPreferences,
+  required RouterRefreshNotifier refreshNotifier,
 }) {
   return GoRouter(
     initialLocation: AppRoutes.splash,
-    refreshListenable: _AuthBlocListenable(authBloc),
+    refreshListenable: refreshNotifier,
     redirect: (context, state) {
       final authStatus = authBloc.state.status;
       final currentPath = state.matchedLocation;
@@ -231,13 +232,17 @@ String? _requireBudgetId(BuildContext context, GoRouterState state) {
 }
 
 /// Adapts [AuthBloc] stream to a [ChangeNotifier] for GoRouter's
-/// `refreshListenable`.
-class _AuthBlocListenable extends ChangeNotifier {
-  _AuthBlocListenable(AuthBloc authBloc) {
+/// `refreshListenable`. Also exposes [refresh] for manual triggers
+/// (e.g. after session restore updates SharedPreferences).
+class RouterRefreshNotifier extends ChangeNotifier {
+  RouterRefreshNotifier(AuthBloc authBloc) {
     _subscription = authBloc.stream.listen((_) => notifyListeners());
   }
 
   late final StreamSubscription<AuthState> _subscription;
+
+  /// Manually trigger a router re-evaluation.
+  void refresh() => notifyListeners();
 
   @override
   void dispose() {
