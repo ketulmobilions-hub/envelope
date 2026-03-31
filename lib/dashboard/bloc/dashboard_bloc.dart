@@ -38,6 +38,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     on<_DashboardStreamError>(_onStreamError);
     on<DashboardRefreshRequested>(_onRefreshRequested);
     on<QuickAllocationRequested>(_onQuickAllocationRequested);
+    on<BudgetDeleteRequested>(_onBudgetDeleteRequested);
   }
 
   final BudgetRepository _budgetRepository;
@@ -411,6 +412,23 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         state.copyWith(
           status: DashboardStatus.error,
           error: DashboardError.allocationFailed,
+        ),
+      );
+      emit(state.copyWith(status: DashboardStatus.loaded, error: null));
+    }
+  }
+
+  Future<void> _onBudgetDeleteRequested(
+    BudgetDeleteRequested event,
+    Emitter<DashboardState> emit,
+  ) async {
+    try {
+      await _budgetRepository.deleteBudget(_budgetId);
+    } on BudgetException {
+      emit(
+        state.copyWith(
+          status: DashboardStatus.error,
+          error: DashboardError.loadFailed,
         ),
       );
       emit(state.copyWith(status: DashboardStatus.loaded, error: null));

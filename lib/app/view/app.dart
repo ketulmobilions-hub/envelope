@@ -1,13 +1,20 @@
+import 'dart:async';
+
 import 'package:account_repository/account_repository.dart';
 import 'package:auth_repository/auth_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
+import 'package:envelope_api_client/envelope_api_client.dart';
+import 'package:envelope_local_storage/envelope_local_storage.dart';
 import 'package:envelope/app/routes/routes.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/notifications/services/fcm_service.dart';
 import 'package:envelope/sync/sync.dart';
 import 'package:envelope/theme/theme.dart';
 import 'package:envelope_repository/envelope_repository.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:goal_repository/goal_repository.dart';
@@ -33,6 +40,8 @@ class App extends StatelessWidget {
     required this.subscriptionRepository,
     required this.syncRepository,
     required this.sharedPreferences,
+    required this.apiClient,
+    required this.localDatabase,
     super.key,
   });
 
@@ -48,6 +57,8 @@ class App extends StatelessWidget {
   final SubscriptionRepository subscriptionRepository;
   final SyncRepository syncRepository;
   final SharedPreferences sharedPreferences;
+  final EnvelopeApiClient apiClient;
+  final AppDatabase localDatabase;
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +76,8 @@ class App extends StatelessWidget {
         RepositoryProvider.value(value: subscriptionRepository),
         RepositoryProvider.value(value: syncRepository),
         RepositoryProvider<SharedPreferences>.value(value: sharedPreferences),
+        RepositoryProvider.value(value: apiClient),
+        RepositoryProvider.value(value: localDatabase),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -77,8 +90,76 @@ class App extends StatelessWidget {
                   ..add(const SyncStarted()),
           ),
         ],
-        child: AppView(sharedPreferences: sharedPreferences),
+        child: _FcmAuthListener(
+          notificationRepository: notificationRepository,
+          child: AppView(sharedPreferences: sharedPreferences),
+        ),
       ),
+    );
+  }
+}
+
+/// Listens to auth state changes and manages FCM token lifecycle.
+class _FcmAuthListener extends StatefulWidget {
+  const _FcmAuthListener({
+    required this.notificationRepository,
+    required this.child,
+  });
+
+  final NotificationRepository notificationRepository;
+  final Widget child;
+
+  @override
+  State<_FcmAuthListener> createState() => _FcmAuthListenerState();
+}
+
+class _FcmAuthListenerState extends State<_FcmAuthListener> {
+  final FcmService _fcmService = FcmService();
+
+  String _currentPlatform() {
+    if (kIsWeb) return 'web';
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return 'android';
+      case TargetPlatform.iOS:
+        return 'ios';
+      case TargetPlatform.fuchsia:
+      case TargetPlatform.linux:
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+        return defaultTargetPlatform.name;
+    }
+  }
+
+  void _onAuthStateChanged(BuildContext context, AuthState state) {
+    if (state.status == AuthStatus.authenticated && state.user != null) {
+      unawaited(
+        _fcmService.initialize(
+          userId: state.user!.id,
+          repository: widget.notificationRepository,
+          platform: _currentPlatform(),
+        ),
+      );
+    } else if (state.status == AuthStatus.unauthenticated) {
+      unawaited(
+        _fcmService.unregisterCurrentToken(
+          repository: widget.notificationRepository,
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    unawaited(_fcmService.dispose());
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<AuthBloc, AuthState>(
+      listener: _onAuthStateChanged,
+      child: widget.child,
     );
   }
 }
@@ -98,6 +179,14 @@ class _AppViewState extends State<AppView> {
   @override
   void initState() {
     super.initState();
+    // Enable edge-to-edge rendering on Android.
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarDividerColor: Colors.transparent,
+      ),
+    );
     final authBloc = context.read<AuthBloc>();
     _router = createRouter(
       authBloc: authBloc,
@@ -113,11 +202,31 @@ class _AppViewState extends State<AppView> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      theme: AppTheme.light,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      routerConfig: _router,
+    return BlocBuilder<AuthBloc, AuthState>(
+      buildWhen: (prev, curr) => prev.user?.themeMode != curr.user?.themeMode,
+      builder: (context, authState) {
+        return MaterialApp.router(
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: _themeModeFromString(
+            authState.user?.themeMode ?? 'system',
+          ),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: _router,
+        );
+      },
     );
+  }
+}
+
+ThemeMode _themeModeFromString(String mode) {
+  switch (mode) {
+    case 'light':
+      return ThemeMode.light;
+    case 'dark':
+      return ThemeMode.dark;
+    default:
+      return ThemeMode.system;
   }
 }

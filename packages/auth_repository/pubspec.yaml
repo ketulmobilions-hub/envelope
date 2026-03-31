@@ -7,6 +7,7 @@ environment:
   sdk: ^3.11.0
 
 dependencies:
+  async: ^2.11.0
   envelope_api_client:
     path: ../envelope_api_client
   freezed_annotation: ^3.0.0

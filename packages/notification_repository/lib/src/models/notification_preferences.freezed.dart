@@ -21,6 +21,7 @@ mixin _$NotificationPreferences {
   bool get dailyLoggingReminder;
   bool get recurringTransactionAlerts;
   bool get sharedBudgetActivity;
+  bool get weeklySummary;
 
   /// Create a copy of NotificationPreferences
   /// with the given fields replaced by the non-null parameter values.
@@ -58,7 +59,9 @@ mixin _$NotificationPreferences {
                 other.recurringTransactionAlerts ==
                     recurringTransactionAlerts) &&
             (identical(other.sharedBudgetActivity, sharedBudgetActivity) ||
-                other.sharedBudgetActivity == sharedBudgetActivity));
+                other.sharedBudgetActivity == sharedBudgetActivity) &&
+            (identical(other.weeklySummary, weeklySummary) ||
+                other.weeklySummary == weeklySummary));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -73,11 +76,12 @@ mixin _$NotificationPreferences {
     dailyLoggingReminder,
     recurringTransactionAlerts,
     sharedBudgetActivity,
+    weeklySummary,
   );
 
   @override
   String toString() {
-    return 'NotificationPreferences(userId: $userId, pushEnabled: $pushEnabled, emailEnabled: $emailEnabled, overspendAlerts: $overspendAlerts, billReminders: $billReminders, dailyLoggingReminder: $dailyLoggingReminder, recurringTransactionAlerts: $recurringTransactionAlerts, sharedBudgetActivity: $sharedBudgetActivity)';
+    return 'NotificationPreferences(userId: $userId, pushEnabled: $pushEnabled, emailEnabled: $emailEnabled, overspendAlerts: $overspendAlerts, billReminders: $billReminders, dailyLoggingReminder: $dailyLoggingReminder, recurringTransactionAlerts: $recurringTransactionAlerts, sharedBudgetActivity: $sharedBudgetActivity, weeklySummary: $weeklySummary)';
   }
 }
 
@@ -97,6 +101,7 @@ abstract mixin class $NotificationPreferencesCopyWith<$Res> {
     bool dailyLoggingReminder,
     bool recurringTransactionAlerts,
     bool sharedBudgetActivity,
+    bool weeklySummary,
   });
 }
 
@@ -121,6 +126,7 @@ class _$NotificationPreferencesCopyWithImpl<$Res>
     Object? dailyLoggingReminder = null,
     Object? recurringTransactionAlerts = null,
     Object? sharedBudgetActivity = null,
+    Object? weeklySummary = null,
   }) {
     return _then(
       _self.copyWith(
@@ -155,6 +161,10 @@ class _$NotificationPreferencesCopyWithImpl<$Res>
         sharedBudgetActivity: null == sharedBudgetActivity
             ? _self.sharedBudgetActivity
             : sharedBudgetActivity // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        weeklySummary: null == weeklySummary
+            ? _self.weeklySummary
+            : weeklySummary // ignore: cast_nullable_to_non_nullable
                   as bool,
       ),
     );
@@ -263,6 +273,7 @@ extension NotificationPreferencesPatterns on NotificationPreferences {
       bool dailyLoggingReminder,
       bool recurringTransactionAlerts,
       bool sharedBudgetActivity,
+      bool weeklySummary,
     )?
     $default, {
     required TResult orElse(),
@@ -279,6 +290,7 @@ extension NotificationPreferencesPatterns on NotificationPreferences {
           _that.dailyLoggingReminder,
           _that.recurringTransactionAlerts,
           _that.sharedBudgetActivity,
+          _that.weeklySummary,
         );
       case _:
         return orElse();
@@ -309,6 +321,7 @@ extension NotificationPreferencesPatterns on NotificationPreferences {
       bool dailyLoggingReminder,
       bool recurringTransactionAlerts,
       bool sharedBudgetActivity,
+      bool weeklySummary,
     )
     $default,
   ) {
@@ -324,6 +337,7 @@ extension NotificationPreferencesPatterns on NotificationPreferences {
           _that.dailyLoggingReminder,
           _that.recurringTransactionAlerts,
           _that.sharedBudgetActivity,
+          _that.weeklySummary,
         );
       case _:
         throw StateError('Unexpected subclass');
@@ -353,6 +367,7 @@ extension NotificationPreferencesPatterns on NotificationPreferences {
       bool dailyLoggingReminder,
       bool recurringTransactionAlerts,
       bool sharedBudgetActivity,
+      bool weeklySummary,
     )?
     $default,
   ) {
@@ -368,6 +383,7 @@ extension NotificationPreferencesPatterns on NotificationPreferences {
           _that.dailyLoggingReminder,
           _that.recurringTransactionAlerts,
           _that.sharedBudgetActivity,
+          _that.weeklySummary,
         );
       case _:
         return null;
@@ -387,6 +403,7 @@ class _NotificationPreferences implements NotificationPreferences {
     this.dailyLoggingReminder = true,
     this.recurringTransactionAlerts = true,
     this.sharedBudgetActivity = true,
+    this.weeklySummary = true,
   });
   factory _NotificationPreferences.fromJson(Map<String, dynamic> json) =>
       _$NotificationPreferencesFromJson(json);
@@ -414,6 +431,9 @@ class _NotificationPreferences implements NotificationPreferences {
   @override
   @JsonKey()
   final bool sharedBudgetActivity;
+  @override
+  @JsonKey()
+  final bool weeklySummary;
 
   /// Create a copy of NotificationPreferences
   /// with the given fields replaced by the non-null parameter values.
@@ -454,7 +474,9 @@ class _NotificationPreferences implements NotificationPreferences {
                 other.recurringTransactionAlerts ==
                     recurringTransactionAlerts) &&
             (identical(other.sharedBudgetActivity, sharedBudgetActivity) ||
-                other.sharedBudgetActivity == sharedBudgetActivity));
+                other.sharedBudgetActivity == sharedBudgetActivity) &&
+            (identical(other.weeklySummary, weeklySummary) ||
+                other.weeklySummary == weeklySummary));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -469,11 +491,12 @@ class _NotificationPreferences implements NotificationPreferences {
     dailyLoggingReminder,
     recurringTransactionAlerts,
     sharedBudgetActivity,
+    weeklySummary,
   );
 
   @override
   String toString() {
-    return 'NotificationPreferences(userId: $userId, pushEnabled: $pushEnabled, emailEnabled: $emailEnabled, overspendAlerts: $overspendAlerts, billReminders: $billReminders, dailyLoggingReminder: $dailyLoggingReminder, recurringTransactionAlerts: $recurringTransactionAlerts, sharedBudgetActivity: $sharedBudgetActivity)';
+    return 'NotificationPreferences(userId: $userId, pushEnabled: $pushEnabled, emailEnabled: $emailEnabled, overspendAlerts: $overspendAlerts, billReminders: $billReminders, dailyLoggingReminder: $dailyLoggingReminder, recurringTransactionAlerts: $recurringTransactionAlerts, sharedBudgetActivity: $sharedBudgetActivity, weeklySummary: $weeklySummary)';
   }
 }
 
@@ -495,6 +518,7 @@ abstract mixin class _$NotificationPreferencesCopyWith<$Res>
     bool dailyLoggingReminder,
     bool recurringTransactionAlerts,
     bool sharedBudgetActivity,
+    bool weeklySummary,
   });
 }
 
@@ -519,6 +543,7 @@ class __$NotificationPreferencesCopyWithImpl<$Res>
     Object? dailyLoggingReminder = null,
     Object? recurringTransactionAlerts = null,
     Object? sharedBudgetActivity = null,
+    Object? weeklySummary = null,
   }) {
     return _then(
       _NotificationPreferences(
@@ -553,6 +578,10 @@ class __$NotificationPreferencesCopyWithImpl<$Res>
         sharedBudgetActivity: null == sharedBudgetActivity
             ? _self.sharedBudgetActivity
             : sharedBudgetActivity // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        weeklySummary: null == weeklySummary
+            ? _self.weeklySummary
+            : weeklySummary // ignore: cast_nullable_to_non_nullable
                   as bool,
       ),
     );

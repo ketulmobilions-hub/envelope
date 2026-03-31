@@ -9,6 +9,7 @@ import 'package:envelope/app/app.dart';
 import 'package:envelope_api_client/envelope_api_client.dart';
 import 'package:envelope_local_storage/envelope_local_storage.dart';
 import 'package:envelope_repository/envelope_repository.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/widgets.dart';
 import 'package:goal_repository/goal_repository.dart';
 import 'package:notification_repository/notification_repository.dart';
@@ -42,6 +43,7 @@ Future<void> bootstrap({
   required String supabaseAnonKey,
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
 
   FlutterError.onError = (details) {
     log(details.exceptionAsString(), stackTrace: details.stack);
@@ -128,6 +130,8 @@ Future<void> bootstrap({
       subscriptionRepository: subscriptionRepository,
       syncRepository: syncRepository,
       sharedPreferences: prefs,
+      apiClient: apiClient,
+      localDatabase: localDatabase,
     ),
   );
 }

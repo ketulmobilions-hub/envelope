@@ -1808,5 +1808,319 @@
     "realtimeChangeReceived": "Budget updated by a collaborator",
     "@realtimeChangeReceived": {
         "description": "SnackBar message when a remote collaborator makes changes"
-    }
+    },
+    "reportsTitle": "Reports",
+    "@reportsTitle": {
+        "description": "Title for the reports hub page"
+    },
+    "reportsSubtitle": "Analyze your spending and track progress",
+    "@reportsSubtitle": {
+        "description": "Subtitle for the reports hub page"
+    },
+    "reportsSpendingTitle": "Spending",
+    "@reportsSpendingTitle": {
+        "description": "Title for the spending report card"
+    },
+    "reportsSpendingSubtitle": "See where your money goes",
+    "@reportsSpendingSubtitle": {
+        "description": "Subtitle for the spending report card"
+    },
+    "reportsTrendsTitle": "Trends",
+    "@reportsTrendsTitle": {
+        "description": "Title for the trends report card"
+    },
+    "reportsTrendsSubtitle": "Income vs expenses over time",
+    "@reportsTrendsSubtitle": {
+        "description": "Subtitle for the trends report card"
+    },
+    "reportsBudgetVsActualTitle": "Budget vs Actual",
+    "@reportsBudgetVsActualTitle": {
+        "description": "Title for the budget vs actual report card"
+    },
+    "reportsBudgetVsActualSubtitle": "Compare planned to actual spending",
+    "@reportsBudgetVsActualSubtitle": {
+        "description": "Subtitle for the budget vs actual report card"
+    },
+    "reportsNetWorthTitle": "Net Worth",
+    "@reportsNetWorthTitle": {
+        "description": "Title for the net worth report card"
+    },
+    "reportsNetWorthSubtitle": "Track your financial position",
+    "@reportsNetWorthSubtitle": {
+        "description": "Subtitle for the net worth report card"
+    },
+    "reportsExportTitle": "Export",
+    "@reportsExportTitle": {
+        "description": "Title for the export report page"
+    },
+    "reportsExportSubtitle": "Download reports as CSV or PDF",
+    "@reportsExportSubtitle": {
+        "description": "Subtitle for the export card"
+    },
+    "reportsDateRange": "Date Range",
+    "@reportsDateRange": {
+        "description": "Label for date range selector"
+    },
+    "reportsMonths": "Months",
+    "@reportsMonths": {
+        "description": "Label for months selector"
+    },
+    "reportsPeriod": "Period",
+    "@reportsPeriod": {
+        "description": "Label for budget period selector"
+    },
+    "reportsNoData": "No data available",
+    "@reportsNoData": {
+        "description": "Message when no report data is available"
+    },
+    "reportsNoDataSubtitle": "Add some transactions to see your reports",
+    "@reportsNoDataSubtitle": {
+        "description": "Subtitle for the empty report state"
+    },
+    "reportsErrorLoad": "Failed to load report",
+    "@reportsErrorLoad": {
+        "description": "Error message when report loading fails"
+    },
+    "reportsErrorExport": "Failed to export report",
+    "@reportsErrorExport": {
+        "description": "Error message when report export fails"
+    },
+    "reportsTotalSpent": "Total Spent",
+    "@reportsTotalSpent": {
+        "description": "Label for total spent amount"
+    },
+    "reportsTotalIncome": "Total Income",
+    "@reportsTotalIncome": {
+        "description": "Label for total income amount"
+    },
+    "reportsIncome": "Income",
+    "@reportsIncome": {
+        "description": "Label for income"
+    },
+    "reportsExpenses": "Expenses",
+    "@reportsExpenses": {
+        "description": "Label for expenses"
+    },
+    "reportsNetSavings": "Net Savings",
+    "@reportsNetSavings": {
+        "description": "Label for net savings"
+    },
+    "reportsAllocated": "Allocated",
+    "@reportsAllocated": {
+        "description": "Label for allocated amount"
+    },
+    "reportsSpent": "Spent",
+    "@reportsSpent": {
+        "description": "Label for spent amount"
+    },
+    "reportsRemaining": "Remaining",
+    "@reportsRemaining": {
+        "description": "Label for remaining amount"
+    },
+    "reportsOverBudget": "Over Budget",
+    "@reportsOverBudget": {
+        "description": "Label for over budget indicator"
+    },
+    "reportsUnderBudget": "Under Budget",
+    "@reportsUnderBudget": {
+        "description": "Label for under budget indicator"
+    },
+    "reportsAssets": "Assets",
+    "@reportsAssets": {
+        "description": "Label for assets"
+    },
+    "reportsLiabilities": "Liabilities",
+    "@reportsLiabilities": {
+        "description": "Label for liabilities"
+    },
+    "reportsNetWorth": "Net Worth",
+    "@reportsNetWorth": {
+        "description": "Label for net worth"
+    },
+    "reportsRecordSnapshot": "Record Snapshot",
+    "@reportsRecordSnapshot": {
+        "description": "Button text for recording net worth snapshot"
+    },
+    "reportsSnapshotRecorded": "Net worth snapshot recorded",
+    "@reportsSnapshotRecorded": {
+        "description": "Success message after recording snapshot"
+    },
+    "reportsExportCsv": "CSV",
+    "@reportsExportCsv": {
+        "description": "Label for CSV export format"
+    },
+    "reportsExportPdf": "PDF",
+    "@reportsExportPdf": {
+        "description": "Label for PDF export format"
+    },
+    "reportsExportFormat": "Format",
+    "@reportsExportFormat": {
+        "description": "Label for export format selector"
+    },
+    "reportsExportReportType": "Report Type",
+    "@reportsExportReportType": {
+        "description": "Label for report type selector on export page"
+    },
+    "reportsShare": "Share",
+    "@reportsShare": {
+        "description": "Button text for sharing exported report"
+    },
+    "reportsExportSuccess": "Report exported successfully",
+    "@reportsExportSuccess": {
+        "description": "Success message after exporting report"
+    },
+    "notificationSettingsTitle": "Notification Settings",
+    "@notificationSettingsTitle": {
+        "description": "Title for the notification settings page"
+    },
+    "notificationPushSectionTitle": "Push Notifications",
+    "@notificationPushSectionTitle": {
+        "description": "Section header for push notification settings"
+    },
+    "notificationPushEnabled": "Enable Push Notifications",
+    "@notificationPushEnabled": {
+        "description": "Toggle label for enabling push notifications"
+    },
+    "notificationEmailSectionTitle": "Email Notifications",
+    "@notificationEmailSectionTitle": {
+        "description": "Section header for email notification settings"
+    },
+    "notificationEmailEnabled": "Enable Email Notifications",
+    "@notificationEmailEnabled": {
+        "description": "Toggle label for enabling email notifications"
+    },
+    "notificationOverspendAlerts": "Overspend Alerts",
+    "@notificationOverspendAlerts": {
+        "description": "Toggle label for overspend alert notifications"
+    },
+    "notificationBillReminders": "Bill Reminders",
+    "@notificationBillReminders": {
+        "description": "Toggle label for bill reminder notifications"
+    },
+    "notificationDailyLoggingReminder": "Daily Logging Reminder",
+    "@notificationDailyLoggingReminder": {
+        "description": "Toggle label for daily logging reminder notifications"
+    },
+    "notificationRecurringAlerts": "Recurring Transaction Alerts",
+    "@notificationRecurringAlerts": {
+        "description": "Toggle label for recurring transaction alert notifications"
+    },
+    "notificationSharedBudgetActivity": "Shared Budget Activity",
+    "@notificationSharedBudgetActivity": {
+        "description": "Toggle label for shared budget activity notifications"
+    },
+    "notificationPermissionDenied": "Notification permission was denied. Please enable it in your device settings.",
+    "@notificationPermissionDenied": {
+        "description": "Message when notification permission is denied"
+    },
+    "notificationError": "Failed to load notification preferences.",
+    "@notificationError": {
+        "description": "Error message when loading notification preferences fails"
+    },
+    "notificationWeeklySummary": "Weekly Budget Summary",
+    "@notificationWeeklySummary": {
+        "description": "Toggle label for weekly budget summary email notifications"
+    },
+    "notificationEmailBillReminders": "Bill Reminder Emails",
+    "@notificationEmailBillReminders": {
+        "description": "Toggle label for bill reminder email notifications"
+    },
+    "settingsTitle": "Settings",
+    "@settingsTitle": { "description": "Settings page title" },
+    "settingsProfile": "Profile",
+    "@settingsProfile": { "description": "Profile section header" },
+    "settingsDisplayName": "Display Name",
+    "@settingsDisplayName": { "description": "Display name label" },
+    "settingsEmail": "Email",
+    "@settingsEmail": { "description": "Email label" },
+    "settingsChangePassword": "Change Password",
+    "@settingsChangePassword": { "description": "Change password option" },
+    "settingsNewPassword": "New Password",
+    "@settingsNewPassword": { "description": "New password field label" },
+    "settingsConfirmPassword": "Confirm Password",
+    "@settingsConfirmPassword": { "description": "Confirm password field label" },
+    "settingsPasswordMismatch": "Passwords must match and be at least 6 characters",
+    "@settingsPasswordMismatch": { "description": "Password validation error" },
+    "settingsPreferences": "Preferences",
+    "@settingsPreferences": { "description": "Preferences section header" },
+    "settingsBaseCurrency": "Base Currency",
+    "@settingsBaseCurrency": { "description": "Base currency option" },
+    "settingsCurrencyWarning": "Changing the base currency will affect how amounts are displayed. Existing transactions will not be converted.",
+    "@settingsCurrencyWarning": { "description": "Warning when changing currency" },
+    "settingsTheme": "Theme",
+    "@settingsTheme": { "description": "Theme option" },
+    "settingsThemeLight": "Light",
+    "@settingsThemeLight": { "description": "Light theme option" },
+    "settingsThemeDark": "Dark",
+    "@settingsThemeDark": { "description": "Dark theme option" },
+    "settingsThemeSystem": "System",
+    "@settingsThemeSystem": { "description": "System theme option" },
+    "settingsNotifications": "Notifications",
+    "@settingsNotifications": { "description": "Notifications option" },
+    "settingsData": "Data",
+    "@settingsData": { "description": "Data section header" },
+    "settingsExportData": "Export Data",
+    "@settingsExportData": { "description": "Export data option" },
+    "settingsAccount": "Account",
+    "@settingsAccount": { "description": "Account section header" },
+    "settingsSignOut": "Sign Out",
+    "@settingsSignOut": { "description": "Sign out option" },
+    "settingsSignOutConfirmation": "Are you sure you want to sign out?",
+    "@settingsSignOutConfirmation": { "description": "Sign out confirmation" },
+    "settingsDeleteAccount": "Delete Account",
+    "@settingsDeleteAccount": { "description": "Delete account option" },
+    "settingsDeleteConfirmation": "This will permanently delete your account and all associated data. This action cannot be undone.",
+    "@settingsDeleteConfirmation": { "description": "Delete account warning" },
+    "settingsTypeDelete": "Type DELETE to confirm",
+    "@settingsTypeDelete": { "description": "Delete confirmation hint" },
+    "settingsAppVersion": "App Version",
+    "@settingsAppVersion": { "description": "App version label" },
+    "settingsPrivacyPolicy": "Privacy Policy",
+    "@settingsPrivacyPolicy": { "description": "Privacy policy link" },
+    "settingsTermsOfService": "Terms of Service",
+    "@settingsTermsOfService": { "description": "Terms of service link" },
+    "settingsCancel": "Cancel",
+    "@settingsCancel": { "description": "Cancel button" },
+    "settingsSave": "Save",
+    "@settingsSave": { "description": "Save button" },
+    "settingsProfileUpdated": "Profile updated",
+    "@settingsProfileUpdated": { "description": "Success message after profile update" },
+    "settingsCurrencyUpdated": "Base currency updated",
+    "@settingsCurrencyUpdated": { "description": "Success message after currency change" },
+    "settingsPasswordChanged": "Password changed successfully",
+    "@settingsPasswordChanged": { "description": "Success message after password change" },
+    "settingsUpdateFailed": "Failed to update. Please try again.",
+    "@settingsUpdateFailed": { "description": "Generic update error" },
+    "settingsPasswordChangeFailed": "Failed to change password. Please try again.",
+    "@settingsPasswordChangeFailed": { "description": "Password change error" },
+    "settingsDeleteFailed": "Failed to delete account. Please try again.",
+    "@settingsDeleteFailed": { "description": "Account deletion error" },
+    "settingsPasswordTooShort": "Password must be at least 6 characters",
+    "@settingsPasswordTooShort": { "description": "Password too short error" },
+    "settingsExportAllData": "Export All Data (JSON)",
+    "@settingsExportAllData": { "description": "Export all user data as JSON" },
+    "settingsExportAllDataSubtitle": "Download a complete copy of your data (GDPR)",
+    "@settingsExportAllDataSubtitle": { "description": "Subtitle for GDPR data export" },
+    "settingsDataExported": "Data exported successfully",
+    "@settingsDataExported": { "description": "Success message after data export" },
+    "settingsDataExportFailed": "Failed to export data. Please try again.",
+    "@settingsDataExportFailed": { "description": "Data export error" },
+    "consentPrefix": "I agree to the ",
+    "@consentPrefix": { "description": "Consent checkbox prefix text" },
+    "consentPrivacyPolicy": "Privacy Policy",
+    "@consentPrivacyPolicy": { "description": "Privacy policy link text in consent" },
+    "consentAnd": " and ",
+    "@consentAnd": { "description": "And conjunction in consent text" },
+    "consentTermsOfService": "Terms of Service",
+    "@consentTermsOfService": { "description": "Terms of service link text in consent" },
+    "budgetDeleteBudget": "Delete Budget",
+    "@budgetDeleteBudget": { "description": "Delete budget menu option" },
+    "budgetDeleteConfirmMessage": "This will permanently delete this budget and all its accounts, envelopes, and transactions. This action cannot be undone.",
+    "@budgetDeleteConfirmMessage": { "description": "Budget deletion warning" },
+    "envelopesArchived": "Envelope archived",
+    "@envelopesArchived": { "description": "Snackbar message after archiving" },
+    "envelopesUnarchived": "Envelope unarchived",
+    "@envelopesUnarchived": { "description": "Snackbar message after unarchiving" },
+    "envelopesDeleted": "Envelope deleted",
+    "@envelopesDeleted": { "description": "Snackbar message after deleting envelope" }
 }

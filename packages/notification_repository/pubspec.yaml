@@ -9,6 +9,7 @@ environment:
 dependencies:
   envelope_api_client:
     path: ../envelope_api_client
+  drift: ^2.26.0
   envelope_local_storage:
     path: ../envelope_local_storage
   freezed_annotation: ^3.0.0

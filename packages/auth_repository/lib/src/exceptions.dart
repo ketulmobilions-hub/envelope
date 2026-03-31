@@ -48,3 +48,13 @@ class EmailVerificationException extends AuthException {
 class UpdateProfileException extends AuthException {
   const UpdateProfileException(super.message);
 }
+
+/// Thrown during account deletion.
+class DeleteAccountException extends AuthException {
+  const DeleteAccountException(super.message);
+}
+
+/// Thrown during password change.
+class ChangePasswordException extends AuthException {
+  const ChangePasswordException(super.message);
+}

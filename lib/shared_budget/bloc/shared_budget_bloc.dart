@@ -12,9 +12,11 @@ class SharedBudgetBloc extends Bloc<SharedBudgetEvent, SharedBudgetState> {
     required SharingRepository sharingRepository,
     required String budgetId,
     required String currentUserId,
+    required String currentUserName,
   }) : _sharingRepository = sharingRepository,
        _budgetId = budgetId,
        _currentUserId = currentUserId,
+       _currentUserName = currentUserName,
        super(const SharedBudgetState()) {
     on<SharedBudgetStarted>(_onStarted);
     on<SharedBudgetRefreshRequested>(_onRefreshRequested);
@@ -30,6 +32,7 @@ class SharedBudgetBloc extends Bloc<SharedBudgetEvent, SharedBudgetState> {
   final SharingRepository _sharingRepository;
   final String _budgetId;
   final String _currentUserId;
+  final String _currentUserName;
   StreamSubscription<List<BudgetMember>>? _membersSubscription;
 
   /// The budget ID this bloc is watching.
@@ -119,6 +122,7 @@ class SharedBudgetBloc extends Bloc<SharedBudgetEvent, SharedBudgetState> {
       await _sharingRepository.inviteMember(
         budgetId: _budgetId,
         email: event.email,
+        inviterName: _currentUserName,
         role: event.role,
       );
       await _sharingRepository.refreshMembers(_budgetId);

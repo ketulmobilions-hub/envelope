@@ -27,6 +27,7 @@ part 'app_database.g.dart';
     DebtAccounts,
     ActivityLog,
     NotificationPreferences,
+    PushTokens,
     NetWorthSnapshots,
     SyncMetadata,
   ],
@@ -48,7 +49,16 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 6;
+
+  /// Deletes all rows from every table. Used for account deletion / GDPR.
+  Future<void> clearAllTables() async {
+    await transaction(() async {
+      for (final table in allTables) {
+        await delete(table).go();
+      }
+    });
+  }
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -82,6 +92,13 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 4) {
             await m.addColumn(accounts, accounts.isOnBudget);
+          }
+          if (from < 5) {
+            await m.createTable(pushTokens);
+          }
+          if (from < 6) {
+            await m.addColumn(transactions, transactions.deletedAt);
+            await m.addColumn(envelopes, envelopes.deletedAt);
           }
         },
       );

@@ -161,9 +161,9 @@ class TransactionRepository {
     }
   }
 
-  /// Deletes a transaction by its [id].
+  /// Soft-deletes a transaction by its [id].
   ///
-  /// Removes from the API first. Local cache removal is best-effort.
+  /// Sets `deleted_at` on the API. Local cache removal is best-effort.
   Future<void> deleteTransaction(String id) async {
     _beginLocalWrite();
     try {
@@ -176,6 +176,18 @@ class TransactionRepository {
       await _localDatabase.transactionsDao.deleteTransaction(id);
     } on Exception {
       // Stale local entry will be cleaned up on next refresh.
+    }
+    _endLocalWrite();
+  }
+
+  /// Restores a soft-deleted transaction by clearing `deleted_at`.
+  Future<void> restoreTransaction(String id) async {
+    _beginLocalWrite();
+    try {
+      await _apiClient.transactions.restoreTransaction(id);
+    } on EnvelopeApiException catch (e) {
+      _endLocalWrite();
+      throw TransactionException('Failed to restore transaction', error: e);
     }
     _endLocalWrite();
   }

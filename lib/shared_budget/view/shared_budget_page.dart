@@ -29,6 +29,9 @@ class SharedBudgetPage extends StatelessWidget {
         sharingRepository: context.read<SharingRepository>(),
         budgetId: budgetId,
         currentUserId: user.id,
+        currentUserName: user.displayName.isNotEmpty
+            ? user.displayName
+            : user.email,
       )..add(const SharedBudgetStarted()),
       child: SharedBudgetView(budgetId: budgetId),
     );

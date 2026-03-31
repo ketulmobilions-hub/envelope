@@ -37,6 +37,7 @@ class _SignUpViewState extends State<SignUpView> {
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
+  bool _consentAccepted = false;
 
   @override
   void dispose() {
@@ -174,7 +175,64 @@ class _SignUpViewState extends State<SignUpView> {
                         },
                         onFieldSubmitted: (_) => _submit(),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Checkbox(
+                            value: _consentAccepted,
+                            onChanged: (value) {
+                              setState(() {
+                                _consentAccepted = value ?? false;
+                              });
+                            },
+                          ),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _consentAccepted = !_consentAccepted;
+                                });
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 12),
+                                child: Text.rich(
+                                  TextSpan(
+                                    text: l10n.consentPrefix,
+                                    children: [
+                                      TextSpan(
+                                        text: l10n.consentPrivacyPolicy,
+                                        style: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
+                                          decoration:
+                                              TextDecoration.underline,
+                                        ),
+                                      ),
+                                      TextSpan(text: l10n.consentAnd),
+                                      TextSpan(
+                                        text: l10n.consentTermsOfService,
+                                        style: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
+                                          decoration:
+                                              TextDecoration.underline,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
                       BlocBuilder<SignUpCubit, SignUpState>(
                         buildWhen: (p, c) => p.status != c.status,
                         builder: (context, state) {
@@ -184,7 +242,9 @@ class _SignUpViewState extends State<SignUpView> {
                           return SizedBox(
                             width: double.infinity,
                             child: FilledButton(
-                              onPressed: isSubmitting ? null : _submit,
+                              onPressed: isSubmitting || !_consentAccepted
+                                  ? null
+                                  : _submit,
                               child: isSubmitting
                                   ? const SizedBox.square(
                                       dimension: 20,

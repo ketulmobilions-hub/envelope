@@ -18,6 +18,7 @@ _NotificationPreferencesDto _$NotificationPreferencesDtoFromJson(
   recurringTransactionAlerts:
       json['recurring_transaction_alerts'] as bool? ?? true,
   sharedBudgetActivity: json['shared_budget_activity'] as bool? ?? true,
+  weeklySummary: json['weekly_summary'] as bool? ?? true,
 );
 
 Map<String, dynamic> _$NotificationPreferencesDtoToJson(
@@ -31,4 +32,5 @@ Map<String, dynamic> _$NotificationPreferencesDtoToJson(
   'daily_logging_reminder': instance.dailyLoggingReminder,
   'recurring_transaction_alerts': instance.recurringTransactionAlerts,
   'shared_budget_activity': instance.sharedBudgetActivity,
+  'weekly_summary': instance.weeklySummary,
 };

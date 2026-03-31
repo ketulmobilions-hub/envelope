@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:async/async.dart';
 import 'package:auth_repository/src/exceptions.dart';
 import 'package:auth_repository/src/models/models.dart';
 import 'package:envelope_api_client/envelope_api_client.dart';
@@ -32,10 +33,15 @@ class AuthRepository {
   /// Cache of the current user to avoid unnecessary lookups.
   User _cachedUser = User.empty;
 
-  /// Stream of [User] which emits when the authentication state changes.
+  /// Controller to push profile updates through the user stream.
+  final _profileUpdateController = StreamController<User>.broadcast();
+
+  /// Stream of [User] which emits when the authentication state changes
+  /// or when the profile is updated locally.
   /// Emits [User.empty] if the user is not authenticated.
   Stream<User> get user {
-    return _apiClient.auth.onAuthStateChange.asyncMap((authState) async {
+    final authStream =
+        _apiClient.auth.onAuthStateChange.asyncMap((authState) async {
       final supabaseUser = authState.session?.user;
       if (supabaseUser == null) {
         _cachedUser = User.empty;
@@ -48,6 +54,8 @@ class AuthRepository {
       _cachedUser = user;
       return user;
     });
+
+    return StreamGroup.merge([authStream, _profileUpdateController.stream]);
   }
 
   /// Returns the current cached user.
@@ -76,7 +84,7 @@ class AuthRepository {
         );
       }
 
-      // Create user record in the users table.
+      // Create user record in the users table with consent tracking.
       final now = DateTime.now();
       await _apiClient.users.createUser(
         UserDto(
@@ -85,6 +93,9 @@ class AuthRepository {
           displayName: displayName,
           createdAt: now,
           updatedAt: now,
+          privacyAcceptedAt: now,
+          termsAcceptedAt: now,
+          consentVersion: '1.0',
         ),
       );
     } on SignUpWithEmailAndPasswordException {
@@ -296,7 +307,7 @@ class AuthRepository {
 
       await _apiClient.users.updateUser(updatedDto);
 
-      // Update the cached user.
+      // Update the cached user and push through the stream.
       _cachedUser = User(
         id: updatedDto.id,
         email: updatedDto.email,
@@ -307,11 +318,54 @@ class AuthRepository {
         themeMode: updatedDto.themeMode,
         accentColor: updatedDto.accentColor,
       );
+      _profileUpdateController.add(_cachedUser);
     } on UpdateProfileException {
       rethrow;
     } on Exception {
       throw const UpdateProfileException(
         'An unexpected error occurred while updating profile.',
+      );
+    }
+  }
+
+  /// Changes the current user's password.
+  Future<void> changePassword(String newPassword) async {
+    try {
+      await _apiClient.auth.auth.updateUser(
+        supabase.UserAttributes(password: newPassword),
+      );
+    } on supabase.AuthException catch (e) {
+      throw ChangePasswordException(e.message);
+    } on Exception {
+      throw const ChangePasswordException(
+        'An unexpected error occurred while changing password.',
+      );
+    }
+  }
+
+  /// Deletes the current user's account via the server-side Edge Function
+  /// (which handles both data cascade and auth user deletion) and signs out.
+  ///
+  /// Callers should clear the local database before or after calling this.
+  Future<void> deleteAccount() async {
+    try {
+      final supabaseUser = _apiClient.auth.currentUser;
+      if (supabaseUser == null) {
+        throw const DeleteAccountException('No authenticated user found.');
+      }
+      await _apiClient.users.invokeDeleteAccount();
+      _cachedUser = User.empty;
+      // Sign out locally (session is already invalidated server-side).
+      try {
+        await _apiClient.auth.signOut();
+      } on Exception {
+        // If sign-out fails, that's OK — the auth user is already deleted.
+      }
+    } on DeleteAccountException {
+      rethrow;
+    } on Exception {
+      throw const DeleteAccountException(
+        'An unexpected error occurred while deleting account.',
       );
     }
   }

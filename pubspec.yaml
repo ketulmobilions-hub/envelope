@@ -23,6 +23,9 @@ dependencies:
   envelope_repository:
     path: packages/envelope_repository
   equatable: ^2.0.7
+  firebase_core: ^3.12.1
+  firebase_messaging: ^15.2.5
+  fl_chart: ^0.70.2
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.1
@@ -35,6 +38,8 @@ dependencies:
   intl: ^0.20.2
   notification_repository:
     path: packages/notification_repository
+  package_info_plus: ^8.0.0
+  path_provider: ^2.1.0
   report_repository:
     path: packages/report_repository
   share_plus: ^10.1.4
@@ -48,6 +53,7 @@ dependencies:
     path: packages/sync_repository
   transaction_repository:
     path: packages/transaction_repository
+  url_launcher: ^6.2.0
   uuid: ^4.5.1
 
 dev_dependencies:
