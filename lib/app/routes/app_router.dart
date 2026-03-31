@@ -12,6 +12,7 @@ import 'package:envelope/recurring/recurring.dart';
 import 'package:envelope/reports/reports.dart';
 import 'package:envelope/settings/settings.dart';
 import 'package:envelope/shared_budget/shared_budget.dart';
+import 'package:envelope/shared_budget/view/redeem_invite_page.dart';
 import 'package:envelope/splash/splash.dart';
 import 'package:envelope/transactions/transactions.dart';
 import 'package:flutter/material.dart';
@@ -35,6 +36,7 @@ abstract final class AppRoutes {
   static const String reports = '/reports';
   static const String sharedBudget = '/sharedBudget';
   static const String settings = '/settings';
+  static const String redeemInvite = '/invite';
 }
 
 /// Creates the application [GoRouter] with auth-based redirects.
@@ -113,6 +115,13 @@ GoRouter createRouter({
         name: AppRoutes.onboarding,
         path: AppRoutes.onboarding,
         builder: (context, state) => const OnboardingPage(),
+      ),
+      GoRoute(
+        path: '${AppRoutes.redeemInvite}/:inviteId',
+        builder: (context, state) {
+          final inviteId = state.pathParameters['inviteId']!;
+          return RedeemInvitePage(inviteId: inviteId);
+        },
       ),
       // Shell route wraps tabs with persistent bottom nav.
       ShellRoute(

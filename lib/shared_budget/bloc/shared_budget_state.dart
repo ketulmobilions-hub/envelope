@@ -24,6 +24,7 @@ final class SharedBudgetState extends Equatable {
   const SharedBudgetState({
     this.status = SharedBudgetStatus.initial,
     this.members = const [],
+    this.pendingInvites = const [],
     this.error,
     this.success,
     this.generatedInviteLink,
@@ -31,6 +32,7 @@ final class SharedBudgetState extends Equatable {
 
   final SharedBudgetStatus status;
   final List<BudgetMember> members;
+  final List<BudgetInvite> pendingInvites;
   final SharedBudgetError? error;
   final SharedBudgetSuccess? success;
   final String? generatedInviteLink;
@@ -43,6 +45,7 @@ final class SharedBudgetState extends Equatable {
   SharedBudgetState copyWith({
     SharedBudgetStatus? status,
     List<BudgetMember>? members,
+    List<BudgetInvite>? pendingInvites,
     Object? error = _sentinel,
     Object? success = _sentinel,
     Object? generatedInviteLink = _sentinel,
@@ -50,6 +53,7 @@ final class SharedBudgetState extends Equatable {
     return SharedBudgetState(
       status: status ?? this.status,
       members: members ?? this.members,
+      pendingInvites: pendingInvites ?? this.pendingInvites,
       error: error == _sentinel
           ? this.error
           : error as SharedBudgetError?,
@@ -66,5 +70,5 @@ final class SharedBudgetState extends Equatable {
 
   @override
   List<Object?> get props =>
-      [status, members, error, success, generatedInviteLink];
+      [status, members, pendingInvites, error, success, generatedInviteLink];
 }
