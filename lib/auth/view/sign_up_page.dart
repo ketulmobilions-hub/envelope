@@ -274,6 +274,7 @@ class _SignUpViewState extends State<SignUpView> {
   }
 
   Future<void> _submit() async {
+    if (!_consentAccepted) return;
     if (_formKey.currentState?.validate() ?? false) {
       await context.read<SignUpCubit>().signUp(
         email: _emailController.text.trim(),
