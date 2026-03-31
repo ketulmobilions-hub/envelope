@@ -139,9 +139,7 @@ class SettingsCubit extends Cubit<SettingsState> {
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/envelope_data_export.json');
       await file.writeAsString(json);
-      await SharePlus.instance.share(
-        ShareParams(files: [XFile(file.path)]),
-      );
+      await Share.shareXFiles([XFile(file.path)]);
       emit(
         state.copyWith(
           status: SettingsStatus.success,

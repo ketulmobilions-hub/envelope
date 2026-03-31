@@ -14,6 +14,7 @@ import 'package:envelope/theme/theme.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:goal_repository/goal_repository.dart';
@@ -178,6 +179,14 @@ class _AppViewState extends State<AppView> {
   @override
   void initState() {
     super.initState();
+    // Enable edge-to-edge rendering on Android.
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarDividerColor: Colors.transparent,
+      ),
+    );
     final authBloc = context.read<AuthBloc>();
     _router = createRouter(
       authBloc: authBloc,
