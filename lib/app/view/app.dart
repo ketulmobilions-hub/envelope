@@ -90,9 +90,18 @@ class App extends StatelessWidget {
                   ..add(const SyncStarted()),
           ),
         ],
-        child: _FcmAuthListener(
-          notificationRepository: notificationRepository,
-          child: AppView(sharedPreferences: sharedPreferences),
+        child: Builder(
+          builder: (context) {
+            final notifier = RouterRefreshNotifier(context.read<AuthBloc>());
+            return _FcmAuthListener(
+              notificationRepository: notificationRepository,
+              routerNotifier: notifier,
+              child: AppView(
+                sharedPreferences: sharedPreferences,
+                routerNotifier: notifier,
+              ),
+            );
+          },
         ),
       ),
     );
@@ -103,10 +112,12 @@ class App extends StatelessWidget {
 class _FcmAuthListener extends StatefulWidget {
   const _FcmAuthListener({
     required this.notificationRepository,
+    required this.routerNotifier,
     required this.child,
   });
 
   final NotificationRepository notificationRepository;
+  final RouterRefreshNotifier routerNotifier;
   final Widget child;
 
   @override
@@ -121,6 +132,7 @@ class _FcmAuthListenerState extends State<_FcmAuthListener> {
   late final EnvelopeApiClient _apiClient;
   late final AppDatabase _db;
   late final AuthBloc _authBloc;
+  RouterRefreshNotifier get _routerNotifier => widget.routerNotifier;
 
   @override
   void initState() {
@@ -202,10 +214,8 @@ class _FcmAuthListenerState extends State<_FcmAuthListener> {
     }
 
     // Re-trigger router to act on updated flags.
-    final user = _authBloc.state.user;
-    if (user != null) {
-      _authBloc.add(AuthUserChanged(user));
-    }
+    _routerNotifier.refresh();
+    debugPrint('[Session] Router refresh triggered');
   }
 
   Future<void> _clearLocalData() async {
@@ -236,9 +246,14 @@ class _FcmAuthListenerState extends State<_FcmAuthListener> {
 }
 
 class AppView extends StatefulWidget {
-  const AppView({required this.sharedPreferences, super.key});
+  const AppView({
+    required this.sharedPreferences,
+    required this.routerNotifier,
+    super.key,
+  });
 
   final SharedPreferences sharedPreferences;
+  final RouterRefreshNotifier routerNotifier;
 
   @override
   State<AppView> createState() => _AppViewState();
@@ -262,6 +277,7 @@ class _AppViewState extends State<AppView> {
     _router = createRouter(
       authBloc: authBloc,
       sharedPreferences: widget.sharedPreferences,
+      refreshNotifier: widget.routerNotifier,
     );
   }
 
