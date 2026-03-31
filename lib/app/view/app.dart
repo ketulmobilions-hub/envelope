@@ -146,6 +146,23 @@ class _FcmAuthListenerState extends State<_FcmAuthListener> {
           repository: widget.notificationRepository,
         ),
       );
+      // Clear local data so a new sign-in starts fresh.
+      unawaited(_clearLocalData(context));
+    }
+  }
+
+  Future<void> _clearLocalData(BuildContext context) async {
+    try {
+      // Clear onboarding/budget flags so the next user gets onboarding.
+      final prefs = context.read<SharedPreferences>();
+      await prefs.remove('onboarding_complete');
+      await prefs.remove('active_budget_id');
+
+      // Clear all cached data from the local Drift database.
+      final db = context.read<AppDatabase>();
+      await db.clearAllTables();
+    } on Exception {
+      // Best-effort cleanup; don't crash on failure.
     }
   }
 
