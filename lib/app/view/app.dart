@@ -116,6 +116,21 @@ class _FcmAuthListener extends StatefulWidget {
 class _FcmAuthListenerState extends State<_FcmAuthListener> {
   final FcmService _fcmService = FcmService();
 
+  // Cached references to avoid context.read after async gaps.
+  late final SharedPreferences _prefs;
+  late final EnvelopeApiClient _apiClient;
+  late final AppDatabase _db;
+  late final AuthBloc _authBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _prefs = context.read<SharedPreferences>();
+    _apiClient = context.read<EnvelopeApiClient>();
+    _db = context.read<AppDatabase>();
+    _authBloc = context.read<AuthBloc>();
+  }
+
   String _currentPlatform() {
     if (kIsWeb) return 'web';
     switch (defaultTargetPlatform) {
@@ -145,74 +160,63 @@ class _FcmAuthListenerState extends State<_FcmAuthListener> {
       );
       // Chain after any pending clear so restore never races with it.
       _sessionTask = (_sessionTask ?? Future.value())
-          .then((_) => _restoreSessionForUser(context, state.user!.id));
+          .then((_) => _restoreSessionForUser(state.user!.id));
     } else if (state.status == AuthStatus.unauthenticated) {
       unawaited(
         _fcmService.unregisterCurrentToken(
           repository: widget.notificationRepository,
         ),
       );
-      _sessionTask = _clearLocalData(context);
+      _sessionTask = _clearLocalData();
     }
   }
 
-  /// On sign-in, clears stale flags, checks the server for budgets,
-  /// then sets the correct flags and re-triggers the router.
-  Future<void> _restoreSessionForUser(
-    BuildContext context,
-    String userId,
-  ) async {
+  /// On sign-in, checks the server for budgets, sets the correct flags,
+  /// and re-triggers the router.
+  Future<void> _restoreSessionForUser(String userId) async {
     try {
-      final prefs = context.read<SharedPreferences>();
-
       // Always start fresh — clear any leftover flags from a prior user.
-      await prefs.remove('onboarding_complete');
-      await prefs.remove('active_budget_id');
-      await prefs.remove('session_checked');
+      await _prefs.remove('onboarding_complete');
+      await _prefs.remove('active_budget_id');
+      await _prefs.remove('session_checked');
 
-      final apiClient = context.read<EnvelopeApiClient>();
-      final budgets = await apiClient.budgets.getBudgetsByOwner(userId);
+      debugPrint('[Session] Fetching budgets for $userId...');
+      final budgets = await _apiClient.budgets.getBudgetsByOwner(userId);
+      debugPrint('[Session] Found ${budgets.length} budgets');
 
       if (budgets.isNotEmpty) {
-        await prefs.setBool('onboarding_complete', true);
-        await prefs.setString('active_budget_id', budgets.first.id);
+        await _prefs.setBool('onboarding_complete', true);
+        await _prefs.setString('active_budget_id', budgets.first.id);
+        debugPrint('[Session] Restored: onboarding_complete=true, '
+            'budget=${budgets.first.id}');
+      } else {
+        debugPrint('[Session] New user — no budgets found');
       }
 
       // Mark session check as done so the router stops holding on splash.
-      await prefs.setBool('session_checked', true);
+      await _prefs.setBool('session_checked', true);
+    } on Exception catch (e) {
+      debugPrint('[Session] Error during restore: $e');
+      // On failure, still mark session_checked so user isn't stuck.
+      await _prefs.setBool('session_checked', true);
+    }
 
-      // Nudge the router to re-evaluate now that flags are set.
-      if (context.mounted) {
-        context.read<AuthBloc>().add(
-          AuthUserChanged(context.read<AuthBloc>().state.user!),
-        );
-      }
-    } on Exception {
-      // On failure, set session_checked so user isn't stuck on splash.
-      try {
-        context.read<SharedPreferences>().setBool('session_checked', true);
-        if (context.mounted) {
-          context.read<AuthBloc>().add(
-            AuthUserChanged(context.read<AuthBloc>().state.user!),
-          );
-        }
-      } on Exception {
-        // Give up — user will see onboarding.
-      }
+    // Re-trigger router to act on updated flags.
+    final user = _authBloc.state.user;
+    if (user != null) {
+      _authBloc.add(AuthUserChanged(user));
     }
   }
 
-  Future<void> _clearLocalData(BuildContext context) async {
+  Future<void> _clearLocalData() async {
     try {
-      final prefs = context.read<SharedPreferences>();
-      await prefs.remove('onboarding_complete');
-      await prefs.remove('active_budget_id');
-      await prefs.remove('session_checked');
-
-      final db = context.read<AppDatabase>();
-      await db.clearAllTables();
-    } on Exception {
-      // Best-effort cleanup.
+      await _prefs.remove('onboarding_complete');
+      await _prefs.remove('active_budget_id');
+      await _prefs.remove('session_checked');
+      await _db.clearAllTables();
+      debugPrint('[Session] Local data cleared');
+    } on Exception catch (e) {
+      debugPrint('[Session] Error clearing local data: $e');
     }
   }
 
