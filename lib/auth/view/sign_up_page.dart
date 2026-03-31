@@ -63,7 +63,8 @@ class _SignUpViewState extends State<SignUpView> {
             );
         }
         if (state.status == SignUpStatus.success) {
-          context.pop();
+          // Auth state change triggers the router redirect to
+          // onboarding (or home). No manual navigation needed.
         }
       },
       child: Scaffold(
