@@ -148,18 +148,15 @@ class _FcmAuthListenerState extends State<_FcmAuthListener> {
           repository: widget.notificationRepository,
         ),
       );
-      // Clear local Drift cache (but not SharedPreferences — those
-      // are restored per-user on next sign-in).
-      unawaited(_clearLocalDatabase(context));
+      // Clear all local data so the next sign-in starts clean.
+      unawaited(_clearLocalData(context));
     }
   }
 
   /// On sign-in, checks if the authenticated user has budgets on the
   /// server. If yes, sets the onboarding and budget flags so the router
-  /// sends them to home instead of onboarding. If no budgets, clears
-  /// the flags so a new user sees onboarding.
-  ///
-  /// Also triggers a router refresh after the flags are set.
+  /// sends them to home. If no budgets, ensures flags are clear for
+  /// onboarding. Then re-triggers the router to act on the updated flags.
   Future<void> _restoreSessionForUser(
     BuildContext context,
     String userId,
@@ -177,6 +174,8 @@ class _FcmAuthListenerState extends State<_FcmAuthListener> {
         await prefs.remove('onboarding_complete');
         await prefs.remove('active_budget_id');
       }
+      // Mark session check as done so the router stops holding on splash.
+      await prefs.setBool('session_checked', true);
 
       // Nudge the router to re-evaluate now that flags are set.
       if (context.mounted) {
@@ -190,8 +189,13 @@ class _FcmAuthListenerState extends State<_FcmAuthListener> {
     }
   }
 
-  Future<void> _clearLocalDatabase(BuildContext context) async {
+  Future<void> _clearLocalData(BuildContext context) async {
     try {
+      final prefs = context.read<SharedPreferences>();
+      await prefs.remove('onboarding_complete');
+      await prefs.remove('active_budget_id');
+      await prefs.remove('session_checked');
+
       final db = context.read<AppDatabase>();
       await db.clearAllTables();
     } on Exception {

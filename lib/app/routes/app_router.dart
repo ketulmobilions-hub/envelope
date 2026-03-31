@@ -69,8 +69,14 @@ GoRouter createRouter({
       // Authenticated: read onboarding status live from prefs.
       final onboarded =
           sharedPreferences.getBool('onboarding_complete') ?? false;
+      final sessionChecked =
+          sharedPreferences.getBool('session_checked') ?? false;
 
       if (!onboarded) {
+        // If session restore hasn't completed yet, stay on splash.
+        if (!sessionChecked && currentPath == AppRoutes.splash) {
+          return null;
+        }
         // Allow staying on onboarding page.
         if (currentPath == AppRoutes.onboarding) return null;
         return AppRoutes.onboarding;
