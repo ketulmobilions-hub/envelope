@@ -140,51 +140,62 @@ class _FcmAuthListenerState extends State<_FcmAuthListener> {
           platform: _currentPlatform(),
         ),
       );
-      // Restore onboarding flags if the user already has a budget.
-      unawaited(_restoreOnboardingIfNeeded(context, state.user!.id));
+      // Restore onboarding flags if this user already has budgets.
+      unawaited(_restoreSessionForUser(context, state.user!.id));
     } else if (state.status == AuthStatus.unauthenticated) {
       unawaited(
         _fcmService.unregisterCurrentToken(
           repository: widget.notificationRepository,
         ),
       );
-      // Clear local data so a new sign-in starts fresh.
-      unawaited(_clearLocalData(context));
+      // Clear local Drift cache (but not SharedPreferences — those
+      // are restored per-user on next sign-in).
+      unawaited(_clearLocalDatabase(context));
     }
   }
 
-  Future<void> _restoreOnboardingIfNeeded(
+  /// On sign-in, checks if the authenticated user has budgets on the
+  /// server. If yes, sets the onboarding and budget flags so the router
+  /// sends them to home instead of onboarding. If no budgets, clears
+  /// the flags so a new user sees onboarding.
+  ///
+  /// Also triggers a router refresh after the flags are set.
+  Future<void> _restoreSessionForUser(
     BuildContext context,
     String userId,
   ) async {
     try {
       final prefs = context.read<SharedPreferences>();
-      if (prefs.getBool('onboarding_complete') == true) return;
-
-      // Check if the user already has budgets on the server.
       final apiClient = context.read<EnvelopeApiClient>();
       final budgets = await apiClient.budgets.getBudgetsByOwner(userId);
+
       if (budgets.isNotEmpty) {
         await prefs.setBool('onboarding_complete', true);
         await prefs.setString('active_budget_id', budgets.first.id);
+      } else {
+        // New user — ensure flags are clear for onboarding.
+        await prefs.remove('onboarding_complete');
+        await prefs.remove('active_budget_id');
+      }
+
+      // Nudge the router to re-evaluate now that flags are set.
+      if (context.mounted) {
+        context.read<AuthBloc>().add(
+          AuthUserChanged(context.read<AuthBloc>().state.user!),
+        );
       }
     } on Exception {
-      // Non-critical; router will show onboarding if flags aren't set.
+      // If the check fails, router falls through to whatever the
+      // current prefs state dictates.
     }
   }
 
-  Future<void> _clearLocalData(BuildContext context) async {
+  Future<void> _clearLocalDatabase(BuildContext context) async {
     try {
-      // Clear onboarding/budget flags so the next user gets onboarding.
-      final prefs = context.read<SharedPreferences>();
-      await prefs.remove('onboarding_complete');
-      await prefs.remove('active_budget_id');
-
-      // Clear all cached data from the local Drift database.
       final db = context.read<AppDatabase>();
       await db.clearAllTables();
     } on Exception {
-      // Best-effort cleanup; don't crash on failure.
+      // Best-effort cleanup.
     }
   }
 
