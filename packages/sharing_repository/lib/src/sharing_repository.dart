@@ -85,24 +85,54 @@ class SharingRepository {
     }
   }
 
-  /// Generates a shareable invite token for a budget.
+  /// Creates a server-side budget invite and returns the invite UUID.
   ///
-  /// The token encodes the budget ID and role so that when a recipient
-  /// opens the deep link, the app can call [inviteMember] with their
-  /// actual user ID. No placeholder row is inserted into `budget_members`.
-  String generateInviteLink({
+  /// The UUID is used in the deep link URL: `https://envelope.app/invite/<id>`.
+  /// Invites expire after 7 days and can only be redeemed once.
+  Future<BudgetInvite> generateInviteLink({
     required String budgetId,
+    required String userId,
     String role = 'viewer',
-  }) {
-    // Token format: budgetId:role:nonce (plaintext, not secure).
-    // TODO(sharing): Replace with a server-side `budget_invites` table.
-    // See https://github.com/ketulmobilions-hub/envelope/issues/49
-    // The invite table approach (id, budget_id, role, created_by,
-    // expires_at, redeemed_at) enables expiration, single-use enforcement,
-    // revocation, and audit trails. Requires a DB migration + Supabase
-    // Edge Function to verify and redeem invites.
-    final nonce = _uuid.v4();
-    return '$budgetId:$role:$nonce';
+  }) async {
+    try {
+      final dto = await _apiClient.budgets.createBudgetInvite(
+        budgetId: budgetId,
+        role: role,
+        createdBy: userId,
+      );
+      return _mapInviteFromDto(dto);
+    } on EnvelopeApiException catch (e) {
+      throw SharingException('Failed to create invite link', error: e);
+    }
+  }
+
+  /// Fetches pending (non-redeemed, non-expired) invites for a budget.
+  Future<List<BudgetInvite>> getPendingInvites(String budgetId) async {
+    try {
+      final dtos = await _apiClient.budgets.getBudgetInvites(budgetId);
+      return dtos.map(_mapInviteFromDto).toList();
+    } on EnvelopeApiException catch (e) {
+      throw SharingException('Failed to fetch invites', error: e);
+    }
+  }
+
+  /// Revokes (deletes) a pending invite.
+  Future<void> revokeInvite(String inviteId) async {
+    try {
+      await _apiClient.budgets.deleteBudgetInvite(inviteId);
+    } on EnvelopeApiException catch (e) {
+      throw SharingException('Failed to revoke invite', error: e);
+    }
+  }
+
+  /// Redeems an invite via the Edge Function.
+  /// Returns a map with `budgetId`, `budgetName`, and `role`.
+  Future<Map<String, dynamic>> redeemInvite(String inviteId) async {
+    try {
+      return await _apiClient.budgets.invokeRedeemInvite(inviteId);
+    } on EnvelopeApiException catch (e) {
+      throw SharingException('Failed to redeem invite', error: e);
+    }
   }
 
   /// Watches the list of members for a budget.
@@ -440,5 +470,18 @@ class SharingRepository {
     } on Exception {
       // Activity logging is best-effort; don't fail the main operation.
     }
+  }
+
+  static BudgetInvite _mapInviteFromDto(BudgetInviteDto dto) {
+    return BudgetInvite(
+      id: dto.id,
+      budgetId: dto.budgetId,
+      role: dto.role,
+      createdBy: dto.createdBy,
+      expiresAt: dto.expiresAt,
+      redeemedAt: dto.redeemedAt,
+      redeemedBy: dto.redeemedBy,
+      createdAt: dto.createdAt,
+    );
   }
 }

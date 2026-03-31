@@ -2,6 +2,7 @@ import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/shared_budget/bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
 /// Page for inviting members by email or shareable link.
@@ -143,6 +144,64 @@ class _InvitePageState extends State<InvitePage> {
                   );
                 },
               ),
+
+              const SizedBox(height: 32),
+              const Divider(),
+              const SizedBox(height: 16),
+
+              // -- Pending Invites Section --
+              BlocBuilder<SharedBudgetBloc, SharedBudgetState>(
+                buildWhen: (prev, curr) =>
+                    prev.pendingInvites != curr.pendingInvites,
+                builder: (context, state) {
+                  if (state.pendingInvites.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+                  final dateFormat = DateFormat.yMMMd();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.invitePendingSection,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      ...state.pendingInvites.map(
+                        (invite) => ListTile(
+                          leading: const Icon(Icons.link),
+                          title: Text(invite.role),
+                          subtitle: Text(
+                            l10n.inviteExpires(
+                              dateFormat.format(invite.expiresAt),
+                            ),
+                          ),
+                          trailing: TextButton(
+                            onPressed: () {
+                              widget.sharedBudgetBloc.add(
+                                SharedBudgetInviteRevoked(invite.id),
+                              );
+                              ScaffoldMessenger.of(context)
+                                ..hideCurrentSnackBar()
+                                ..showSnackBar(
+                                  SnackBar(
+                                    content: Text(l10n.inviteRevoked),
+                                  ),
+                                );
+                            },
+                            child: Text(
+                              l10n.inviteRevoke,
+                              style: TextStyle(
+                                color:
+                                    Theme.of(context).colorScheme.error,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ],
           ),
         ),
@@ -181,9 +240,8 @@ class _InvitePageState extends State<InvitePage> {
     );
   }
 
-  Future<void> _shareLink(String token) async {
-    // TODO(sharing): Build a real deep link URL when deep linking is set up.
-    final link = 'https://envelope.app/invite/$token';
+  Future<void> _shareLink(String inviteId) async {
+    final link = 'https://envelope.app/invite/$inviteId';
     await Share.share(link);
 
     if (mounted) {

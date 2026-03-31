@@ -159,6 +159,80 @@ class BudgetsApiClient {
     }
   }
 
+  // --- Budget Invites ---
+
+  /// Creates a new budget invite and returns the invite row.
+  Future<BudgetInviteDto> createBudgetInvite({
+    required String budgetId,
+    required String role,
+    required String createdBy,
+  }) async {
+    try {
+      final response = await _supabaseClient
+          .from('budget_invites')
+          .insert({
+            'budget_id': budgetId,
+            'role': role,
+            'created_by': createdBy,
+          })
+          .select()
+          .single();
+      return BudgetInviteDto.fromJson(response);
+    } catch (error) {
+      throw EnvelopeApiException.fromPostgrestException(error);
+    }
+  }
+
+  /// Fetches pending (non-redeemed, non-expired) invites for a budget.
+  Future<List<BudgetInviteDto>> getBudgetInvites(String budgetId) async {
+    try {
+      final response = await _supabaseClient
+          .from('budget_invites')
+          .select()
+          .eq('budget_id', budgetId)
+          .isFilter('redeemed_at', null)
+          .gte('expires_at', DateTime.now().toIso8601String())
+          .order('created_at', ascending: false);
+      return (response as List)
+          .map((e) => BudgetInviteDto.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (error) {
+      throw EnvelopeApiException.fromPostgrestException(error);
+    }
+  }
+
+  /// Deletes (revokes) a pending invite.
+  Future<void> deleteBudgetInvite(String inviteId) async {
+    try {
+      await _supabaseClient
+          .from('budget_invites')
+          .delete()
+          .eq('id', inviteId);
+    } catch (error) {
+      throw EnvelopeApiException.fromPostgrestException(error);
+    }
+  }
+
+  /// Invokes the `redeem-invite` Edge Function to redeem an invite.
+  Future<Map<String, dynamic>> invokeRedeemInvite(String inviteId) async {
+    try {
+      final response = await _supabaseClient.functions.invoke(
+        'redeem-invite',
+        body: {'inviteId': inviteId},
+      );
+      if (response.status != 200) {
+        final data = response.data as Map<String, dynamic>?;
+        throw EnvelopeApiException(
+          data?['error']?.toString() ?? 'Failed to redeem invite',
+        );
+      }
+      return response.data as Map<String, dynamic>;
+    } catch (error) {
+      if (error is EnvelopeApiException) rethrow;
+      throw EnvelopeApiException('Failed to redeem invite: $error');
+    }
+  }
+
   // --- Budget Periods ---
 
   /// Fetches all periods for a budget.

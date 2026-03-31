@@ -4,6 +4,7 @@ export 'allocation_template_dto.dart';
 export 'allocation_template_item_dto.dart';
 export 'bill_reminder_dto.dart';
 export 'budget_dto.dart';
+export 'budget_invite_dto.dart';
 export 'budget_member_dto.dart';
 export 'budget_period_dto.dart';
 export 'category_group_dto.dart';

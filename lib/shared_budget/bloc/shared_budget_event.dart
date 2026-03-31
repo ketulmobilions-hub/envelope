@@ -70,6 +70,21 @@ final class SharedBudgetInviteLinkCleared extends SharedBudgetEvent {
   const SharedBudgetInviteLinkCleared();
 }
 
+/// Revoke a pending invite link.
+final class SharedBudgetInviteRevoked extends SharedBudgetEvent {
+  const SharedBudgetInviteRevoked(this.inviteId);
+
+  final String inviteId;
+
+  @override
+  List<Object?> get props => [inviteId];
+}
+
+/// Load pending invites for the current budget.
+final class SharedBudgetPendingInvitesRequested extends SharedBudgetEvent {
+  const SharedBudgetPendingInvitesRequested();
+}
+
 /// Internal event when the members stream emits new data.
 final class _MembersUpdated extends SharedBudgetEvent {
   const _MembersUpdated(this.members);
