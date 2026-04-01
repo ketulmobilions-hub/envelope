@@ -204,29 +204,25 @@ class _SignUpViewState extends State<SignUpView> {
                                       TextSpan(
                                         text: l10n.consentPrivacyPolicy,
                                         style: TextStyle(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .primary,
-                                          decoration:
-                                              TextDecoration.underline,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                          decoration: TextDecoration.underline,
                                         ),
                                       ),
                                       TextSpan(text: l10n.consentAnd),
                                       TextSpan(
                                         text: l10n.consentTermsOfService,
                                         style: TextStyle(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .primary,
-                                          decoration:
-                                              TextDecoration.underline,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                          decoration: TextDecoration.underline,
                                         ),
                                       ),
                                     ],
                                   ),
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall,
+                                  style: Theme.of(context).textTheme.bodySmall,
                                 ),
                               ),
                             ),

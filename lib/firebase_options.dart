@@ -57,7 +57,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyB16GwJg6lKafy_rONOLezg4KTeEGSHFNo',
-    appId: '1:767046810526:android:090b7d06e58e33027b748f',
+    appId: '1:767046810526:android:804ccc37f74d7c6e7b748f',
     messagingSenderId: '767046810526',
     projectId: 'white-board-3',
     storageBucket: 'white-board-3.firebasestorage.app',
@@ -65,10 +65,11 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyAUcMHc7ThJf6XrCDjnSpNL_t7n9GkJ288',
-    appId: '1:767046810526:ios:0eca1ebca596e81f7b748f',
+    appId: '1:767046810526:ios:15a5063fe6b4ad5d7b748f',
     messagingSenderId: '767046810526',
     projectId: 'white-board-3',
     storageBucket: 'white-board-3.firebasestorage.app',
-    iosBundleId: 'com.envelope.envelope',
+    iosBundleId: 'com.envelope.ml',
   );
+
 }

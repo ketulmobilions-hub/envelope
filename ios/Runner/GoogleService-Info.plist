@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.envelope.envelope</string>
+	<string>com.envelope.ml</string>
 	<key>PROJECT_ID</key>
 	<string>white-board-3</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:767046810526:ios:0eca1ebca596e81f7b748f</string>
+	<string>1:767046810526:ios:15a5063fe6b4ad5d7b748f</string>
 </dict>
 </plist>
