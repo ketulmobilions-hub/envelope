@@ -183,50 +183,36 @@ class _FcmAuthListenerState extends State<_FcmAuthListener> {
     }
   }
 
-  /// On sign-in, checks the server for budgets, sets the correct flags,
-  /// and re-triggers the router.
+  /// On sign-in, fetches budgets from the server to determine if the
+  /// user has onboarded. Sets `active_budget_id` if a budget exists,
+  /// then marks `session_resolved` and refreshes the router.
   Future<void> _restoreSessionForUser(String userId) async {
     try {
-      // Always start fresh — clear any leftover flags from a prior user.
-      await _prefs.remove('onboarding_complete');
+      // Clear stale data from any prior user.
       await _prefs.remove('active_budget_id');
-      await _prefs.remove('session_checked');
+      await _prefs.remove('session_resolved');
 
-      debugPrint('[Session] Fetching budgets for $userId...');
       final budgets = await _apiClient.budgets.getBudgetsByOwner(userId);
-      debugPrint('[Session] Found ${budgets.length} budgets');
 
       if (budgets.isNotEmpty) {
-        await _prefs.setBool('onboarding_complete', true);
         await _prefs.setString('active_budget_id', budgets.first.id);
-        debugPrint('[Session] Restored: onboarding_complete=true, '
-            'budget=${budgets.first.id}');
-      } else {
-        debugPrint('[Session] New user — no budgets found');
       }
-
-      // Mark session check as done so the router stops holding on splash.
-      await _prefs.setBool('session_checked', true);
-    } on Exception catch (e) {
-      debugPrint('[Session] Error during restore: $e');
-      // On failure, still mark session_checked so user isn't stuck.
-      await _prefs.setBool('session_checked', true);
+    } on Exception {
+      // On failure, user will see onboarding (safe fallback).
     }
 
-    // Re-trigger router to act on updated flags.
+    // Always mark resolved so the router stops holding on splash.
+    await _prefs.setBool('session_resolved', true);
     _routerNotifier.refresh();
-    debugPrint('[Session] Router refresh triggered');
   }
 
   Future<void> _clearLocalData() async {
     try {
-      await _prefs.remove('onboarding_complete');
       await _prefs.remove('active_budget_id');
-      await _prefs.remove('session_checked');
+      await _prefs.remove('session_resolved');
       await _db.clearAllTables();
-      debugPrint('[Session] Local data cleared');
-    } on Exception catch (e) {
-      debugPrint('[Session] Error clearing local data: $e');
+    } on Exception {
+      // Best-effort cleanup.
     }
   }
 

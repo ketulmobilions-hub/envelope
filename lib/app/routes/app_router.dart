@@ -67,18 +67,16 @@ GoRouter createRouter({
         return publicRoutes.contains(currentPath) ? null : AppRoutes.login;
       }
 
-      // Authenticated: read onboarding status live from prefs.
-      final onboarded =
-          sharedPreferences.getBool('onboarding_complete') ?? false;
-      final sessionChecked =
-          sharedPreferences.getBool('session_checked') ?? false;
+      // Wait for session restore to complete before routing.
+      final sessionResolved =
+          sharedPreferences.getBool('session_resolved') ?? false;
+      if (!sessionResolved) {
+        return currentPath == AppRoutes.splash ? null : AppRoutes.splash;
+      }
 
-      if (!onboarded) {
-        // If session restore hasn't completed yet, stay on splash.
-        if (!sessionChecked && currentPath == AppRoutes.splash) {
-          return null;
-        }
-        // Allow staying on onboarding page.
+      // If no active budget, user needs onboarding.
+      final activeBudgetId = sharedPreferences.getString('active_budget_id');
+      if (activeBudgetId == null || activeBudgetId.isEmpty) {
         if (currentPath == AppRoutes.onboarding) return null;
         return AppRoutes.onboarding;
       }
