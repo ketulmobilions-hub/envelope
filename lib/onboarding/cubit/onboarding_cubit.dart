@@ -7,10 +7,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 part 'onboarding_state.dart';
 
-/// Key used in [SharedPreferences] to persist onboarding completion.
-const String _onboardingCompleteKey = 'onboarding_complete';
-
 /// Key used in [SharedPreferences] to store the active budget ID.
+/// The router uses this to determine if onboarding is complete:
+/// if set, the user has a budget and is onboarded.
 const String activeBudgetIdKey = 'active_budget_id';
 
 /// Cubit that manages the onboarding wizard state.
@@ -34,9 +33,10 @@ class OnboardingCubit extends Cubit<OnboardingState> {
   final BudgetRepository _budgetRepository;
   final String _userId;
 
-  /// Returns whether onboarding has been completed.
+  /// Returns whether onboarding has been completed (user has a budget).
   static bool isOnboardingComplete(SharedPreferences prefs) {
-    return prefs.getBool(_onboardingCompleteKey) ?? false;
+    final budgetId = prefs.getString(activeBudgetIdKey);
+    return budgetId != null && budgetId.isNotEmpty;
   }
 
   /// Advances to the next step if validation passes.
@@ -275,7 +275,6 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       }
 
       await _prefs.setString(activeBudgetIdKey, budgetId);
-      await _prefs.setBool(_onboardingCompleteKey, true);
       emit(state.copyWith(status: OnboardingStatus.success));
     } on Exception {
       emit(
