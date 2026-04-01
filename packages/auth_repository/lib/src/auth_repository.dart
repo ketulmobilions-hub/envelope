@@ -202,7 +202,6 @@ class AuthRepository {
 
       final response = await _apiClient.auth.signInWithAppleIdToken(
         idToken: idToken,
-        nonce: credential.authorizationCode,
       );
 
       final supabaseUser = response.user;
