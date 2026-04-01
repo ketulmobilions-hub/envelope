@@ -22,7 +22,12 @@ class AuthRepository {
     GoogleSignIn? googleSignIn,
     AppleCredentialProvider? appleCredentialProvider,
   })  : _apiClient = apiClient,
-        _googleSignIn = googleSignIn ?? GoogleSignIn(),
+        _googleSignIn = googleSignIn ??
+            GoogleSignIn(
+              serverClientId:
+                  '767046810526-5rmr4ulbj24qdc52fllojlcino8ciesa'
+                  '.apps.googleusercontent.com',
+            ),
         _getAppleCredential =
             appleCredentialProvider ?? SignInWithApple.getAppleIDCredential;
 
