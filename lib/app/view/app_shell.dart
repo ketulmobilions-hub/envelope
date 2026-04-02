@@ -85,6 +85,7 @@ class AppShell extends StatelessWidget {
               transactionRepository: context.read<TransactionRepository>(),
               accountRepository: context.read<AccountRepository>(),
               envelopeRepository: context.read<EnvelopeRepository>(),
+              budgetRepository: context.read<BudgetRepository>(),
               budgetId: budgetId,
               budgetPeriodId: periodId,
               userId: user.id,
