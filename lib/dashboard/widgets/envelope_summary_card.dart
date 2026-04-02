@@ -10,6 +10,7 @@ import 'package:envelope/theme/app_colors.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:transaction_repository/transaction_repository.dart';
 
 /// Displays envelopes grouped by category on the dashboard.
 class EnvelopeSummaryCard extends StatelessWidget {
@@ -233,6 +234,7 @@ class _CategoryGroupSection extends StatelessWidget {
               envelopeRepository: context.read<EnvelopeRepository>(),
               envelope: summary.envelope,
               allocation: summary.allocation,
+              transactionRepository: context.read<TransactionRepository>(),
             ),
             child: EnvelopeDetailPage(
               categoryGroups: categoryGroups,

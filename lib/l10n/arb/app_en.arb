@@ -551,6 +551,14 @@
     "@envelopesArchived": {
         "description": "Section header for archived items"
     },
+    "envelopesShowArchived": "Show archived",
+    "@envelopesShowArchived": {
+        "description": "Tooltip/label for the toggle to show archived items"
+    },
+    "envelopesHideArchived": "Hide archived",
+    "@envelopesHideArchived": {
+        "description": "Tooltip/label for the toggle to hide archived items"
+    },
     "envelopesCancel": "Cancel",
     "@envelopesCancel": {
         "description": "Cancel button in dialogs"
@@ -643,9 +651,13 @@
     "@envelopesDetailAllocationHistoryPlaceholder": {
         "description": "Placeholder text for allocation history"
     },
-    "envelopesDetailTransactionsPlaceholder": "Transactions will appear here once the transactions feature is built.",
+    "envelopesDetailTransactions": "Transactions",
+    "@envelopesDetailTransactions": {
+        "description": "Section header for transactions in envelope detail"
+    },
+    "envelopesDetailTransactionsPlaceholder": "No transactions yet.",
     "@envelopesDetailTransactionsPlaceholder": {
-        "description": "Placeholder text for transactions in envelope detail"
+        "description": "Placeholder text when envelope has no transactions"
     },
     "envelopesDetailGoalProgressPlaceholder": "Goal tracking coming soon.",
     "@envelopesDetailGoalProgressPlaceholder": {
@@ -2117,8 +2129,8 @@
     "@budgetDeleteBudget": { "description": "Delete budget menu option" },
     "budgetDeleteConfirmMessage": "This will permanently delete this budget and all its accounts, envelopes, and transactions. This action cannot be undone.",
     "@budgetDeleteConfirmMessage": { "description": "Budget deletion warning" },
-    "envelopesArchived": "Envelope archived",
-    "@envelopesArchived": { "description": "Snackbar message after archiving" },
+    "envelopesEnvelopeArchived": "Envelope archived",
+    "@envelopesEnvelopeArchived": { "description": "Snackbar message after archiving" },
     "envelopesUnarchived": "Envelope unarchived",
     "@envelopesUnarchived": { "description": "Snackbar message after unarchiving" },
     "envelopesDeleted": "Envelope deleted",

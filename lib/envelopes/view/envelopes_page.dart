@@ -12,6 +12,7 @@ import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:transaction_repository/transaction_repository.dart';
 
 /// Page that provides [EnvelopesBloc] and displays the envelopes list.
 class EnvelopesPage extends StatelessWidget {
@@ -43,6 +44,7 @@ class EnvelopesView extends StatefulWidget {
 /// Owns all navigation and confirmation dialog logic for the envelopes list.
 class _EnvelopesViewState extends State<EnvelopesView> {
   bool _isReordering = false;
+  bool _showArchived = false;
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +71,31 @@ class _EnvelopesViewState extends State<EnvelopesView> {
             IconButton(
               onPressed: () => _showAddMenu(context),
               icon: const Icon(Icons.add),
+            ),
+            BlocBuilder<EnvelopesBloc, EnvelopesState>(
+              buildWhen: (prev, curr) =>
+                  prev.status != curr.status ||
+                  prev.categoryGroups != curr.categoryGroups ||
+                  prev.envelopes != curr.envelopes,
+              builder: (context, state) {
+                final hasArchived = state.archivedGroups.isNotEmpty ||
+                    state.archivedEnvelopes.isNotEmpty;
+                if (state.status != EnvelopesStatus.loaded || !hasArchived) {
+                  return const SizedBox.shrink();
+                }
+                return IconButton(
+                  onPressed: () =>
+                      setState(() => _showArchived = !_showArchived),
+                  icon: Icon(
+                    _showArchived
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                  ),
+                  tooltip: _showArchived
+                      ? l10n.envelopesHideArchived
+                      : l10n.envelopesShowArchived,
+                );
+              },
             ),
             BlocBuilder<EnvelopesBloc, EnvelopesState>(
               buildWhen: (prev, curr) => prev.status != curr.status ||
@@ -115,6 +142,7 @@ class _EnvelopesViewState extends State<EnvelopesView> {
               child: _EnvelopesList(
                 state: state,
                 isReordering: _isReordering,
+                showArchived: _showArchived,
                 onEditGroup: (g) => _openEditCategoryGroup(context, g),
                 onAddEnvelopeToGroup: (g) =>
                     _openAddEnvelope(context, initialGroupId: g.id),
@@ -275,6 +303,7 @@ class _EnvelopesViewState extends State<EnvelopesView> {
         builder: (_) => BlocProvider(
           create: (_) => EnvelopeDetailCubit(
             envelopeRepository: context.read<EnvelopeRepository>(),
+            transactionRepository: context.read<TransactionRepository>(),
             envelope: envelope,
           ),
           child: EnvelopeDetailPage(categoryGroups: activeGroups),
@@ -350,6 +379,18 @@ class _EnvelopesViewState extends State<EnvelopesView> {
     Envelope envelope,
   ) async {
     final l10n = context.l10n;
+
+    if (envelope.isArchived) {
+      final bloc = context.read<EnvelopesBloc>();
+      bloc.add(EnvelopeArchiveToggled(envelope));
+      showUndoSnackBar(
+        context,
+        message: l10n.envelopesUnarchived,
+        onUndo: () => bloc.add(const EnvelopeUndoArchiveRequested()),
+      );
+      return;
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -372,9 +413,7 @@ class _EnvelopesViewState extends State<EnvelopesView> {
       bloc.add(EnvelopeArchiveToggled(envelope));
       showUndoSnackBar(
         context,
-        message: envelope.isArchived
-            ? l10n.envelopesUnarchived
-            : l10n.envelopesArchived,
+        message: l10n.envelopesEnvelopeArchived,
         onUndo: () => bloc.add(const EnvelopeUndoArchiveRequested()),
       );
     }
@@ -461,6 +500,7 @@ class _EnvelopesList extends StatelessWidget {
   const _EnvelopesList({
     required this.state,
     required this.isReordering,
+    required this.showArchived,
     required this.onEditGroup,
     required this.onAddEnvelopeToGroup,
     required this.onArchiveGroup,
@@ -474,6 +514,7 @@ class _EnvelopesList extends StatelessWidget {
 
   final EnvelopesState state;
   final bool isReordering;
+  final bool showArchived;
   final void Function(CategoryGroup) onEditGroup;
   final void Function(CategoryGroup) onAddEnvelopeToGroup;
   final void Function(CategoryGroup) onArchiveGroup;
@@ -501,7 +542,18 @@ class _EnvelopesList extends StatelessWidget {
           CategoryGroupTile(
             key: ValueKey(group.id),
             categoryGroup: group,
-            envelopes: envelopes,
+            envelopes: showArchived
+                ? [
+                    ...envelopes,
+                    ...state.envelopes
+                        .where(
+                          (e) =>
+                              e.categoryGroupId == group.id && e.isArchived,
+                        )
+                        .toList()
+                      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder)),
+                  ]
+                : envelopes,
             onEditGroup: () => onEditGroup(group),
             onAddEnvelope: () => onAddEnvelopeToGroup(group),
             onArchiveGroup: () => onArchiveGroup(group),
@@ -511,7 +563,7 @@ class _EnvelopesList extends StatelessWidget {
             onArchiveEnvelope: onArchiveEnvelope,
             onDeleteEnvelope: onDeleteEnvelope,
           ),
-        if (archivedGroups.isNotEmpty) ...[
+        if (showArchived && archivedGroups.isNotEmpty) ...[
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
             child: Text(
