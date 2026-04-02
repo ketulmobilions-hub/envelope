@@ -73,13 +73,14 @@ class AccountsView extends StatelessWidget {
             }
 
             return RefreshIndicator(
-              onRefresh: () async {
-                final bloc = context.read<AccountsBloc>()
-                  ..add(const AccountsRefreshRequested());
-                // Wait for the next loaded state so the spinner dismisses.
-                await bloc.stream.firstWhere(
-                  (s) => s.status == AccountsStatus.loaded,
-                );
+              onRefresh: () {
+                final completer = Completer<void>();
+                context.read<AccountsBloc>().add(
+                      AccountsRefreshRequested(
+                        onComplete: completer.complete,
+                      ),
+                    );
+                return completer.future;
               },
               child: _AccountsList(
                 state: state,

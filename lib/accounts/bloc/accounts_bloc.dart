@@ -83,6 +83,8 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       await _accountRepository.refreshAccounts(_budgetId);
     } on AccountException {
       // Stream will update on its own if data changes.
+    } finally {
+      event.onComplete?.call();
     }
   }
 
