@@ -15,6 +15,7 @@ void showUndoSnackBar(
         duration: const Duration(seconds: 5),
         action: SnackBarAction(
           label: undoLabel,
+          textColor: Theme.of(context).colorScheme.onInverseSurface,
           onPressed: onUndo,
         ),
       ),
