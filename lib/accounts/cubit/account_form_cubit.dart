@@ -78,7 +78,7 @@ class AccountFormCubit extends Cubit<AccountFormState> {
           isOnBudget: isOnBudget,
         );
 
-        if (balanceCents > 0 && isOnBudget && _budgetRepository != null) {
+        if (balanceCents != 0 && isOnBudget && _budgetRepository != null) {
           await _budgetRepository.addIncomeToCurrentPeriod(
             budgetId: budgetId,
             amount: balanceCents,
