@@ -29,7 +29,10 @@ final class _AccountsStreamError extends AccountsEvent {
 
 /// Pull latest accounts from the API.
 final class AccountsRefreshRequested extends AccountsEvent {
-  const AccountsRefreshRequested();
+  const AccountsRefreshRequested({this.onComplete});
+
+  /// Called when the refresh operation finishes (success or failure).
+  final void Function()? onComplete;
 }
 
 /// Archive or unarchive an account.
