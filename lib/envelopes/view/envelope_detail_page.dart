@@ -1,14 +1,15 @@
 import 'dart:async';
 
-import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/envelopes/cubit/cubit.dart';
 import 'package:envelope/envelopes/view/envelope_form_page.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/theme/app_colors.dart';
+import 'package:envelope/transactions/widgets/transaction_helpers.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:transaction_repository/transaction_repository.dart';
 
 /// Detail page for a single envelope with terracotta header.
 class EnvelopeDetailPage extends StatelessWidget {
@@ -402,24 +403,77 @@ class _EnvelopeContentState extends State<_EnvelopeContent>
             child: Column(
               children: [
                 // Transactions.
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      const Icon(
-                        Icons.receipt_long_outlined,
-                        size: 48,
-                        color: AppColors.primaryDark,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n.envelopesDetailTransactionsPlaceholder
-                            .toUpperCase(),
-                        style: mutedStyle,
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
+                BlocBuilder<EnvelopeDetailCubit, EnvelopeDetailState>(
+                  buildWhen: (prev, curr) =>
+                      prev.transactions != curr.transactions,
+                  builder: (context, state) {
+                    final transactions = [...state.transactions]
+                      ..sort((a, b) => b.date.compareTo(a.date));
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
+                          child: Text(
+                            l10n.envelopesDetailTransactions.toUpperCase(),
+                            style: sectionTitle,
+                          ),
+                        ),
+                        if (transactions.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Center(
+                              child: Column(
+                                children: [
+                                  const Icon(
+                                    Icons.receipt_long_outlined,
+                                    size: 48,
+                                    color: AppColors.primaryDark,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    l10n.envelopesDetailTransactionsPlaceholder
+                                        .toUpperCase(),
+                                    style: mutedStyle,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        else
+                          for (int i = 0;
+                              i < transactions.length;
+                              i++) ...[
+                            if (i == 0 ||
+                                !_sameDay(
+                                  transactions[i].date,
+                                  transactions[i - 1].date,
+                                ))
+                              Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(4, 12, 4, 4),
+                                child: Text(
+                                  formatDateHeader(
+                                    transactions[i].date,
+                                    l10n,
+                                  ),
+                                  style: theme.textTheme.labelSmall
+                                      ?.copyWith(
+                                    color: AppColors.onPrimary
+                                        .withValues(alpha: 0.6),
+                                    letterSpacing: 0.8,
+                                  ),
+                                ),
+                              ),
+                            _TransactionRow(
+                              transaction: transactions[i],
+                              envelopeColor: widget.envelopeColor,
+                            ),
+                          ],
+                      ],
+                    );
+                  },
                 ),
                 Divider(
                   color: AppColors.onPrimary.withValues(alpha: 0.2),
@@ -485,6 +539,63 @@ class _HeaderDetail extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+bool _sameDay(DateTime a, DateTime b) =>
+    a.year == b.year && a.month == b.month && a.day == b.day;
+
+class _TransactionRow extends StatelessWidget {
+  const _TransactionRow({
+    required this.transaction,
+    required this.envelopeColor,
+  });
+
+  final Transaction transaction;
+  final Color envelopeColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final typeColor = AppColors.onPrimary.withValues(alpha: 0.9);
+    final iconColor = AppColors.onPrimary.withValues(alpha: 0.7);
+    final prefix = transaction.type == 'income' ? '+' : '';
+    final l10n = context.l10n;
+
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+      leading: CircleAvatar(
+        backgroundColor: AppColors.onPrimary.withValues(alpha: 0.15),
+        child: Icon(
+          iconForTransactionType(transaction.type),
+          color: iconColor,
+          size: 20,
+        ),
+      ),
+      title: Text(
+        transaction.payee?.isNotEmpty == true
+            ? transaction.payee!
+            : localizedTransactionType(transaction.type, l10n),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(color: AppColors.onPrimary),
+      ),
+      subtitle: transaction.notes?.isNotEmpty == true
+          ? Text(
+              transaction.notes!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style:
+                  TextStyle(color: AppColors.onPrimary.withValues(alpha: 0.7)),
+            )
+          : null,
+      trailing: Text(
+        '$prefix${formatCents(transaction.amount)}',
+        style: TextStyle(
+          color: typeColor,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }
