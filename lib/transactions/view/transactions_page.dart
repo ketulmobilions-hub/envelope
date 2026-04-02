@@ -122,6 +122,7 @@ class TransactionsView extends StatelessWidget {
             accountRepository: context.read<AccountRepository>(),
             envelopeRepository:
                 context.read<EnvelopeRepository>(),
+            budgetRepository: context.read<BudgetRepository>(),
             budgetId: budgetId,
             userId:
                 context.read<AuthBloc>().state.user?.id ?? '',
@@ -235,6 +236,7 @@ class _TransactionsList extends StatelessWidget {
             accountRepository: context.read<AccountRepository>(),
             envelopeRepository:
                 context.read<EnvelopeRepository>(),
+            budgetRepository: context.read<BudgetRepository>(),
             budgetId: budgetId,
             userId: transaction.createdBy,
             budgetPeriodId: periodId,

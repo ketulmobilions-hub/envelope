@@ -1,8 +1,9 @@
 import 'package:account_repository/account_repository.dart';
 import 'package:bloc/bloc.dart';
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/transactions/widgets/split_rows.dart';
-import 'package:equatable/equatable.dart';
 import 'package:envelope_repository/envelope_repository.dart';
+import 'package:equatable/equatable.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 
 part 'transaction_form_state.dart';
@@ -12,6 +13,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     required TransactionRepository transactionRepository,
     required AccountRepository accountRepository,
     required EnvelopeRepository envelopeRepository,
+    required BudgetRepository budgetRepository,
     required this.budgetId,
     required this.userId,
     this.budgetPeriodId,
@@ -19,6 +21,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
   })  : _transactionRepository = transactionRepository,
         _accountRepository = accountRepository,
         _envelopeRepository = envelopeRepository,
+        _budgetRepository = budgetRepository,
         super(const TransactionFormState()) {
     _loadData();
   }
@@ -26,6 +29,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
   final TransactionRepository _transactionRepository;
   final AccountRepository _accountRepository;
   final EnvelopeRepository _envelopeRepository;
+  final BudgetRepository _budgetRepository;
   final String budgetId;
   final String userId;
   final String? budgetPeriodId;
@@ -142,6 +146,23 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
 
       // Handle tags.
       await _saveTags(transactionId, selectedTagIds);
+
+      // Update budget period income for income transactions.
+      final oldIncome = (isEditing && transaction!.type == 'income')
+          ? transaction!.amount
+          : 0;
+      final newIncome = type == 'income' ? amountCents : 0;
+      final incomeDelta = newIncome - oldIncome;
+      if (incomeDelta != 0) {
+        try {
+          await _budgetRepository.addIncomeToCurrentPeriod(
+            budgetId: budgetId,
+            amount: incomeDelta,
+          );
+        } on BudgetException {
+          // Best-effort; budget income update is non-critical.
+        }
+      }
 
       // Refresh allocations so the local Drift cache reflects the updated
       // spent_amount computed by the database trigger.
