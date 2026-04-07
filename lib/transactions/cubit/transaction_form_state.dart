@@ -48,6 +48,12 @@ final class TransactionFormState extends Equatable {
     this.errorMessage,
     this.tagError,
     this.overspendData,
+    this.isRecurring = false,
+    this.recurringFrequency = 'monthly',
+    this.recurringCustomInterval,
+    this.recurringCustomUnit = 'days',
+    this.recurringEndDate,
+    this.recurringAutoPost = false,
   });
 
   final TransactionFormStatus status;
@@ -60,7 +66,17 @@ final class TransactionFormState extends Equatable {
   final String? tagError;
   final OverspendData? overspendData;
 
+  // Recurring rule fields.
+  final bool isRecurring;
+  final String recurringFrequency;
+  final int? recurringCustomInterval;
+  final String recurringCustomUnit;
+  final DateTime? recurringEndDate;
+  final bool recurringAutoPost;
+
   static const Object _sentinel = Object();
+  static const Object _customIntervalSentinel = Object();
+  static const Object _endDateSentinel = Object();
 
   TransactionFormState copyWith({
     TransactionFormStatus? status,
@@ -72,6 +88,12 @@ final class TransactionFormState extends Equatable {
     String? errorMessage,
     String? tagError,
     Object? overspendData = _sentinel,
+    bool? isRecurring,
+    String? recurringFrequency,
+    Object? recurringCustomInterval = _customIntervalSentinel,
+    String? recurringCustomUnit,
+    Object? recurringEndDate = _endDateSentinel,
+    bool? recurringAutoPost,
   }) {
     return TransactionFormState(
       status: status ?? this.status,
@@ -85,6 +107,17 @@ final class TransactionFormState extends Equatable {
       overspendData: overspendData == _sentinel
           ? this.overspendData
           : overspendData as OverspendData?,
+      isRecurring: isRecurring ?? this.isRecurring,
+      recurringFrequency: recurringFrequency ?? this.recurringFrequency,
+      recurringCustomInterval:
+          recurringCustomInterval == _customIntervalSentinel
+              ? this.recurringCustomInterval
+              : recurringCustomInterval as int?,
+      recurringCustomUnit: recurringCustomUnit ?? this.recurringCustomUnit,
+      recurringEndDate: recurringEndDate == _endDateSentinel
+          ? this.recurringEndDate
+          : recurringEndDate as DateTime?,
+      recurringAutoPost: recurringAutoPost ?? this.recurringAutoPost,
     );
   }
 
@@ -99,5 +132,11 @@ final class TransactionFormState extends Equatable {
         errorMessage,
         tagError,
         overspendData,
+        isRecurring,
+        recurringFrequency,
+        recurringCustomInterval,
+        recurringCustomUnit,
+        recurringEndDate,
+        recurringAutoPost,
       ];
 }

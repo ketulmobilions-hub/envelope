@@ -98,9 +98,22 @@ class _HomeView extends StatelessWidget {
                 _confirmDeleteBudget(context);
               } else if (value == 'settings') {
                 context.go(AppRoutes.settings);
+              } else if (value == 'recurring') {
+                context.go(
+                  '${AppRoutes.recurring}?budgetId=$budgetId',
+                );
               }
             },
             itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'recurring',
+                child: ListTile(
+                  leading: const Icon(Icons.repeat),
+                  title: Text(l10n.recurringTitle),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
               PopupMenuItem(
                 value: 'settings',
                 child: ListTile(
@@ -190,7 +203,7 @@ class _HomeView extends StatelessWidget {
                                   onPressed: () => context.go(
                                     '${AppRoutes.recurring}?budgetId=$budgetId',
                                   ),
-                                  child: Text(l10n.recurringTabRecurring),
+                                  child: Text("l10n.recurringTabRecurring"),
                                 ),
                               ],
                             ),
