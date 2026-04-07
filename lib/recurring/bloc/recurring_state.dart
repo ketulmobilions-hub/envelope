@@ -8,6 +8,7 @@ enum RecurringError {
   deleteFailed,
   undoFailed,
   pauseFailed,
+  postFailed,
 }
 
 final class RecurringState extends Equatable {

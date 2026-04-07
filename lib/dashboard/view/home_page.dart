@@ -3,12 +3,13 @@ import 'dart:async';
 import 'package:envelope/app/routes/app_router.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/dashboard/bloc/bloc.dart';
-import 'package:envelope/shared/widgets/confirm_delete_dialog.dart';
 import 'package:envelope/dashboard/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
 import 'package:envelope/recurring/cubit/recurring_check_cubit.dart';
+import 'package:envelope/shared/widgets/confirm_delete_dialog.dart';
 import 'package:envelope/sync/sync.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -93,15 +94,41 @@ class _HomeView extends StatelessWidget {
           ),
           const SyncStatusIndicator(),
           PopupMenuButton<String>(
-            onSelected: (value) {
+            onSelected: (value) async {
               if (value == 'delete_budget') {
-                _confirmDeleteBudget(context);
+                unawaited(_confirmDeleteBudget(context));
               } else if (value == 'settings') {
                 context.go(AppRoutes.settings);
               } else if (value == 'recurring') {
                 context.go(
                   '${AppRoutes.recurring}?budgetId=$budgetId',
                 );
+              } else if (value == 'debug_simulate_date') {
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now().add(
+                    const Duration(days: 30),
+                  ),
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime.now().add(
+                    const Duration(days: 365),
+                  ),
+                );
+                if (picked != null && context.mounted) {
+                  await context
+                      .read<RecurringCheckCubit>()
+                      .check(now: picked);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          '[Debug] Simulated auto-post: '
+                          '${picked.toIso8601String().substring(0, 10)}',
+                        ),
+                      ),
+                    );
+                  }
+                }
               }
             },
             itemBuilder: (context) => [
@@ -140,6 +167,16 @@ class _HomeView extends StatelessWidget {
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
+              if (kDebugMode)
+                const PopupMenuItem(
+                  value: 'debug_simulate_date',
+                  child: ListTile(
+                    leading: Icon(Icons.science_outlined),
+                    title: Text('[Debug] Simulate auto-post date'),
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
             ],
           ),
         ],
@@ -203,7 +240,7 @@ class _HomeView extends StatelessWidget {
                                   onPressed: () => context.go(
                                     '${AppRoutes.recurring}?budgetId=$budgetId',
                                   ),
-                                  child: Text("l10n.recurringTabRecurring"),
+                                  child: Text(l10n.recurringTabRecurring),
                                 ),
                               ],
                             ),

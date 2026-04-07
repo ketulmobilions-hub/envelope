@@ -216,79 +216,107 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
           emit(state.copyWith(status: TransactionFormStatus.success));
         }
       } else if (isRecurring) {
-        // ── Create transaction + recurring rule for future occurrences ─────
-        final created = await _transactionRepository.createTransaction(
-          budgetId: budgetId,
-          accountId: accountId,
-          type: type,
-          amount: amountCents,
-          currency: 'USD',
-          date: date,
-          createdBy: userId,
-          envelopeId: isSplitMode ? null : envelopeId,
-          payee: payee,
-          notes: notes,
+        // ── Create transaction (if today/past) + recurring rule ───────────
+        final today = DateTime(
+          DateTime.now().year,
+          DateTime.now().month,
+          DateTime.now().day,
         );
-        final transactionId = created.id;
+        final selectedDay = DateTime(date.year, date.month, date.day);
+        final isFutureDate = selectedDay.isAfter(today);
 
-        if (isSplitMode) {
-          await _saveSplits(transactionId, splits);
-        }
-        await _saveTags(transactionId, selectedTagIds);
-
-        final newIncome = type == 'income' ? amountCents : 0;
-        if (newIncome != 0) {
-          try {
-            await _budgetRepository.addIncomeToCurrentPeriod(
-              budgetId: budgetId,
-              amount: newIncome,
-            );
-          } on BudgetException {
-            // Best-effort.
-          }
-        }
-
-        if (budgetPeriodId != null) {
-          try {
-            await _envelopeRepository.refreshAllocations(budgetPeriodId!);
-          } on Exception {
-            // Best-effort.
-          }
-        }
-        try {
-          await _accountRepository.refreshAccounts(budgetId);
-        } on AccountException {
-          // Best-effort.
-        }
-
-        // Create recurring rule with startDate = next occurrence (not today),
-        // so it doesn't trigger an immediate home-page banner.
-        await _createRecurringRuleFromForm(
-          type: type,
-          accountId: accountId,
-          amountCents: amountCents,
-          transactionDate: date,
-          envelopeId: envelopeId,
-          payee: payee,
-          notes: notes,
-        );
-
-        final overspendData = await _checkOverspend(
-          type: type,
-          envelopeId: envelopeId,
-          isSplitMode: isSplitMode,
-          splits: splits,
-        );
-
-        if (isClosed) return;
-        if (overspendData != null) {
-          emit(
-            state.copyWith(
-              status: TransactionFormStatus.successWithOverspend,
-              overspendData: overspendData,
-            ),
+        if (!isFutureDate) {
+          // Today or past: post the transaction immediately.
+          final created = await _transactionRepository.createTransaction(
+            budgetId: budgetId,
+            accountId: accountId,
+            type: type,
+            amount: amountCents,
+            currency: 'USD',
+            date: date,
+            createdBy: userId,
+            envelopeId: isSplitMode ? null : envelopeId,
+            payee: payee,
+            notes: notes,
           );
+          final transactionId = created.id;
+
+          if (isSplitMode) {
+            await _saveSplits(transactionId, splits);
+          }
+          await _saveTags(transactionId, selectedTagIds);
+
+          final newIncome = type == 'income' ? amountCents : 0;
+          if (newIncome != 0) {
+            try {
+              await _budgetRepository.addIncomeToCurrentPeriod(
+                budgetId: budgetId,
+                amount: newIncome,
+              );
+            } on BudgetException {
+              // Best-effort.
+            }
+          }
+
+          if (budgetPeriodId != null) {
+            try {
+              await _envelopeRepository.refreshAllocations(budgetPeriodId!);
+            } on Exception {
+              // Best-effort.
+            }
+          }
+          try {
+            await _accountRepository.refreshAccounts(budgetId);
+          } on AccountException {
+            // Best-effort.
+          }
+
+          // Rule starts from the next occurrence so it doesn't banner today.
+          await _createRecurringRuleFromForm(
+            type: type,
+            accountId: accountId,
+            amountCents: amountCents,
+            transactionDate: date,
+            isFutureDate: false,
+            envelopeId: envelopeId,
+            payee: payee,
+            notes: notes,
+          );
+
+          final overspendData = await _checkOverspend(
+            type: type,
+            envelopeId: envelopeId,
+            isSplitMode: isSplitMode,
+            splits: splits,
+          );
+
+          if (isClosed) return;
+          if (overspendData != null) {
+            emit(
+              state.copyWith(
+                status: TransactionFormStatus.successWithOverspend,
+                overspendData: overspendData,
+              ),
+            );
+          } else {
+            emit(state.copyWith(status: TransactionFormStatus.success));
+          }
         } else {
+          // Future date: skip transaction, just create the rule.
+          // autoPost=true → auto-posted when due; autoPost=false → pending
+          // banner appears on due date.
+          await _createRecurringRuleFromForm(
+            type: type,
+            accountId: accountId,
+            amountCents: amountCents,
+            transactionDate: date,
+            isFutureDate: true,
+            envelopeId: envelopeId,
+            payee: payee,
+            notes: notes,
+          );
+
+          if (isClosed) return;
           emit(state.copyWith(status: TransactionFormStatus.success));
         }
       } else {
@@ -380,17 +408,22 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     required String accountId,
     required int amountCents,
     required DateTime transactionDate,
+    required bool isFutureDate,
     String? envelopeId,
     String? payee,
     String? notes,
   }) async {
-    // Start the rule from the next occurrence so it doesn't fire immediately.
-    final startDate = _nextOccurrenceAfter(
-      from: transactionDate,
-      frequency: state.recurringFrequency,
-      customInterval: state.recurringCustomInterval,
-      customUnit: state.recurringCustomUnit,
-    );
+    // Future date: rule starts on the chosen date (no transaction yet).
+    // Today/past: rule starts from the next occurrence to avoid an
+    // immediate pending banner.
+    final startDate = isFutureDate
+        ? transactionDate
+        : _nextOccurrenceAfter(
+            from: transactionDate,
+            frequency: state.recurringFrequency,
+            customInterval: state.recurringCustomInterval,
+            customUnit: state.recurringCustomUnit,
+          );
     await _transactionRepository.createRecurringRule(
       budgetId: budgetId,
       accountId: accountId,
