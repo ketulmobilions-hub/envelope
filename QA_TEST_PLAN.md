@@ -150,6 +150,14 @@
 | 7.6 | Pause/resume rule | Toggle pause on a rule | Rule shows paused state |
 | 7.7 | Auto-post transaction | Create auto-post rule, advance date past trigger | Transaction auto-created |
 | 7.8 | Custom frequency | Create rule with custom: every 2 weeks | Displays "Every 2 weeks" |
+| 7.9 | Make Recurring from transaction form | Add expense > toggle "Make Recurring" > select Monthly > save | Today's transaction posted immediately; recurring rule created with next occurrence ~1 month away; no "pending recurring rules" banner on home page |
+| 7.10 | Make Recurring — custom frequency | Add expense > Make Recurring > select Custom > enter "2 Weeks" > save | Transaction posted; rule created with next occurrence in 14 days |
+| 7.11 | Make Recurring — auto-post on | Add expense > Make Recurring > enable Auto-post > save | Transaction posted; rule created; future transactions will auto-post when due |
+| 7.12 | Make Recurring — end date | Add expense > Make Recurring > set end date 3 months out > save | Rule created with end date; rule stops after end date |
+| 7.13 | Make Recurring hidden for transfer | Add Transaction > select Transfer type | "Make Recurring" toggle is not visible |
+| 7.14 | Make Recurring hidden for split | Add expense > enable Split mode | "Make Recurring" toggle is not visible |
+| 7.15 | Make Recurring hidden when editing | Edit an existing transaction | "Make Recurring" toggle is not visible |
+| 7.16 | Navigate to Recurring from home menu | Home page > ⋮ menu > "Recurring & Bills" | Recurring page opens |
 
 ---
 
@@ -167,6 +175,7 @@
 | 8.8 | Navigate to reports | Tap reports icon in app bar | Reports page opens |
 | 8.9 | Navigate to shared budget | Tap group icon in app bar | Shared budget page opens |
 | 8.10 | Navigate to settings | Tap menu > Settings | Settings page opens |
+| 8.12 | Navigate to recurring | Tap menu > Recurring & Bills | Recurring page opens |
 | 8.11 | Delete budget | Menu > Delete Budget > confirm | Budget deleted, navigate home |
 
 ---
