@@ -22,10 +22,12 @@ class RecurringPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final userId = context.read<AuthBloc>().state.user?.id ?? '';
     return BlocProvider(
       create: (_) => RecurringBloc(
         transactionRepository: context.read<TransactionRepository>(),
         budgetId: budgetId,
+        userId: userId,
       )..add(const RecurringStarted()),
       child: RecurringView(budgetId: budgetId),
     );
@@ -52,6 +54,7 @@ class RecurringView extends StatelessWidget {
             RecurringError.deleteFailed => l10n.recurringErrorDeleteFailed,
             RecurringError.undoFailed => l10n.recurringErrorUndoFailed,
             RecurringError.pauseFailed => l10n.recurringErrorPauseFailed,
+            RecurringError.postFailed => l10n.recurringErrorPostFailed,
           };
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
@@ -173,10 +176,17 @@ class _RecurringRulesTab extends StatelessWidget {
         itemCount: state.recurringRules.length,
         itemBuilder: (context, index) {
           final rule = state.recurringRules[index];
+          final isPending = !rule.isPaused &&
+              !rule.autoPost &&
+              !rule.nextOccurrence.isAfter(DateTime.now());
           return RecurringRuleListTile(
             rule: rule,
+            isPending: isPending,
             onTap: () => _openEditRule(context, rule),
             onDelete: () => _onDeleteRule(context, rule),
+            onPost: () => context
+                .read<RecurringBloc>()
+                .add(RecurringRulePosted(rule.id)),
             onPauseToggle: () => context
                 .read<RecurringBloc>()
                 .add(RecurringRulePauseToggled(rule.id)),

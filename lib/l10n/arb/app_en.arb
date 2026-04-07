@@ -1186,6 +1186,10 @@
             "date": { "type": "String" }
         }
     },
+    "recurringDueNow": "Due now",
+    "@recurringDueNow": {
+        "description": "Subtitle label shown on pending recurring rules that are due"
+    },
     "recurringPaused": "Paused",
     "@recurringPaused": {
         "description": "Badge text for paused rules"
@@ -1280,6 +1284,14 @@
     "recurringErrorPauseFailed": "Failed to update rule. Please try again.",
     "@recurringErrorPauseFailed": {
         "description": "Error message when pause/resume fails"
+    },
+    "recurringErrorPostFailed": "Failed to post transaction. Please try again.",
+    "@recurringErrorPostFailed": {
+        "description": "Error when manually posting a pending recurring rule fails"
+    },
+    "recurringPostNow": "Post now",
+    "@recurringPostNow": {
+        "description": "Tooltip for the post-now button on pending recurring rules"
     },
     "recurringPendingBanner": "You have pending recurring transactions",
     "@recurringPendingBanner": {

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart' show DateUtils;
 import 'package:transaction_repository/transaction_repository.dart';
 
 part 'recurring_event.dart';
@@ -11,8 +12,10 @@ class RecurringBloc extends Bloc<RecurringEvent, RecurringState> {
   RecurringBloc({
     required TransactionRepository transactionRepository,
     required String budgetId,
+    required String userId,
   })  : _transactionRepository = transactionRepository,
         _budgetId = budgetId,
+        _userId = userId,
         super(const RecurringState()) {
     on<RecurringStarted>(_onStarted);
     on<_RecurringRulesUpdated>(_onRulesUpdated);
@@ -22,6 +25,7 @@ class RecurringBloc extends Bloc<RecurringEvent, RecurringState> {
     on<RecurringRefreshRequested>(_onRefreshRequested);
     on<RecurringRuleDeleted>(_onRuleDeleted);
     on<RecurringRuleUndoDeleteRequested>(_onRuleUndoDelete);
+    on<RecurringRulePosted>(_onRulePosted);
     on<RecurringRulePauseToggled>(_onRulePauseToggled);
     on<BillReminderDeleted>(_onReminderDeleted);
     on<BillReminderUndoDeleteRequested>(_onReminderUndoDelete);
@@ -29,6 +33,7 @@ class RecurringBloc extends Bloc<RecurringEvent, RecurringState> {
 
   final TransactionRepository _transactionRepository;
   final String _budgetId;
+  final String _userId;
   StreamSubscription<List<RecurringRule>>? _rulesSubscription;
   StreamSubscription<List<BillReminder>>? _remindersSubscription;
   RecurringRule? _lastDeletedRule;
@@ -193,6 +198,86 @@ class RecurringBloc extends Bloc<RecurringEvent, RecurringState> {
       );
       emit(state.copyWith(status: RecurringStatus.loaded, error: null));
     }
+  }
+
+  Future<void> _onRulePosted(
+    RecurringRulePosted event,
+    Emitter<RecurringState> emit,
+  ) async {
+    final rule = state.recurringRules
+        .where((r) => r.id == event.id)
+        .firstOrNull;
+    if (rule == null) return;
+
+    try {
+      await _transactionRepository.createTransaction(
+        budgetId: rule.budgetId,
+        accountId: rule.accountId,
+        type: rule.type,
+        amount: rule.amount,
+        currency: rule.currency,
+        date: DateTime.now(),
+        createdBy: _userId,
+        envelopeId: rule.envelopeId,
+        payee: rule.payee,
+        notes: rule.notes,
+        recurringRuleId: rule.id,
+      );
+    } on TransactionException {
+      emit(
+        state.copyWith(
+          status: RecurringStatus.error,
+          error: RecurringError.postFailed,
+        ),
+      );
+      emit(state.copyWith(status: RecurringStatus.loaded, error: null));
+      return;
+    }
+
+    // Advance nextOccurrence so the rule doesn't stay pending.
+    try {
+      final next = _calculateNextOccurrence(rule);
+      await _transactionRepository.updateRecurringRule(
+        rule.copyWith(nextOccurrence: next),
+      );
+    } on TransactionException {
+      // Transaction was created; nextOccurrence update failed.
+      // Will self-correct on next app open.
+    }
+  }
+
+  static DateTime _calculateNextOccurrence(RecurringRule rule) {
+    final current = rule.nextOccurrence;
+    return switch (rule.frequency) {
+      'daily' => current.add(const Duration(days: 1)),
+      'weekly' => current.add(const Duration(days: 7)),
+      'bi-weekly' => current.add(const Duration(days: 14)),
+      'monthly' => _addMonths(current, 1),
+      'yearly' => _addMonths(current, 12),
+      'custom' => _calculateCustomNext(rule),
+      _ => current.add(const Duration(days: 30)),
+    };
+  }
+
+  static DateTime _calculateCustomNext(RecurringRule rule) {
+    final current = rule.nextOccurrence;
+    final interval = rule.customInterval ?? 1;
+    final unit = rule.customUnit ?? 'days';
+    return switch (unit) {
+      'days' => current.add(Duration(days: interval)),
+      'weeks' => current.add(Duration(days: interval * 7)),
+      'months' => _addMonths(current, interval),
+      _ => current.add(Duration(days: interval)),
+    };
+  }
+
+  static DateTime _addMonths(DateTime date, int months) {
+    final total = date.month + months;
+    final y = date.year + (total - 1) ~/ 12;
+    final m = (total - 1) % 12 + 1;
+    final daysInMonth = DateUtils.getDaysInMonth(y, m);
+    final d = date.day > daysInMonth ? daysInMonth : date.day;
+    return DateTime(y, m, d, date.hour, date.minute);
   }
 
   Future<void> _onRulePauseToggled(
