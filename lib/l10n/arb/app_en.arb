@@ -1131,6 +1131,10 @@
     "@recurringFrequencyCustom": {
         "description": "Custom frequency option"
     },
+    "recurringMakeRecurringLabel": "Make Recurring",
+    "@recurringMakeRecurringLabel": {
+        "description": "Toggle label to enable recurring rule creation from the transaction form"
+    },
     "recurringFrequencyLabel": "Frequency",
     "@recurringFrequencyLabel": {
         "description": "Label for frequency dropdown"

@@ -4,6 +4,7 @@ import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/transactions/widgets/split_rows.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart' show DateUtils;
 import 'package:transaction_repository/transaction_repository.dart';
 
 part 'transaction_form_state.dart';
@@ -106,6 +107,32 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // Recurring mutators
+  // ---------------------------------------------------------------------------
+
+  void toggleRecurring({required bool value}) =>
+      emit(state.copyWith(isRecurring: value));
+
+  void setRecurringFrequency(String frequency) =>
+      emit(state.copyWith(recurringFrequency: frequency));
+
+  void setRecurringCustomInterval(int? interval) =>
+      emit(state.copyWith(recurringCustomInterval: interval));
+
+  void setRecurringCustomUnit(String unit) =>
+      emit(state.copyWith(recurringCustomUnit: unit));
+
+  void setRecurringEndDate(DateTime? date) =>
+      emit(state.copyWith(recurringEndDate: date));
+
+  void toggleRecurringAutoPost({required bool value}) =>
+      emit(state.copyWith(recurringAutoPost: value));
+
+  // ---------------------------------------------------------------------------
+  // Submit
+  // ---------------------------------------------------------------------------
+
   Future<void> submit({
     required String type,
     required String accountId,
@@ -117,12 +144,12 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     bool isSplitMode = false,
     List<SplitEntry> splits = const [],
     List<String> selectedTagIds = const [],
+    bool isRecurring = false,
   }) async {
     emit(state.copyWith(status: TransactionFormStatus.submitting));
     try {
-      String transactionId;
-
       if (isEditing) {
+        // ── Edit existing transaction ──────────────────────────────────────
         final updated = transaction!.copyWith(
           type: type,
           accountId: accountId,
@@ -134,8 +161,62 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
           updatedAt: DateTime.now(),
         );
         await _transactionRepository.updateTransaction(updated);
-        transactionId = transaction!.id;
-      } else {
+        final transactionId = transaction!.id;
+
+        if (isSplitMode) {
+          await _saveSplits(transactionId, splits);
+        }
+        await _saveTags(transactionId, selectedTagIds);
+
+        // Income delta for edits.
+        final oldIncome =
+            transaction!.type == 'income' ? transaction!.amount : 0;
+        final newIncome = type == 'income' ? amountCents : 0;
+        final incomeDelta = newIncome - oldIncome;
+        if (incomeDelta != 0) {
+          try {
+            await _budgetRepository.addIncomeToCurrentPeriod(
+              budgetId: budgetId,
+              amount: incomeDelta,
+            );
+          } on BudgetException {
+            // Best-effort.
+          }
+        }
+
+        if (budgetPeriodId != null) {
+          try {
+            await _envelopeRepository.refreshAllocations(budgetPeriodId!);
+          } on Exception {
+            // Best-effort.
+          }
+        }
+        try {
+          await _accountRepository.refreshAccounts(budgetId);
+        } on AccountException {
+          // Best-effort.
+        }
+
+        final overspendData = await _checkOverspend(
+          type: type,
+          envelopeId: envelopeId,
+          isSplitMode: isSplitMode,
+          splits: splits,
+        );
+
+        if (isClosed) return;
+        if (overspendData != null) {
+          emit(
+            state.copyWith(
+              status: TransactionFormStatus.successWithOverspend,
+              overspendData: overspendData,
+            ),
+          );
+        } else {
+          emit(state.copyWith(status: TransactionFormStatus.success));
+        }
+      } else if (isRecurring) {
+        // ── Create transaction + recurring rule for future occurrences ─────
         final created = await _transactionRepository.createTransaction(
           budgetId: budgetId,
           accountId: accountId,
@@ -148,69 +229,132 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
           payee: payee,
           notes: notes,
         );
-        transactionId = created.id;
-      }
+        final transactionId = created.id;
 
-      // Handle splits.
-      if (isSplitMode) {
-        await _saveSplits(transactionId, splits);
-      }
-
-      // Handle tags.
-      await _saveTags(transactionId, selectedTagIds);
-
-      // Update budget period income for income transactions.
-      final oldIncome = (isEditing && transaction!.type == 'income')
-          ? transaction!.amount
-          : 0;
-      final newIncome = type == 'income' ? amountCents : 0;
-      final incomeDelta = newIncome - oldIncome;
-      if (incomeDelta != 0) {
-        try {
-          await _budgetRepository.addIncomeToCurrentPeriod(
-            budgetId: budgetId,
-            amount: incomeDelta,
-          );
-        } on BudgetException {
-          // Best-effort; budget income update is non-critical.
+        if (isSplitMode) {
+          await _saveSplits(transactionId, splits);
         }
-      }
+        await _saveTags(transactionId, selectedTagIds);
 
-      // Refresh allocations so the local Drift cache reflects the updated
-      // spent_amount computed by the database trigger.
-      if (budgetPeriodId != null) {
-        try {
-          await _envelopeRepository.refreshAllocations(budgetPeriodId!);
-        } on Exception {
-          // Best-effort; Realtime will eventually sync.
+        final newIncome = type == 'income' ? amountCents : 0;
+        if (newIncome != 0) {
+          try {
+            await _budgetRepository.addIncomeToCurrentPeriod(
+              budgetId: budgetId,
+              amount: newIncome,
+            );
+          } on BudgetException {
+            // Best-effort.
+          }
         }
-      }
 
-      // Refresh accounts so current_balance reflects the database trigger update.
-      try {
-        await _accountRepository.refreshAccounts(budgetId);
-      } on AccountException {
-        // Best-effort; local cache will be corrected on next full sync.
-      }
+        if (budgetPeriodId != null) {
+          try {
+            await _envelopeRepository.refreshAllocations(budgetPeriodId!);
+          } on Exception {
+            // Best-effort.
+          }
+        }
+        try {
+          await _accountRepository.refreshAccounts(budgetId);
+        } on AccountException {
+          // Best-effort.
+        }
 
-      // Check for overspend on expense transactions.
-      final overspendData = await _checkOverspend(
-        type: type,
-        envelopeId: envelopeId,
-        isSplitMode: isSplitMode,
-        splits: splits,
-      );
-
-      if (isClosed) return;
-      if (overspendData != null) {
-        emit(
-          state.copyWith(
-            status: TransactionFormStatus.successWithOverspend,
-            overspendData: overspendData,
-          ),
+        // Create recurring rule with startDate = next occurrence (not today),
+        // so it doesn't trigger an immediate home-page banner.
+        await _createRecurringRuleFromForm(
+          type: type,
+          accountId: accountId,
+          amountCents: amountCents,
+          transactionDate: date,
+          envelopeId: envelopeId,
+          payee: payee,
+          notes: notes,
         );
+
+        final overspendData = await _checkOverspend(
+          type: type,
+          envelopeId: envelopeId,
+          isSplitMode: isSplitMode,
+          splits: splits,
+        );
+
+        if (isClosed) return;
+        if (overspendData != null) {
+          emit(
+            state.copyWith(
+              status: TransactionFormStatus.successWithOverspend,
+              overspendData: overspendData,
+            ),
+          );
+        } else {
+          emit(state.copyWith(status: TransactionFormStatus.success));
+        }
       } else {
-        emit(state.copyWith(status: TransactionFormStatus.success));
+        // ── Create one-off transaction ─────────────────────────────────────
+        final created = await _transactionRepository.createTransaction(
+          budgetId: budgetId,
+          accountId: accountId,
+          type: type,
+          amount: amountCents,
+          currency: 'USD',
+          date: date,
+          createdBy: userId,
+          envelopeId: isSplitMode ? null : envelopeId,
+          payee: payee,
+          notes: notes,
+        );
+        final transactionId = created.id;
+
+        if (isSplitMode) {
+          await _saveSplits(transactionId, splits);
+        }
+        await _saveTags(transactionId, selectedTagIds);
+
+        final newIncome = type == 'income' ? amountCents : 0;
+        if (newIncome != 0) {
+          try {
+            await _budgetRepository.addIncomeToCurrentPeriod(
+              budgetId: budgetId,
+              amount: newIncome,
+            );
+          } on BudgetException {
+            // Best-effort.
+          }
+        }
+
+        if (budgetPeriodId != null) {
+          try {
+            await _envelopeRepository.refreshAllocations(budgetPeriodId!);
+          } on Exception {
+            // Best-effort.
+          }
+        }
+        try {
+          await _accountRepository.refreshAccounts(budgetId);
+        } on AccountException {
+          // Best-effort.
+        }
+
+        final overspendData = await _checkOverspend(
+          type: type,
+          envelopeId: envelopeId,
+          isSplitMode: isSplitMode,
+          splits: splits,
+        );
+
+        if (isClosed) return;
+        if (overspendData != null) {
+          emit(
+            state.copyWith(
+              status: TransactionFormStatus.successWithOverspend,
+              overspendData: overspendData,
+            ),
+          );
+        } else {
+          emit(state.copyWith(status: TransactionFormStatus.success));
+        }
       }
     } on TransactionException catch (e) {
       if (isClosed) return;
@@ -230,6 +374,84 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
       );
     }
   }
+
+  Future<void> _createRecurringRuleFromForm({
+    required String type,
+    required String accountId,
+    required int amountCents,
+    required DateTime transactionDate,
+    String? envelopeId,
+    String? payee,
+    String? notes,
+  }) async {
+    // Start the rule from the next occurrence so it doesn't fire immediately.
+    final startDate = _nextOccurrenceAfter(
+      from: transactionDate,
+      frequency: state.recurringFrequency,
+      customInterval: state.recurringCustomInterval,
+      customUnit: state.recurringCustomUnit,
+    );
+    await _transactionRepository.createRecurringRule(
+      budgetId: budgetId,
+      accountId: accountId,
+      type: type,
+      amount: amountCents,
+      currency: 'USD',
+      frequency: state.recurringFrequency,
+      startDate: startDate,
+      envelopeId: envelopeId,
+      payee: payee?.isEmpty == true ? null : payee,
+      notes: notes?.isEmpty == true ? null : notes,
+      customInterval: state.recurringFrequency == 'custom'
+          ? (state.recurringCustomInterval ?? 1)
+          : null,
+      customUnit: state.recurringFrequency == 'custom'
+          ? state.recurringCustomUnit
+          : null,
+      endDate: state.recurringEndDate,
+      autoPost: state.recurringAutoPost,
+    );
+  }
+
+  static DateTime _nextOccurrenceAfter({
+    required DateTime from,
+    required String frequency,
+    int? customInterval,
+    String? customUnit,
+  }) {
+    return switch (frequency) {
+      'daily' => from.add(const Duration(days: 1)),
+      'weekly' => from.add(const Duration(days: 7)),
+      'bi-weekly' => from.add(const Duration(days: 14)),
+      'monthly' => _addMonths(from, 1),
+      'yearly' => _addMonths(from, 12),
+      'custom' => _addCustomInterval(
+          from,
+          customInterval ?? 1,
+          customUnit ?? 'days',
+        ),
+      _ => from.add(const Duration(days: 30)),
+    };
+  }
+
+  static DateTime _addMonths(DateTime date, int months) {
+    final total = date.month + months;
+    final y = date.year + (total - 1) ~/ 12;
+    final m = (total - 1) % 12 + 1;
+    final d = date.day.clamp(1, DateUtils.getDaysInMonth(y, m));
+    return DateTime(y, m, d);
+  }
+
+  static DateTime _addCustomInterval(
+    DateTime date,
+    int interval,
+    String unit,
+  ) =>
+      switch (unit) {
+        'weeks' => date.add(Duration(days: interval * 7)),
+        'months' => _addMonths(date, interval),
+        _ => date.add(Duration(days: interval)),
+      };
 
   Future<void> _saveSplits(
     String transactionId,
@@ -345,7 +567,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
           .watchEnvelopes(budgetId)
           .first;
 
-      int readyToAssign = 0;
+      var readyToAssign = 0;
       try {
         readyToAssign = await _budgetRepository.calculateReadyToAssign(
           periodId,
