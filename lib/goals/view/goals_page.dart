@@ -74,7 +74,7 @@ class GoalsView extends StatelessWidget {
                 final bloc = context.read<GoalsBloc>()
                   ..add(const GoalsRefreshRequested());
                 await bloc.stream.firstWhere(
-                  (s) => s.status == GoalsStatus.loaded,
+                  (s) => s.status != GoalsStatus.refreshing,
                 );
               },
               child: _GoalsList(
