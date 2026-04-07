@@ -81,13 +81,13 @@ class _HomeView extends StatelessWidget {
         title: Text(l10n.homeTitle),
         actions: [
           IconButton(
-            onPressed: () => context.go(
+            onPressed: () => context.push(
               '${AppRoutes.reports}?budgetId=$budgetId',
             ),
             icon: const Icon(Icons.bar_chart),
           ),
           IconButton(
-            onPressed: () => context.go(
+            onPressed: () => context.push(
               '${AppRoutes.sharedBudget}?budgetId=$budgetId',
             ),
             icon: const Icon(Icons.group),
@@ -98,11 +98,11 @@ class _HomeView extends StatelessWidget {
               if (value == 'delete_budget') {
                 unawaited(_confirmDeleteBudget(context));
               } else if (value == 'settings') {
-                context.go(AppRoutes.settings);
+                unawaited(context.push(AppRoutes.settings));
               } else if (value == 'recurring') {
-                context.go(
+                unawaited(context.push(
                   '${AppRoutes.recurring}?budgetId=$budgetId',
-                );
+                ));
               } else if (value == 'debug_simulate_date') {
                 final picked = await showDatePicker(
                   context: context,
@@ -237,7 +237,7 @@ class _HomeView extends StatelessWidget {
                               leading: const Icon(Icons.repeat),
                               actions: [
                                 TextButton(
-                                  onPressed: () => context.go(
+                                  onPressed: () => context.push(
                                     '${AppRoutes.recurring}?budgetId=$budgetId',
                                   ),
                                   child: Text(l10n.recurringTabRecurring),
@@ -250,7 +250,7 @@ class _HomeView extends StatelessWidget {
                               leading: const Icon(Icons.receipt_outlined),
                               actions: [
                                 TextButton(
-                                  onPressed: () => context.go(
+                                  onPressed: () => context.push(
                                     '${AppRoutes.recurring}?budgetId=$budgetId',
                                   ),
                                   child: Text(l10n.recurringTabBills),
@@ -265,7 +265,7 @@ class _HomeView extends StatelessWidget {
                   // Ready to Assign
                   DashboardReadyToAssignCard(
                     readyToAssign: state.readyToAssign,
-                    onTap: () => context.go(
+                    onTap: () => context.push(
                       '${AppRoutes.budget}?budgetId=$budgetId',
                     ),
                   ),
@@ -274,7 +274,7 @@ class _HomeView extends StatelessWidget {
                   EnvelopeSummaryCard(
                     summaries: state.envelopeSummaries,
                     categoryGroups: state.categoryGroups,
-                    onViewAll: () => context.go(
+                    onViewAll: () => context.push(
                       '${AppRoutes.envelopes}?budgetId=$budgetId',
                     ),
                   ),
@@ -283,7 +283,7 @@ class _HomeView extends StatelessWidget {
                   DashboardAccountsCard(
                     accounts: state.accounts,
                     totalBalance: state.totalBalance,
-                    onTap: () => context.go(
+                    onTap: () => context.push(
                       '${AppRoutes.accounts}?budgetId=$budgetId',
                     ),
                   ),
@@ -291,7 +291,7 @@ class _HomeView extends StatelessWidget {
                   // Recent Transactions
                   RecentTransactionsCard(
                     transactions: state.recentTransactions,
-                    onViewAll: () => context.go(
+                    onViewAll: () => context.push(
                       '${AppRoutes.transactions}?budgetId=$budgetId',
                     ),
                   ),
