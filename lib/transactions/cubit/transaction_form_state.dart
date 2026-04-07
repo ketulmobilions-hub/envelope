@@ -16,6 +16,7 @@ final class OverspendData extends Equatable {
     required this.overspentAllocation,
     required this.allocations,
     required this.envelopes,
+    this.readyToAssign = 0,
   });
 
   final String envelopeName;
@@ -23,6 +24,7 @@ final class OverspendData extends Equatable {
   final EnvelopeAllocation overspentAllocation;
   final List<EnvelopeAllocation> allocations;
   final List<Envelope> envelopes;
+  final int readyToAssign;
 
   @override
   List<Object?> get props => [
@@ -31,6 +33,7 @@ final class OverspendData extends Equatable {
         overspentAllocation,
         allocations,
         envelopes,
+        readyToAssign,
       ];
 }
 
@@ -41,6 +44,7 @@ final class TransactionFormState extends Equatable {
     this.envelopes = const [],
     this.tags = const [],
     this.selectedTagIds = const [],
+    this.initialSplits = const [],
     this.errorMessage,
     this.tagError,
     this.overspendData,
@@ -51,6 +55,7 @@ final class TransactionFormState extends Equatable {
   final List<Envelope> envelopes;
   final List<Tag> tags;
   final List<String> selectedTagIds;
+  final List<SplitEntry> initialSplits;
   final String? errorMessage;
   final String? tagError;
   final OverspendData? overspendData;
@@ -63,6 +68,7 @@ final class TransactionFormState extends Equatable {
     List<Envelope>? envelopes,
     List<Tag>? tags,
     List<String>? selectedTagIds,
+    List<SplitEntry>? initialSplits,
     String? errorMessage,
     String? tagError,
     Object? overspendData = _sentinel,
@@ -73,6 +79,7 @@ final class TransactionFormState extends Equatable {
       envelopes: envelopes ?? this.envelopes,
       tags: tags ?? this.tags,
       selectedTagIds: selectedTagIds ?? this.selectedTagIds,
+      initialSplits: initialSplits ?? this.initialSplits,
       errorMessage: errorMessage,
       tagError: tagError,
       overspendData: overspendData == _sentinel
@@ -88,6 +95,7 @@ final class TransactionFormState extends Equatable {
         envelopes,
         tags,
         selectedTagIds,
+        initialSplits,
         errorMessage,
         tagError,
         overspendData,

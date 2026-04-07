@@ -442,26 +442,23 @@ class _EnvelopeContentState extends State<_EnvelopeContent>
                             ),
                           )
                         else
-                          for (int i = 0;
-                              i < transactions.length;
-                              i++) ...[
+                          for (int i = 0; i < transactions.length; i++) ...[
                             if (i == 0 ||
                                 !_sameDay(
                                   transactions[i].date,
                                   transactions[i - 1].date,
                                 ))
                               Padding(
-                                padding:
-                                    const EdgeInsets.fromLTRB(4, 12, 4, 4),
+                                padding: const EdgeInsets.fromLTRB(4, 12, 4, 4),
                                 child: Text(
                                   formatDateHeader(
                                     transactions[i].date,
                                     l10n,
                                   ),
-                                  style: theme.textTheme.labelSmall
-                                      ?.copyWith(
-                                    color: AppColors.onPrimary
-                                        .withValues(alpha: 0.6),
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: AppColors.onPrimary.withValues(
+                                      alpha: 0.6,
+                                    ),
                                     letterSpacing: 0.8,
                                   ),
                                 ),
@@ -585,8 +582,9 @@ class _TransactionRow extends StatelessWidget {
               transaction.notes!,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style:
-                  TextStyle(color: AppColors.onPrimary.withValues(alpha: 0.7)),
+              style: TextStyle(
+                color: AppColors.onPrimary.withValues(alpha: 0.7),
+              ),
             )
           : null,
       trailing: Text(

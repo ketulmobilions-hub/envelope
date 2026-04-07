@@ -35,6 +35,7 @@ class TransactionsApiClient {
           .from('transactions')
           .select()
           .eq('budget_id', budgetId)
+          .filter('deleted_at', 'is', null)
           .order('date', ascending: false);
       return response.map(TransactionDto.fromJson).toList();
     } catch (error) {

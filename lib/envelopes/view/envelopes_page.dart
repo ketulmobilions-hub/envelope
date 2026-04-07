@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/envelopes/bloc/bloc.dart';
 import 'package:envelope/shared/widgets/confirm_delete_dialog.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
@@ -78,7 +79,8 @@ class _EnvelopesViewState extends State<EnvelopesView> {
                   prev.categoryGroups != curr.categoryGroups ||
                   prev.envelopes != curr.envelopes,
               builder: (context, state) {
-                final hasArchived = state.archivedGroups.isNotEmpty ||
+                final hasArchived =
+                    state.archivedGroups.isNotEmpty ||
                     state.archivedEnvelopes.isNotEmpty;
                 if (state.status != EnvelopesStatus.loaded || !hasArchived) {
                   return const SizedBox.shrink();
@@ -98,7 +100,8 @@ class _EnvelopesViewState extends State<EnvelopesView> {
               },
             ),
             BlocBuilder<EnvelopesBloc, EnvelopesState>(
-              buildWhen: (prev, curr) => prev.status != curr.status ||
+              buildWhen: (prev, curr) =>
+                  prev.status != curr.status ||
                   prev.categoryGroups != curr.categoryGroups,
               builder: (context, state) {
                 if (state.status != EnvelopesStatus.loaded ||
@@ -148,9 +151,9 @@ class _EnvelopesViewState extends State<EnvelopesView> {
                     _openAddEnvelope(context, initialGroupId: g.id),
                 onArchiveGroup: (g) => _confirmArchiveGroup(context, g),
                 onDeleteGroup: (g) => _confirmDeleteGroup(context, g),
-                onUnarchiveGroup: (g) => context
-                    .read<EnvelopesBloc>()
-                    .add(CategoryGroupArchiveToggled(g)),
+                onUnarchiveGroup: (g) => context.read<EnvelopesBloc>().add(
+                  CategoryGroupArchiveToggled(g),
+                ),
                 onEnvelopeTap: (e) => _openEnvelopeDetail(context, e),
                 onEditEnvelope: (e) => _openEditEnvelope(context, e),
                 onArchiveEnvelope: (e) => _confirmArchiveEnvelope(context, e),
@@ -304,6 +307,7 @@ class _EnvelopesViewState extends State<EnvelopesView> {
           create: (_) => EnvelopeDetailCubit(
             envelopeRepository: context.read<EnvelopeRepository>(),
             transactionRepository: context.read<TransactionRepository>(),
+            budgetRepository: context.read<BudgetRepository>(),
             envelope: envelope,
           ),
           child: EnvelopeDetailPage(categoryGroups: activeGroups),
@@ -474,8 +478,8 @@ class _EmptyState extends StatelessWidget {
               l10n.envelopesEmptySubtitle,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
+                color: Theme.of(context).colorScheme.outline,
+              ),
             ),
           ),
           const SizedBox(height: 24),
@@ -547,8 +551,7 @@ class _EnvelopesList extends StatelessWidget {
                     ...envelopes,
                     ...state.envelopes
                         .where(
-                          (e) =>
-                              e.categoryGroupId == group.id && e.isArchived,
+                          (e) => e.categoryGroupId == group.id && e.isArchived,
                         )
                         .toList()
                       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder)),
@@ -569,8 +572,8 @@ class _EnvelopesList extends StatelessWidget {
             child: Text(
               l10n.envelopesArchived,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
+                color: Theme.of(context).colorScheme.outline,
+              ),
             ),
           ),
           for (final group in archivedGroups)

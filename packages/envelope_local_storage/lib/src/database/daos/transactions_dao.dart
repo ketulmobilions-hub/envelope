@@ -81,6 +81,27 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
             ..where((t) => t.transactionId.equals(transactionId)))
           .go();
 
+  /// Watches a map of transactionId → envelopeIds for all split transactions
+  /// belonging to [budgetId].
+  Stream<Map<String, List<String>>> watchSplitEnvelopeIds(String budgetId) {
+    final query = select(transactions).join([
+      innerJoin(
+        transactionSplits,
+        transactionSplits.transactionId.equalsExp(transactions.id),
+      ),
+    ])
+      ..where(transactions.budgetId.equals(budgetId));
+    return query.watch().map((rows) {
+      final result = <String, List<String>>{};
+      for (final row in rows) {
+        final txnId = row.readTable(transactions).id;
+        final split = row.readTable(transactionSplits);
+        result.putIfAbsent(txnId, () => []).add(split.envelopeId);
+      }
+      return result;
+    });
+  }
+
   // Tags CRUD
   Future<List<Tag>> getAllTags() => select(tags).get();
 

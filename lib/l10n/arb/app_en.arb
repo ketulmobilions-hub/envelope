@@ -1398,9 +1398,22 @@
     "@overspendCoverNoSource": {
         "description": "Message when no source envelopes have positive balance"
     },
-    "overspendCoverSourceRequired": "Please select a source envelope",
+    "envelopeFixOverspend": "Fix Overspend",
+    "@envelopeFixOverspend": {
+        "description": "Button label on overspent envelope cards to open the cover overspend dialog"
+    },
+    "overspendCoverReadyToAssign": "Ready to Assign ({amount})",
+    "@overspendCoverReadyToAssign": {
+        "description": "Dropdown option to allocate from ready-to-assign funds",
+        "placeholders": {
+            "amount": {
+                "type": "String"
+            }
+        }
+    },
+    "overspendCoverSourceRequired": "Please select a source",
     "@overspendCoverSourceRequired": {
-        "description": "Validation when no source envelope selected"
+        "description": "Validation when no source selected"
     },
     "overspendCoverAmountRequired": "Please enter a positive amount",
     "@overspendCoverAmountRequired": {

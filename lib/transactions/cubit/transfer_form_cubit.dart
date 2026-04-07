@@ -75,6 +75,13 @@ class TransferFormCubit extends Cubit<TransferFormState> {
         transferPairId: transferPairId,
       );
 
+      // Refresh accounts so current_balance reflects the trigger update.
+      try {
+        await _accountRepository.refreshAccounts(budgetId);
+      } on AccountException {
+        // Best-effort; local cache will be corrected on next full sync.
+      }
+
       if (isClosed) return;
       emit(state.copyWith(status: TransferFormStatus.success));
     } on TransactionException catch (e) {

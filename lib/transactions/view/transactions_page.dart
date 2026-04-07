@@ -2,6 +2,7 @@ import 'package:account_repository/account_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/transactions/bloc/bloc.dart';
 import 'package:envelope/transactions/cubit/cubit.dart';
 import 'package:envelope/transactions/view/transaction_form_page.dart';
@@ -23,6 +24,8 @@ class TransactionsPage extends StatelessWidget {
     return BlocProvider(
       create: (_) => TransactionsBloc(
         transactionRepository: context.read<TransactionRepository>(),
+        accountRepository: context.read<AccountRepository>(),
+        envelopeRepository: context.read<EnvelopeRepository>(),
         budgetId: budgetId,
       )..add(const TransactionsStarted()),
       child: TransactionsView(budgetId: budgetId),
@@ -44,12 +47,9 @@ class TransactionsView extends StatelessWidget {
           curr.status == TransactionsStatus.error && curr.error != null,
       listener: (context, state) {
         final message = switch (state.error!) {
-          TransactionsError.loadFailed =>
-            l10n.transactionsErrorLoadFailed,
-          TransactionsError.deleteFailed =>
-            l10n.transactionsErrorDeleteFailed,
-          TransactionsError.undoFailed =>
-            l10n.transactionsErrorUndoFailed,
+          TransactionsError.loadFailed => l10n.transactionsErrorLoadFailed,
+          TransactionsError.deleteFailed => l10n.transactionsErrorDeleteFailed,
+          TransactionsError.undoFailed => l10n.transactionsErrorUndoFailed,
         };
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
@@ -90,8 +90,7 @@ class TransactionsView extends StatelessWidget {
                             final bloc = context.read<TransactionsBloc>()
                               ..add(const TransactionsRefreshRequested());
                             await bloc.stream.firstWhere(
-                              (s) =>
-                                  s.status == TransactionsStatus.loaded,
+                              (s) => s.status == TransactionsStatus.loaded,
                             );
                           },
                           child: _TransactionsList(
@@ -117,15 +116,12 @@ class TransactionsView extends StatelessWidget {
       MaterialPageRoute<bool>(
         builder: (_) => BlocProvider(
           create: (_) => TransactionFormCubit(
-            transactionRepository:
-                context.read<TransactionRepository>(),
+            transactionRepository: context.read<TransactionRepository>(),
             accountRepository: context.read<AccountRepository>(),
-            envelopeRepository:
-                context.read<EnvelopeRepository>(),
+            envelopeRepository: context.read<EnvelopeRepository>(),
             budgetRepository: context.read<BudgetRepository>(),
             budgetId: budgetId,
-            userId:
-                context.read<AuthBloc>().state.user?.id ?? '',
+            userId: context.read<AuthBloc>().state.user?.id ?? '',
             budgetPeriodId: periodId,
           ),
           child: const TransactionFormPage(),
@@ -176,8 +172,8 @@ class _EmptyState extends StatelessWidget {
           Text(
             l10n.transactionsEmptySubtitle,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
+              color: Theme.of(context).colorScheme.outline,
+            ),
           ),
           const SizedBox(height: 24),
           FilledButton.icon(
@@ -200,8 +196,7 @@ class _TransactionsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final grouped = state.transactionsByDate;
-    final sortedDates = grouped.keys.toList()
-      ..sort((a, b) => b.compareTo(a));
+    final sortedDates = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
 
     return ListView(
       padding: const EdgeInsets.only(bottom: 80),
@@ -210,6 +205,10 @@ class _TransactionsList extends StatelessWidget {
           TransactionDateGroup(
             date: date,
             transactions: grouped[date]!,
+            allTransactions: state.transactions,
+            accounts: state.accounts,
+            envelopes: state.envelopes,
+            splitEnvelopeIds: state.splitEnvelopeIds,
             onTap: (txn) => _openEditTransaction(context, txn),
             onEdit: (txn) => _openEditTransaction(context, txn),
             onDelete: (txn) => _onDelete(context, txn),
@@ -224,18 +223,15 @@ class _TransactionsList extends StatelessWidget {
   ) async {
     final bloc = context.read<TransactionsBloc>();
     final budgetRepository = context.read<BudgetRepository>();
-    final periodId =
-        await _getCurrentPeriodId(budgetRepository, budgetId);
+    final periodId = await _getCurrentPeriodId(budgetRepository, budgetId);
     if (!context.mounted) return;
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
         builder: (_) => BlocProvider(
           create: (_) => TransactionFormCubit(
-            transactionRepository:
-                context.read<TransactionRepository>(),
+            transactionRepository: context.read<TransactionRepository>(),
             accountRepository: context.read<AccountRepository>(),
-            envelopeRepository:
-                context.read<EnvelopeRepository>(),
+            envelopeRepository: context.read<EnvelopeRepository>(),
             budgetRepository: context.read<BudgetRepository>(),
             budgetId: budgetId,
             userId: transaction.createdBy,
@@ -251,52 +247,18 @@ class _TransactionsList extends StatelessWidget {
     }
   }
 
-  Future<void> _onDelete(
-    BuildContext context,
-    Transaction transaction,
-  ) async {
+  void _onDelete(BuildContext context, Transaction transaction) {
     final l10n = context.l10n;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.transactionsDeleteConfirmTitle),
-        content: Text(l10n.transactionsDeleteConfirmMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(l10n.transactionsCancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor:
-                  Theme.of(dialogContext).colorScheme.error,
-            ),
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(l10n.transactionsDelete),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !context.mounted) return;
-
     final bloc = context.read<TransactionsBloc>()
       ..add(TransactionDeleted(transaction.id));
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(l10n.transactionsDeleted),
-          duration: const Duration(seconds: 5),
-          action: SnackBarAction(
-            label: l10n.transactionsUndo,
-            onPressed: () =>
-                bloc.add(const TransactionUndoDeleteRequested()),
-          ),
-        ),
-      );
+    showUndoSnackBar(
+      context,
+      message: l10n.transactionsDeleted,
+      undoLabel: l10n.transactionsUndo,
+      onUndo: () => bloc.add(const TransactionUndoDeleteRequested()),
+    );
   }
-
 }
 
 /// Resolves the current (open) budget period ID.
@@ -305,19 +267,14 @@ Future<String?> _getCurrentPeriodId(
   String budgetId,
 ) async {
   try {
-    final periods = await budgetRepository
-        .watchBudgetPeriods(budgetId)
-        .first;
+    final periods = await budgetRepository.watchBudgetPeriods(budgetId).first;
     if (periods.isEmpty) return null;
     final now = DateTime.now();
     final current = periods.firstWhere(
       (p) =>
-          !p.isClosed &&
-          !p.startDate.isAfter(now) &&
-          !p.endDate.isBefore(now),
+          !p.isClosed && !p.startDate.isAfter(now) && !p.endDate.isBefore(now),
       orElse: () =>
-          periods.where((p) => !p.isClosed).lastOrNull ??
-          periods.last,
+          periods.where((p) => !p.isClosed).lastOrNull ?? periods.last,
     );
     return current.id;
   } on Exception {

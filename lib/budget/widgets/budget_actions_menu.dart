@@ -33,7 +33,7 @@ Future<void> showBudgetActionsMenu(BuildContext context) {
                       title: Text(l10n.budgetApplyTemplate),
                       onTap: () {
                         Navigator.of(sheetContext).pop();
-                        unawaited(_showApplyTemplateDialog(context, state));
+                        unawaited(_showApplyTemplateDialog(context, bloc, state));
                       },
                     ),
                   ListTile(
@@ -91,6 +91,7 @@ Future<void> showBudgetActionsMenu(BuildContext context) {
 
 Future<void> _showApplyTemplateDialog(
   BuildContext context,
+  BudgetBloc bloc,
   BudgetState state,
 ) {
   final l10n = context.l10n;
@@ -132,7 +133,7 @@ Future<void> _showApplyTemplateDialog(
               FilledButton(
                 onPressed: () {
                   Navigator.of(dialogContext).pop();
-                  context.read<BudgetBloc>().add(
+                  bloc.add(
                         AllocationTemplateApplied(
                           templateId: selectedTemplateId,
                           totalAmount:

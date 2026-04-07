@@ -57,6 +57,9 @@ class AppShell extends StatelessWidget {
     }
     final route = _tabs[index];
     if (route == null) return;
+    
+    ScaffoldMessenger.of(context).clearSnackBars();
+    
     final budgetId =
         context.read<SharedPreferences>().getString(activeBudgetIdKey) ?? '';
     context.go('$route?budgetId=$budgetId');

@@ -34,6 +34,7 @@ class _TagPickerState extends State<TagPicker> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,19 +49,7 @@ class _TagPickerState extends State<TagPicker> {
           runSpacing: 4,
           children: [
             for (final tag in widget.availableTags)
-              FilterChip(
-                label: Text(tag.name),
-                selected: widget.selectedTagIds.contains(tag.id),
-                onSelected: (selected) {
-                  final updated = List<String>.from(widget.selectedTagIds);
-                  if (selected) {
-                    updated.add(tag.id);
-                  } else {
-                    updated.remove(tag.id);
-                  }
-                  widget.onChanged(updated);
-                },
-              ),
+              _buildTagChip(tag, colorScheme),
             ActionChip(
               avatar: const Icon(Icons.add, size: 18),
               label: Text(l10n.transactionsAddTag),
@@ -98,6 +87,28 @@ class _TagPickerState extends State<TagPicker> {
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildTagChip(Tag tag, ColorScheme colorScheme) {
+    final isSelected = widget.selectedTagIds.contains(tag.id);
+    return FilterChip(
+      label: Text(tag.name),
+      selected: isSelected,
+      selectedColor: colorScheme.primary,
+      checkmarkColor: colorScheme.onPrimary,
+      labelStyle: TextStyle(
+        color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
+      ),
+      onSelected: (selected) {
+        final updated = List<String>.from(widget.selectedTagIds);
+        if (selected) {
+          updated.add(tag.id);
+        } else {
+          updated.remove(tag.id);
+        }
+        widget.onChanged(updated);
+      },
     );
   }
 

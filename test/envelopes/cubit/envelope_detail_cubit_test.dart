@@ -1,13 +1,19 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:envelope/envelopes/cubit/cubit.dart';
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:transaction_repository/transaction_repository.dart';
 
 class MockEnvelopeRepository extends Mock implements EnvelopeRepository {}
+class MockTransactionRepository extends Mock implements TransactionRepository {}
+class MockBudgetRepository extends Mock implements BudgetRepository {}
 
 void main() {
   late MockEnvelopeRepository envelopeRepository;
+  late MockTransactionRepository transactionRepository;
+  late MockBudgetRepository budgetRepository;
 
   final now = DateTime(2024);
   final testEnvelope = Envelope(
@@ -29,12 +35,25 @@ void main() {
 
   setUp(() {
     envelopeRepository = MockEnvelopeRepository();
+    transactionRepository = MockTransactionRepository();
+    budgetRepository = MockBudgetRepository();
+    
+    when(() => transactionRepository.watchTransactions(
+          budgetId: any(named: 'budgetId'), 
+          envelopeId: any(named: 'envelopeId'),
+        )).thenAnswer((_) => const Stream.empty());
+    when(() => transactionRepository.refreshTransactions(any()))
+        .thenAnswer((_) async {});
+    when(() => budgetRepository.watchBudgetPeriods(any()))
+        .thenAnswer((_) => const Stream.empty());
   });
 
   group('EnvelopeDetailCubit', () {
     test('initial state has the provided envelope', () {
       final cubit = EnvelopeDetailCubit(
         envelopeRepository: envelopeRepository,
+        transactionRepository: transactionRepository,
+        budgetRepository: budgetRepository,
         envelope: testEnvelope,
       );
 
@@ -49,6 +68,8 @@ void main() {
     test('initial state with allocation computes values', () {
       final cubit = EnvelopeDetailCubit(
         envelopeRepository: envelopeRepository,
+        transactionRepository: transactionRepository,
+        budgetRepository: budgetRepository,
         envelope: testEnvelope,
         allocation: testAllocation,
       );
@@ -68,6 +89,8 @@ void main() {
             .thenAnswer((_) async => updated);
         return EnvelopeDetailCubit(
           envelopeRepository: envelopeRepository,
+        transactionRepository: transactionRepository,
+        budgetRepository: budgetRepository,
           envelope: testEnvelope,
         );
       },
@@ -88,6 +111,8 @@ void main() {
             .thenThrow(const EnvelopeException('Error'));
         return EnvelopeDetailCubit(
           envelopeRepository: envelopeRepository,
+        transactionRepository: transactionRepository,
+        budgetRepository: budgetRepository,
           envelope: testEnvelope,
         );
       },
@@ -100,6 +125,8 @@ void main() {
           .thenAnswer((_) async {});
       final cubit = EnvelopeDetailCubit(
         envelopeRepository: envelopeRepository,
+        transactionRepository: transactionRepository,
+        budgetRepository: budgetRepository,
         envelope: testEnvelope,
       );
 
@@ -116,6 +143,8 @@ void main() {
           .thenThrow(const EnvelopeException('Error'));
       final cubit = EnvelopeDetailCubit(
         envelopeRepository: envelopeRepository,
+        transactionRepository: transactionRepository,
+        budgetRepository: budgetRepository,
         envelope: testEnvelope,
       );
 
