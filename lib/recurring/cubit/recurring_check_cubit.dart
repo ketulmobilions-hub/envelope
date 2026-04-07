@@ -58,7 +58,9 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
 
   /// Runs the due-check: auto-posts eligible rules, collects pending
   /// manual rules, and identifies upcoming bills.
-  Future<void> check() async {
+  ///
+  /// Pass [now] to simulate a future date (useful for debug/testing only).
+  Future<void> check({DateTime? now}) async {
     emit(state.copyWith(isChecking: true));
 
     try {
@@ -66,17 +68,18 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
           await _transactionRepository.watchRecurringRules(_budgetId).first;
       final bills =
           await _transactionRepository.watchBillReminders(_budgetId).first;
-      final now = DateTime.now();
+      final effectiveNow = now ?? DateTime.now();
 
       final pendingRules = <RecurringRule>[];
 
       for (final rule in rules) {
         if (rule.isPaused) continue;
-        if (rule.endDate != null && now.isAfter(rule.endDate!)) continue;
+        final endDate = rule.endDate;
+        if (endDate != null && effectiveNow.isAfter(endDate)) continue;
 
-        if (!rule.nextOccurrence.isAfter(now)) {
+        if (!rule.nextOccurrence.isAfter(effectiveNow)) {
           if (rule.autoPost) {
-            await _autoPostRule(rule, now);
+            await _autoPostRule(rule, effectiveNow);
           } else {
             pendingRules.add(rule);
           }
@@ -85,7 +88,7 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
 
       final upcomingBills = <BillReminder>[];
       for (final bill in bills) {
-        if (_isBillUpcoming(bill, now)) {
+        if (_isBillUpcoming(bill, effectiveNow)) {
           upcomingBills.add(bill);
         }
       }
@@ -102,7 +105,7 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
     }
   }
 
-  Future<void> _autoPostRule(RecurringRule rule, DateTime now) async {
+  Future<void> _autoPostRule(RecurringRule rule, DateTime effectiveNow) async {
     // Create the transaction first.
     try {
       await _transactionRepository.createTransaction(
@@ -111,7 +114,7 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
         type: rule.type,
         amount: rule.amount,
         currency: rule.currency,
-        date: now,
+        date: effectiveNow,
         createdBy: _userId,
         envelopeId: rule.envelopeId,
         payee: rule.payee,
@@ -135,25 +138,28 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
     }
   }
 
-  bool _isBillUpcoming(BillReminder bill, DateTime now) {
+  bool _isBillUpcoming(BillReminder bill, DateTime effectiveNow) {
     final currentMonthDue = DateTime(
-      now.year,
-      now.month,
-      _clampDay(bill.dueDay, now.year, now.month),
+      effectiveNow.year,
+      effectiveNow.month,
+      _clampDay(bill.dueDay, effectiveNow.year, effectiveNow.month),
     );
     final reminderStart = currentMonthDue.subtract(
       Duration(days: bill.reminderDaysBefore),
     );
 
     // Within the reminder window for this month.
-    if (!now.isBefore(reminderStart) && !now.isAfter(currentMonthDue)) {
+    final inWindow = !effectiveNow.isBefore(reminderStart) &&
+        !effectiveNow.isAfter(currentMonthDue);
+    if (inWindow) {
       return true;
     }
 
     // Check next month if we're past due day this month.
-    if (now.isAfter(currentMonthDue)) {
-      final nextMonth = now.month + 1;
-      final nextYear = nextMonth > 12 ? now.year + 1 : now.year;
+    if (effectiveNow.isAfter(currentMonthDue)) {
+      final nextMonth = effectiveNow.month + 1;
+      final nextYear =
+          nextMonth > 12 ? effectiveNow.year + 1 : effectiveNow.year;
       final normalizedMonth = nextMonth > 12 ? 1 : nextMonth;
       final nextMonthDue = DateTime(
         nextYear,
@@ -163,7 +169,7 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
       final nextReminderStart = nextMonthDue.subtract(
         Duration(days: bill.reminderDaysBefore),
       );
-      if (!now.isBefore(nextReminderStart)) return true;
+      if (!effectiveNow.isBefore(nextReminderStart)) return true;
     }
 
     return false;

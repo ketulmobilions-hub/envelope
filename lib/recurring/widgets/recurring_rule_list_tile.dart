@@ -68,32 +68,32 @@ class RecurringRuleListTile extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (rule.isPaused)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 2,
-                ),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  l10n.recurringPaused,
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
-              ),
-            if (rule.isPaused) const SizedBox(width: 8),
             Text(
               formatCents(rule.amount),
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     color: typeColor,
                   ),
             ),
+            if (onPauseToggle != null) ...[
+              const SizedBox(width: 4),
+              IconButton(
+                tooltip: rule.isPaused
+                    ? l10n.recurringResume
+                    : l10n.recurringPause,
+                icon: Icon(
+                  rule.isPaused
+                      ? Icons.play_circle_outline
+                      : Icons.pause_circle_outline,
+                  color: rule.isPaused
+                      ? colorScheme.primary
+                      : colorScheme.outline,
+                ),
+                onPressed: onPauseToggle,
+              ),
+            ],
           ],
         ),
         onTap: onTap,
-        onLongPress: onPauseToggle,
       ),
     );
   }
