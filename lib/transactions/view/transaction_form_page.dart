@@ -6,6 +6,7 @@ import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/transactions/cubit/cubit.dart';
 import 'package:envelope/transactions/view/transfer_form_page.dart';
 import 'package:envelope/transactions/widgets/widgets.dart';
+import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -38,6 +39,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   String? _selectedEnvelopeId;
   bool _isSplitMode = false;
   bool _tagIdsInitialized = false;
+  bool _splitsInitialized = false;
 
   List<SplitEntry> _splits = [];
   List<String> _selectedTagIds = [];
@@ -83,8 +85,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
             ..showSnackBar(
               SnackBar(
                 content: Text(
-                  state.errorMessage ??
-                      l10n.transactionsErrorLoadFailed,
+                  state.errorMessage ?? l10n.transactionsErrorLoadFailed,
                 ),
               ),
             );
@@ -120,12 +121,19 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
             final envelopes = state.envelopes;
 
             // Initialize local state from cubit on first load.
-            _selectedAccountId ??=
-                accounts.isNotEmpty ? accounts.first.id : null;
-            if (!_tagIdsInitialized &&
-                state.selectedTagIds.isNotEmpty) {
+            _selectedAccountId ??= accounts.isNotEmpty
+                ? accounts.first.id
+                : null;
+            if (!_tagIdsInitialized && state.selectedTagIds.isNotEmpty) {
               _selectedTagIds = List.of(state.selectedTagIds);
               _tagIdsInitialized = true;
+            }
+            if (!_splitsInitialized && state.status == TransactionFormStatus.loaded) {
+              if (state.initialSplits.isNotEmpty) {
+                _splits = List.of(state.initialSplits);
+                _isSplitMode = true;
+              }
+              _splitsInitialized = true;
             }
 
             return SingleChildScrollView(
@@ -150,8 +158,11 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                           _TypeChip(
                             label: l10n.transactionsTypeIncome,
                             isSelected: _selectedType == 'income',
-                            onTap: () =>
-                                setState(() => _selectedType = 'income'),
+                            onTap: () => setState(() {
+                              _selectedType = 'income';
+                              _selectedEnvelopeId = null;
+                              _isSplitMode = false;
+                            }),
                           ),
                           const SizedBox(width: 8),
                           _TypeChip(
@@ -179,8 +190,9 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                           initialValue: _selectedAccountId,
                           decoration: InputDecoration(
                             labelText: l10n.transactionsAccountLabel,
-                            prefixIcon:
-                                const Icon(Icons.account_balance_outlined),
+                            prefixIcon: const Icon(
+                              Icons.account_balance_outlined,
+                            ),
                           ),
                           items: accounts.map((account) {
                             return DropdownMenuItem(
@@ -200,8 +212,11 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                         ),
                       const SizedBox(height: 16),
 
-                      // Envelope dropdown (hidden in split mode)
-                      if (!_isSplitMode && envelopes.isNotEmpty)
+                      // Envelope dropdown (hidden in split mode, income, transfer)
+                      if (!_isSplitMode &&
+                          _selectedType != 'income' &&
+                          _selectedType != 'transfer' &&
+                          envelopes.isNotEmpty)
                         DropdownButtonFormField<String>(
                           initialValue: _selectedEnvelopeId,
                           decoration: InputDecoration(
@@ -230,17 +245,13 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                         controller: _amountController,
                         decoration: InputDecoration(
                           hintText: r'$0.00',
-                          hintStyle: Theme.of(context)
-                              .textTheme
-                              .displaySmall
+                          hintStyle: Theme.of(context).textTheme.displaySmall
                               ?.copyWith(
                                 color: Theme.of(context).colorScheme.outline,
                               ),
                           border: InputBorder.none,
                         ),
-                        style: Theme.of(context)
-                            .textTheme
-                            .displaySmall
+                        style: Theme.of(context).textTheme.displaySmall
                             ?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -291,23 +302,25 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Split mode toggle
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(l10n.transactionsSplitMode),
-                        value: _isSplitMode,
-                        onChanged: (value) {
-                          setState(() {
-                            _isSplitMode = value;
-                            if (value && _splits.length < 2) {
-                              _splits = [
-                                const SplitEntry(),
-                                const SplitEntry(),
-                              ];
-                            }
-                          });
-                        },
-                      ),
+                      // Split mode toggle (hidden for income and transfer)
+                      if (_selectedType != 'income' &&
+                          _selectedType != 'transfer')
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(l10n.transactionsSplitMode),
+                          value: _isSplitMode,
+                          onChanged: (value) {
+                            setState(() {
+                              _isSplitMode = value;
+                              if (value && _splits.length < 2) {
+                                _splits = [
+                                  const SplitEntry(),
+                                  const SplitEntry(),
+                                ];
+                              }
+                            });
+                          },
+                        ),
 
                       // Split rows
                       if (_isSplitMode) ...[
@@ -338,30 +351,34 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                       // Submit button — full width.
                       SizedBox(
                         width: double.infinity,
-                        child: BlocBuilder<TransactionFormCubit,
-                            TransactionFormState>(
-                          buildWhen: (prev, curr) =>
-                              prev.status != curr.status,
-                          builder: (context, submitState) {
-                            final isSubmitting = submitState.status ==
-                                TransactionFormStatus.submitting;
-                            return FilledButton(
-                              onPressed: isSubmitting ? null : _submit,
-                              child: isSubmitting
-                                  ? const SizedBox.square(
-                                      dimension: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : Text(
-                                      _isEditing
-                                          ? l10n.transactionsSaveButton
-                                          : l10n.transactionsCreateButton,
-                                    ),
-                            );
-                          },
-                        ),
+                        child:
+                            BlocBuilder<
+                              TransactionFormCubit,
+                              TransactionFormState
+                            >(
+                              buildWhen: (prev, curr) =>
+                                  prev.status != curr.status,
+                              builder: (context, submitState) {
+                                final isSubmitting =
+                                    submitState.status ==
+                                    TransactionFormStatus.submitting;
+                                return FilledButton(
+                                  onPressed: isSubmitting ? null : _submit,
+                                  child: isSubmitting
+                                      ? const SizedBox.square(
+                                          dimension: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : Text(
+                                          _isEditing
+                                              ? l10n.transactionsSaveButton
+                                              : l10n.transactionsCreateButton,
+                                        ),
+                                );
+                              },
+                            ),
                       ),
                     ],
                   ),
@@ -390,10 +407,8 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       MaterialPageRoute<bool>(
         builder: (_) => BlocProvider(
           create: (_) => TransferFormCubit(
-            transactionRepository:
-                context.read<TransactionRepository>(),
-            accountRepository:
-                context.read<AccountRepository>(),
+            transactionRepository: context.read<TransactionRepository>(),
+            accountRepository: context.read<AccountRepository>(),
             budgetId: cubit.budgetId,
             userId: cubit.userId,
           ),
@@ -430,6 +445,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     final coverResult = await showCoverOverspendDialog(
       context,
       budgetRepository: context.read<BudgetRepository>(),
+      envelopeRepository: context.read<EnvelopeRepository>(),
       allocations: data.allocations,
       envelopes: data.envelopes,
       overspentAllocation: data.overspentAllocation,

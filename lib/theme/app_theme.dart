@@ -129,6 +129,7 @@ abstract final class AppTheme {
     snackBarTheme: SnackBarThemeData(
       backgroundColor: AppColors.charcoal,
       contentTextStyle: const TextStyle(color: AppColors.onPrimary),
+      actionTextColor: AppColors.primary,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -263,6 +264,7 @@ abstract final class AppTheme {
     snackBarTheme: SnackBarThemeData(
       backgroundColor: const Color(0xFFE8E0D4),
       contentTextStyle: const TextStyle(color: Color(0xFF1E1E1E)),
+      actionTextColor: AppColors.primaryDark,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),

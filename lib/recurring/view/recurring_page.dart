@@ -7,6 +7,7 @@ import 'package:envelope/recurring/bloc/bloc.dart';
 import 'package:envelope/recurring/view/bill_reminder_form_page.dart';
 import 'package:envelope/recurring/view/recurring_rule_form_page.dart';
 import 'package:envelope/recurring/widgets/widgets.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -253,19 +254,12 @@ class _RecurringRulesTab extends StatelessWidget {
     final bloc = context.read<RecurringBloc>()
       ..add(RecurringRuleDeleted(rule.id));
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(l10n.recurringDeleted),
-          duration: const Duration(seconds: 5),
-          action: SnackBarAction(
-            label: l10n.recurringUndo,
-            onPressed: () =>
-                bloc.add(const RecurringRuleUndoDeleteRequested()),
-          ),
-        ),
-      );
+    showUndoSnackBar(
+      context,
+      message: l10n.recurringDeleted,
+      undoLabel: l10n.recurringUndo,
+      onUndo: () => bloc.add(const RecurringRuleUndoDeleteRequested()),
+    );
   }
 }
 
@@ -379,19 +373,12 @@ class _BillRemindersTab extends StatelessWidget {
     final bloc = context.read<RecurringBloc>()
       ..add(BillReminderDeleted(reminder.id));
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(l10n.recurringDeleted),
-          duration: const Duration(seconds: 5),
-          action: SnackBarAction(
-            label: l10n.recurringUndo,
-            onPressed: () =>
-                bloc.add(const BillReminderUndoDeleteRequested()),
-          ),
-        ),
-      );
+    showUndoSnackBar(
+      context,
+      message: l10n.recurringDeleted,
+      undoLabel: l10n.recurringUndo,
+      onUndo: () => bloc.add(const BillReminderUndoDeleteRequested()),
+    );
   }
 
   Future<void> _onPayBill(

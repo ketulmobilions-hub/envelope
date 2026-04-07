@@ -48,9 +48,20 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
       final tags = await _transactionRepository.getTags(budgetId);
 
       var selectedTagIds = <String>[];
+      var initialSplits = <SplitEntry>[];
       if (isEditing) {
         selectedTagIds = await _transactionRepository
             .getTagIdsForTransaction(transaction!.id);
+
+        final splits = await _transactionRepository
+            .getTransactionSplits(transaction!.id);
+        
+        initialSplits = splits
+            .map((s) => SplitEntry(
+                  envelopeId: s.envelopeId,
+                  amountText: (s.amount / 100).toStringAsFixed(2),
+                ))
+            .toList();
       }
 
       if (isClosed) return;
@@ -61,6 +72,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
           envelopes: envelopes,
           tags: tags,
           selectedTagIds: selectedTagIds,
+          initialSplits: initialSplits,
         ),
       );
     } on Exception {
@@ -172,6 +184,13 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         } on Exception {
           // Best-effort; Realtime will eventually sync.
         }
+      }
+
+      // Refresh accounts so current_balance reflects the database trigger update.
+      try {
+        await _accountRepository.refreshAccounts(budgetId);
+      } on AccountException {
+        // Best-effort; local cache will be corrected on next full sync.
       }
 
       // Check for overspend on expense transactions.
@@ -326,12 +345,22 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
           .watchEnvelopes(budgetId)
           .first;
 
+      int readyToAssign = 0;
+      try {
+        readyToAssign = await _budgetRepository.calculateReadyToAssign(
+          periodId,
+        );
+      } on Exception {
+        // Fallback to 0 if unavailable.
+      }
+
       return OverspendData(
         envelopeName: envelopeName,
         deficitCents: available,
         overspentAllocation: overspent,
         allocations: allocations,
         envelopes: envelopes,
+        readyToAssign: readyToAssign,
       );
     } on Exception {
       return null;

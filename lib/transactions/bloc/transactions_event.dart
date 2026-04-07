@@ -27,6 +27,36 @@ final class _TransactionsStreamError extends TransactionsEvent {
   const _TransactionsStreamError();
 }
 
+/// Internal event when the accounts stream emits new data.
+final class _AccountsUpdated extends TransactionsEvent {
+  const _AccountsUpdated(this.accounts);
+
+  final List<Account> accounts;
+
+  @override
+  List<Object?> get props => [accounts];
+}
+
+/// Internal event when the envelopes stream emits new data.
+final class _EnvelopesUpdated extends TransactionsEvent {
+  const _EnvelopesUpdated(this.envelopes);
+
+  final List<Envelope> envelopes;
+
+  @override
+  List<Object?> get props => [envelopes];
+}
+
+/// Internal event when the split envelope IDs stream emits new data.
+final class _SplitEnvelopeIdsUpdated extends TransactionsEvent {
+  const _SplitEnvelopeIdsUpdated(this.splitEnvelopeIds);
+
+  final Map<String, List<String>> splitEnvelopeIds;
+
+  @override
+  List<Object?> get props => [splitEnvelopeIds];
+}
+
 /// Pull latest transactions from the API.
 final class TransactionsRefreshRequested extends TransactionsEvent {
   const TransactionsRefreshRequested();

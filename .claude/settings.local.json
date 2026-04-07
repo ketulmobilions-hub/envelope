@@ -21,7 +21,28 @@
       "Bash(very_good test:*)",
       "Bash(cd /Users/mobilions/development/envelope/packages/transaction_repository && dart pub get 2>&1)",
       "Bash(dart pub:*)",
-      "Bash(flutter --version 2>/dev/null | head -3)"
+      "Bash(flutter --version 2>/dev/null | head -3)",
+      "Bash(find /Users/mobilions/development/envelope/lib/goals -type f -name *.dart)",
+      "Bash(flutter --version)",
+      "Bash(flutter clean:*)",
+      "Bash(pod install:*)",
+      "Bash(flutter run:*)",
+      "Bash(xxd /Users/mobilions/development/envelope/lib/envelopes/view/envelope_detail_page.dart)",
+      "Bash(gh project:*)",
+      "Bash(/Users/mobilions/development/envelope/lib/shared_budget/widgets/widgets.dart:*)",
+      "Bash(/Users/mobilions/development/envelope/lib/shared_budget/view/view.dart:*)",
+      "Bash(__NEW_LINE_8f56ebcec4bd7816__ cat:*)",
+      "Bash(/Users/mobilions/development/envelope/lib/shared_budget/shared_budget.dart:*)",
+      "Bash(xargs ls:*)",
+      "Bash(supabase db:*)",
+      "Bash(npx supabase:*)",
+      "Bash(find /Users/mobilions/development/envelope/packages -name *transfer* -o -name *sharing*)",
+      "Bash(grep -h \"\\\\.from\\(\" /Users/mobilions/development/envelope/packages/envelope_api_client/lib/src/clients/*.dart)",
+      "Bash(grep -E \"\\\\.\\(dart\\)$\")",
+      "Bash(find /Users/mobilions/development/envelope/packages/notification_repository -type f -name *.dart)",
+      "Bash(find /Users/mobilions/development/envelope/lib/reports -type f -name *.dart)",
+      "Bash(xargs cat:*)",
+      "Bash(python3:*)"
     ]
   }
 }

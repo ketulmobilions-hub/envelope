@@ -145,6 +145,19 @@ class TransactionRepository {
         );
   }
 
+  /// Watches a map of transactionId → envelopeIds for split transactions
+  /// belonging to [budgetId].
+  Stream<Map<String, List<String>>> watchSplitEnvelopeIds(String budgetId) {
+    return _localDatabase.transactionsDao
+        .watchSplitEnvelopeIds(budgetId)
+        .handleError(
+          (Object error) => throw TransactionException(
+            'Failed to watch split envelope ids',
+            error: error,
+          ),
+        );
+  }
+
   /// Updates a [transaction].
   ///
   /// Sends the update to the API and syncs locally.
@@ -717,8 +730,18 @@ class TransactionRepository {
                 case PostgresChangeEvent.insert:
                 case PostgresChangeEvent.update:
                   if (newRecord.isNotEmpty) {
-                    final dto = TransactionDto.fromJson(newRecord);
-                    await _cacheTransaction(dto);
+                    if (newRecord['deleted_at'] != null) {
+                      // Soft-deleted remotely — remove from local cache.
+                      final id = newRecord['id'] as String?;
+                      if (id != null) {
+                        await _localDatabase.transactionsDao.deleteTransaction(
+                          id,
+                        );
+                      }
+                    } else {
+                      final dto = TransactionDto.fromJson(newRecord);
+                      await _cacheTransaction(dto);
+                    }
                     if (_localWriteCount == 0) {
                       _remoteChangeController.add(null);
                     }
@@ -727,8 +750,9 @@ class TransactionRepository {
                   if (oldRecord.isNotEmpty) {
                     final id = oldRecord['id'] as String?;
                     if (id != null) {
-                      await _localDatabase.transactionsDao
-                          .deleteTransaction(id);
+                      await _localDatabase.transactionsDao.deleteTransaction(
+                        id,
+                      );
                       if (_localWriteCount == 0) {
                         _remoteChangeController.add(null);
                       }

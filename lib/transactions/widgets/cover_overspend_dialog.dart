@@ -5,7 +5,25 @@ import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Shows a dialog to transfer funds from another envelope
+// ---------------------------------------------------------------------------
+// Fund source — either Ready to Assign or a specific envelope allocation.
+// ---------------------------------------------------------------------------
+
+sealed class _FundSource {}
+
+final class _ReadyToAssignSource extends _FundSource {}
+
+final class _EnvelopeSource extends _FundSource {
+  _EnvelopeSource(this.envelope, this.allocation);
+  final Envelope envelope;
+  final EnvelopeAllocation allocation;
+}
+
+// ---------------------------------------------------------------------------
+// Public entry point
+// ---------------------------------------------------------------------------
+
+/// Shows a dialog to transfer funds from another envelope (or Ready to Assign)
 /// to cover overspending.
 ///
 /// Returns `true` if the transfer was successful,
@@ -13,58 +31,67 @@ import 'package:flutter/services.dart';
 Future<bool?> showCoverOverspendDialog(
   BuildContext context, {
   required BudgetRepository budgetRepository,
+  required EnvelopeRepository envelopeRepository,
   required List<EnvelopeAllocation> allocations,
   required List<Envelope> envelopes,
   required EnvelopeAllocation overspentAllocation,
   required String overspentEnvelopeName,
   required int deficitCents,
+  int readyToAssign = 0,
 }) {
   return showDialog<bool>(
     context: context,
     builder: (dialogContext) => _CoverOverspendDialog(
       budgetRepository: budgetRepository,
+      envelopeRepository: envelopeRepository,
       allocations: allocations,
       envelopes: envelopes,
       overspentAllocation: overspentAllocation,
       overspentEnvelopeName: overspentEnvelopeName,
       deficitCents: deficitCents,
+      readyToAssign: readyToAssign,
     ),
   );
 }
 
+// ---------------------------------------------------------------------------
+// Dialog widget
+// ---------------------------------------------------------------------------
+
 class _CoverOverspendDialog extends StatefulWidget {
   const _CoverOverspendDialog({
     required this.budgetRepository,
+    required this.envelopeRepository,
     required this.allocations,
     required this.envelopes,
     required this.overspentAllocation,
     required this.overspentEnvelopeName,
     required this.deficitCents,
+    required this.readyToAssign,
   });
 
   final BudgetRepository budgetRepository;
+  final EnvelopeRepository envelopeRepository;
   final List<EnvelopeAllocation> allocations;
   final List<Envelope> envelopes;
   final EnvelopeAllocation overspentAllocation;
   final String overspentEnvelopeName;
   final int deficitCents;
+  final int readyToAssign;
 
   @override
-  State<_CoverOverspendDialog> createState() =>
-      _CoverOverspendDialogState();
+  State<_CoverOverspendDialog> createState() => _CoverOverspendDialogState();
 }
 
-class _CoverOverspendDialogState
-    extends State<_CoverOverspendDialog> {
+class _CoverOverspendDialogState extends State<_CoverOverspendDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _amountController;
   bool _isSubmitting = false;
 
-  EnvelopeAllocation? _fromAllocation;
+  _FundSource? _selectedSource;
 
-  /// Source envelopes with positive available balance.
-  late final List<(Envelope, EnvelopeAllocation)>
-      _sourceEnvelopes;
+  /// All available sources (RTA first, then envelope allocations with funds).
+  late final List<_FundSource> _sources;
 
   @override
   void initState() {
@@ -73,19 +100,23 @@ class _CoverOverspendDialogState
       text: (widget.deficitCents / 100).toStringAsFixed(2),
     );
 
-    _sourceEnvelopes = widget.allocations
+    final envelopeSources = widget.allocations
         .where((a) {
           if (a.id == widget.overspentAllocation.id) return false;
           return EnvelopeRepository.calculateRollover(a) > 0;
         })
         .map((a) {
-          final env = widget.envelopes
-              .where((e) => e.id == a.envelopeId)
-              .firstOrNull;
-          return env != null ? (env, a) : null;
+          final env =
+              widget.envelopes.where((e) => e.id == a.envelopeId).firstOrNull;
+          return env != null ? _EnvelopeSource(env, a) : null;
         })
-        .whereType<(Envelope, EnvelopeAllocation)>()
+        .whereType<_EnvelopeSource>()
         .toList();
+
+    _sources = [
+      if (widget.readyToAssign > 0) _ReadyToAssignSource(),
+      ...envelopeSources,
+    ];
   }
 
   @override
@@ -98,7 +129,7 @@ class _CoverOverspendDialogState
   Widget build(BuildContext context) {
     final l10n = context.l10n;
 
-    if (_sourceEnvelopes.isEmpty) {
+    if (_sources.isEmpty) {
       return AlertDialog(
         title: Text(l10n.overspendCoverTitle),
         content: Text(l10n.overspendCoverNoSource),
@@ -128,33 +159,34 @@ class _CoverOverspendDialogState
             ),
             const SizedBox(height: 12),
 
-            // "From" dropdown — only envelopes with positive
-            // available balance.
-            DropdownButtonFormField<EnvelopeAllocation>(
+            // "From" dropdown — RTA or envelopes with positive balance.
+            DropdownButtonFormField<_FundSource>(
               decoration: InputDecoration(
                 labelText: l10n.overspendCoverFromLabel,
               ),
-              initialValue: _fromAllocation,
-              items: _sourceEnvelopes
-                  .map(
-                    (pair) => DropdownMenuItem(
-                      value: pair.$2,
-                      child: Text(
-                        '${pair.$1.name} '
+              initialValue: _selectedSource,
+              items: _sources.map((source) {
+                return DropdownMenuItem<_FundSource>(
+                  value: source,
+                  child: switch (source) {
+                    _ReadyToAssignSource() => Text(
+                        l10n.overspendCoverReadyToAssign(
+                          formatCents(widget.readyToAssign),
+                        ),
+                      ),
+                    _EnvelopeSource(:final envelope, :final allocation) =>
+                      Text(
+                        '${envelope.name} '
                         '(${formatCents(
-                          EnvelopeRepository.calculateRollover(
-                            pair.$2,
-                          ),
+                          EnvelopeRepository.calculateRollover(allocation),
                         )})',
                       ),
-                    ),
-                  )
-                  .toList(),
-              validator: (v) => v == null
-                  ? l10n.overspendCoverSourceRequired
-                  : null,
-              onChanged: (v) =>
-                  setState(() => _fromAllocation = v),
+                  },
+                );
+              }).toList(),
+              validator: (v) =>
+                  v == null ? l10n.overspendCoverSourceRequired : null,
+              onChanged: (v) => setState(() => _selectedSource = v),
             ),
             const SizedBox(height: 12),
 
@@ -165,8 +197,7 @@ class _CoverOverspendDialogState
                 labelText: l10n.overspendCoverAmountLabel,
                 prefixText: r'$',
               ),
-              keyboardType:
-                  const TextInputType.numberWithOptions(
+              keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
               inputFormatters: [
@@ -179,11 +210,15 @@ class _CoverOverspendDialogState
                 if (cents <= 0) {
                   return l10n.overspendCoverAmountRequired;
                 }
-                final from = _fromAllocation;
-                if (from != null &&
+                final source = _selectedSource;
+                if (source is _ReadyToAssignSource &&
+                    cents > widget.readyToAssign) {
+                  return l10n.overspendCoverInsufficientFunds;
+                }
+                if (source is _EnvelopeSource &&
                     cents >
                         EnvelopeRepository.calculateRollover(
-                          from,
+                          source.allocation,
                         )) {
                   return l10n.overspendCoverInsufficientFunds;
                 }
@@ -195,9 +230,7 @@ class _CoverOverspendDialogState
       ),
       actions: [
         TextButton(
-          onPressed: _isSubmitting
-              ? null
-              : () => Navigator.of(context).pop(),
+          onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
           child: Text(l10n.overspendDismiss),
         ),
         FilledButton(
@@ -222,11 +255,24 @@ class _CoverOverspendDialogState
 
     try {
       final amount = parseCents(_amountController.text) ?? 0;
-      await widget.budgetRepository.transferBetweenEnvelopes(
-        fromAllocationId: _fromAllocation!.id,
-        toAllocationId: widget.overspentAllocation.id,
-        amount: amount,
-      );
+      final source = _selectedSource!;
+
+      if (source is _ReadyToAssignSource) {
+        // Increase the overspent envelope's allocation by the cover amount,
+        // pulling funds from Ready to Assign.
+        await widget.envelopeRepository.updateAllocation(
+          widget.overspentAllocation.copyWith(
+            allocatedAmount:
+                widget.overspentAllocation.allocatedAmount + amount,
+          ),
+        );
+      } else if (source is _EnvelopeSource) {
+        await widget.budgetRepository.transferBetweenEnvelopes(
+          fromAllocationId: source.allocation.id,
+          toAllocationId: widget.overspentAllocation.id,
+          amount: amount,
+        );
+      }
 
       if (mounted) {
         Navigator.of(context).pop(true);

@@ -13,8 +13,7 @@ final class EnvelopeDetailState extends Equatable {
 
   int get allocated => allocation?.allocatedAmount ?? 0;
   int get spent => allocation?.spentAmount ?? 0;
-  int get available =>
-      allocated - spent + (allocation?.rolloverAmount ?? 0);
+  int get available => allocated - spent + (allocation?.rolloverAmount ?? 0);
 
   EnvelopeDetailState copyWith({
     Envelope? envelope,

@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:account_repository/account_repository.dart';
 import 'package:bloc/bloc.dart';
+import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 
@@ -10,12 +12,19 @@ part 'transactions_state.dart';
 class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
   TransactionsBloc({
     required TransactionRepository transactionRepository,
+    required AccountRepository accountRepository,
+    required EnvelopeRepository envelopeRepository,
     required String budgetId,
   })  : _transactionRepository = transactionRepository,
+        _accountRepository = accountRepository,
+        _envelopeRepository = envelopeRepository,
         _budgetId = budgetId,
         super(const TransactionsState()) {
     on<TransactionsStarted>(_onStarted);
     on<_TransactionsUpdated>(_onUpdated);
+    on<_AccountsUpdated>(_onAccountsUpdated);
+    on<_EnvelopesUpdated>(_onEnvelopesUpdated);
+    on<_SplitEnvelopeIdsUpdated>(_onSplitEnvelopeIdsUpdated);
     on<_TransactionsStreamError>(_onStreamError);
     on<TransactionsRefreshRequested>(_onRefreshRequested);
     on<TransactionDeleted>(_onDeleted);
@@ -24,8 +33,13 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
   }
 
   final TransactionRepository _transactionRepository;
+  final AccountRepository _accountRepository;
+  final EnvelopeRepository _envelopeRepository;
   final String _budgetId;
   StreamSubscription<List<Transaction>>? _transactionsSubscription;
+  StreamSubscription<List<Account>>? _accountsSubscription;
+  StreamSubscription<List<Envelope>>? _envelopesSubscription;
+  StreamSubscription<Map<String, List<String>>>? _splitIdsSubscription;
   Transaction? _lastDeleted;
 
   /// The budget ID this bloc is watching.
@@ -45,6 +59,21 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
           onError: (Object _) => add(const _TransactionsStreamError()),
         );
 
+    await _accountsSubscription?.cancel();
+    _accountsSubscription = _accountRepository
+        .watchAccounts(_budgetId)
+        .listen((accounts) => add(_AccountsUpdated(accounts)));
+
+    await _envelopesSubscription?.cancel();
+    _envelopesSubscription = _envelopeRepository
+        .watchEnvelopes(_budgetId)
+        .listen((envelopes) => add(_EnvelopesUpdated(envelopes)));
+
+    await _splitIdsSubscription?.cancel();
+    _splitIdsSubscription = _transactionRepository
+        .watchSplitEnvelopeIds(_budgetId)
+        .listen((ids) => add(_SplitEnvelopeIdsUpdated(ids)));
+
     try {
       await _transactionRepository.refreshTransactions(_budgetId);
     } on TransactionException {
@@ -62,6 +91,27 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
         transactions: event.transactions,
       ),
     );
+  }
+
+  void _onAccountsUpdated(
+    _AccountsUpdated event,
+    Emitter<TransactionsState> emit,
+  ) {
+    emit(state.copyWith(accounts: event.accounts));
+  }
+
+  void _onEnvelopesUpdated(
+    _EnvelopesUpdated event,
+    Emitter<TransactionsState> emit,
+  ) {
+    emit(state.copyWith(envelopes: event.envelopes));
+  }
+
+  void _onSplitEnvelopeIdsUpdated(
+    _SplitEnvelopeIdsUpdated event,
+    Emitter<TransactionsState> emit,
+  ) {
+    emit(state.copyWith(splitEnvelopeIds: event.splitEnvelopeIds));
   }
 
   void _onStreamError(
@@ -155,6 +205,9 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
   @override
   Future<void> close() async {
     await _transactionsSubscription?.cancel();
+    await _accountsSubscription?.cancel();
+    await _envelopesSubscription?.cancel();
+    await _splitIdsSubscription?.cancel();
     return super.close();
   }
 }
