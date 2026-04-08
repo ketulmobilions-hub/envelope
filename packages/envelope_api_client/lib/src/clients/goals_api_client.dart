@@ -6,7 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class GoalsApiClient {
   /// Creates a [GoalsApiClient] with the given [SupabaseClient].
   const GoalsApiClient({required SupabaseClient supabaseClient})
-      : _supabaseClient = supabaseClient;
+    : _supabaseClient = supabaseClient;
 
   final SupabaseClient _supabaseClient;
 
@@ -74,6 +74,53 @@ class GoalsApiClient {
   Future<void> deleteGoal(String id) async {
     try {
       await _supabaseClient.from('goals').delete().eq('id', id);
+    } catch (error) {
+      throw EnvelopeApiException.fromPostgrestException(error);
+    }
+  }
+
+  /// Creates a new goal contribution.
+  Future<GoalContributionDto> createContribution(
+    GoalContributionDto contribution,
+  ) async {
+    try {
+      final json = contribution.toJson()
+        ..remove('id')
+        ..remove('created_at');
+      final response = await _supabaseClient
+          .from('goal_contributions')
+          .insert(json)
+          .select()
+          .single();
+      return GoalContributionDto.fromJson(response);
+    } catch (error) {
+      throw EnvelopeApiException.fromPostgrestException(error);
+    }
+  }
+
+  /// Fetches all contributions for a goal, newest first.
+  Future<List<GoalContributionDto>> getContributionsByGoal(
+    String goalId,
+  ) async {
+    try {
+      final response = await _supabaseClient
+          .from('goal_contributions')
+          .select()
+          .eq('goal_id', goalId)
+          .order('created_at', ascending: false);
+      return response.map(GoalContributionDto.fromJson).toList();
+    } catch (error) {
+      throw EnvelopeApiException.fromPostgrestException(error);
+    }
+  }
+
+  /// Deletes a goal contribution by [id].
+  Future<void> deleteContribution(String id) async {
+    try {
+      await _supabaseClient
+          .from('goal_contributions')
+          .delete()
+          .eq('id', id);
     } catch (error) {
       throw EnvelopeApiException.fromPostgrestException(error);
     }

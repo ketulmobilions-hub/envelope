@@ -11,6 +11,7 @@ export 'category_group_dto.dart';
 export 'debt_account_dto.dart';
 export 'envelope_allocation_dto.dart';
 export 'envelope_dto.dart';
+export 'goal_contribution_dto.dart';
 export 'goal_dto.dart';
 export 'net_worth_snapshot_dto.dart';
 export 'notification_preferences_dto.dart';
