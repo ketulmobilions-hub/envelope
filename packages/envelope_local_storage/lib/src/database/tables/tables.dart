@@ -10,6 +10,7 @@ export 'category_groups_table.dart';
 export 'debt_accounts_table.dart';
 export 'envelope_allocations_table.dart';
 export 'envelopes_table.dart';
+export 'goal_contributions_table.dart';
 export 'goals_table.dart';
 export 'net_worth_snapshots_table.dart';
 export 'notification_preferences_table.dart';

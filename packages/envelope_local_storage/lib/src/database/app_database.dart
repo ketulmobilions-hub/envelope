@@ -24,6 +24,7 @@ part 'app_database.g.dart';
     AllocationTemplates,
     AllocationTemplateItems,
     Goals,
+    GoalContributions,
     DebtAccounts,
     ActivityLog,
     NotificationPreferences,
@@ -49,7 +50,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   /// Deletes all rows from every table. Used for account deletion / GDPR.
   Future<void> clearAllTables() async {
@@ -99,6 +100,9 @@ class AppDatabase extends _$AppDatabase {
           if (from < 6) {
             await m.addColumn(transactions, transactions.deletedAt);
             await m.addColumn(envelopes, envelopes.deletedAt);
+          }
+          if (from < 7) {
+            await m.createTable(goalContributions);
           }
         },
       );

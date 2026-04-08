@@ -78,10 +78,13 @@ class GoalsBloc extends Bloc<GoalsEvent, GoalsState> {
     GoalsRefreshRequested event,
     Emitter<GoalsState> emit,
   ) async {
+    emit(state.copyWith(status: GoalsStatus.refreshing));
     try {
       await _goalRepository.refreshGoals(_budgetId);
     } on GoalException {
       // Stream will update on its own if data changes.
+    } finally {
+      emit(state.copyWith(status: GoalsStatus.loaded));
     }
   }
 

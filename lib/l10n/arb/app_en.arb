@@ -1519,6 +1519,42 @@
     "@goalsCancel": {
         "description": "Button text to cancel a goal action"
     },
+    "goalsAdd": "Add",
+    "@goalsAdd": {
+        "description": "Button text to confirm adding a contribution"
+    },
+    "goalsAddContribution": "Add Contribution",
+    "@goalsAddContribution": {
+        "description": "Button label and dialog title for adding a contribution to a goal"
+    },
+    "goalsContributionAdded": "Contribution added",
+    "@goalsContributionAdded": {
+        "description": "Snackbar message shown after a contribution is successfully added"
+    },
+    "goalsContributionAmountLabel": "Amount",
+    "@goalsContributionAmountLabel": {
+        "description": "Label for the amount field in the add contribution dialog"
+    },
+    "goalsContributionAmountRequired": "Enter a valid amount",
+    "@goalsContributionAmountRequired": {
+        "description": "Validation error when contribution amount is empty or zero"
+    },
+    "goalsContributionsTitle": "Contributions",
+    "@goalsContributionsTitle": {
+        "description": "Section title for the contribution history on the goal detail page"
+    },
+    "goalsNoContributions": "No contributions yet",
+    "@goalsNoContributions": {
+        "description": "Empty state message when a goal has no contributions"
+    },
+    "goalsDeleteContributionTitle": "Remove contribution?",
+    "@goalsDeleteContributionTitle": {
+        "description": "Confirmation dialog title when deleting a contribution"
+    },
+    "goalsDeleteContributionMessage": "This will also reduce the goal progress by this amount.",
+    "@goalsDeleteContributionMessage": {
+        "description": "Confirmation dialog body when deleting a contribution"
+    },
     "goalsErrorLoadFailed": "Failed to load goals",
     "@goalsErrorLoadFailed": {
         "description": "Error message when goals fail to load"

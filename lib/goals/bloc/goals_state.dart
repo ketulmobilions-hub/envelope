@@ -1,6 +1,6 @@
 part of 'goals_bloc.dart';
 
-enum GoalsStatus { initial, loading, loaded, error }
+enum GoalsStatus { initial, loading, refreshing, loaded, error }
 
 /// Error codes for goal operations, translated in the UI layer.
 enum GoalsError { loadFailed, updateFailed, deleteFailed }
