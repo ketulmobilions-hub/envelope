@@ -1,6 +1,7 @@
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-export const FROM_ADDRESS = 'Envelope <noreply@envelope.app>';
+export const FROM_ADDRESS =
+  Deno.env.get('FROM_EMAIL') ?? 'Envelope <noreply@envelope.app>';
 
 /** Creates a Supabase client with service_role privileges (bypasses RLS). */
 export function createSupabaseServiceClient(): SupabaseClient {

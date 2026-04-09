@@ -3,7 +3,6 @@ import {
   corsHeaders,
   createSupabaseServiceClient,
 } from '../_shared/email.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
@@ -20,13 +19,10 @@ serve(async (req: Request) => {
       );
     }
 
-    const userClient = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } },
-    );
+    const jwt = authHeader.replace(/^Bearer\s+/i, '');
+    const serviceClient = createSupabaseServiceClient();
     const { data: { user: caller }, error: authError } =
-      await userClient.auth.getUser();
+      await serviceClient.auth.getUser(jwt);
 
     if (authError || !caller) {
       return new Response(
@@ -42,8 +38,6 @@ serve(async (req: Request) => {
         { status: 400, headers: corsHeaders() },
       );
     }
-
-    const serviceClient = createSupabaseServiceClient();
 
     // Look up the invite.
     const { data: invite, error: inviteError } = await serviceClient
@@ -101,6 +95,19 @@ serve(async (req: Request) => {
       return new Response(
         JSON.stringify({ error: 'You own this budget' }),
         { status: 409, headers: corsHeaders() },
+      );
+    }
+
+    // Enforce free plan member limit.
+    const { count } = await serviceClient
+      .from('budget_members')
+      .select('*', { count: 'exact', head: true })
+      .eq('budget_id', invite.budget_id);
+
+    if ((count ?? 0) >= 2) {
+      return new Response(
+        JSON.stringify({ error: 'Budget has reached the free plan member limit' }),
+        { status: 403, headers: corsHeaders() },
       );
     }
 

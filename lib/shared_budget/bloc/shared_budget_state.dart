@@ -1,6 +1,6 @@
 part of 'shared_budget_bloc.dart';
 
-enum SharedBudgetStatus { initial, loading, loaded, error }
+enum SharedBudgetStatus { initial, loading, refreshing, loaded, error }
 
 /// Role constants used across the shared budget feature.
 abstract final class MemberRole {
