@@ -42,6 +42,7 @@ class SharingRepository {
     required String budgetId,
     required String email,
     required String inviterName,
+    required String budgetName,
     String role = 'viewer',
   }) async {
     try {
@@ -66,10 +67,9 @@ class SharingRepository {
 
       // Send invitation email (best-effort).
       try {
-        final budget = await _apiClient.budgets.getBudget(budgetId);
         await _apiClient.budgets.invokeSendInviteEmail(
           email: email,
-          budgetName: budget.name,
+          budgetName: budgetName,
           inviterName: inviterName,
           inviteId: created.id,
         );
@@ -95,6 +95,10 @@ class SharingRepository {
     String role = 'viewer',
   }) async {
     try {
+      // Reuse an existing non-expired, non-redeemed invite if one exists.
+      final existing = await _apiClient.budgets.getBudgetInvites(budgetId);
+      if (existing.isNotEmpty) return _mapInviteFromDto(existing.first);
+
       final dto = await _apiClient.budgets.createBudgetInvite(
         budgetId: budgetId,
         role: role,
