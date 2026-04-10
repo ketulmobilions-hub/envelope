@@ -102,6 +102,53 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       _transactionsSubscription?.cancel() ?? Future<void>.value(),
     ]);
 
+    // Subscribe to Supabase Realtime channels early so live changes that
+    // arrive during the initial API refresh are written to local DB and
+    // captured by the watch streams when they subscribe below.
+    for (final ch in _realtimeChannels) {
+      ch.unsubscribe();
+    }
+    _realtimeChannels = [
+      _accountRepository.subscribeToRealtimeChanges(_budgetId),
+      _budgetRepository.subscribeToBudgetChanges(_budgetId),
+      _budgetRepository.subscribeToPeriodChanges(_budgetId),
+      _envelopeRepository.subscribeToEnvelopeChanges(_budgetId),
+      _envelopeRepository.subscribeToCategoryGroupChanges(_budgetId),
+      _transactionRepository.subscribeToTransactionChanges(_budgetId),
+      _sharingRepository?.subscribeToBudgetChanges(_budgetId),
+    ].whereType<RealtimeChannel>().toList();
+
+    await _remoteChangeSubscription?.cancel();
+    _remoteChangeMergeController?.close();
+    _remoteChangeSubscription = _mergeRemoteChangeStreams().listen(
+      (_) => add(const _RemoteChangeReceived()),
+      onError: (Object _) {/* Ignore merge stream errors. */},
+    );
+
+    // Refresh from API first so local DB is populated before watch streams
+    // subscribe. This prevents the race where empty DB emissions set all
+    // _xxxReceived flags to true before any real data arrives, causing the
+    // dashboard to transition to loaded with empty lists.
+    await Future.wait([
+      _safeRefresh(
+        () => _budgetRepository.refreshBudgetPeriods(_budgetId),
+      ),
+      _safeRefresh(
+        () => _accountRepository.refreshAccounts(_budgetId),
+      ),
+      _safeRefresh(
+        () => _envelopeRepository.refreshEnvelopes(_budgetId),
+      ),
+      _safeRefresh(
+        () => _envelopeRepository.refreshCategoryGroups(_budgetId),
+      ),
+      _safeRefresh(
+        () => _transactionRepository.refreshTransactions(_budgetId),
+      ),
+    ]);
+
+    // Subscribe to watch streams after API refresh — first emission has
+    // fresh data so the dashboard loads correctly on first open.
     final gen = _generation;
 
     _periodsSubscription = _budgetRepository
@@ -138,46 +185,6 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
           (transactions) => add(_RecentTransactionsUpdated(transactions, gen)),
           onError: (Object _) => add(const _DashboardStreamError()),
         );
-
-    // Subscribe to Supabase Realtime channels.
-    for (final ch in _realtimeChannels) {
-      ch.unsubscribe();
-    }
-    _realtimeChannels = [
-      _accountRepository.subscribeToRealtimeChanges(_budgetId),
-      _budgetRepository.subscribeToBudgetChanges(_budgetId),
-      _budgetRepository.subscribeToPeriodChanges(_budgetId),
-      _envelopeRepository.subscribeToEnvelopeChanges(_budgetId),
-      _envelopeRepository.subscribeToCategoryGroupChanges(_budgetId),
-      _transactionRepository.subscribeToTransactionChanges(_budgetId),
-      _sharingRepository?.subscribeToBudgetChanges(_budgetId),
-    ].whereType<RealtimeChannel>().toList();
-
-    // Merge all remote change streams for the indicator.
-    await _remoteChangeSubscription?.cancel();
-    _remoteChangeMergeController?.close();
-    _remoteChangeSubscription = _mergeRemoteChangeStreams().listen(
-      (_) => add(const _RemoteChangeReceived()),
-      onError: (Object _) {/* Ignore merge stream errors. */},
-    );
-
-    await Future.wait([
-      _safeRefresh(
-        () => _budgetRepository.refreshBudgetPeriods(_budgetId),
-      ),
-      _safeRefresh(
-        () => _accountRepository.refreshAccounts(_budgetId),
-      ),
-      _safeRefresh(
-        () => _envelopeRepository.refreshEnvelopes(_budgetId),
-      ),
-      _safeRefresh(
-        () => _envelopeRepository.refreshCategoryGroups(_budgetId),
-      ),
-      _safeRefresh(
-        () => _transactionRepository.refreshTransactions(_budgetId),
-      ),
-    ]);
   }
 
   Future<void> _onPeriodsUpdated(

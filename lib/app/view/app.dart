@@ -188,17 +188,25 @@ class _FcmAuthListenerState extends State<_FcmAuthListener> {
   /// then marks `session_resolved` and refreshes the router.
   Future<void> _restoreSessionForUser(String userId) async {
     try {
-      // Clear stale data from any prior user.
-      await _prefs.remove('active_budget_id');
+      // Hold the router on splash while we restore by clearing session_resolved.
+      // active_budget_id is intentionally NOT removed here — SharedPreferences
+      // updates its in-memory cache immediately on remove(), so clearing it
+      // before the API call completes causes HomePage.build() to read an empty
+      // budgetId and create DashboardBloc with no budget.  The setString call
+      // below overwrites it once the correct value is known.
       await _prefs.remove('session_resolved');
 
       final budgets = await _apiClient.budgets.getBudgetsByOwner(userId);
 
       if (budgets.isNotEmpty) {
         await _prefs.setString('active_budget_id', budgets.first.id);
+      } else {
+        // No budgets found — clear so the router sends the user to onboarding.
+        await _prefs.remove('active_budget_id');
       }
     } on Exception {
-      // On failure, user will see onboarding (safe fallback).
+      // On failure, keep the existing active_budget_id so the user stays on
+      // the dashboard rather than being bounced to onboarding.
     }
 
     // Always mark resolved so the router stops holding on splash.

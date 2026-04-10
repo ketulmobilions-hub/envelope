@@ -75,7 +75,8 @@ class _NetWorthLineChartState extends State<NetWorthLineChart> {
                 horizontal: 12,
                 vertical: 8,
               ),
-              getTooltipColor: (_) => AppColors.textDark.withValues(alpha: 0.85),
+              getTooltipColor: (_) =>
+                  AppColors.charcoal.withValues(alpha: 0.85),
               getTooltipItems: (spots) {
                 // spots order matches lineBarsData order:
                 // 0 = net worth, 1 = assets, 2 = liabilities
