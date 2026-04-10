@@ -42,7 +42,11 @@ class ReportsApiClient {
     }
   }
 
-  /// Creates a new net worth snapshot.
+  /// Creates or updates a net worth snapshot for the given budget and date.
+  ///
+  /// Uses upsert so that recording a second snapshot on the same day updates
+  /// the existing row instead of failing the (budget_id, date) unique
+  /// constraint.
   ///
   /// Server-generated fields (`id`, `created_at`) are stripped so Supabase
   /// applies its defaults.
@@ -55,7 +59,7 @@ class ReportsApiClient {
         ..remove('created_at');
       final response = await _supabaseClient
           .from('net_worth_snapshots')
-          .insert(json)
+          .upsert(json, onConflict: 'budget_id,date')
           .select()
           .single();
       return NetWorthSnapshotDto.fromJson(response);

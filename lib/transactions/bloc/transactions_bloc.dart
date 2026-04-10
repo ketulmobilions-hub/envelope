@@ -15,11 +15,11 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
     required AccountRepository accountRepository,
     required EnvelopeRepository envelopeRepository,
     required String budgetId,
-  })  : _transactionRepository = transactionRepository,
-        _accountRepository = accountRepository,
-        _envelopeRepository = envelopeRepository,
-        _budgetId = budgetId,
-        super(const TransactionsState()) {
+  }) : _transactionRepository = transactionRepository,
+       _accountRepository = accountRepository,
+       _envelopeRepository = envelopeRepository,
+       _budgetId = budgetId,
+       super(const TransactionsState()) {
     on<TransactionsStarted>(_onStarted);
     on<_TransactionsUpdated>(_onUpdated);
     on<_AccountsUpdated>(_onAccountsUpdated);
@@ -144,12 +144,28 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
   ) async {
     // Store for undo before deleting.
     _lastDeleted = state.transactions.cast<Transaction?>().firstWhere(
-          (t) => t!.id == event.id,
-          orElse: () => null,
-        );
+      (t) => t!.id == event.id,
+      orElse: () => null,
+    );
 
     try {
       await _transactionRepository.deleteTransaction(event.id);
+      // Optimistically decrement local spentAmount so the envelope card on
+      // the home page reflects the deletion instantly (before the API
+      // refreshAllocations round-trip completes).
+      final deleted = _lastDeleted;
+      if (deleted != null &&
+          deleted.type == 'expense' &&
+          deleted.envelopeId != null) {
+        unawaited(
+          _envelopeRepository.decrementLocalSpentAmount(
+            envelopeId: deleted.envelopeId!,
+            budgetId: deleted.budgetId,
+            date: deleted.date,
+            amount: deleted.amount,
+          ),
+        );
+      }
     } on TransactionException {
       emit(
         state.copyWith(
