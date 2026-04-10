@@ -1,3 +1,4 @@
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/shared_budget/bloc/bloc.dart';
@@ -27,6 +28,7 @@ class SharedBudgetPage extends StatelessWidget {
     return BlocProvider(
       create: (_) => SharedBudgetBloc(
         sharingRepository: context.read<SharingRepository>(),
+        budgetRepository: context.read<BudgetRepository>(),
         budgetId: budgetId,
         currentUserId: user.id,
         currentUserName: user.displayName.isNotEmpty
@@ -72,15 +74,9 @@ class SharedBudgetView extends StatelessWidget {
               onPressed: () => _openActivityLog(context),
               icon: const Icon(Icons.history),
             ),
-            BlocBuilder<SharedBudgetBloc, SharedBudgetState>(
-              buildWhen: (prev, curr) => prev.canInvite != curr.canInvite,
-              builder: (context, state) {
-                if (!state.canInvite) return const SizedBox.shrink();
-                return IconButton(
-                  onPressed: () => _openInvite(context),
-                  icon: const Icon(Icons.person_add),
-                );
-              },
+            IconButton(
+              onPressed: () => _openInvite(context),
+              icon: const Icon(Icons.person_add),
             ),
           ],
         ),
@@ -96,11 +92,7 @@ class SharedBudgetView extends StatelessWidget {
             }
 
             final bloc = context.read<SharedBudgetBloc>();
-            final isOwner = state.members.any(
-              (m) =>
-                  m.userId == bloc.currentUserId &&
-                  m.role == MemberRole.owner,
-            );
+            final isOwner = bloc.isOwner;
 
             return Column(
               children: [
@@ -113,7 +105,7 @@ class SharedBudgetView extends StatelessWidget {
                       await b.stream
                           .firstWhere(
                             (s) =>
-                                s.status == SharedBudgetStatus.loaded,
+                                s.status != SharedBudgetStatus.refreshing,
                           )
                           .timeout(const Duration(seconds: 10))
                           .catchError((_) => b.state);
@@ -131,6 +123,9 @@ class SharedBudgetView extends StatelessWidget {
                               _showChangeRoleDialog(context, member),
                           onRemove: () =>
                               _showRemoveDialog(context, member),
+                          onRevokeInvite: () => context
+                              .read<SharedBudgetBloc>()
+                              .add(SharedBudgetMemberRemoved(member.id)),
                         );
                       },
                     ),

@@ -124,8 +124,8 @@ class ReportMonthsSelector extends StatelessWidget {
         Text(
           l10n.reportsMonths,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.charcoal,
-              ),
+            color: AppColors.charcoal,
+          ),
         ),
         Expanded(
           child: Slider(
@@ -142,8 +142,8 @@ class ReportMonthsSelector extends StatelessWidget {
           child: Text(
             '$months',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ],

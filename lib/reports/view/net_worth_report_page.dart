@@ -7,8 +7,19 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:report_repository/report_repository.dart';
 
 /// Net worth report page with line chart.
-class NetWorthReportPage extends StatelessWidget {
+class NetWorthReportPage extends StatefulWidget {
   const NetWorthReportPage({super.key});
+
+  @override
+  State<NetWorthReportPage> createState() => _NetWorthReportPageState();
+}
+
+class _NetWorthReportPageState extends State<NetWorthReportPage> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<ReportsBloc>().add(const NetWorthReportRequested());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,24 +39,12 @@ class NetWorthReportPage extends StatelessWidget {
         child: BlocBuilder<ReportsBloc, ReportsState>(
           builder: (context, state) {
             final hasData = state.netWorthSnapshots.isNotEmpty;
-            final needsLoad = state.activeReport != ReportType.netWorth ||
-                (!hasData && state.status != ReportsStatus.loading);
+            final isLoading = state.status == ReportsStatus.loading;
 
             return ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                if (needsLoad)
-                  Center(
-                    child: FilledButton(
-                      onPressed: () {
-                        context.read<ReportsBloc>().add(
-                          const NetWorthReportRequested(),
-                        );
-                      },
-                      child: Text(l10n.reportsNetWorthTitle),
-                    ),
-                  ),
-                if (state.status == ReportsStatus.loading)
+                if (isLoading)
                   const Padding(
                     padding: EdgeInsets.all(32),
                     child: Center(child: CircularProgressIndicator()),
@@ -65,7 +64,14 @@ class NetWorthReportPage extends StatelessWidget {
                         .first,
                   ),
                   const SizedBox(height: 16),
-                  // Record snapshot button
+                ],
+                if (!hasData && !isLoading)
+                  const ReportEmptyState(),
+                // Record snapshot button — always shown once loaded so users
+                // can record their first snapshot from the empty state.
+                if (!isLoading &&
+                    state.activeReport == ReportType.netWorth) ...[
+                  const SizedBox(height: 16),
                   FilledButton.icon(
                     onPressed: () {
                       context.read<ReportsBloc>().add(
@@ -76,8 +82,6 @@ class NetWorthReportPage extends StatelessWidget {
                     label: Text(l10n.reportsRecordSnapshot),
                   ),
                 ],
-                if (!hasData && state.status != ReportsStatus.loading)
-                  const ReportEmptyState(),
               ],
             );
           },

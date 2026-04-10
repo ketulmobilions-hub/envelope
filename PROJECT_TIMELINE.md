@@ -2,12 +2,26 @@
 
 ## Progress
 
-| Phase | Name | Issues | Status | Completed |
-|-------|------|--------|--------|-----------|
-| 1 | Project Foundation | #1–#5 | Done | Mar 10 |
-| 2 | Authentication | #6–#8 | Done | Mar 11 |
-| 3 | Sync Engine | #9–#10 | Done | Mar 11 |
-| 4 | Onboarding & Accounts | #11–#13 | Done | Mar 12 |
+| Phase | Name | Issues | Status | Target | Completed |
+|-------|------|--------|--------|--------|-----------|
+| 1 | Project Foundation | #1–#5 | Done | Mar 10 | Mar 10 |
+| 2 | Authentication | #6–#8 | Done | Mar 11 | Mar 11 |
+| 3 | Sync Engine | #9–#10 | Done | Mar 11 | Mar 11 |
+| 4 | Onboarding & Accounts | #11–#13 | Done | Mar 12 | Mar 12 |
+| 5 | Envelopes & Budget | #14–#17 | Done | Mar 18 | Mar 13 |
+| 6 | Transactions | #18–#20 | Done | Mar 25 | Mar 16 |
+| 7 | Dashboard | #21–#22 | Done | Mar 26 | Mar 17 |
+| 8 | Goals & Debt | #23–#24 | Done | Mar 31 | Mar 20 |
+| — | UI Polish & Extras | #45–#47, quick-allocate | Done | — | Mar 17–24 |
+| 9 | Shared Budgets | #25–#27 | **Next** | Fri Mar 28 | — |
+| 10 | Reports & Analytics | #28–#29 | Pending | Wed Apr 2 | — |
+| 11 | Notifications | #30–#32 | Pending | Mon Apr 7 | — |
+| 12 | Settings & Polish | #33–#36 | Pending | Fri Apr 11 | — |
+| 13 | Subscriptions | #37–#40 | Pending | Fri Apr 18 | — |
+| 14 | Testing & Launch | #41–#44 | Pending | **Thu Apr 24** | — |
+
+**Status as of Mar 24: ~1 week ahead of schedule.** Phase 8 done Mar 20 vs target Mar 31.
+**Revised launch target: Apr 24** (was May 1).
 
 ## Pace Analysis
 
@@ -73,82 +87,81 @@ Estimated throughput drops to **~1.5–2 issues/day** for complex phases.
 | 11 | Thu Mar 27 | #23 | goal_repository package |
 | 12 | Fri Mar 28 | #24 | Goals & debt tracking feature |
 
-### Week 4: March 31–April 4 (5 days) — Phase 8 Finish + Phase 9
+### Week 3 (continued): March 25–28 (4 days) — Phase 9
 
 | Day | Date | Issues | Deliverable |
 |-----|------|--------|-------------|
-| 13 | Mon Mar 31 | — | **Phase 8 complete → merge dev to main** |
-| 13 | Mon Mar 31 | #25 | sharing_repository package |
-| 14-15 | Tue-Wed Apr 1-2 | #26 | Shared budget feature (Bloc + UI) |
-| 16-17 | Thu-Fri Apr 3-4 | #27 | Supabase Realtime integration |
+| 13 | Wed Mar 25 | #25 | sharing_repository package |
+| 14-15 | Thu-Fri Mar 26-27 | #26 | Shared budget feature (Bloc + UI) |
+| 16 | Fri Mar 28 | #27 | Supabase Realtime integration |
+| — | Fri Mar 28 | — | **Phase 9 complete → merge dev to main** |
 
-### Week 5: April 7–11 (5 days) — Phase 9 Finish + Phase 10 + Phase 11
-
-| Day | Date | Issues | Deliverable |
-|-----|------|--------|-------------|
-| 18 | Mon Apr 7 | — | **Phase 9 complete → merge dev to main** |
-| 18 | Mon Apr 7 | #28 | report_repository package |
-| 19-20 | Tue-Wed Apr 8-9 | #29 | Reports & analytics feature (charts, export) |
-| — | Wed Apr 9 | — | **Phase 10 complete → merge dev to main** |
-| 21 | Thu Apr 10 | #30 | FCM push notifications setup |
-| 22 | Fri Apr 11 | #31 | Email notifications (Edge Functions) |
-
-### Week 6: April 14–18 (5 days) — Phase 11 Finish + Phase 12
+### Week 4: March 31–April 4 (5 days) — Phase 10 + Phase 11
 
 | Day | Date | Issues | Deliverable |
 |-----|------|--------|-------------|
-| 23 | Mon Apr 14 | #32 | Notification preferences UI |
-| — | Mon Apr 14 | — | **Phase 11 complete → merge dev to main** |
-| 24 | Tue Apr 15 | #33 | Settings feature |
-| 25 | Wed Apr 16 | #34 | GDPR & privacy compliance |
-| 26 | Thu Apr 17 | #35 | Undo & confirmation dialogs |
-| 27 | Fri Apr 18 | #36 | Platform polish (Android/iOS/Web) |
+| 17 | Mon Mar 31 | #28 | report_repository package |
+| 18-19 | Tue-Wed Apr 1-2 | #29 | Reports & analytics feature (charts, export) |
+| — | Wed Apr 2 | — | **Phase 10 complete → merge dev to main** |
+| 20 | Thu Apr 3 | #30 | FCM push notifications setup |
+| 21 | Fri Apr 4 | #31 | Email notifications (Edge Functions) |
 
-### Week 7: April 21–25 (5 days) — Phase 13
-
-| Day | Date | Issues | Deliverable |
-|-----|------|--------|-------------|
-| — | Mon Apr 21 | — | **Phase 12 complete → merge dev to main** |
-| 28 | Mon Apr 21 | #37 | RevenueCat setup & products |
-| 29 | Tue Apr 22 | #38 | subscription_repository package |
-| 30-31 | Wed-Thu Apr 23-24 | #39 | Subscription feature (paywall + premium gates) |
-| 32 | Fri Apr 25 | #40 | Web subscriptions (Stripe) |
-
-### Week 8: April 28–May 1 (4 days) — Phase 14 (Testing & Launch)
+### Week 5: April 7–11 (5 days) — Phase 11 Finish + Phase 12
 
 | Day | Date | Issues | Deliverable |
 |-----|------|--------|-------------|
-| — | Mon Apr 28 | — | **Phase 13 complete → merge dev to main** |
-| 33 | Mon Apr 28 | #41 | Unit tests for all packages/blocs |
-| 34 | Tue Apr 29 | #42 | Widget & integration tests |
-| 35 | Wed Apr 30 | #43 | CI/CD finalization |
-| 36 | Thu May 1 | #44 | Launch checklist & store submissions |
-| — | Fri May 2 | — | **Phase 14 complete → final merge to main** |
+| 22 | Mon Apr 7 | #32 | Notification preferences UI |
+| — | Mon Apr 7 | — | **Phase 11 complete → merge dev to main** |
+| 23 | Tue Apr 8 | #33 | Settings feature |
+| 24 | Wed Apr 9 | #34 | GDPR & privacy compliance |
+| 25 | Thu Apr 10 | #35 | Undo & confirmation dialogs |
+| 26 | Fri Apr 11 | #36 | Platform polish (Android/iOS/Web) |
+| — | Fri Apr 11 | — | **Phase 12 complete → merge dev to main** |
+
+### Week 6: April 14–18 (5 days) — Phase 13
+
+| Day | Date | Issues | Deliverable |
+|-----|------|--------|-------------|
+| 27 | Mon Apr 14 | #37 | RevenueCat setup & products |
+| 28 | Tue Apr 15 | #38 | subscription_repository package |
+| 29-30 | Wed-Thu Apr 16-17 | #39 | Subscription feature (paywall + premium gates) |
+| 31 | Fri Apr 18 | #40 | Web subscriptions (Stripe) |
+| — | Fri Apr 18 | — | **Phase 13 complete → merge dev to main** |
+
+### Week 7: April 21–24 (4 days) — Phase 14 (Testing & Launch)
+
+| Day | Date | Issues | Deliverable |
+|-----|------|--------|-------------|
+| 32 | Mon Apr 21 | #41 | Unit tests for all packages/blocs |
+| 33 | Tue Apr 22 | #42 | Widget & integration tests |
+| 34 | Wed Apr 23 | #43 | CI/CD finalization |
+| 35 | Thu Apr 24 | #44 | Launch checklist & store submissions |
+| — | Fri Apr 25 | — | **Phase 14 complete → final merge to main** |
 
 ---
 
 ## Milestone Summary
 
-| Milestone | Target Date | Status |
-|-----------|------------|--------|
-| Phase 1 — Foundation | Mar 10 | Done |
-| Phase 2 — Auth | Mar 11 | Done |
-| Phase 3 — Sync | Mar 11 | Done |
-| Phase 4 — Onboarding & Accounts | Mar 12 | Done |
-| Phase 5 — Envelopes & Budget | Wed Mar 18 | Pending |
-| Phase 6 — Transactions | Tue Mar 25 | Pending |
-| Phase 7 — Dashboard | Wed Mar 26 | Pending |
-| Phase 8 — Goals & Debt | Mon Mar 31 | Pending |
-| Phase 9 — Shared Budgets | Mon Apr 7 | Pending |
-| Phase 10 — Reports | Wed Apr 9 | Pending |
-| Phase 11 — Notifications | Mon Apr 14 | Pending |
-| Phase 12 — Settings & Polish | Mon Apr 21 | Pending |
-| Phase 13 — Subscriptions | Mon Apr 28 | Pending |
-| Phase 14 — Testing & Launch | **Fri May 1** | Pending |
+| Milestone | Target Date | Actual | Status |
+|-----------|------------|--------|--------|
+| Phase 1 — Foundation | Mar 10 | Mar 10 | Done |
+| Phase 2 — Auth | Mar 11 | Mar 11 | Done |
+| Phase 3 — Sync | Mar 11 | Mar 11 | Done |
+| Phase 4 — Onboarding & Accounts | Mar 12 | Mar 12 | Done |
+| Phase 5 — Envelopes & Budget | Wed Mar 18 | Mar 13 | Done (5 days early) |
+| Phase 6 — Transactions | Tue Mar 25 | Mar 16 | Done (9 days early) |
+| Phase 7 — Dashboard | Wed Mar 26 | Mar 17 | Done (9 days early) |
+| Phase 8 — Goals & Debt | Mon Mar 31 | Mar 20 | Done (11 days early) |
+| Phase 9 — Shared Budgets | Fri Mar 28 | — | **Next** |
+| Phase 10 — Reports | Wed Apr 2 | — | Pending |
+| Phase 11 — Notifications | Mon Apr 7 | — | Pending |
+| Phase 12 — Settings & Polish | Fri Apr 11 | — | Pending |
+| Phase 13 — Subscriptions | Fri Apr 18 | — | Pending |
+| Phase 14 — Testing & Launch | **Thu Apr 24** | — | Pending |
 
 **Original plan: 31 weeks (Aug 2026)**
-**With Claude Code: ~7.5 weeks (May 1, 2026)**
-**Speedup: ~4x faster**
+**With Claude Code: ~6.5 weeks (Apr 24, 2026)**
+**Speedup: ~5x faster**
 
 ### Buffer
 

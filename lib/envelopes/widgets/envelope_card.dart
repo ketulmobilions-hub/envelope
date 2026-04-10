@@ -17,6 +17,7 @@ class EnvelopeCard extends StatefulWidget {
     this.heroTag,
     this.onTap,
     this.onAllocate,
+    this.onFixOverspend,
     super.key,
   });
 
@@ -31,6 +32,9 @@ class EnvelopeCard extends StatefulWidget {
 
   /// Called when the user submits a new allocation amount (in cents).
   final ValueChanged<int>? onAllocate;
+
+  /// Called when the user taps "Fix Overspend" on an overspent card.
+  final VoidCallback? onFixOverspend;
 
   @override
   State<EnvelopeCard> createState() => _EnvelopeCardState();
@@ -168,85 +172,112 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
                   color: textColor.withValues(alpha: 0.3),
                 ),
                 const SizedBox(height: 4),
-                // Bottom area — tappable for inline editing.
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: _isEditing ? null : _enterEditMode,
-                  child: _isEditing
-                      ? SizedBox(
-                          height: 20,
-                          child: TextField(
-                            controller: _controller,
-                            focusNode: _focusNode,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            cursorColor: Colors.white,
-                            cursorWidth: 1.5,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            textInputAction: TextInputAction.done,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d*\.?\d{0,2}'),
-                              ),
-                            ],
-                            decoration: InputDecoration(
-                              prefixText: r'$',
-                              prefixStyle: const TextStyle(
+                // Bottom area — "Fix Overspend" when overspent,
+                // inline allocation editing otherwise.
+                if (widget.isOverspent && widget.onFixOverspend != null)
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: widget.onFixOverspend,
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.build_outlined,
+                          size: 10,
+                          color: textColor,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          l10n.envelopeFixOverspend,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: textColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: _isEditing ? null : _enterEditMode,
+                    child: _isEditing
+                        ? SizedBox(
+                            height: 20,
+                            child: TextField(
+                              controller: _controller,
+                              focusNode: _focusNode,
+                              style: const TextStyle(
                                 fontSize: 11,
                                 color: Colors.white,
                                 fontWeight: FontWeight.w600,
                               ),
-                              border: InputBorder.none,
-                              enabledBorder: UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: Colors.white.withValues(alpha: 0.6),
-                                ),
+                              cursorColor: Colors.white,
+                              cursorWidth: 1.5,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                decimal: true,
                               ),
-                              focusedBorder: const UnderlineInputBorder(
-                                borderSide: BorderSide(
+                              textInputAction: TextInputAction.done,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'^\d*\.?\d{0,2}'),
+                                ),
+                              ],
+                              decoration: InputDecoration(
+                                prefixText: r'$',
+                                prefixStyle: const TextStyle(
+                                  fontSize: 11,
                                   color: Colors.white,
+                                  fontWeight: FontWeight.w600,
                                 ),
-                              ),
-                              contentPadding: const EdgeInsets.only(bottom: 4),
-                              isDense: true,
-                            ),
-                            onSubmitted: (_) => _submitEditing(),
-                          ),
-                        )
-                      : Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                l10n.envelopeCardOfAllocated(
-                                  formatCents(
-                                    widget.allocatedCents,
+                                border: InputBorder.none,
+                                enabledBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color:
+                                        Colors.white.withValues(alpha: 0.6),
                                   ),
                                 ),
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: textColor,
+                                focusedBorder: const UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: Colors.white,
+                                  ),
                                 ),
-                                overflow: TextOverflow.ellipsis,
+                                contentPadding:
+                                    const EdgeInsets.only(bottom: 4),
+                                isDense: true,
                               ),
+                              onSubmitted: (_) => _submitEditing(),
                             ),
-                            if (widget.onAllocate != null)
-                              Padding(
-                                padding:
-                                    const EdgeInsets.only(left: 4),
-                                child: Icon(
-                                  Icons.edit_outlined,
-                                  size: 10,
-                                  color: textColor,
+                          )
+                        : Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  l10n.envelopeCardOfAllocated(
+                                    formatCents(
+                                      widget.allocatedCents,
+                                    ),
+                                  ),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: textColor,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                          ],
-                        ),
-                ),
+                              if (widget.onAllocate != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 4),
+                                  child: Icon(
+                                    Icons.edit_outlined,
+                                    size: 10,
+                                    color: textColor,
+                                  ),
+                                ),
+                            ],
+                          ),
+                  ),
               ],
             ),
           ),

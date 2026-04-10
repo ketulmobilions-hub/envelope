@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
+import 'package:budget_repository/budget_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:sharing_repository/sharing_repository.dart';
 
@@ -10,10 +11,12 @@ part 'shared_budget_state.dart';
 class SharedBudgetBloc extends Bloc<SharedBudgetEvent, SharedBudgetState> {
   SharedBudgetBloc({
     required SharingRepository sharingRepository,
+    required BudgetRepository budgetRepository,
     required String budgetId,
     required String currentUserId,
     required String currentUserName,
   }) : _sharingRepository = sharingRepository,
+       _budgetRepository = budgetRepository,
        _budgetId = budgetId,
        _currentUserId = currentUserId,
        _currentUserName = currentUserName,
@@ -25,14 +28,19 @@ class SharedBudgetBloc extends Bloc<SharedBudgetEvent, SharedBudgetState> {
     on<SharedBudgetMemberRoleUpdated>(_onMemberRoleUpdated);
     on<SharedBudgetMemberRemoved>(_onMemberRemoved);
     on<SharedBudgetInviteLinkCleared>(_onInviteLinkCleared);
+    on<SharedBudgetInviteRevoked>(_onInviteRevoked);
+    on<SharedBudgetPendingInvitesRequested>(_onPendingInvitesRequested);
     on<_MembersUpdated>(_onMembersUpdated);
     on<_MembersStreamError>(_onMembersStreamError);
   }
 
   final SharingRepository _sharingRepository;
+  final BudgetRepository _budgetRepository;
   final String _budgetId;
   final String _currentUserId;
   final String _currentUserName;
+  String? _budgetOwnerId;
+  String? _budgetName;
   StreamSubscription<List<BudgetMember>>? _membersSubscription;
 
   /// The budget ID this bloc is watching.
@@ -40,6 +48,9 @@ class SharedBudgetBloc extends Bloc<SharedBudgetEvent, SharedBudgetState> {
 
   /// The current user's ID.
   String get currentUserId => _currentUserId;
+
+  /// Whether the current user owns this budget.
+  bool get isOwner => _budgetOwnerId == _currentUserId;
 
   Future<void> _onStarted(
     SharedBudgetStarted event,
@@ -61,10 +72,21 @@ class SharedBudgetBloc extends Bloc<SharedBudgetEvent, SharedBudgetState> {
         );
 
     try {
+      final budget = await _budgetRepository.getBudget(_budgetId);
+      _budgetOwnerId = budget.ownerId;
+      _budgetName = budget.name;
+    } on BudgetException {
+      // Ownership check falls back to false if budget can't be fetched.
+    }
+
+    try {
       await _sharingRepository.refreshMembers(_budgetId);
     } on SharingException {
       // Local watch will still show cached data.
     }
+
+    // Load pending invites.
+    add(const SharedBudgetPendingInvitesRequested());
   }
 
   void _onMembersUpdated(
@@ -96,10 +118,13 @@ class SharedBudgetBloc extends Bloc<SharedBudgetEvent, SharedBudgetState> {
     SharedBudgetRefreshRequested event,
     Emitter<SharedBudgetState> emit,
   ) async {
+    emit(state.copyWith(status: SharedBudgetStatus.refreshing));
     try {
       await _sharingRepository.refreshMembers(_budgetId);
     } on SharingException {
       // Stream will update on its own if data changes.
+    } finally {
+      emit(state.copyWith(status: SharedBudgetStatus.loaded));
     }
   }
 
@@ -123,6 +148,7 @@ class SharedBudgetBloc extends Bloc<SharedBudgetEvent, SharedBudgetState> {
         budgetId: _budgetId,
         email: event.email,
         inviterName: _currentUserName,
+        budgetName: _budgetName ?? '',
         role: event.role,
       );
       await _sharingRepository.refreshMembers(_budgetId);
@@ -141,10 +167,10 @@ class SharedBudgetBloc extends Bloc<SharedBudgetEvent, SharedBudgetState> {
     }
   }
 
-  void _onInviteLinkRequested(
+  Future<void> _onInviteLinkRequested(
     SharedBudgetInviteLinkRequested event,
     Emitter<SharedBudgetState> emit,
-  ) {
+  ) async {
     if (!state.canInvite) {
       emit(
         state.copyWith(
@@ -156,11 +182,24 @@ class SharedBudgetBloc extends Bloc<SharedBudgetEvent, SharedBudgetState> {
       return;
     }
 
-    final token = _sharingRepository.generateInviteLink(
-      budgetId: _budgetId,
-      role: event.role,
-    );
-    emit(state.copyWith(generatedInviteLink: token));
+    try {
+      final invite = await _sharingRepository.generateInviteLink(
+        budgetId: _budgetId,
+        userId: _currentUserId,
+        role: event.role,
+      );
+      emit(state.copyWith(generatedInviteLink: invite.id));
+      // Refresh pending invites list.
+      add(const SharedBudgetPendingInvitesRequested());
+    } on SharingException {
+      emit(
+        state.copyWith(
+          status: SharedBudgetStatus.error,
+          error: SharedBudgetError.inviteFailed,
+        ),
+      );
+      emit(state.copyWith(status: SharedBudgetStatus.loaded, error: null));
+    }
   }
 
   void _onInviteLinkCleared(
@@ -205,6 +244,36 @@ class SharedBudgetBloc extends Bloc<SharedBudgetEvent, SharedBudgetState> {
         ),
       );
       emit(state.copyWith(status: SharedBudgetStatus.loaded, error: null));
+    }
+  }
+
+  Future<void> _onInviteRevoked(
+    SharedBudgetInviteRevoked event,
+    Emitter<SharedBudgetState> emit,
+  ) async {
+    try {
+      await _sharingRepository.revokeInvite(event.inviteId);
+      add(const SharedBudgetPendingInvitesRequested());
+    } on SharingException {
+      emit(
+        state.copyWith(
+          status: SharedBudgetStatus.error,
+          error: SharedBudgetError.inviteFailed,
+        ),
+      );
+      emit(state.copyWith(status: SharedBudgetStatus.loaded, error: null));
+    }
+  }
+
+  Future<void> _onPendingInvitesRequested(
+    SharedBudgetPendingInvitesRequested event,
+    Emitter<SharedBudgetState> emit,
+  ) async {
+    try {
+      final invites = await _sharingRepository.getPendingInvites(_budgetId);
+      emit(state.copyWith(pendingInvites: invites));
+    } on SharingException {
+      // Non-critical — just don't show pending invites.
     }
   }
 

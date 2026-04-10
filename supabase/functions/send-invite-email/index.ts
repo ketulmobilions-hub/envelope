@@ -8,7 +8,6 @@ import {
   logEmail,
   sendEmail,
 } from '../_shared/email.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 interface InviteRequest {
   email: string;
@@ -33,13 +32,10 @@ serve(async (req: Request) => {
       );
     }
 
-    // Create a client with the caller's JWT to verify identity.
-    const userClient = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } },
-    );
-    const { data: { user: caller }, error: authError } = await userClient.auth.getUser();
+    // Verify the caller's JWT using the service role client.
+    const jwt = authHeader.replace(/^Bearer\s+/i, '');
+    const serviceClient = createSupabaseServiceClient();
+    const { data: { user: caller }, error: authError } = await serviceClient.auth.getUser(jwt);
     if (authError || !caller) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
@@ -56,8 +52,6 @@ serve(async (req: Request) => {
         { status: 400, headers: corsHeaders() },
       );
     }
-
-    const serviceClient = createSupabaseServiceClient();
 
     // Verify the caller is the owner or a member of the budget associated
     // with this invite, to prevent abuse.

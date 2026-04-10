@@ -29,8 +29,7 @@ class AccountsDao extends DatabaseAccessor<AppDatabase>
   Future<int> insertAccount(
     AccountsCompanion account, {
     InsertMode mode = InsertMode.insert,
-  }) =>
-      into(accounts).insert(account, mode: mode);
+  }) => into(accounts).insert(account, mode: mode);
 
   Future<void> batchInsertAccounts(
     List<AccountsCompanion> entries, {
@@ -48,22 +47,20 @@ class AccountsDao extends DatabaseAccessor<AppDatabase>
       (delete(accounts)..where((t) => t.id.equals(id))).go();
 
   // Debt Accounts CRUD
-  Future<DebtAccount?> getDebtAccount(String accountId) =>
-      (select(debtAccounts)..where((t) => t.accountId.equals(accountId)))
-          .getSingleOrNull();
+  Future<DebtAccount?> getDebtAccount(String accountId) => (select(
+    debtAccounts,
+  )..where((t) => t.accountId.equals(accountId))).getSingleOrNull();
 
-  Stream<DebtAccount?> watchDebtAccount(String accountId) =>
-      (select(debtAccounts)..where((t) => t.accountId.equals(accountId)))
-          .watchSingleOrNull();
+  Stream<DebtAccount?> watchDebtAccount(String accountId) => (select(
+    debtAccounts,
+  )..where((t) => t.accountId.equals(accountId))).watchSingleOrNull();
 
-  Future<List<DebtAccount>> getAllDebtAccounts() =>
-      select(debtAccounts).get();
+  Future<List<DebtAccount>> getAllDebtAccounts() => select(debtAccounts).get();
 
   Future<int> insertDebtAccount(
     DebtAccountsCompanion debtAccount, {
     InsertMode mode = InsertMode.insert,
-  }) =>
-      into(debtAccounts).insert(debtAccount, mode: mode);
+  }) => into(debtAccounts).insert(debtAccount, mode: mode);
 
   Future<bool> updateDebtAccount(DebtAccountsCompanion debtAccount) =>
       update(debtAccounts).replace(debtAccount);

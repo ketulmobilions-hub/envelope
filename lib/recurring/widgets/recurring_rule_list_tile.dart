@@ -13,6 +13,8 @@ class RecurringRuleListTile extends StatelessWidget {
     this.onTap,
     this.onDelete,
     this.onPauseToggle,
+    this.onPost,
+    this.isPending = false,
     super.key,
   });
 
@@ -20,6 +22,8 @@ class RecurringRuleListTile extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onDelete;
   final VoidCallback? onPauseToggle;
+  final VoidCallback? onPost;
+  final bool isPending;
 
   @override
   Widget build(BuildContext context) {
@@ -61,39 +65,64 @@ class RecurringRuleListTile extends StatelessWidget {
         title: Text(
           rule.payee ?? localizedTransactionType(rule.type, l10n),
         ),
-        subtitle: Text(
-          '${localizedFrequency(rule.frequency, l10n)} '
-          '${l10n.recurringNextOccurrence(nextDate)}',
+        subtitle: Text.rich(
+          TextSpan(
+            text: '${localizedFrequency(rule.frequency, l10n)} ',
+            children: [
+              TextSpan(
+                text: isPending
+                    ? l10n.recurringDueNow
+                    : l10n.recurringNextOccurrence(nextDate),
+                style: isPending
+                    ? TextStyle(
+                        color: colorScheme.error,
+                        fontWeight: FontWeight.w600,
+                      )
+                    : null,
+              ),
+            ],
+          ),
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (rule.isPaused)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 2,
-                ),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  l10n.recurringPaused,
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
-              ),
-            if (rule.isPaused) const SizedBox(width: 8),
             Text(
               formatCents(rule.amount),
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     color: typeColor,
                   ),
             ),
+            if (isPending && onPost != null) ...[
+              const SizedBox(width: 4),
+              IconButton(
+                tooltip: l10n.recurringPostNow,
+                icon: Icon(
+                  Icons.check_circle_outline,
+                  color: colorScheme.primary,
+                ),
+                onPressed: onPost,
+              ),
+            ],
+            if (onPauseToggle != null) ...[
+              const SizedBox(width: 4),
+              IconButton(
+                tooltip: rule.isPaused
+                    ? l10n.recurringResume
+                    : l10n.recurringPause,
+                icon: Icon(
+                  rule.isPaused
+                      ? Icons.play_circle_outline
+                      : Icons.pause_circle_outline,
+                  color: rule.isPaused
+                      ? colorScheme.primary
+                      : colorScheme.outline,
+                ),
+                onPressed: onPauseToggle,
+              ),
+            ],
           ],
         ),
         onTap: onTap,
-        onLongPress: onPauseToggle,
       ),
     );
   }

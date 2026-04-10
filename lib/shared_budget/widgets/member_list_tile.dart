@@ -11,6 +11,7 @@ class MemberListTile extends StatelessWidget {
     required this.isCurrentUser,
     this.onChangeRole,
     this.onRemove,
+    this.onRevokeInvite,
     super.key,
   });
 
@@ -19,6 +20,7 @@ class MemberListTile extends StatelessWidget {
   final bool isCurrentUser;
   final VoidCallback? onChangeRole;
   final VoidCallback? onRemove;
+  final VoidCallback? onRevokeInvite;
 
   @override
   Widget build(BuildContext context) {
@@ -60,18 +62,27 @@ class MemberListTile extends StatelessWidget {
                   onChangeRole?.call();
                 } else if (value == 'remove') {
                   onRemove?.call();
+                } else if (value == 'revoke_invite') {
+                  onRevokeInvite?.call();
                 }
               },
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: 'change_role',
-                  child: Text(l10n.sharedBudgetChangeRole),
-                ),
-                PopupMenuItem(
-                  value: 'remove',
-                  child: Text(l10n.sharedBudgetRemoveMember),
-                ),
-              ],
+              itemBuilder: (context) => isPending
+                  ? [
+                      PopupMenuItem(
+                        value: 'revoke_invite',
+                        child: Text(l10n.inviteRevoke),
+                      ),
+                    ]
+                  : [
+                      PopupMenuItem(
+                        value: 'change_role',
+                        child: Text(l10n.sharedBudgetChangeRole),
+                      ),
+                      PopupMenuItem(
+                        value: 'remove',
+                        child: Text(l10n.sharedBudgetRemoveMember),
+                      ),
+                    ],
             )
           : null,
     );

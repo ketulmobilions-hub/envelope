@@ -12,6 +12,7 @@ import 'package:envelope/recurring/recurring.dart';
 import 'package:envelope/reports/reports.dart';
 import 'package:envelope/settings/settings.dart';
 import 'package:envelope/shared_budget/shared_budget.dart';
+import 'package:envelope/shared_budget/view/redeem_invite_page.dart';
 import 'package:envelope/splash/splash.dart';
 import 'package:envelope/transactions/transactions.dart';
 import 'package:flutter/material.dart';
@@ -35,16 +36,18 @@ abstract final class AppRoutes {
   static const String reports = '/reports';
   static const String sharedBudget = '/sharedBudget';
   static const String settings = '/settings';
+  static const String redeemInvite = '/invite';
 }
 
 /// Creates the application [GoRouter] with auth-based redirects.
 GoRouter createRouter({
   required AuthBloc authBloc,
   required SharedPreferences sharedPreferences,
+  required RouterRefreshNotifier refreshNotifier,
 }) {
   return GoRouter(
     initialLocation: AppRoutes.splash,
-    refreshListenable: _AuthBlocListenable(authBloc),
+    refreshListenable: refreshNotifier,
     redirect: (context, state) {
       final authStatus = authBloc.state.status;
       final currentPath = state.matchedLocation;
@@ -64,12 +67,16 @@ GoRouter createRouter({
         return publicRoutes.contains(currentPath) ? null : AppRoutes.login;
       }
 
-      // Authenticated: read onboarding status live from prefs.
-      final onboarded =
-          sharedPreferences.getBool('onboarding_complete') ?? false;
+      // Wait for session restore to complete before routing.
+      final sessionResolved =
+          sharedPreferences.getBool('session_resolved') ?? false;
+      if (!sessionResolved) {
+        return currentPath == AppRoutes.splash ? null : AppRoutes.splash;
+      }
 
-      if (!onboarded) {
-        // Allow staying on onboarding page.
+      // If no active budget, user needs onboarding.
+      final activeBudgetId = sharedPreferences.getString('active_budget_id');
+      if (activeBudgetId == null || activeBudgetId.isEmpty) {
         if (currentPath == AppRoutes.onboarding) return null;
         return AppRoutes.onboarding;
       }
@@ -113,6 +120,13 @@ GoRouter createRouter({
         name: AppRoutes.onboarding,
         path: AppRoutes.onboarding,
         builder: (context, state) => const OnboardingPage(),
+      ),
+      GoRoute(
+        path: '${AppRoutes.redeemInvite}/:inviteId',
+        builder: (context, state) {
+          final inviteId = state.pathParameters['inviteId']!;
+          return RedeemInvitePage(inviteId: inviteId);
+        },
       ),
       // Shell route wraps tabs with persistent bottom nav.
       ShellRoute(
@@ -216,13 +230,17 @@ String? _requireBudgetId(BuildContext context, GoRouterState state) {
 }
 
 /// Adapts [AuthBloc] stream to a [ChangeNotifier] for GoRouter's
-/// `refreshListenable`.
-class _AuthBlocListenable extends ChangeNotifier {
-  _AuthBlocListenable(AuthBloc authBloc) {
+/// `refreshListenable`. Also exposes [refresh] for manual triggers
+/// (e.g. after session restore updates SharedPreferences).
+class RouterRefreshNotifier extends ChangeNotifier {
+  RouterRefreshNotifier(AuthBloc authBloc) {
     _subscription = authBloc.stream.listen((_) => notifyListeners());
   }
 
   late final StreamSubscription<AuthState> _subscription;
+
+  /// Manually trigger a router re-evaluation.
+  void refresh() => notifyListeners();
 
   @override
   void dispose() {

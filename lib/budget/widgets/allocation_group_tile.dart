@@ -17,20 +17,19 @@ class AllocationGroupTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ExpansionTile(
-      key: PageStorageKey(group.id),
       initiallyExpanded: true,
       title: Text(
         group.name,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+          fontWeight: FontWeight.w600,
+        ),
       ),
       trailing: envelopesWithAllocations.isNotEmpty
           ? Text(
               _groupTotal(envelopesWithAllocations),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
+                color: Theme.of(context).colorScheme.outline,
+              ),
             )
           : null,
       children: envelopesWithAllocations.isEmpty
@@ -40,20 +39,20 @@ class AllocationGroupTile extends StatelessWidget {
                 child: Text(
                   context.l10n.budgetGroupNoEnvelopes,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
                 ),
               ),
             ]
           : envelopesWithAllocations
-              .map(
-                (pair) => AllocationRow(
-                  key: ValueKey(pair.$1.id),
-                  envelope: pair.$1,
-                  allocation: pair.$2,
-                ),
-              )
-              .toList(),
+                .map(
+                  (pair) => AllocationRow(
+                    key: ValueKey(pair.$1.id),
+                    envelope: pair.$1,
+                    allocation: pair.$2,
+                  ),
+                )
+                .toList(),
     );
   }
 

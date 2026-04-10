@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "767046810526",
+    "project_id": "white-board-3",
+    "storage_bucket": "white-board-3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:767046810526:android:804ccc37f74d7c6e7b748f",
+        "android_client_info": {
+          "package_name": "com.envelope.ml"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "767046810526-5rmr4ulbj24qdc52fllojlcino8ciesa.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB16GwJg6lKafy_rONOLezg4KTeEGSHFNo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "767046810526-5rmr4ulbj24qdc52fllojlcino8ciesa.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "767046810526-m1d4fjburv7gi8u900i104omfdcd7b80.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.envelope.ml"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:767046810526:android:2592c1a6578b751f7b748f",
+        "android_client_info": {
+          "package_name": "com.example.white_board"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "767046810526-5rmr4ulbj24qdc52fllojlcino8ciesa.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB16GwJg6lKafy_rONOLezg4KTeEGSHFNo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "767046810526-5rmr4ulbj24qdc52fllojlcino8ciesa.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "767046810526-m1d4fjburv7gi8u900i104omfdcd7b80.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.envelope.ml"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -63,7 +63,8 @@ class _SignUpViewState extends State<SignUpView> {
             );
         }
         if (state.status == SignUpStatus.success) {
-          context.pop();
+          // Auth state change triggers the router redirect to
+          // onboarding (or home). No manual navigation needed.
         }
       },
       child: Scaffold(
@@ -203,29 +204,25 @@ class _SignUpViewState extends State<SignUpView> {
                                       TextSpan(
                                         text: l10n.consentPrivacyPolicy,
                                         style: TextStyle(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .primary,
-                                          decoration:
-                                              TextDecoration.underline,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                          decoration: TextDecoration.underline,
                                         ),
                                       ),
                                       TextSpan(text: l10n.consentAnd),
                                       TextSpan(
                                         text: l10n.consentTermsOfService,
                                         style: TextStyle(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .primary,
-                                          decoration:
-                                              TextDecoration.underline,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                          decoration: TextDecoration.underline,
                                         ),
                                       ),
                                     ],
                                   ),
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall,
+                                  style: Theme.of(context).textTheme.bodySmall,
                                 ),
                               ),
                             ),
@@ -274,6 +271,7 @@ class _SignUpViewState extends State<SignUpView> {
   }
 
   Future<void> _submit() async {
+    if (!_consentAccepted) return;
     if (_formKey.currentState?.validate() ?? false) {
       await context.read<SignUpCubit>().signUp(
         email: _emailController.text.trim(),

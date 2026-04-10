@@ -35,6 +35,7 @@ class TransactionsApiClient {
           .from('transactions')
           .select()
           .eq('budget_id', budgetId)
+          .filter('deleted_at', 'is', null)
           .order('date', ascending: false);
       return response.map(TransactionDto.fromJson).toList();
     } catch (error) {
@@ -94,12 +95,12 @@ class TransactionsApiClient {
     }
   }
 
-  /// Soft-deletes a transaction by setting `deleted_at`.
+  /// Deletes a transaction by its [id].
   Future<void> deleteTransaction(String id) async {
     try {
       await _supabaseClient
           .from('transactions')
-          .update({'deleted_at': DateTime.now().toIso8601String()})
+          .delete()
           .eq('id', id);
     } catch (error) {
       throw EnvelopeApiException.fromPostgrestException(error);

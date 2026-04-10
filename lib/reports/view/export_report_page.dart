@@ -27,7 +27,6 @@ class ExportReportPage extends StatelessWidget {
           builder: (context, state) {
             final selectedType = state.exportReportType;
             final selectedFormat = state.exportFormat;
-
             return ListView(
               padding: const EdgeInsets.all(16),
               children: [
@@ -124,8 +123,7 @@ class ExportReportPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                 ],
-                if (selectedType ==
-                        ReportType.budgetVsActual &&
+                if (selectedType == ReportType.budgetVsActual &&
                     state.budgetPeriods.isNotEmpty) ...[
                   ReportPeriodDropdown(
                     periods: state.budgetPeriods,

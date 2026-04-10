@@ -85,8 +85,7 @@ class CategoryGroupTile extends StatelessWidget {
               value: 'delete',
               child: Text(
                 l10n.envelopesDelete,
-                style:
-                    TextStyle(color: Theme.of(context).colorScheme.error),
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ),
           ],

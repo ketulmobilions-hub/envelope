@@ -64,12 +64,18 @@ final class TransactionsState extends Equatable {
   const TransactionsState({
     this.status = TransactionsStatus.initial,
     this.transactions = const [],
+    this.accounts = const [],
+    this.envelopes = const [],
+    this.splitEnvelopeIds = const {},
     this.filter = const TransactionsFilter(),
     this.error,
   });
 
   final TransactionsStatus status;
   final List<Transaction> transactions;
+  final List<Account> accounts;
+  final List<Envelope> envelopes;
+  final Map<String, List<String>> splitEnvelopeIds;
   final TransactionsFilter filter;
   final TransactionsError? error;
 
@@ -94,6 +100,16 @@ final class TransactionsState extends Equatable {
       result = result.where((t) => !t.date.isAfter(f.endDate!)).toList();
     }
     // Tag filtering would require async lookup; deferred to UI layer.
+
+    // Deduplicate transfer pairs: when not filtering by account, keep only
+    // the outgoing (negative amount) transaction per pair.
+    if (f.accountId == null) {
+      result = result.where((t) {
+        if (t.type != 'transfer' || t.transferPairId == null) return true;
+        return t.amount < 0;
+      }).toList();
+    }
+
     return result;
   }
 
@@ -113,12 +129,18 @@ final class TransactionsState extends Equatable {
   TransactionsState copyWith({
     TransactionsStatus? status,
     List<Transaction>? transactions,
+    List<Account>? accounts,
+    List<Envelope>? envelopes,
+    Map<String, List<String>>? splitEnvelopeIds,
     TransactionsFilter? filter,
     Object? error = _sentinel,
   }) {
     return TransactionsState(
       status: status ?? this.status,
       transactions: transactions ?? this.transactions,
+      accounts: accounts ?? this.accounts,
+      envelopes: envelopes ?? this.envelopes,
+      splitEnvelopeIds: splitEnvelopeIds ?? this.splitEnvelopeIds,
       filter: filter ?? this.filter,
       error: error == _sentinel ? this.error : error as TransactionsError?,
     );
@@ -127,5 +149,13 @@ final class TransactionsState extends Equatable {
   static const Object _sentinel = Object();
 
   @override
-  List<Object?> get props => [status, transactions, filter, error];
+  List<Object?> get props => [
+        status,
+        transactions,
+        accounts,
+        envelopes,
+        splitEnvelopeIds,
+        filter,
+        error,
+      ];
 }

@@ -22,7 +22,12 @@ class AuthRepository {
     GoogleSignIn? googleSignIn,
     AppleCredentialProvider? appleCredentialProvider,
   })  : _apiClient = apiClient,
-        _googleSignIn = googleSignIn ?? GoogleSignIn(),
+        _googleSignIn = googleSignIn ??
+            GoogleSignIn(
+              serverClientId:
+                  '767046810526-5rmr4ulbj24qdc52fllojlcino8ciesa'
+                  '.apps.googleusercontent.com',
+            ),
         _getAppleCredential =
             appleCredentialProvider ?? SignInWithApple.getAppleIDCredential;
 
@@ -84,9 +89,10 @@ class AuthRepository {
         );
       }
 
-      // Create user record in the users table with consent tracking.
+      // Update the user record created by the auth trigger with
+      // display name and consent tracking fields.
       final now = DateTime.now();
-      await _apiClient.users.createUser(
+      await _apiClient.users.updateUser(
         UserDto(
           id: supabaseUser.id,
           email: email,
@@ -196,7 +202,6 @@ class AuthRepository {
 
       final response = await _apiClient.auth.signInWithAppleIdToken(
         idToken: idToken,
-        nonce: credential.authorizationCode,
       );
 
       final supabaseUser = response.user;

@@ -64,6 +64,10 @@ ARB files in `lib/l10n/arb/`. English only, architecture ready for i18n. Generat
 
 Uses `very_good_analysis` + `bloc_lint`. Config in `analysis_options.yaml`. Generated localization files are excluded from analysis.
 
+## Code Review Display (STRICT RULE)
+
+When displaying code review results, **always include the file name and line numbers** for every issue found. Use the format `file_path:line_number` so issues can be easily located in the source code.
+
 ## Git Workflow (STRICT RULE)
 
 **NEVER work directly on `main` or `dev`. Always create a feature branch.**
@@ -89,6 +93,14 @@ Uses `very_good_analysis` + `bloc_lint`. Config in `analysis_options.yaml`. Gene
 9. After approval, commit and merge feature branch into `dev` with `--no-ff`
 10. **Move issue to "Done"**: `gh issue close <number>` and update project board status to "Done"
 11. Only after an entire phase is complete, merge `dev` into `main`
+
+## QA Testing Workflow
+
+During QA testing (using `QA_TEST_PLAN.md`), use `fix/tc-<number>-<description>` branches instead of feature branches:
+
+- **Start**: `/qa-start <tc-number>` — creates the branch from `dev` and shows test cases.
+- **Fix bugs**: Commit all fixes for that test case to the same branch (multiple commits OK). Follow the same code review + user approval rules as feature branches.
+- **Finish**: `/qa-finish` — merges the fix branch into `dev` with `--no-ff` and cleans up.
 
 ## Testing
 

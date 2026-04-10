@@ -551,6 +551,14 @@
     "@envelopesArchived": {
         "description": "Section header for archived items"
     },
+    "envelopesShowArchived": "Show archived",
+    "@envelopesShowArchived": {
+        "description": "Tooltip/label for the toggle to show archived items"
+    },
+    "envelopesHideArchived": "Hide archived",
+    "@envelopesHideArchived": {
+        "description": "Tooltip/label for the toggle to hide archived items"
+    },
     "envelopesCancel": "Cancel",
     "@envelopesCancel": {
         "description": "Cancel button in dialogs"
@@ -643,9 +651,13 @@
     "@envelopesDetailAllocationHistoryPlaceholder": {
         "description": "Placeholder text for allocation history"
     },
-    "envelopesDetailTransactionsPlaceholder": "Transactions will appear here once the transactions feature is built.",
+    "envelopesDetailTransactions": "Transactions",
+    "@envelopesDetailTransactions": {
+        "description": "Section header for transactions in envelope detail"
+    },
+    "envelopesDetailTransactionsPlaceholder": "No transactions yet.",
     "@envelopesDetailTransactionsPlaceholder": {
-        "description": "Placeholder text for transactions in envelope detail"
+        "description": "Placeholder text when envelope has no transactions"
     },
     "envelopesDetailGoalProgressPlaceholder": "Goal tracking coming soon.",
     "@envelopesDetailGoalProgressPlaceholder": {
@@ -1119,6 +1131,10 @@
     "@recurringFrequencyCustom": {
         "description": "Custom frequency option"
     },
+    "recurringMakeRecurringLabel": "Make Recurring",
+    "@recurringMakeRecurringLabel": {
+        "description": "Toggle label to enable recurring rule creation from the transaction form"
+    },
     "recurringFrequencyLabel": "Frequency",
     "@recurringFrequencyLabel": {
         "description": "Label for frequency dropdown"
@@ -1169,6 +1185,10 @@
         "placeholders": {
             "date": { "type": "String" }
         }
+    },
+    "recurringDueNow": "Due now",
+    "@recurringDueNow": {
+        "description": "Subtitle label shown on pending recurring rules that are due"
     },
     "recurringPaused": "Paused",
     "@recurringPaused": {
@@ -1264,6 +1284,14 @@
     "recurringErrorPauseFailed": "Failed to update rule. Please try again.",
     "@recurringErrorPauseFailed": {
         "description": "Error message when pause/resume fails"
+    },
+    "recurringErrorPostFailed": "Failed to post transaction. Please try again.",
+    "@recurringErrorPostFailed": {
+        "description": "Error when manually posting a pending recurring rule fails"
+    },
+    "recurringPostNow": "Post now",
+    "@recurringPostNow": {
+        "description": "Tooltip for the post-now button on pending recurring rules"
     },
     "recurringPendingBanner": "You have pending recurring transactions",
     "@recurringPendingBanner": {
@@ -1386,9 +1414,22 @@
     "@overspendCoverNoSource": {
         "description": "Message when no source envelopes have positive balance"
     },
-    "overspendCoverSourceRequired": "Please select a source envelope",
+    "envelopeFixOverspend": "Fix Overspend",
+    "@envelopeFixOverspend": {
+        "description": "Button label on overspent envelope cards to open the cover overspend dialog"
+    },
+    "overspendCoverReadyToAssign": "Ready to Assign ({amount})",
+    "@overspendCoverReadyToAssign": {
+        "description": "Dropdown option to allocate from ready-to-assign funds",
+        "placeholders": {
+            "amount": {
+                "type": "String"
+            }
+        }
+    },
+    "overspendCoverSourceRequired": "Please select a source",
     "@overspendCoverSourceRequired": {
-        "description": "Validation when no source envelope selected"
+        "description": "Validation when no source selected"
     },
     "overspendCoverAmountRequired": "Please enter a positive amount",
     "@overspendCoverAmountRequired": {
@@ -1477,6 +1518,42 @@
     "goalsCancel": "Cancel",
     "@goalsCancel": {
         "description": "Button text to cancel a goal action"
+    },
+    "goalsAdd": "Add",
+    "@goalsAdd": {
+        "description": "Button text to confirm adding a contribution"
+    },
+    "goalsAddContribution": "Add Contribution",
+    "@goalsAddContribution": {
+        "description": "Button label and dialog title for adding a contribution to a goal"
+    },
+    "goalsContributionAdded": "Contribution added",
+    "@goalsContributionAdded": {
+        "description": "Snackbar message shown after a contribution is successfully added"
+    },
+    "goalsContributionAmountLabel": "Amount",
+    "@goalsContributionAmountLabel": {
+        "description": "Label for the amount field in the add contribution dialog"
+    },
+    "goalsContributionAmountRequired": "Enter a valid amount",
+    "@goalsContributionAmountRequired": {
+        "description": "Validation error when contribution amount is empty or zero"
+    },
+    "goalsContributionsTitle": "Contributions",
+    "@goalsContributionsTitle": {
+        "description": "Section title for the contribution history on the goal detail page"
+    },
+    "goalsNoContributions": "No contributions yet",
+    "@goalsNoContributions": {
+        "description": "Empty state message when a goal has no contributions"
+    },
+    "goalsDeleteContributionTitle": "Remove contribution?",
+    "@goalsDeleteContributionTitle": {
+        "description": "Confirmation dialog title when deleting a contribution"
+    },
+    "goalsDeleteContributionMessage": "This will also reduce the goal progress by this amount.",
+    "@goalsDeleteContributionMessage": {
+        "description": "Confirmation dialog body when deleting a contribution"
     },
     "goalsErrorLoadFailed": "Failed to load goals",
     "@goalsErrorLoadFailed": {
@@ -2117,10 +2194,30 @@
     "@budgetDeleteBudget": { "description": "Delete budget menu option" },
     "budgetDeleteConfirmMessage": "This will permanently delete this budget and all its accounts, envelopes, and transactions. This action cannot be undone.",
     "@budgetDeleteConfirmMessage": { "description": "Budget deletion warning" },
-    "envelopesArchived": "Envelope archived",
-    "@envelopesArchived": { "description": "Snackbar message after archiving" },
+    "envelopesEnvelopeArchived": "Envelope archived",
+    "@envelopesEnvelopeArchived": { "description": "Snackbar message after archiving" },
     "envelopesUnarchived": "Envelope unarchived",
     "@envelopesUnarchived": { "description": "Snackbar message after unarchiving" },
     "envelopesDeleted": "Envelope deleted",
-    "@envelopesDeleted": { "description": "Snackbar message after deleting envelope" }
+    "@envelopesDeleted": { "description": "Snackbar message after deleting envelope" },
+    "redeemInviteTitle": "Budget Invitation",
+    "@redeemInviteTitle": { "description": "Redeem invite page title" },
+    "redeemInviteMessage": "You've been invited to collaborate on a budget. Tap below to accept.",
+    "@redeemInviteMessage": { "description": "Redeem invite page message" },
+    "redeemInviteAccept": "Accept Invitation",
+    "@redeemInviteAccept": { "description": "Accept invite button" },
+    "redeemInviteSuccess": "You've joined the budget \"{budgetName}\"!",
+    "@redeemInviteSuccess": { "description": "Success message after accepting invite", "placeholders": { "budgetName": { "type": "String" } } },
+    "redeemInviteGoHome": "Go to Home",
+    "@redeemInviteGoHome": { "description": "Button to go home after accepting invite" },
+    "invitePendingSection": "Pending Invites",
+    "@invitePendingSection": { "description": "Section header for pending invites list" },
+    "inviteExpires": "Expires {date}",
+    "@inviteExpires": { "description": "Invite expiry label", "placeholders": { "date": { "type": "String" } } },
+    "inviteRevoke": "Revoke",
+    "@inviteRevoke": { "description": "Revoke invite button" },
+    "inviteRevoked": "Invite revoked",
+    "@inviteRevoked": { "description": "Snackbar after revoking invite" },
+    "inviteGenerating": "Generating invite link...",
+    "@inviteGenerating": { "description": "Loading message while generating invite" }
 }

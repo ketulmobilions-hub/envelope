@@ -33,28 +33,38 @@ class AccountFormCubit extends Cubit<AccountFormState> {
     try {
       if (isEditing) {
         final oldAccount = account!;
+        final balanceDelta = balanceCents - oldAccount.startingBalance;
         final updated = oldAccount.copyWith(
           name: name,
           type: type,
           startingBalance: balanceCents,
+          currentBalance: oldAccount.currentBalance + balanceDelta,
           currency: currency,
           isOnBudget: isOnBudget,
           updatedAt: DateTime.now(),
         );
         await _accountRepository.updateAccount(updated);
 
-        // Adjust income when isOnBudget changes on an existing account.
-        if (_budgetRepository != null &&
-            oldAccount.isOnBudget != isOnBudget) {
-          if (isOnBudget && oldAccount.startingBalance > 0) {
+        // Adjust income when isOnBudget or startingBalance changes.
+        if (_budgetRepository != null) {
+          if (oldAccount.isOnBudget != isOnBudget) {
+            // isOnBudget toggled: add or remove the full new balance.
+            if (isOnBudget && balanceCents > 0) {
+              await _budgetRepository.addIncomeToCurrentPeriod(
+                budgetId: budgetId,
+                amount: balanceCents,
+              );
+            } else if (!isOnBudget && oldAccount.startingBalance > 0) {
+              await _budgetRepository.addIncomeToCurrentPeriod(
+                budgetId: budgetId,
+                amount: -oldAccount.startingBalance,
+              );
+            }
+          } else if (isOnBudget && balanceDelta != 0) {
+            // Balance changed while staying on-budget: adjust by delta.
             await _budgetRepository.addIncomeToCurrentPeriod(
               budgetId: budgetId,
-              amount: oldAccount.startingBalance,
-            );
-          } else if (!isOnBudget && oldAccount.startingBalance > 0) {
-            await _budgetRepository.addIncomeToCurrentPeriod(
-              budgetId: budgetId,
-              amount: -oldAccount.startingBalance,
+              amount: balanceDelta,
             );
           }
         }
@@ -68,7 +78,7 @@ class AccountFormCubit extends Cubit<AccountFormState> {
           isOnBudget: isOnBudget,
         );
 
-        if (balanceCents > 0 && isOnBudget && _budgetRepository != null) {
+        if (balanceCents != 0 && isOnBudget && _budgetRepository != null) {
           await _budgetRepository.addIncomeToCurrentPeriod(
             budgetId: budgetId,
             amount: balanceCents,

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/dashboard/bloc/bloc.dart';
 import 'package:envelope/envelopes/cubit/cubit.dart';
@@ -7,9 +8,11 @@ import 'package:envelope/envelopes/view/envelope_detail_page.dart';
 import 'package:envelope/envelopes/widgets/envelope_card.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/theme/app_colors.dart';
+import 'package:envelope/transactions/widgets/cover_overspend_dialog.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:transaction_repository/transaction_repository.dart';
 
 /// Displays envelopes grouped by category on the dashboard.
 class EnvelopeSummaryCard extends StatelessWidget {
@@ -210,6 +213,9 @@ class _CategoryGroupSection extends StatelessWidget {
                               ),
                             );
                           },
+                          onFixOverspend: s.isOverspent && s.allocation != null
+                              ? () => _fixOverspend(context, s)
+                              : null,
                         ),
                       ),
                     )
@@ -220,6 +226,28 @@ class _CategoryGroupSection extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _fixOverspend(
+    BuildContext context,
+    EnvelopeSummary summary,
+  ) async {
+    final dashState = context.read<DashboardBloc>().state;
+    final result = await showCoverOverspendDialog(
+      context,
+      budgetRepository: context.read<BudgetRepository>(),
+      envelopeRepository: context.read<EnvelopeRepository>(),
+      allocations: dashState.allocations,
+      envelopes: dashState.envelopes,
+      overspentAllocation: summary.allocation!,
+      overspentEnvelopeName: summary.envelope.name,
+      deficitCents: -summary.available,
+      readyToAssign: dashState.readyToAssign,
+    );
+
+    if (result == true && context.mounted) {
+      context.read<DashboardBloc>().add(const DashboardRefreshRequested());
+    }
   }
 
   void _openDetail(BuildContext context, EnvelopeSummary summary) {
@@ -233,6 +261,8 @@ class _CategoryGroupSection extends StatelessWidget {
               envelopeRepository: context.read<EnvelopeRepository>(),
               envelope: summary.envelope,
               allocation: summary.allocation,
+              transactionRepository: context.read<TransactionRepository>(),
+              budgetRepository: context.read<BudgetRepository>(),
             ),
             child: EnvelopeDetailPage(
               categoryGroups: categoryGroups,

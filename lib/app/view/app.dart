@@ -90,9 +90,18 @@ class App extends StatelessWidget {
                   ..add(const SyncStarted()),
           ),
         ],
-        child: _FcmAuthListener(
-          notificationRepository: notificationRepository,
-          child: AppView(sharedPreferences: sharedPreferences),
+        child: Builder(
+          builder: (context) {
+            final notifier = RouterRefreshNotifier(context.read<AuthBloc>());
+            return _FcmAuthListener(
+              notificationRepository: notificationRepository,
+              routerNotifier: notifier,
+              child: AppView(
+                sharedPreferences: sharedPreferences,
+                routerNotifier: notifier,
+              ),
+            );
+          },
         ),
       ),
     );
@@ -103,10 +112,12 @@ class App extends StatelessWidget {
 class _FcmAuthListener extends StatefulWidget {
   const _FcmAuthListener({
     required this.notificationRepository,
+    required this.routerNotifier,
     required this.child,
   });
 
   final NotificationRepository notificationRepository;
+  final RouterRefreshNotifier routerNotifier;
   final Widget child;
 
   @override
@@ -115,6 +126,22 @@ class _FcmAuthListener extends StatefulWidget {
 
 class _FcmAuthListenerState extends State<_FcmAuthListener> {
   final FcmService _fcmService = FcmService();
+
+  // Cached references to avoid context.read after async gaps.
+  late final SharedPreferences _prefs;
+  late final EnvelopeApiClient _apiClient;
+  late final AppDatabase _db;
+  late final AuthBloc _authBloc;
+  RouterRefreshNotifier get _routerNotifier => widget.routerNotifier;
+
+  @override
+  void initState() {
+    super.initState();
+    _prefs = context.read<SharedPreferences>();
+    _apiClient = context.read<EnvelopeApiClient>();
+    _db = context.read<AppDatabase>();
+    _authBloc = context.read<AuthBloc>();
+  }
 
   String _currentPlatform() {
     if (kIsWeb) return 'web';
@@ -131,6 +158,9 @@ class _FcmAuthListenerState extends State<_FcmAuthListener> {
     }
   }
 
+  /// Sequenced so that clear always finishes before restore starts.
+  Future<void>? _sessionTask;
+
   void _onAuthStateChanged(BuildContext context, AuthState state) {
     if (state.status == AuthStatus.authenticated && state.user != null) {
       unawaited(
@@ -140,12 +170,57 @@ class _FcmAuthListenerState extends State<_FcmAuthListener> {
           platform: _currentPlatform(),
         ),
       );
+      // Chain after any pending clear so restore never races with it.
+      _sessionTask = (_sessionTask ?? Future.value())
+          .then((_) => _restoreSessionForUser(state.user!.id));
     } else if (state.status == AuthStatus.unauthenticated) {
       unawaited(
         _fcmService.unregisterCurrentToken(
           repository: widget.notificationRepository,
         ),
       );
+      _sessionTask = _clearLocalData();
+    }
+  }
+
+  /// On sign-in, fetches budgets from the server to determine if the
+  /// user has onboarded. Sets `active_budget_id` if a budget exists,
+  /// then marks `session_resolved` and refreshes the router.
+  Future<void> _restoreSessionForUser(String userId) async {
+    try {
+      // Hold the router on splash while we restore by clearing session_resolved.
+      // active_budget_id is intentionally NOT removed here — SharedPreferences
+      // updates its in-memory cache immediately on remove(), so clearing it
+      // before the API call completes causes HomePage.build() to read an empty
+      // budgetId and create DashboardBloc with no budget.  The setString call
+      // below overwrites it once the correct value is known.
+      await _prefs.remove('session_resolved');
+
+      final budgets = await _apiClient.budgets.getBudgetsByOwner(userId);
+
+      if (budgets.isNotEmpty) {
+        await _prefs.setString('active_budget_id', budgets.first.id);
+      } else {
+        // No budgets found — clear so the router sends the user to onboarding.
+        await _prefs.remove('active_budget_id');
+      }
+    } on Exception {
+      // On failure, keep the existing active_budget_id so the user stays on
+      // the dashboard rather than being bounced to onboarding.
+    }
+
+    // Always mark resolved so the router stops holding on splash.
+    await _prefs.setBool('session_resolved', true);
+    _routerNotifier.refresh();
+  }
+
+  Future<void> _clearLocalData() async {
+    try {
+      await _prefs.remove('active_budget_id');
+      await _prefs.remove('session_resolved');
+      await _db.clearAllTables();
+    } on Exception {
+      // Best-effort cleanup.
     }
   }
 
@@ -165,9 +240,14 @@ class _FcmAuthListenerState extends State<_FcmAuthListener> {
 }
 
 class AppView extends StatefulWidget {
-  const AppView({required this.sharedPreferences, super.key});
+  const AppView({
+    required this.sharedPreferences,
+    required this.routerNotifier,
+    super.key,
+  });
 
   final SharedPreferences sharedPreferences;
+  final RouterRefreshNotifier routerNotifier;
 
   @override
   State<AppView> createState() => _AppViewState();
@@ -191,6 +271,7 @@ class _AppViewState extends State<AppView> {
     _router = createRouter(
       authBloc: authBloc,
       sharedPreferences: widget.sharedPreferences,
+      refreshNotifier: widget.routerNotifier,
     );
   }
 

@@ -62,6 +62,16 @@ final class RecurringRuleUndoDeleteRequested extends RecurringEvent {
   const RecurringRuleUndoDeleteRequested();
 }
 
+/// Manually post a pending recurring rule as a transaction now.
+final class RecurringRulePosted extends RecurringEvent {
+  const RecurringRulePosted(this.id);
+
+  final String id;
+
+  @override
+  List<Object?> get props => [id];
+}
+
 /// Toggle pause/resume on a recurring rule.
 final class RecurringRulePauseToggled extends RecurringEvent {
   const RecurringRulePauseToggled(this.id);

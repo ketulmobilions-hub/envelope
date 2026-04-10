@@ -11,6 +11,9 @@ class TimelineTransactionTile extends StatelessWidget {
   const TimelineTransactionTile({
     required this.transaction,
     this.isLast = false,
+    this.transferLabel,
+    this.envelopeName,
+    this.splitEnvelopeNames,
     this.onTap,
     this.onEdit,
     this.onDelete,
@@ -19,6 +22,9 @@ class TimelineTransactionTile extends StatelessWidget {
 
   final Transaction transaction;
   final bool isLast;
+  final String? transferLabel;
+  final String? envelopeName;
+  final List<String>? splitEnvelopeNames;
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
@@ -49,7 +55,26 @@ class TimelineTransactionTile extends StatelessWidget {
           onEdit?.call();
           return false;
         }
-        return true;
+        return showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(l10n.transactionsDeleteConfirmTitle),
+            content: Text(l10n.transactionsDeleteConfirmMessage),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: Text(l10n.transactionsCancel),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(ctx).colorScheme.error,
+                ),
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: Text(l10n.transactionsDelete),
+              ),
+            ],
+          ),
+        ).then((v) => v ?? false);
       },
       onDismissed: (_) => onDelete?.call(),
       child: InkWell(
@@ -101,19 +126,59 @@ class TimelineTransactionTile extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              transaction.payee?.isNotEmpty == true
-                                  ? transaction.payee!
-                                  : localizedTransactionType(
-                                      transaction.type,
-                                      l10n,
-                                    ),
+                              splitEnvelopeNames != null
+                                  ? (transaction.payee?.isNotEmpty == true
+                                      ? transaction.payee!
+                                      : localizedTransactionType(
+                                          transaction.type,
+                                          l10n,
+                                        ))
+                                  : (envelopeName ??
+                                      (transaction.payee?.isNotEmpty == true
+                                          ? transaction.payee!
+                                          : localizedTransactionType(
+                                              transaction.type,
+                                              l10n,
+                                            ))),
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 fontWeight: FontWeight.w500,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            if (transaction.notes?.isNotEmpty == true)
+                            if (transferLabel != null)
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.swap_horiz,
+                                    size: 12,
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Flexible(
+                                    child: Text(
+                                      transferLabel!,
+                                      style: theme.textTheme.bodySmall,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            else if (splitEnvelopeNames != null)
+                              Text(
+                                splitEnvelopeNames!.join(' · '),
+                                style: theme.textTheme.bodySmall,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              )
+                            else if (transaction.payee?.isNotEmpty == true)
+                              Text(
+                                transaction.payee!,
+                                style: theme.textTheme.bodySmall,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              )
+                            else if (transaction.notes?.isNotEmpty == true)
                               Text(
                                 transaction.notes!,
                                 style: theme.textTheme.bodySmall,

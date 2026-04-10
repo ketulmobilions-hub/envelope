@@ -4,7 +4,7 @@ import 'package:envelope_local_storage/src/database/tables/tables.dart';
 
 part 'goals_dao.g.dart';
 
-@DriftAccessor(tables: [Goals])
+@DriftAccessor(tables: [Goals, GoalContributions])
 class GoalsDao extends DatabaseAccessor<AppDatabase> with _$GoalsDaoMixin {
   GoalsDao(super.attachedDatabase);
 
@@ -41,4 +41,26 @@ class GoalsDao extends DatabaseAccessor<AppDatabase> with _$GoalsDaoMixin {
 
   Future<int> deleteGoal(String id) =>
       (delete(goals)..where((t) => t.id.equals(id))).go();
+
+  // ---------------------------------------------------------------------------
+  // Goal contributions
+  // ---------------------------------------------------------------------------
+
+  Stream<List<GoalContribution>> watchContributionsByGoalId(String goalId) =>
+      (select(goalContributions)
+            ..where((t) => t.goalId.equals(goalId))
+            ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+          .watch();
+
+  Future<int> insertContribution(
+    GoalContributionsCompanion contribution, {
+    InsertMode mode = InsertMode.insert,
+  }) =>
+      into(goalContributions).insert(contribution, mode: mode);
+
+  Future<int> deleteContribution(String id) =>
+      (delete(goalContributions)..where((t) => t.id.equals(id))).go();
+
+  Future<int> deleteContributionsByGoalId(String goalId) =>
+      (delete(goalContributions)..where((t) => t.goalId.equals(goalId))).go();
 }

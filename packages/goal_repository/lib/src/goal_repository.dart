@@ -110,9 +110,10 @@ class GoalRepository {
     }
     // Best-effort local cleanup — remote is already deleted.
     try {
+      await _localDatabase.goalsDao.deleteContributionsByGoalId(id);
       await _localDatabase.goalsDao.deleteGoal(id);
     } on Exception {
-      // Stale local entry will be cleaned up on next refresh.
+      // Stale local entries will be cleaned up on next refresh.
     }
   }
 
@@ -145,6 +146,86 @@ class GoalRepository {
       rethrow;
     } on Exception catch (e) {
       throw GoalException('Failed to uncomplete goal', error: e);
+    }
+  }
+
+  /// Adds a contribution toward a goal and updates [goal.currentAmount].
+  Future<GoalContribution> addContribution({
+    required String goalId,
+    required int amountCents,
+    String? note,
+  }) async {
+    try {
+      final dto = GoalContributionDto(
+        id: '',
+        goalId: goalId,
+        amountCents: amountCents,
+        createdAt: DateTime.now(),
+        note: note,
+      );
+      final created = await _apiClient.goals.createContribution(dto);
+      await _localDatabase.goalsDao.insertContribution(
+        _toContributionCompanion(created),
+        mode: InsertMode.insertOrReplace,
+      );
+      // Update goal's currentAmount to reflect the new contribution.
+      final goal = await getGoal(goalId);
+      await updateGoal(
+        goal.copyWith(currentAmount: goal.currentAmount + amountCents),
+      );
+      return _mapContributionFromDto(created);
+    } on EnvelopeApiException catch (e) {
+      throw GoalException('Failed to add contribution', error: e);
+    }
+  }
+
+  /// Removes a contribution and decrements [goal.currentAmount].
+  Future<void> removeContribution(GoalContribution contribution) async {
+    try {
+      await _apiClient.goals.deleteContribution(contribution.id);
+    } on EnvelopeApiException catch (e) {
+      throw GoalException('Failed to delete contribution', error: e);
+    }
+    // Best-effort local cleanup.
+    try {
+      await _localDatabase.goalsDao.deleteContribution(contribution.id);
+      final goal = await getGoal(contribution.goalId);
+      await updateGoal(
+        goal.copyWith(
+          currentAmount:
+              (goal.currentAmount - contribution.amountCents).clamp(0, 999999999),
+        ),
+      );
+    } on Exception {
+      // Local state will reconcile on next refresh.
+    }
+  }
+
+  /// Watches contributions for a goal from local storage, newest first.
+  Stream<List<GoalContribution>> watchContributions(String goalId) {
+    return _localDatabase.goalsDao
+        .watchContributionsByGoalId(goalId)
+        .map((rows) => rows.map(_mapContributionFromLocal).toList())
+        .handleError(
+          (Object error) => throw GoalException(
+            'Failed to watch contributions',
+            error: error,
+          ),
+        );
+  }
+
+  /// Fetches contributions from the API and syncs them locally.
+  Future<void> refreshContributions(String goalId) async {
+    try {
+      final remote = await _apiClient.goals.getContributionsByGoal(goalId);
+      for (final dto in remote) {
+        await _localDatabase.goalsDao.insertContribution(
+          _toContributionCompanion(dto),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+    } on EnvelopeApiException catch (e) {
+      throw GoalException('Failed to refresh contributions', error: e);
     }
   }
 
@@ -247,6 +328,40 @@ class GoalRepository {
     await _localDatabase.goalsDao.insertGoal(
       _toGoalCompanion(dto),
       mode: InsertMode.insertOrReplace,
+    );
+  }
+
+  static GoalContribution _mapContributionFromDto(GoalContributionDto dto) {
+    return GoalContribution(
+      id: dto.id,
+      goalId: dto.goalId,
+      amountCents: dto.amountCents,
+      createdAt: dto.createdAt,
+      note: dto.note,
+    );
+  }
+
+  static GoalContribution _mapContributionFromLocal(
+    storage.GoalContribution row,
+  ) {
+    return GoalContribution(
+      id: row.id,
+      goalId: row.goalId,
+      amountCents: row.amountCents,
+      createdAt: row.createdAt,
+      note: row.note,
+    );
+  }
+
+  static storage.GoalContributionsCompanion _toContributionCompanion(
+    GoalContributionDto dto,
+  ) {
+    return storage.GoalContributionsCompanion.insert(
+      id: dto.id,
+      goalId: dto.goalId,
+      amountCents: dto.amountCents,
+      createdAt: dto.createdAt,
+      note: Value(dto.note),
     );
   }
 }

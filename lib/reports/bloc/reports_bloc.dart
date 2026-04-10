@@ -9,11 +9,12 @@ part 'reports_event.dart';
 part 'reports_state.dart';
 
 /// Callback to write export data to a temporary file and return its path.
-typedef ExportFileWriter = Future<String> Function({
-  required String fileName,
-  String? content,
-  List<int>? bytes,
-});
+typedef ExportFileWriter =
+    Future<String> Function({
+      required String fileName,
+      String? content,
+      List<int>? bytes,
+    });
 
 /// Callback to share a file via the platform share sheet.
 typedef FileSharer = Future<void> Function(String filePath);
@@ -25,12 +26,12 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
     required String budgetId,
     ExportFileWriter? exportFileWriter,
     FileSharer? fileSharer,
-  })  : _reportRepository = reportRepository,
-        _budgetRepository = budgetRepository,
-        _budgetId = budgetId,
-        _exportFileWriter = exportFileWriter,
-        _fileSharer = fileSharer,
-        super(const ReportsState()) {
+  }) : _reportRepository = reportRepository,
+       _budgetRepository = budgetRepository,
+       _budgetId = budgetId,
+       _exportFileWriter = exportFileWriter,
+       _fileSharer = fileSharer,
+       super(const ReportsState()) {
     on<ReportsStarted>(_onStarted);
     on<_PeriodsUpdated>(_onPeriodsUpdated);
     on<SpendingReportRequested>(_onSpendingReportRequested);
@@ -63,8 +64,7 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
     // Default date range: current month.
     final now = DateTime.now();
     final defaultStart = DateTime(now.year, now.month);
-    final defaultEnd =
-        DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+    final defaultEnd = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
 
     emit(
       state.copyWith(
@@ -231,8 +231,7 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
     );
 
     try {
-      final snapshots =
-          await _reportRepository.getNetWorthHistory(_budgetId);
+      final snapshots = await _reportRepository.getNetWorthHistory(_budgetId);
       emit(
         state.copyWith(
           status: ReportsStatus.loaded,
@@ -259,8 +258,7 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
       await _reportRepository.recordNetWorthSnapshot(
         budgetId: _budgetId,
       );
-      final snapshots =
-          await _reportRepository.getNetWorthHistory(_budgetId);
+      final snapshots = await _reportRepository.getNetWorthHistory(_budgetId);
       emit(
         state.copyWith(
           status: ReportsStatus.loaded,
@@ -310,14 +308,12 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
             throw Exception('No spending report loaded');
           }
           if (event.format == ExportFormat.csv) {
-            content =
-                _reportRepository.exportSpendingReportCsv(report);
+            content = _reportRepository.exportSpendingReportCsv(report);
             pdfBytes = null;
             fileName = 'spending_report.csv';
           } else {
             content = '';
-            pdfBytes = await _reportRepository
-                .exportSpendingReportPdf(report);
+            pdfBytes = await _reportRepository.exportSpendingReportPdf(report);
             fileName = 'spending_report.pdf';
           }
         case ReportType.trends:
@@ -326,14 +322,12 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
             throw Exception('No trend report loaded');
           }
           if (event.format == ExportFormat.csv) {
-            content =
-                _reportRepository.exportTrendReportCsv(report);
+            content = _reportRepository.exportTrendReportCsv(report);
             pdfBytes = null;
             fileName = 'trend_report.csv';
           } else {
             content = '';
-            pdfBytes = await _reportRepository
-                .exportTrendReportPdf(report);
+            pdfBytes = await _reportRepository.exportTrendReportPdf(report);
             fileName = 'trend_report.pdf';
           }
         case ReportType.budgetVsActual:
@@ -342,14 +336,12 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
             throw Exception('No budget vs actual report loaded');
           }
           if (event.format == ExportFormat.csv) {
-            content = _reportRepository
-                .exportBudgetVsActualCsv(report);
+            content = _reportRepository.exportBudgetVsActualCsv(report);
             pdfBytes = null;
             fileName = 'budget_vs_actual_report.csv';
           } else {
             content = '';
-            pdfBytes = await _reportRepository
-                .exportBudgetVsActualPdf(report);
+            pdfBytes = await _reportRepository.exportBudgetVsActualPdf(report);
             fileName = 'budget_vs_actual_report.pdf';
           }
         case ReportType.netWorth:
