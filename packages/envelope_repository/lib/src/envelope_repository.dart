@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' show max;
 
 import 'package:drift/drift.dart' show InsertMode, Value;
 import 'package:envelope_api_client/envelope_api_client.dart';
@@ -586,6 +587,60 @@ class EnvelopeRepository {
       // Stale local entry will be cleaned up on next refresh.
     }
     _endLocalWrite();
+  }
+
+  /// Immediately decrements `spentAmount` in local SQLite for the allocation
+  /// matching [envelopeId] + the budget period that contains [date] in
+  /// [budgetId]. No API call is made — this is an optimistic update to give
+  /// instant UI feedback after a transaction is deleted.
+  Future<void> decrementLocalSpentAmount({
+    required String envelopeId,
+    required String budgetId,
+    required DateTime date,
+    required int amount,
+  }) async {
+    try {
+      // Find the budget period that contains this date (local DB only).
+      final periods = await _localDatabase.budgetsDao
+          .getPeriodsByBudgetId(budgetId);
+      storage.BudgetPeriod? period;
+      for (final p in periods) {
+        if (!p.startDate.isAfter(date) && !p.endDate.isBefore(date)) {
+          period = p;
+          break;
+        }
+      }
+      if (period == null) return;
+
+      // Find the local allocation for this envelope in that period.
+      final allocs = await _localDatabase.envelopesDao
+          .getAllocationsByPeriodId(period.id);
+      storage.EnvelopeAllocation? alloc;
+      for (final a in allocs) {
+        if (a.envelopeId == envelopeId) {
+          alloc = a;
+          break;
+        }
+      }
+      if (alloc == null) return;
+
+      // Floor at zero and write back to local DB — instant UI update.
+      final newSpent = max(0, alloc.spentAmount - amount);
+      await _localDatabase.envelopesDao.updateAllocation(
+        storage.EnvelopeAllocationsCompanion(
+          id: Value(alloc.id),
+          envelopeId: Value(alloc.envelopeId),
+          budgetPeriodId: Value(alloc.budgetPeriodId),
+          allocatedAmount: Value(alloc.allocatedAmount),
+          spentAmount: Value(newSpent),
+          rolloverAmount: Value(alloc.rolloverAmount),
+          createdAt: Value(alloc.createdAt),
+        ),
+      );
+    } on Exception {
+      // Best-effort — the async refreshAllocations call will correct any
+      // discrepancy on the next round-trip.
+    }
   }
 
   /// Fetches allocations from the API and syncs to local storage.

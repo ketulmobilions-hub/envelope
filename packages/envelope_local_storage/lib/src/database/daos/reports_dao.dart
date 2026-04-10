@@ -28,6 +28,10 @@ class ReportsDao extends DatabaseAccessor<AppDatabase>
   Future<int> insertNetWorthSnapshot(NetWorthSnapshotsCompanion snapshot) =>
       into(netWorthSnapshots).insert(snapshot);
 
+  Future<int> upsertNetWorthSnapshot(NetWorthSnapshotsCompanion snapshot) =>
+      into(netWorthSnapshots)
+          .insert(snapshot, mode: InsertMode.insertOrReplace);
+
   Future<bool> updateNetWorthSnapshot(NetWorthSnapshotsCompanion snapshot) =>
       update(netWorthSnapshots).replace(snapshot);
 

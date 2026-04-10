@@ -30,6 +30,10 @@ class EnvelopeDetailCubit extends Cubit<EnvelopeDetailState> {
           envelopeId: envelope.id,
         )
         .listen((txns) {
+          if (_initialTransactionsLoaded && _currentPeriodId != null) {
+            unawaited(_refreshAllocations());
+          }
+          _initialTransactionsLoaded = true;
           emit(state.copyWith(transactions: txns));
         });
 
@@ -76,12 +80,23 @@ class EnvelopeDetailCubit extends Cubit<EnvelopeDetailState> {
   StreamSubscription<List<BudgetPeriod>>? _periodsSubscription;
   StreamSubscription<List<EnvelopeAllocation>>? _allocationsSubscription;
   String? _currentPeriodId;
+  bool _initialTransactionsLoaded = false;
 
   Future<void> _refreshTransactions() async {
     try {
       await _transactionRepository.refreshTransactions(state.envelope.budgetId);
     } on TransactionException {
       // Keep showing whatever is cached if refresh fails.
+    }
+  }
+
+  Future<void> _refreshAllocations() async {
+    final periodId = _currentPeriodId;
+    if (periodId == null) return;
+    try {
+      await _envelopeRepository.refreshAllocations(periodId);
+    } on EnvelopeException {
+      // Keep cached data if refresh fails.
     }
   }
 

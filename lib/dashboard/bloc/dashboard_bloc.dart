@@ -309,6 +309,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     Emitter<DashboardState> emit,
   ) {
     if (event.generation != _generation) return;
+    final wasAlreadyReceived = _transactionsReceived;
     _transactionsReceived = true;
 
     // Sort by date descending and take last 5.
@@ -322,6 +323,13 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         recentTransactions: recent,
       ),
     );
+
+    // Refresh allocations so envelope available amounts reflect the change.
+    if (wasAlreadyReceived && state.selectedPeriod != null) {
+      unawaited(
+        _envelopeRepository.refreshAllocations(state.selectedPeriod!.id),
+      );
+    }
   }
 
   void _onStreamError(
@@ -454,6 +462,14 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     _allocationsGeneration++;
     await _allocationsSubscription?.cancel();
 
+    // Refresh from API before subscribing so the first watch emission has
+    // fresh spentAmount values (avoids a stale flash when navigating back).
+    try {
+      await _envelopeRepository.refreshAllocations(periodId);
+    } on EnvelopeException {
+      // Keep cached data if refresh fails.
+    }
+
     // Resubscribe allocation Realtime channel for the new period.
     _allocationRealtimeChannel?.unsubscribe();
     _allocationRealtimeChannel =
@@ -466,12 +482,6 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
           (allocations) => add(_AllocationsUpdated(allocations, gen)),
           onError: (Object _) => add(const _DashboardStreamError()),
         );
-
-    try {
-      await _envelopeRepository.refreshAllocations(periodId);
-    } on EnvelopeException {
-      // Local watch will still show cached data.
-    }
   }
 
   Future<void> _onRemoteChangeReceived(

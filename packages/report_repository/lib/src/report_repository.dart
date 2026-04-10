@@ -1,7 +1,6 @@
 import 'package:csv/csv.dart';
 import 'package:envelope_api_client/envelope_api_client.dart';
-import 'package:envelope_local_storage/envelope_local_storage.dart'
-    as storage;
+import 'package:envelope_local_storage/envelope_local_storage.dart' as storage;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:report_repository/src/exceptions.dart';
@@ -17,9 +16,9 @@ class ReportRepository {
     required EnvelopeApiClient apiClient,
     required storage.AppDatabase localDatabase,
     DateTime Function()? now,
-  })  : _apiClient = apiClient,
-        _localDatabase = localDatabase,
-        _now = now ?? DateTime.now;
+  }) : _apiClient = apiClient,
+       _localDatabase = localDatabase,
+       _now = now ?? DateTime.now;
 
   final EnvelopeApiClient _apiClient;
   final storage.AppDatabase _localDatabase;
@@ -43,8 +42,7 @@ class ReportRepository {
     required DateTime endDate,
   }) async {
     try {
-      final transactions = await _localDatabase
-          .transactionsDao
+      final transactions = await _localDatabase.transactionsDao
           .getTransactionsByBudgetId(budgetId);
 
       final filtered = transactions.where((t) {
@@ -74,8 +72,7 @@ class ReportRepository {
           } else {
             // Split transaction — amount is stored
             // as double (Real); truncate to int cents.
-            final splits = await _localDatabase
-                .transactionsDao
+            final splits = await _localDatabase.transactionsDao
                 .getSplitsByTransactionId(tx.id);
             for (final split in splits) {
               final amount = split.amount.toInt();
@@ -90,11 +87,9 @@ class ReportRepository {
       }
 
       // Build category group hierarchy
-      final envelopes = await _localDatabase
-          .envelopesDao
+      final envelopes = await _localDatabase.envelopesDao
           .getEnvelopesByBudgetId(budgetId);
-      final categoryGroups = await _localDatabase
-          .envelopesDao
+      final categoryGroups = await _localDatabase.envelopesDao
           .getCategoryGroupsByBudgetId(budgetId);
 
       final envelopeMap = {
@@ -105,8 +100,7 @@ class ReportRepository {
       };
 
       // Group envelope spend by category group
-      final groupedSpend =
-          <String, List<SpendingByEnvelope>>{};
+      final groupedSpend = <String, List<SpendingByEnvelope>>{};
       final groupTotals = <String, int>{};
 
       for (final entry in envelopeSpend.entries) {
@@ -166,14 +160,11 @@ class ReportRepository {
   }) async {
     try {
       final now = _now();
-      final startDate =
-          DateTime(now.year, now.month - months + 1);
+      final startDate = DateTime(now.year, now.month - months + 1);
       // Upper bound: end of current month
-      final endDate =
-          DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+      final endDate = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
 
-      final transactions = await _localDatabase
-          .transactionsDao
+      final transactions = await _localDatabase.transactionsDao
           .getTransactionsByBudgetId(budgetId);
 
       final filtered = transactions.where((t) {
@@ -183,13 +174,11 @@ class ReportRepository {
       }).toList();
 
       // Group by year-month
-      final buckets =
-          <String, ({int income, int expense})>{};
+      final buckets = <String, ({int income, int expense})>{};
 
       for (final tx in filtered) {
         final key = _monthKey(tx.date);
-        final current =
-            buckets[key] ?? (income: 0, expense: 0);
+        final current = buckets[key] ?? (income: 0, expense: 0);
 
         if (tx.type == 'income') {
           buckets[key] = (
@@ -212,8 +201,7 @@ class ReportRepository {
           now.month - months + 1 + i,
         );
         final key = _monthKey(date);
-        final bucket =
-            buckets[key] ?? (income: 0, expense: 0);
+        final bucket = buckets[key] ?? (income: 0, expense: 0);
         dataPoints.add(
           TrendDataPoint(
             date: date,
@@ -243,23 +231,21 @@ class ReportRepository {
     required String budgetPeriodId,
   }) async {
     try {
-      final period = await _localDatabase.budgetsDao
-          .getBudgetPeriod(budgetPeriodId);
+      final period = await _localDatabase.budgetsDao.getBudgetPeriod(
+        budgetPeriodId,
+      );
       if (period == null) {
         throw const ReportException(
           'Budget period not found',
         );
       }
 
-      final allocations = await _localDatabase
-          .envelopesDao
+      final allocations = await _localDatabase.envelopesDao
           .getAllocationsByPeriodId(budgetPeriodId);
 
-      final envelopes = await _localDatabase
-          .envelopesDao
+      final envelopes = await _localDatabase.envelopesDao
           .getEnvelopesByBudgetId(period.budgetId);
-      final categoryGroups = await _localDatabase
-          .envelopesDao
+      final categoryGroups = await _localDatabase.envelopesDao
           .getCategoryGroupsByBudgetId(period.budgetId);
 
       final envelopeMap = {
@@ -289,8 +275,7 @@ class ReportRepository {
             categoryGroupName: group?.name ?? 'Unknown',
             allocated: alloc.allocatedAmount,
             spent: alloc.spentAmount,
-            remaining:
-                alloc.allocatedAmount - alloc.spentAmount,
+            remaining: alloc.allocatedAmount - alloc.spentAmount,
           ),
         );
       }
@@ -330,8 +315,9 @@ class ReportRepository {
 
       // Cache remotely-fetched snapshots locally
       for (final dto in remoteSnapshots) {
-        await _localDatabase.reportsDao
-            .insertNetWorthSnapshot(_toCompanion(dto));
+        await _localDatabase.reportsDao.upsertNetWorthSnapshot(
+          _toCompanion(dto),
+        );
       }
 
       if (remoteSnapshots.isNotEmpty) {
@@ -339,21 +325,17 @@ class ReportRepository {
       }
 
       // Fallback to local when API returns empty
-      final localSnapshots = await _localDatabase
-          .reportsDao
+      final localSnapshots = await _localDatabase.reportsDao
           .getNetWorthSnapshotsByBudgetId(budgetId);
 
       return localSnapshots.map(_mapFromLocal).toList();
     } catch (e) {
       // On network error, fall back to local cache
       try {
-        final localSnapshots = await _localDatabase
-            .reportsDao
+        final localSnapshots = await _localDatabase.reportsDao
             .getNetWorthSnapshotsByBudgetId(budgetId);
         if (localSnapshots.isNotEmpty) {
-          return localSnapshots
-              .map(_mapFromLocal)
-              .toList();
+          return localSnapshots.map(_mapFromLocal).toList();
         }
       } on Exception catch (_) {
         // Local also failed — throw original error
@@ -371,16 +353,17 @@ class ReportRepository {
     required String budgetId,
   }) async {
     try {
-      final accounts = await _localDatabase.accountsDao
-          .getAccountsByBudgetId(budgetId);
-
-      final onBudgetAccounts =
-          accounts.where((a) => a.isOnBudget).toList();
+      final accounts = await _localDatabase.accountsDao.getAccountsByBudgetId(
+        budgetId,
+      );
 
       var assets = 0;
       var liabilities = 0;
 
-      for (final account in onBudgetAccounts) {
+      // Net worth includes ALL accounts regardless of isOnBudget —
+      // isOnBudget only controls whether the balance feeds into the budget's
+      // "Ready to Assign" pool, not whether the account counts toward wealth.
+      for (final account in accounts) {
         if (_assetTypes.contains(account.type)) {
           assets += account.currentBalance;
         } else if (_liabilityTypes.contains(account.type)) {
@@ -404,14 +387,14 @@ class ReportRepository {
       );
 
       // Remote-first
-      final created =
-          await _apiClient.reports.createNetWorthSnapshot(
+      final created = await _apiClient.reports.createNetWorthSnapshot(
         dto,
       );
 
       // Cache locally
-      await _localDatabase.reportsDao
-          .insertNetWorthSnapshot(_toCompanion(created));
+      await _localDatabase.reportsDao.upsertNetWorthSnapshot(
+        _toCompanion(created),
+      );
     } catch (e) {
       if (e is ReportException) rethrow;
       throw ReportException(
@@ -487,8 +470,7 @@ class ReportRepository {
       ]);
     }
 
-    final totalRemaining =
-        report.totalAllocated - report.totalSpent;
+    final totalRemaining = report.totalAllocated - report.totalSpent;
     rows
       ..add([])
       ..add([
@@ -537,8 +519,7 @@ class ReportRepository {
           pw.Page(
             pageFormat: PdfPageFormat.a4,
             build: (context) => pw.Column(
-              crossAxisAlignment:
-                  pw.CrossAxisAlignment.start,
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Header(
                   level: 0,
@@ -602,8 +583,7 @@ class ReportRepository {
           pw.Page(
             pageFormat: PdfPageFormat.a4,
             build: (context) => pw.Column(
-              crossAxisAlignment:
-                  pw.CrossAxisAlignment.start,
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Header(
                   level: 0,
@@ -670,8 +650,7 @@ class ReportRepository {
           pw.Page(
             pageFormat: PdfPageFormat.a4,
             build: (context) => pw.Column(
-              crossAxisAlignment:
-                  pw.CrossAxisAlignment.start,
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Header(
                   level: 0,

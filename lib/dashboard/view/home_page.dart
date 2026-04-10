@@ -100,9 +100,11 @@ class _HomeView extends StatelessWidget {
               } else if (value == 'settings') {
                 unawaited(context.push(AppRoutes.settings));
               } else if (value == 'recurring') {
-                unawaited(context.push(
-                  '${AppRoutes.recurring}?budgetId=$budgetId',
-                ));
+                unawaited(
+                  context.push(
+                    '${AppRoutes.recurring}?budgetId=$budgetId',
+                  ),
+                );
               } else if (value == 'debug_simulate_date') {
                 final picked = await showDatePicker(
                   context: context,
@@ -115,9 +117,7 @@ class _HomeView extends StatelessWidget {
                   ),
                 );
                 if (picked != null && context.mounted) {
-                  await context
-                      .read<RecurringCheckCubit>()
-                      .check(now: picked);
+                  await context.read<RecurringCheckCubit>().check(now: picked);
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
