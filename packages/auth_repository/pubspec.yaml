@@ -13,7 +13,7 @@ dependencies:
   freezed_annotation: ^3.0.0
   google_sign_in: ^6.2.2
   json_annotation: ^4.9.0
-  sign_in_with_apple: ^6.1.4
+  sign_in_with_apple: ^7.0.1
   supabase_flutter: ^2.9.0
 
 dev_dependencies:
