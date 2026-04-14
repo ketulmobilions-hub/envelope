@@ -252,7 +252,7 @@ class _HomeView extends StatelessWidget {
                               actions: [
                                 TextButton(
                                   onPressed: () => context.push(
-                                    '${AppRoutes.recurring}?budgetId=$budgetId',
+                                    '${AppRoutes.recurring}?budgetId=$budgetId&initialTab=1',
                                   ),
                                   child: Text(l10n.recurringTabBills),
                                 ),
