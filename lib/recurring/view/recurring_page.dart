@@ -16,9 +16,14 @@ import 'package:transaction_repository/transaction_repository.dart';
 /// Page that provides [RecurringBloc] and displays recurring rules and
 /// bill reminders in a tabbed layout.
 class RecurringPage extends StatelessWidget {
-  const RecurringPage({required this.budgetId, super.key});
+  const RecurringPage({
+    required this.budgetId,
+    this.initialTab = 0,
+    super.key,
+  });
 
   final String budgetId;
+  final int initialTab;
 
   @override
   Widget build(BuildContext context) {
@@ -29,22 +34,29 @@ class RecurringPage extends StatelessWidget {
         budgetId: budgetId,
         userId: userId,
       )..add(const RecurringStarted()),
-      child: RecurringView(budgetId: budgetId),
+      child: RecurringView(budgetId: budgetId, initialTab: initialTab),
     );
   }
 }
 
 class RecurringView extends StatelessWidget {
-  const RecurringView({required this.budgetId, super.key});
+  const RecurringView({
+    required this.budgetId,
+    this.initialTab = 0,
+    super.key,
+  });
 
   final String budgetId;
+  final int initialTab;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final userId = context.read<AuthBloc>().state.user?.id ?? '';
 
     return DefaultTabController(
       length: 2,
+      initialIndex: initialTab,
       child: BlocListener<RecurringBloc, RecurringState>(
         listenWhen: (prev, curr) =>
             curr.status == RecurringStatus.error && curr.error != null,
@@ -90,6 +102,7 @@ class RecurringView extends StatelessWidget {
                   _BillRemindersTab(
                     state: state,
                     budgetId: budgetId,
+                    userId: userId,
                   ),
                 ],
               );
@@ -274,10 +287,15 @@ class _RecurringRulesTab extends StatelessWidget {
 }
 
 class _BillRemindersTab extends StatelessWidget {
-  const _BillRemindersTab({required this.state, required this.budgetId});
+  const _BillRemindersTab({
+    required this.state,
+    required this.budgetId,
+    required this.userId,
+  });
 
   final RecurringState state;
   final String budgetId;
+  final String userId;
 
   @override
   Widget build(BuildContext context) {
@@ -395,8 +413,6 @@ class _BillRemindersTab extends StatelessWidget {
     BuildContext context,
     BillReminder reminder,
   ) async {
-    final userId = context.read<AuthBloc>().state.user?.id;
-    if (userId == null || userId.isEmpty) return;
     await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
         builder: (_) => _SimpleBillPaymentForm(
@@ -409,6 +425,9 @@ class _BillRemindersTab extends StatelessWidget {
         ),
       ),
     );
+    if (context.mounted) {
+      context.read<RecurringBloc>().add(const RecurringRefreshRequested());
+    }
   }
 }
 
@@ -440,6 +459,7 @@ class _SimpleBillPaymentFormState extends State<_SimpleBillPaymentForm> {
   late final TextEditingController _amountController;
   String? _selectedAccountId;
   bool _isSubmitting = false;
+  bool _isLoadingAccounts = true;
   List<Account> _accounts = [];
 
   @override
@@ -461,10 +481,11 @@ class _SimpleBillPaymentFormState extends State<_SimpleBillPaymentForm> {
           _accounts = accounts;
           _selectedAccountId =
               accounts.isNotEmpty ? accounts.first.id : null;
+          _isLoadingAccounts = false;
         });
       }
     } on Exception {
-      // Keep current state.
+      if (mounted) setState(() => _isLoadingAccounts = false);
     }
   }
 
@@ -489,7 +510,9 @@ class _SimpleBillPaymentFormState extends State<_SimpleBillPaymentForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (_accounts.isNotEmpty)
+              if (_isLoadingAccounts)
+                const Center(child: CircularProgressIndicator())
+              else if (_accounts.isNotEmpty)
                 DropdownButtonFormField<String>(
                   key: ValueKey('account_$_selectedAccountId'),
                   initialValue: _selectedAccountId,
@@ -531,7 +554,7 @@ class _SimpleBillPaymentFormState extends State<_SimpleBillPaymentForm> {
               ),
               const SizedBox(height: 32),
               FilledButton(
-                onPressed: _isSubmitting ? null : _submit,
+                onPressed: _isSubmitting || _isLoadingAccounts ? null : _submit,
                 child: _isSubmitting
                     ? const SizedBox.square(
                         dimension: 20,
