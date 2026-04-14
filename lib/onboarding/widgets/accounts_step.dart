@@ -73,6 +73,7 @@ class AccountsStep extends StatelessWidget {
                   onPressed: () => _showAddAccountSheet(context),
                 ),
               ),
+              const SizedBox(height: 60),
             ],
           ),
         );
@@ -105,6 +106,7 @@ class AccountsStep extends StatelessWidget {
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (sheetContext, setSheetState) {
+            String? balanceError;
             return Padding(
               padding: EdgeInsets.fromLTRB(
                 24,
@@ -157,6 +159,7 @@ class AccountsStep extends StatelessWidget {
                       labelText: isCreditCard(selectedType)
                           ? l10n.accountsAmountOwedLabel
                           : l10n.onboardingStartingBalance,
+                      errorText: balanceError,
                     ),
                     keyboardType:
                         const TextInputType.numberWithOptions(
@@ -165,6 +168,11 @@ class AccountsStep extends StatelessWidget {
                     onTap: () {
                       if (balanceController.text == '0') {
                         balanceController.clear();
+                      }
+                    },
+                    onChanged: (_) {
+                      if (balanceError != null) {
+                        setSheetState(() => balanceError = null);
                       }
                     },
                   ),
@@ -183,6 +191,12 @@ class AccountsStep extends StatelessWidget {
                       if (name.isEmpty) return;
                       var startingBalance =
                           double.tryParse(balanceController.text) ?? 0;
+                      if (startingBalance.abs() > maxDollarAmount) {
+                        setSheetState(
+                          () => balanceError = l10n.accountsBalanceTooLarge,
+                        );
+                        return;
+                      }
                       if (isCreditCard(selectedType) &&
                           startingBalance > 0) {
                         startingBalance = -startingBalance;

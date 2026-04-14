@@ -382,6 +382,10 @@
     "@accountsStartingBalanceLabel": {
         "description": "Label for starting balance input"
     },
+    "accountsBalanceTooLarge": "Amount must be $999,999,999.99 or less",
+    "@accountsBalanceTooLarge": {
+        "description": "Error when balance exceeds the maximum allowed amount"
+    },
     "accountsCreateButton": "Create Account",
     "@accountsCreateButton": {
         "description": "Button to create a new account"

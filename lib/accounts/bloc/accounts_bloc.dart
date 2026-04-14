@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:account_repository/account_repository.dart';
 import 'package:bloc/bloc.dart';
+import 'package:budget_repository/budget_repository.dart';
 import 'package:equatable/equatable.dart';
 
 part 'accounts_event.dart';
@@ -10,8 +11,10 @@ part 'accounts_state.dart';
 class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   AccountsBloc({
     required AccountRepository accountRepository,
+    required BudgetRepository budgetRepository,
     required String budgetId,
   }) : _accountRepository = accountRepository,
+       _budgetRepository = budgetRepository,
        _budgetId = budgetId,
        super(const AccountsState()) {
     on<AccountsStarted>(_onStarted);
@@ -23,6 +26,7 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   }
 
   final AccountRepository _accountRepository;
+  final BudgetRepository _budgetRepository;
   final String _budgetId;
   StreamSubscription<List<Account>>? _accountsSubscription;
 
@@ -114,7 +118,16 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     Emitter<AccountsState> emit,
   ) async {
     try {
+      final account = state.accounts.firstWhere(
+        (a) => a.id == event.accountId,
+      );
       await _accountRepository.deleteAccount(event.accountId);
+      if (account.isOnBudget && account.startingBalance != 0) {
+        await _budgetRepository.addIncomeToCurrentPeriod(
+          budgetId: _budgetId,
+          amount: -account.startingBalance,
+        );
+      }
     } on AccountException {
       emit(
         state.copyWith(

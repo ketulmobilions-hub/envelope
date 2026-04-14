@@ -1,5 +1,6 @@
 import 'package:account_repository/account_repository.dart';
 import 'package:bloc/bloc.dart';
+import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
@@ -47,12 +48,8 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     // Validation per step
     final error = _validateCurrentStep();
     if (error != null) {
-      emit(
-        state.copyWith(
-          status: OnboardingStatus.failure,
-          error: error,
-        ),
-      );
+      emit(state.copyWith(status: OnboardingStatus.failure, error: error));
+      emit(state.copyWith(status: OnboardingStatus.initial, error: error));
       return;
     }
 
@@ -216,7 +213,9 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       // floating-point imprecision from the double input.
       var totalStartingBalance = 0;
       for (final account in state.accounts) {
-        final balanceCents = (account.startingBalance * 100).round();
+        final clampedBalance = account.startingBalance
+          .clamp(-maxDollarAmount, maxDollarAmount);
+      final balanceCents = (clampedBalance * 100).round();
         if (account.isOnBudget && balanceCents > 0) {
           totalStartingBalance += balanceCents;
         }

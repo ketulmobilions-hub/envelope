@@ -2,6 +2,7 @@ import 'package:auth_repository/auth_repository.dart';
 import 'package:envelope/app/app.dart';
 import 'package:envelope/auth/cubit/cubit.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -56,11 +57,10 @@ class _SignUpViewState extends State<SignUpView> {
       listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
         if (state.status == SignUpStatus.failure) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(content: Text(state.errorMessage ?? '')),
-            );
+          showAppSnackBar(
+            context,
+            SnackBar(content: Text(state.errorMessage ?? '')),
+          );
         }
         if (state.status == SignUpStatus.success) {
           // Auth state change triggers the router redirect to

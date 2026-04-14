@@ -8,6 +8,7 @@ import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
 import 'package:envelope/recurring/cubit/recurring_check_cubit.dart';
 import 'package:envelope/shared/widgets/confirm_delete_dialog.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/sync/sync.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
@@ -119,7 +120,8 @@ class _HomeView extends StatelessWidget {
                 if (picked != null && context.mounted) {
                   await context.read<RecurringCheckCubit>().check(now: picked);
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    showAppSnackBar(
+                      context,
                       SnackBar(
                         content: Text(
                           '[Debug] Simulated auto-post: '
@@ -190,16 +192,15 @@ class _HomeView extends StatelessWidget {
               final message = state.error == DashboardError.allocationFailed
                   ? l10n.dashboardErrorAllocation
                   : l10n.dashboardErrorLoad;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(message)),
-              );
+              showAppSnackBar(context, SnackBar(content: Text(message)));
             },
           ),
           BlocListener<DashboardBloc, DashboardState>(
             listenWhen: (prev, curr) =>
                 !prev.hasRemoteUpdate && curr.hasRemoteUpdate,
             listener: (context, state) {
-              ScaffoldMessenger.of(context).showSnackBar(
+              showAppSnackBar(
+                context,
                 SnackBar(
                   content: Text(l10n.realtimeChangeReceived),
                   duration: const Duration(seconds: 3),

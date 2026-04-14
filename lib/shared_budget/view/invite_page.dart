@@ -1,4 +1,5 @@
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/shared_budget/bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -51,11 +52,7 @@ class _InvitePageState extends State<InvitePage> {
                   l10n.sharedBudgetErrorMemberLimit,
                 _ => l10n.sharedBudgetErrorInviteFailed,
               };
-              ScaffoldMessenger.of(context)
-                ..hideCurrentSnackBar()
-                ..showSnackBar(
-                  SnackBar(content: Text(message)),
-                );
+              showAppSnackBar(context, SnackBar(content: Text(message)));
             },
           ),
           BlocListener<SharedBudgetBloc, SharedBudgetState>(
@@ -63,13 +60,12 @@ class _InvitePageState extends State<InvitePage> {
                 prev.success != curr.success &&
                 curr.success != null,
             listener: (context, state) {
-              ScaffoldMessenger.of(context)
-                ..hideCurrentSnackBar()
-                ..showSnackBar(
-                  SnackBar(
-                    content: Text(l10n.sharedBudgetInviteSent),
-                  ),
-                );
+              showAppSnackBar(
+                context,
+                SnackBar(
+                  content: Text(l10n.sharedBudgetInviteSent),
+                ),
+              );
             },
           ),
         ],
@@ -180,13 +176,12 @@ class _InvitePageState extends State<InvitePage> {
                               widget.sharedBudgetBloc.add(
                                 SharedBudgetInviteRevoked(invite.id),
                               );
-                              ScaffoldMessenger.of(context)
-                                ..hideCurrentSnackBar()
-                                ..showSnackBar(
-                                  SnackBar(
-                                    content: Text(l10n.inviteRevoked),
-                                  ),
-                                );
+                              showAppSnackBar(
+                                context,
+                                SnackBar(
+                                  content: Text(l10n.inviteRevoked),
+                                ),
+                              );
                             },
                             child: Text(
                               l10n.inviteRevoke,
@@ -219,11 +214,10 @@ class _InvitePageState extends State<InvitePage> {
 
     if (!_emailRegex.hasMatch(email)) {
       final l10n = context.l10n;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(content: Text(l10n.sharedBudgetInvalidEmail)),
-        );
+      showAppSnackBar(
+        context,
+        SnackBar(content: Text(l10n.sharedBudgetInvalidEmail)),
+      );
       return;
     }
 
@@ -246,9 +240,10 @@ class _InvitePageState extends State<InvitePage> {
 
     if (mounted) {
       final l10n = context.l10n;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l10n.sharedBudgetLinkCopied)));
+      showAppSnackBar(
+        context,
+        SnackBar(content: Text(l10n.sharedBudgetLinkCopied)),
+      );
     }
   }
 }

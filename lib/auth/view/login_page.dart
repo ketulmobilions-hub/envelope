@@ -5,6 +5,7 @@ import 'package:envelope/auth/view/forgot_password_page.dart';
 import 'package:envelope/auth/view/sign_up_page.dart';
 import 'package:envelope/auth/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -53,11 +54,10 @@ class _LoginViewState extends State<LoginView> {
       listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
         if (state.status == LoginStatus.failure) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(content: Text(state.errorMessage ?? '')),
-            );
+          showAppSnackBar(
+            context,
+            SnackBar(content: Text(state.errorMessage ?? '')),
+          );
         }
       },
       child: Scaffold(

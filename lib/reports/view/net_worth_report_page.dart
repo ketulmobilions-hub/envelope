@@ -1,5 +1,6 @@
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/reports/bloc/bloc.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/reports/widgets/widgets.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -32,7 +33,8 @@ class _NetWorthReportPageState extends State<NetWorthReportPage> {
             prev.netWorthSnapshots.length < curr.netWorthSnapshots.length &&
             curr.status == ReportsStatus.loaded,
         listener: (context, state) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          showAppSnackBar(
+            context,
             SnackBar(content: Text(l10n.reportsSnapshotRecorded)),
           );
         },

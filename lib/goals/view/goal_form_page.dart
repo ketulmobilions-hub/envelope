@@ -2,6 +2,7 @@ import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/goals/cubit/cubit.dart';
 import 'package:envelope/goals/widgets/goal_helpers.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -73,15 +74,14 @@ class _GoalFormPageState extends State<GoalFormPage> {
         if (state.status == GoalFormStatus.success) {
           Navigator.of(context).pop(true);
         } else if (state.status == GoalFormStatus.failure) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: Text(
-                  state.errorMessage ?? l10n.goalsErrorUpdateFailed,
-                ),
+          showAppSnackBar(
+            context,
+            SnackBar(
+              content: Text(
+                state.errorMessage ?? l10n.goalsErrorUpdateFailed,
               ),
-            );
+            ),
+          );
         }
       },
       child: Scaffold(

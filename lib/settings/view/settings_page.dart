@@ -3,6 +3,7 @@ import 'package:envelope/app/routes/app_router.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/notifications/notifications.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
 import 'package:envelope/onboarding/data/currencies.dart';
 import 'package:envelope/settings/cubit/cubit.dart';
@@ -46,7 +47,8 @@ class _SettingsView extends StatelessWidget {
       listener: (context, state) {
         final l10n = context.l10n;
         if (state.successMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          showAppSnackBar(
+            context,
             SnackBar(
               content: Text(_localizeMessage(state.successMessage!, l10n)),
             ),
@@ -54,7 +56,8 @@ class _SettingsView extends StatelessWidget {
         }
         if (state.status == SettingsStatus.error &&
             state.errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          showAppSnackBar(
+            context,
             SnackBar(
               content: Text(_localizeMessage(state.errorMessage!, l10n)),
             ),
@@ -266,7 +269,8 @@ class _SettingsView extends StatelessWidget {
               final newPassword = newPasswordController.text;
               final confirm = confirmController.text;
               if (newPassword.length < 6) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                showAppSnackBar(
+                  context,
                   SnackBar(
                     content: Text(l10n.settingsPasswordTooShort),
                   ),
@@ -274,7 +278,8 @@ class _SettingsView extends StatelessWidget {
                 return;
               }
               if (newPassword != confirm) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                showAppSnackBar(
+                  context,
                   SnackBar(
                     content: Text(l10n.settingsPasswordMismatch),
                   ),
@@ -322,8 +327,9 @@ class _SettingsView extends StatelessWidget {
                 final currency = supportedCurrencies[index];
                 final isSelected = currency.code == user.baseCurrency;
                 return ListTile(
-                  title: Text('${currency.symbol} ${currency.code}'),
-                  subtitle: Text(currency.name),
+                  dense: true,
+                  visualDensity: VisualDensity.compact,
+                  title: Text('${currency.symbol} ${currency.code} - ${currency.name}', style: const TextStyle(fontSize: 15)),
                   trailing:
                       isSelected ? const Icon(Icons.check) : null,
                   onTap: () {
