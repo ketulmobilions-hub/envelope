@@ -150,15 +150,18 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                 _selectedType != 'transfer' &&
                 !_isSplitMode;
 
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 500),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
+            return Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 500),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
                       // Type selector — pill chips.
                       Row(
                         children: [
@@ -377,41 +380,45 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                             : const SizedBox.shrink(),
                       ),
 
-                      const SizedBox(height: 32),
-
-                      // Submit button — full width.
-                      SizedBox(
-                        width: double.infinity,
-                        child: BlocBuilder<TransactionFormCubit,
-                            TransactionFormState>(
-                          buildWhen: (prev, curr) =>
-                              prev.status != curr.status,
-                          builder: (context, submitState) {
-                            final isSubmitting =
-                                submitState.status ==
-                                TransactionFormStatus.submitting;
-                            return FilledButton(
-                              onPressed: isSubmitting ? null : _submit,
-                              child: isSubmitting
-                                  ? const SizedBox.square(
-                                      dimension: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : Text(
-                                      _isEditing
-                                          ? l10n.transactionsSaveButton
-                                          : l10n.transactionsCreateButton,
-                                    ),
-                            );
-                          },
+                          ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+                // Submit button — sticky at bottom.
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: BlocBuilder<TransactionFormCubit,
+                        TransactionFormState>(
+                      buildWhen: (prev, curr) =>
+                          prev.status != curr.status,
+                      builder: (context, submitState) {
+                        final isSubmitting =
+                            submitState.status ==
+                            TransactionFormStatus.submitting;
+                        return FilledButton(
+                          onPressed: isSubmitting ? null : _submit,
+                          child: isSubmitting
+                              ? const SizedBox.square(
+                                  dimension: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  _isEditing
+                                      ? l10n.transactionsSaveButton
+                                      : l10n.transactionsCreateButton,
+                                ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
             );
           },
         ),
