@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/budget/bloc/bloc.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -338,7 +339,8 @@ class _TemplateFormPageState extends State<_TemplateFormPage> {
           sum + (double.tryParse(row.percentageController.text) ?? 0),
     );
     if ((total - 100).abs() > 0.01) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      showAppSnackBar(
+        context,
         SnackBar(
           content: Text(context.l10n.budgetTemplatePercentageSumError),
         ),

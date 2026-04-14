@@ -4,6 +4,7 @@ import 'package:envelope/app/routes/routes.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/cubit.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/onboarding/widgets/widgets.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
@@ -49,7 +50,8 @@ class OnboardingView extends StatelessWidget {
         }
         if (state.status == OnboardingStatus.failure &&
             state.error != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          showAppSnackBar(
+            context,
             SnackBar(
               content: Text(
                 _localizeError(context.l10n, state.error!),
@@ -75,17 +77,8 @@ class OnboardingView extends StatelessWidget {
                         context.read<OnboardingCubit>().previousStep(),
                   ),
                 ),
-          body: Column(
-            children: [
-              if (!isWelcome)
-                LinearProgressIndicator(
-                  value: (stepIndex + 1) / totalSteps,
-                ),
-              Expanded(
-                child: _buildStep(state.currentStep),
-              ),
-              if (!isWelcome && !isAllocation)
-                SafeArea(
+          bottomNavigationBar: (!isWelcome && !isAllocation)
+              ? SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
                     child: SizedBox(
@@ -97,7 +90,17 @@ class OnboardingView extends StatelessWidget {
                       ),
                     ),
                   ),
+                )
+              : null,
+          body: Column(
+            children: [
+              if (!isWelcome)
+                LinearProgressIndicator(
+                  value: (stepIndex + 1) / totalSteps,
                 ),
+              Expanded(
+                child: _buildStep(state.currentStep),
+              ),
             ],
           ),
         );

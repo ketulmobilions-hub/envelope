@@ -56,9 +56,7 @@ class RecurringView extends StatelessWidget {
             RecurringError.pauseFailed => l10n.recurringErrorPauseFailed,
             RecurringError.postFailed => l10n.recurringErrorPostFailed,
           };
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(SnackBar(content: Text(message)));
+          showAppSnackBar(context, SnackBar(content: Text(message)));
         },
         child: Scaffold(
           appBar: AppBar(
@@ -575,9 +573,7 @@ class _SimpleBillPaymentFormState extends State<_SimpleBillPaymentForm> {
       if (mounted) Navigator.of(context).pop(true);
     } on TransactionException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(e.message)));
+        showAppSnackBar(context, SnackBar(content: Text(e.message)));
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);

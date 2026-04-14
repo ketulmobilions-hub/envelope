@@ -8,6 +8,7 @@ import 'package:envelope/accounts/view/account_detail_page.dart';
 import 'package:envelope/accounts/view/account_form_page.dart';
 import 'package:envelope/accounts/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -22,6 +23,7 @@ class AccountsPage extends StatelessWidget {
     return BlocProvider(
       create: (_) => AccountsBloc(
         accountRepository: context.read<AccountRepository>(),
+        budgetRepository: context.read<BudgetRepository>(),
         budgetId: budgetId,
       )..add(const AccountsStarted()),
       child: AccountsView(budgetId: budgetId),
@@ -47,9 +49,7 @@ class AccountsView extends StatelessWidget {
           AccountsError.updateFailed => l10n.accountsErrorUpdateFailed,
           AccountsError.deleteFailed => l10n.accountsErrorDeleteFailed,
         };
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(message)));
+        showAppSnackBar(context, SnackBar(content: Text(message)));
       },
       child: Scaffold(
         appBar: AppBar(

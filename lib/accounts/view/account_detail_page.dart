@@ -4,6 +4,7 @@ import 'package:envelope/accounts/cubit/cubit.dart';
 import 'package:envelope/accounts/view/account_form_page.dart';
 import 'package:envelope/accounts/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -21,23 +22,20 @@ class AccountDetailPage extends StatelessWidget {
     return BlocConsumer<AccountDetailCubit, AccountDetailState>(
       listenWhen: (prev, curr) => prev.status != curr.status,
       listener: (context, state) {
-        final messenger = ScaffoldMessenger.of(context);
         if (state.status == AccountDetailStatus.reconciled) {
-          messenger
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(content: Text(l10n.accountsReconciled)),
-            );
+          showAppSnackBar(
+            context,
+            SnackBar(content: Text(l10n.accountsReconciled)),
+          );
         } else if (state.status == AccountDetailStatus.failure) {
-          messenger
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: Text(
+          showAppSnackBar(
+            context,
+            SnackBar(
+              content: Text(
                 state.errorMessage ?? l10n.accountsErrorReconcileFailed,
               ),
-              ),
-            );
+            ),
+          );
         }
       },
       builder: (context, state) {
@@ -197,58 +195,77 @@ class AccountDetailPage extends StatelessWidget {
     final result = await showDialog<int>(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(l10n.accountsReconcileTitle),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(l10n.accountsReconcileDescription),
-              const SizedBox(height: 8),
-              Text(
-                '${l10n.accountsCurrentBalance}: '
-                '${formatCents(account.currentBalance)}',
-                style: Theme.of(dialogContext).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: controller,
-                decoration: InputDecoration(
-                  labelText: isCreditCard(account.type)
-                      ? l10n.accountsAmountOwedLabel
-                      : l10n.accountsReconcileActualBalance,
-                  prefixIcon: const Icon(Icons.attach_money),
-                ),
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(
-                    isCreditCard(account.type)
-                        ? RegExp(r'^\d*\.?\d{0,2}')
-                        : RegExp(r'^\-?\d*\.?\d{0,2}'),
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            String? balanceError;
+            return AlertDialog(
+              title: Text(l10n.accountsReconcileTitle),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.accountsReconcileDescription),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${l10n.accountsCurrentBalance}: '
+                    '${formatCents(account.currentBalance)}',
+                    style: Theme.of(dialogContext).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: controller,
+                    decoration: InputDecoration(
+                      labelText: isCreditCard(account.type)
+                          ? l10n.accountsAmountOwedLabel
+                          : l10n.accountsReconcileActualBalance,
+                      prefixIcon: const Icon(Icons.attach_money),
+                      errorText: balanceError,
+                    ),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                        isCreditCard(account.type)
+                            ? RegExp(r'^\d*\.?\d{0,2}')
+                            : RegExp(r'^\-?\d*\.?\d{0,2}'),
+                      ),
+                    ],
+                    onChanged: (_) {
+                      if (balanceError != null) {
+                        setDialogState(() => balanceError = null);
+                      }
+                    },
+                    autofocus: true,
                   ),
                 ],
-                autofocus: true,
               ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(l10n.accountsReconcileCancel),
-            ),
-            FilledButton(
-              onPressed: () {
-                var cents = parseCents(controller.text);
-                if (cents == null) return;
-                if (isCreditCard(account.type) && cents > 0) {
-                  cents = -cents;
-                }
-                Navigator.of(dialogContext).pop(cents);
-              },
-              child: Text(l10n.accountsReconcileConfirm),
-            ),
-          ],
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: Text(l10n.accountsReconcileCancel),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    final raw =
+                        double.tryParse(controller.text.trim());
+                    if (raw != null && raw.abs() > maxDollarAmount) {
+                      setDialogState(
+                        () => balanceError = l10n.accountsBalanceTooLarge,
+                      );
+                      return;
+                    }
+                    var cents = parseCents(controller.text);
+                    if (cents == null) return;
+                    if (isCreditCard(account.type) && cents > 0) {
+                      cents = -cents;
+                    }
+                    Navigator.of(dialogContext).pop(cents);
+                  },
+                  child: Text(l10n.accountsReconcileConfirm),
+                ),
+              ],
+            );
+          },
         );
       },
     );

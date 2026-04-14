@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:envelope/envelopes/cubit/cubit.dart';
 import 'package:envelope/envelopes/view/envelope_form_page.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:envelope/transactions/widgets/transaction_helpers.dart';
 import 'package:envelope_repository/envelope_repository.dart';
@@ -101,7 +102,8 @@ class EnvelopeDetailPage extends StatelessWidget {
       final success = await cubit.deleteEnvelope();
       if (context.mounted) {
         if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          showAppSnackBar(
+            context,
             SnackBar(
               content: Text(
                 l10n.envelopesDetailDeleteSuccess,
@@ -110,7 +112,8 @@ class EnvelopeDetailPage extends StatelessWidget {
           );
           Navigator.of(context).pop();
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
+          showAppSnackBar(
+            context,
             SnackBar(
               content: Text(
                 l10n.envelopesDetailDeleteError,

@@ -76,10 +76,12 @@ class _CurrencyStepState extends State<CurrencyStep> {
               itemBuilder: (context, index) {
                 final currency = _filteredCurrencies[index];
                 return ListTile(
+                  dense: true,
+                  visualDensity: VisualDensity.compact,
                   title: Text(
-                    '${currency.code} - ${currency.name}',
+                    '${currency.code} - ${currency.name} (${currency.symbol})',
+                    style: const TextStyle(fontSize: 15),
                   ),
-                  subtitle: Text(currency.symbol),
                   leading: Radio<String>(value: currency.code),
                   onTap: () => context
                       .read<OnboardingCubit>()

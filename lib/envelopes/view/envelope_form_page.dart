@@ -1,5 +1,6 @@
 import 'package:envelope/envelopes/cubit/cubit.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
@@ -76,15 +77,14 @@ class _EnvelopeFormPageState extends State<EnvelopeFormPage> {
         if (state.status == EnvelopeFormStatus.success) {
           Navigator.of(context).pop(true);
         } else if (state.status == EnvelopeFormStatus.failure) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: Text(
-                  state.errorMessage ?? l10n.envelopesErrorUpdateFailed,
-                ),
+          showAppSnackBar(
+            context,
+            SnackBar(
+              content: Text(
+                state.errorMessage ?? l10n.envelopesErrorUpdateFailed,
               ),
-            );
+            ),
+          );
         }
       },
       child: Scaffold(
@@ -229,11 +229,10 @@ class _EnvelopeFormPageState extends State<EnvelopeFormPage> {
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_selectedGroupId.isEmpty) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(content: Text(context.l10n.envelopesNoCategoryGroupsError)),
-        );
+      showAppSnackBar(
+        context,
+        SnackBar(content: Text(context.l10n.envelopesNoCategoryGroupsError)),
+      );
       return;
     }
 

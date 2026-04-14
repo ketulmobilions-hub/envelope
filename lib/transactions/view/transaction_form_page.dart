@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:account_repository/account_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/transactions/cubit/cubit.dart';
 import 'package:envelope/transactions/view/transfer_form_page.dart';
 import 'package:envelope/transactions/widgets/widgets.dart';
@@ -90,21 +91,19 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
         } else if (state.status == TransactionFormStatus.successWithOverspend) {
           unawaited(_handleOverspend(context, state));
         } else if (state.status == TransactionFormStatus.failure) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: Text(
-                  state.errorMessage ?? l10n.transactionsErrorLoadFailed,
-                ),
+          showAppSnackBar(
+            context,
+            SnackBar(
+              content: Text(
+                state.errorMessage ?? l10n.transactionsErrorLoadFailed,
               ),
-            );
+            ),
+          );
         } else if (state.tagError != null) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(content: Text(state.tagError!)),
-            );
+          showAppSnackBar(
+            context,
+            SnackBar(content: Text(state.tagError!)),
+          );
         }
       },
       child: Scaffold(
@@ -526,17 +525,15 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
 
     final l10n = context.l10n;
     if (coverResult == true) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(content: Text(l10n.overspendCoverSuccess)),
-        );
+      showAppSnackBar(
+        context,
+        SnackBar(content: Text(l10n.overspendCoverSuccess)),
+      );
     } else if (coverResult == false) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(content: Text(l10n.overspendCoverFailed)),
-        );
+      showAppSnackBar(
+        context,
+        SnackBar(content: Text(l10n.overspendCoverFailed)),
+      );
     }
 
     if (mounted) Navigator.of(context).pop(true);

@@ -51,9 +51,7 @@ class TransactionsView extends StatelessWidget {
           TransactionsError.deleteFailed => l10n.transactionsErrorDeleteFailed,
           TransactionsError.undoFailed => l10n.transactionsErrorUndoFailed,
         };
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(message)));
+        showAppSnackBar(context, SnackBar(content: Text(message)));
       },
       child: Scaffold(
         appBar: AppBar(

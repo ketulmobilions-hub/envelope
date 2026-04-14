@@ -4,6 +4,7 @@ import 'package:envelope/goals/view/goal_detail_page.dart';
 import 'package:envelope/goals/view/goal_form_page.dart';
 import 'package:envelope/goals/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:goal_repository/goal_repository.dart';
@@ -44,9 +45,7 @@ class GoalsView extends StatelessWidget {
           GoalsError.updateFailed => l10n.goalsErrorUpdateFailed,
           GoalsError.deleteFailed => l10n.goalsErrorDeleteFailed,
         };
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(message)));
+        showAppSnackBar(context, SnackBar(content: Text(message)));
       },
       child: Scaffold(
         appBar: AppBar(

@@ -1,6 +1,7 @@
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/shared_budget/bloc/bloc.dart';
 import 'package:envelope/shared_budget/widgets/widgets.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sharing_repository/sharing_repository.dart';
@@ -34,11 +35,10 @@ class _ActivityLogView extends StatelessWidget {
       listenWhen: (prev, curr) =>
           curr.status == ActivityLogStatus.error && curr.error != null,
       listener: (context, state) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(content: Text(l10n.activityLogErrorLoadFailed)),
-          );
+        showAppSnackBar(
+          context,
+          SnackBar(content: Text(l10n.activityLogErrorLoadFailed)),
+        );
       },
       child: Scaffold(
         appBar: AppBar(

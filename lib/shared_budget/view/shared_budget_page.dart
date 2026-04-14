@@ -1,6 +1,7 @@
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/shared_budget/bloc/bloc.dart';
 import 'package:envelope/shared_budget/view/activity_log_page.dart';
 import 'package:envelope/shared_budget/view/invite_page.dart';
@@ -62,9 +63,7 @@ class SharedBudgetView extends StatelessWidget {
           SharedBudgetError.memberLimitReached =>
             l10n.sharedBudgetErrorMemberLimit,
         };
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(message)));
+        showAppSnackBar(context, SnackBar(content: Text(message)));
       },
       child: Scaffold(
         appBar: AppBar(

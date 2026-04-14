@@ -122,7 +122,9 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     _remoteChangeMergeController?.close();
     _remoteChangeSubscription = _mergeRemoteChangeStreams().listen(
       (_) => add(const _RemoteChangeReceived()),
-      onError: (Object _) {/* Ignore merge stream errors. */},
+      onError: (Object _) {
+        /* Ignore merge stream errors. */
+      },
     );
 
     // Refresh from API first so local DB is populated before watch streams
@@ -479,8 +481,8 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
 
     // Resubscribe allocation Realtime channel for the new period.
     _allocationRealtimeChannel?.unsubscribe();
-    _allocationRealtimeChannel =
-        _envelopeRepository.subscribeToAllocationChanges(periodId);
+    _allocationRealtimeChannel = _envelopeRepository
+        .subscribeToAllocationChanges(periodId);
 
     final gen = _allocationsGeneration;
     _allocationsSubscription = _envelopeRepository
