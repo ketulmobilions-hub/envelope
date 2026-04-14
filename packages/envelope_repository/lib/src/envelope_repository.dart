@@ -527,6 +527,24 @@ class EnvelopeRepository {
     }
   }
 
+  /// Ensures a \$0 allocation record exists for [envelopeId] in [budgetPeriodId].
+  ///
+  /// No-op if one already exists. Called before creating expense transactions
+  /// so the DB spent-amount trigger has a row to update.
+  Future<void> ensureAllocation({
+    required String envelopeId,
+    required String budgetPeriodId,
+  }) async {
+    final existing = await _localDatabase.envelopesDao
+        .getAllocationByEnvelopeAndPeriod(envelopeId, budgetPeriodId);
+    if (existing != null) return;
+    await allocate(
+      envelopeId: envelopeId,
+      budgetPeriodId: budgetPeriodId,
+      amount: 0,
+    );
+  }
+
   /// Watches all allocations for a [budgetPeriodId].
   ///
   /// Returns a reactive stream from local storage.

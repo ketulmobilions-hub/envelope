@@ -321,6 +321,35 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         }
       } else {
         // ── Create one-off transaction ─────────────────────────────────────
+
+        // Ensure allocation rows exist before the transaction so the DB
+        // spent-amount trigger has a row to update (even for $0-allocated envelopes).
+        if (type == 'expense' && budgetPeriodId != null) {
+          if (!isSplitMode && envelopeId != null) {
+            try {
+              await _envelopeRepository.ensureAllocation(
+                envelopeId: envelopeId,
+                budgetPeriodId: budgetPeriodId!,
+              );
+            } on EnvelopeException {
+              // Best-effort.
+            }
+          } else if (isSplitMode) {
+            for (final split in splits) {
+              if (split.envelopeId != null) {
+                try {
+                  await _envelopeRepository.ensureAllocation(
+                    envelopeId: split.envelopeId!,
+                    budgetPeriodId: budgetPeriodId!,
+                  );
+                } on EnvelopeException {
+                  // Best-effort.
+                }
+              }
+            }
+          }
+        }
+
         final created = await _transactionRepository.createTransaction(
           budgetId: budgetId,
           accountId: accountId,
