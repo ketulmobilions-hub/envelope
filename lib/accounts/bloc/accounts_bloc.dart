@@ -97,10 +97,23 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     Emitter<AccountsState> emit,
   ) async {
     try {
-      if (event.account.isArchived) {
-        await _accountRepository.unarchiveAccount(event.account.id);
+      final account = event.account;
+      if (account.isArchived) {
+        await _accountRepository.unarchiveAccount(account.id);
+        if (account.isOnBudget && account.startingBalance != 0) {
+          await _budgetRepository.addIncomeToCurrentPeriod(
+            budgetId: _budgetId,
+            amount: account.startingBalance,
+          );
+        }
       } else {
-        await _accountRepository.archiveAccount(event.account.id);
+        await _accountRepository.archiveAccount(account.id);
+        if (account.isOnBudget && account.startingBalance != 0) {
+          await _budgetRepository.addIncomeToCurrentPeriod(
+            budgetId: _budgetId,
+            amount: -account.startingBalance,
+          );
+        }
       }
     } on AccountException {
       emit(
