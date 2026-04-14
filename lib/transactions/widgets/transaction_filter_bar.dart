@@ -73,9 +73,16 @@ class _TypeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return FilterChip(
-      label: Text(label),
+      label: Text(
+        label,
+        style: isSelected
+            ? TextStyle(color: colorScheme.onPrimaryContainer)
+            : null,
+      ),
       selected: isSelected,
+      selectedColor: colorScheme.primaryContainer,
       onSelected: onSelected,
     );
   }
