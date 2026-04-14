@@ -519,6 +519,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       overspentAllocation: data.overspentAllocation,
       overspentEnvelopeName: data.envelopeName,
       deficitCents: data.deficitCents.abs(),
+      readyToAssign: data.readyToAssign,
     );
 
     if (!mounted) return;
