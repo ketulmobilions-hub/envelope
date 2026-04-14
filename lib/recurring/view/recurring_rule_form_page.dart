@@ -184,7 +184,7 @@ class _RecurringRuleFormPageState extends State<RecurringRuleFormPage> {
                 const SizedBox(height: 16),
 
                 // Envelope dropdown
-                if (_envelopes.isNotEmpty)
+                if (_envelopes.isNotEmpty && _selectedType != 'income')
                   DropdownButtonFormField<String>(
                     initialValue: _selectedEnvelopeId,
                     decoration: InputDecoration(
