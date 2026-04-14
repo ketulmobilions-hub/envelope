@@ -68,9 +68,11 @@ class RecurringView extends StatelessWidget {
               ],
             ),
           ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () => _onFabPressed(context),
-            child: const Icon(Icons.add),
+          floatingActionButton: Builder(
+            builder: (innerContext) => FloatingActionButton(
+              onPressed: () => _onFabPressed(innerContext),
+              child: const Icon(Icons.add),
+            ),
           ),
           body: BlocBuilder<RecurringBloc, RecurringState>(
             builder: (context, state) {
