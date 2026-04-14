@@ -322,46 +322,6 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Split mode toggle (hidden for income and transfer)
-                      if (_selectedType != 'income' &&
-                          _selectedType != 'transfer')
-                        SwitchListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text(l10n.transactionsSplitMode),
-                          value: _isSplitMode,
-                          onChanged: (value) {
-                            setState(() {
-                              _isSplitMode = value;
-                              if (value && _splits.length < 2) {
-                                _splits = [
-                                  const SplitEntry(),
-                                  const SplitEntry(),
-                                ];
-                              }
-                              // Recurring is incompatible with split mode.
-                              if (value && _isRecurring) {
-                                _isRecurring = false;
-                                context
-                                    .read<TransactionFormCubit>()
-                                    .toggleRecurring(value: false);
-                              }
-                            });
-                          },
-                        ),
-
-                      // Split rows
-                      if (_isSplitMode) ...[
-                        const SizedBox(height: 8),
-                        SplitRows(
-                          splits: _splits,
-                          envelopes: envelopes,
-                          totalAmountCents:
-                              parseCents(_amountController.text) ?? 0,
-                          onChanged: (splits) =>
-                              setState(() => _splits = splits),
-                        ),
-                      ],
-
                       const SizedBox(height: 16),
 
                       // Tags
