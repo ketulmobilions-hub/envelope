@@ -121,7 +121,9 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     await _remoteChangeSubscription?.cancel();
     _remoteChangeMergeController?.close();
     _remoteChangeSubscription = _mergeRemoteChangeStreams().listen(
-      (_) => add(const _RemoteChangeReceived()),
+      (_) {
+        if (!isClosed) add(const _RemoteChangeReceived());
+      },
       onError: (Object _) {
         /* Ignore merge stream errors. */
       },
@@ -516,7 +518,11 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     controller = StreamController<void>.broadcast(
       onListen: () {
         for (final stream in streams) {
-          subscriptions.add(stream.listen((_) => controller.add(null)));
+          subscriptions.add(
+            stream.listen((_) {
+              if (!controller.isClosed) controller.add(null);
+            }),
+          );
         }
       },
       onCancel: () {
@@ -531,11 +537,13 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
 
   @override
   Future<void> close() async {
-    // Unsubscribe Realtime channels.
-    for (final ch in _realtimeChannels) {
-      ch.unsubscribe();
-    }
-    _allocationRealtimeChannel?.unsubscribe();
+    // Unsubscribe Realtime channels first so no new events arrive during
+    // the remaining async cleanup steps.
+    await Future.wait([
+      for (final ch in _realtimeChannels) ch.unsubscribe(),
+      if (_allocationRealtimeChannel != null)
+        _allocationRealtimeChannel!.unsubscribe(),
+    ]);
     await _remoteChangeSubscription?.cancel();
     await _remoteChangeMergeController?.close();
 
