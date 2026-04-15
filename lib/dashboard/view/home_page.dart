@@ -199,6 +199,7 @@ class _HomeView extends StatelessWidget {
             listenWhen: (prev, curr) =>
                 !prev.hasRemoteUpdate && curr.hasRemoteUpdate,
             listener: (context, state) {
+              context.read<SyncBloc>().add(const SyncRequested());
               showAppSnackBar(
                 context,
                 SnackBar(
