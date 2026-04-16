@@ -23,6 +23,8 @@ mixin _$NotificationPreferencesDto {
   bool get overspendAlerts;
   @JsonKey(name: 'bill_reminders')
   bool get billReminders;
+  @JsonKey(name: 'email_bill_reminders')
+  bool get emailBillReminders;
   @JsonKey(name: 'daily_logging_reminder')
   bool get dailyLoggingReminder;
   @JsonKey(name: 'recurring_transaction_alerts')
@@ -60,6 +62,8 @@ mixin _$NotificationPreferencesDto {
                 other.overspendAlerts == overspendAlerts) &&
             (identical(other.billReminders, billReminders) ||
                 other.billReminders == billReminders) &&
+            (identical(other.emailBillReminders, emailBillReminders) ||
+                other.emailBillReminders == emailBillReminders) &&
             (identical(other.dailyLoggingReminder, dailyLoggingReminder) ||
                 other.dailyLoggingReminder == dailyLoggingReminder) &&
             (identical(
@@ -83,6 +87,7 @@ mixin _$NotificationPreferencesDto {
     emailEnabled,
     overspendAlerts,
     billReminders,
+    emailBillReminders,
     dailyLoggingReminder,
     recurringTransactionAlerts,
     sharedBudgetActivity,
@@ -91,7 +96,7 @@ mixin _$NotificationPreferencesDto {
 
   @override
   String toString() {
-    return 'NotificationPreferencesDto(userId: $userId, pushEnabled: $pushEnabled, emailEnabled: $emailEnabled, overspendAlerts: $overspendAlerts, billReminders: $billReminders, dailyLoggingReminder: $dailyLoggingReminder, recurringTransactionAlerts: $recurringTransactionAlerts, sharedBudgetActivity: $sharedBudgetActivity, weeklySummary: $weeklySummary)';
+    return 'NotificationPreferencesDto(userId: $userId, pushEnabled: $pushEnabled, emailEnabled: $emailEnabled, overspendAlerts: $overspendAlerts, billReminders: $billReminders, emailBillReminders: $emailBillReminders, dailyLoggingReminder: $dailyLoggingReminder, recurringTransactionAlerts: $recurringTransactionAlerts, sharedBudgetActivity: $sharedBudgetActivity, weeklySummary: $weeklySummary)';
   }
 }
 
@@ -108,6 +113,7 @@ abstract mixin class $NotificationPreferencesDtoCopyWith<$Res> {
     @JsonKey(name: 'email_enabled') bool emailEnabled,
     @JsonKey(name: 'overspend_alerts') bool overspendAlerts,
     @JsonKey(name: 'bill_reminders') bool billReminders,
+    @JsonKey(name: 'email_bill_reminders') bool emailBillReminders,
     @JsonKey(name: 'daily_logging_reminder') bool dailyLoggingReminder,
     @JsonKey(name: 'recurring_transaction_alerts')
     bool recurringTransactionAlerts,
@@ -134,6 +140,7 @@ class _$NotificationPreferencesDtoCopyWithImpl<$Res>
     Object? emailEnabled = null,
     Object? overspendAlerts = null,
     Object? billReminders = null,
+    Object? emailBillReminders = null,
     Object? dailyLoggingReminder = null,
     Object? recurringTransactionAlerts = null,
     Object? sharedBudgetActivity = null,
@@ -160,6 +167,10 @@ class _$NotificationPreferencesDtoCopyWithImpl<$Res>
         billReminders: null == billReminders
             ? _self.billReminders
             : billReminders // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        emailBillReminders: null == emailBillReminders
+            ? _self.emailBillReminders
+            : emailBillReminders // ignore: cast_nullable_to_non_nullable
                   as bool,
         dailyLoggingReminder: null == dailyLoggingReminder
             ? _self.dailyLoggingReminder
@@ -281,6 +292,7 @@ extension NotificationPreferencesDtoPatterns on NotificationPreferencesDto {
       @JsonKey(name: 'email_enabled') bool emailEnabled,
       @JsonKey(name: 'overspend_alerts') bool overspendAlerts,
       @JsonKey(name: 'bill_reminders') bool billReminders,
+      @JsonKey(name: 'email_bill_reminders') bool emailBillReminders,
       @JsonKey(name: 'daily_logging_reminder') bool dailyLoggingReminder,
       @JsonKey(name: 'recurring_transaction_alerts')
       bool recurringTransactionAlerts,
@@ -299,6 +311,7 @@ extension NotificationPreferencesDtoPatterns on NotificationPreferencesDto {
           _that.emailEnabled,
           _that.overspendAlerts,
           _that.billReminders,
+          _that.emailBillReminders,
           _that.dailyLoggingReminder,
           _that.recurringTransactionAlerts,
           _that.sharedBudgetActivity,
@@ -330,6 +343,7 @@ extension NotificationPreferencesDtoPatterns on NotificationPreferencesDto {
       @JsonKey(name: 'email_enabled') bool emailEnabled,
       @JsonKey(name: 'overspend_alerts') bool overspendAlerts,
       @JsonKey(name: 'bill_reminders') bool billReminders,
+      @JsonKey(name: 'email_bill_reminders') bool emailBillReminders,
       @JsonKey(name: 'daily_logging_reminder') bool dailyLoggingReminder,
       @JsonKey(name: 'recurring_transaction_alerts')
       bool recurringTransactionAlerts,
@@ -347,6 +361,7 @@ extension NotificationPreferencesDtoPatterns on NotificationPreferencesDto {
           _that.emailEnabled,
           _that.overspendAlerts,
           _that.billReminders,
+          _that.emailBillReminders,
           _that.dailyLoggingReminder,
           _that.recurringTransactionAlerts,
           _that.sharedBudgetActivity,
@@ -377,6 +392,7 @@ extension NotificationPreferencesDtoPatterns on NotificationPreferencesDto {
       @JsonKey(name: 'email_enabled') bool emailEnabled,
       @JsonKey(name: 'overspend_alerts') bool overspendAlerts,
       @JsonKey(name: 'bill_reminders') bool billReminders,
+      @JsonKey(name: 'email_bill_reminders') bool emailBillReminders,
       @JsonKey(name: 'daily_logging_reminder') bool dailyLoggingReminder,
       @JsonKey(name: 'recurring_transaction_alerts')
       bool recurringTransactionAlerts,
@@ -394,6 +410,7 @@ extension NotificationPreferencesDtoPatterns on NotificationPreferencesDto {
           _that.emailEnabled,
           _that.overspendAlerts,
           _that.billReminders,
+          _that.emailBillReminders,
           _that.dailyLoggingReminder,
           _that.recurringTransactionAlerts,
           _that.sharedBudgetActivity,
@@ -414,6 +431,7 @@ class _NotificationPreferencesDto implements NotificationPreferencesDto {
     @JsonKey(name: 'email_enabled') this.emailEnabled = true,
     @JsonKey(name: 'overspend_alerts') this.overspendAlerts = true,
     @JsonKey(name: 'bill_reminders') this.billReminders = true,
+    @JsonKey(name: 'email_bill_reminders') this.emailBillReminders = true,
     @JsonKey(name: 'daily_logging_reminder') this.dailyLoggingReminder = true,
     @JsonKey(name: 'recurring_transaction_alerts')
     this.recurringTransactionAlerts = true,
@@ -438,6 +456,9 @@ class _NotificationPreferencesDto implements NotificationPreferencesDto {
   @override
   @JsonKey(name: 'bill_reminders')
   final bool billReminders;
+  @override
+  @JsonKey(name: 'email_bill_reminders')
+  final bool emailBillReminders;
   @override
   @JsonKey(name: 'daily_logging_reminder')
   final bool dailyLoggingReminder;
@@ -482,6 +503,8 @@ class _NotificationPreferencesDto implements NotificationPreferencesDto {
                 other.overspendAlerts == overspendAlerts) &&
             (identical(other.billReminders, billReminders) ||
                 other.billReminders == billReminders) &&
+            (identical(other.emailBillReminders, emailBillReminders) ||
+                other.emailBillReminders == emailBillReminders) &&
             (identical(other.dailyLoggingReminder, dailyLoggingReminder) ||
                 other.dailyLoggingReminder == dailyLoggingReminder) &&
             (identical(
@@ -505,6 +528,7 @@ class _NotificationPreferencesDto implements NotificationPreferencesDto {
     emailEnabled,
     overspendAlerts,
     billReminders,
+    emailBillReminders,
     dailyLoggingReminder,
     recurringTransactionAlerts,
     sharedBudgetActivity,
@@ -513,7 +537,7 @@ class _NotificationPreferencesDto implements NotificationPreferencesDto {
 
   @override
   String toString() {
-    return 'NotificationPreferencesDto(userId: $userId, pushEnabled: $pushEnabled, emailEnabled: $emailEnabled, overspendAlerts: $overspendAlerts, billReminders: $billReminders, dailyLoggingReminder: $dailyLoggingReminder, recurringTransactionAlerts: $recurringTransactionAlerts, sharedBudgetActivity: $sharedBudgetActivity, weeklySummary: $weeklySummary)';
+    return 'NotificationPreferencesDto(userId: $userId, pushEnabled: $pushEnabled, emailEnabled: $emailEnabled, overspendAlerts: $overspendAlerts, billReminders: $billReminders, emailBillReminders: $emailBillReminders, dailyLoggingReminder: $dailyLoggingReminder, recurringTransactionAlerts: $recurringTransactionAlerts, sharedBudgetActivity: $sharedBudgetActivity, weeklySummary: $weeklySummary)';
   }
 }
 
@@ -532,6 +556,7 @@ abstract mixin class _$NotificationPreferencesDtoCopyWith<$Res>
     @JsonKey(name: 'email_enabled') bool emailEnabled,
     @JsonKey(name: 'overspend_alerts') bool overspendAlerts,
     @JsonKey(name: 'bill_reminders') bool billReminders,
+    @JsonKey(name: 'email_bill_reminders') bool emailBillReminders,
     @JsonKey(name: 'daily_logging_reminder') bool dailyLoggingReminder,
     @JsonKey(name: 'recurring_transaction_alerts')
     bool recurringTransactionAlerts,
@@ -558,6 +583,7 @@ class __$NotificationPreferencesDtoCopyWithImpl<$Res>
     Object? emailEnabled = null,
     Object? overspendAlerts = null,
     Object? billReminders = null,
+    Object? emailBillReminders = null,
     Object? dailyLoggingReminder = null,
     Object? recurringTransactionAlerts = null,
     Object? sharedBudgetActivity = null,
@@ -584,6 +610,10 @@ class __$NotificationPreferencesDtoCopyWithImpl<$Res>
         billReminders: null == billReminders
             ? _self.billReminders
             : billReminders // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        emailBillReminders: null == emailBillReminders
+            ? _self.emailBillReminders
+            : emailBillReminders // ignore: cast_nullable_to_non_nullable
                   as bool,
         dailyLoggingReminder: null == dailyLoggingReminder
             ? _self.dailyLoggingReminder

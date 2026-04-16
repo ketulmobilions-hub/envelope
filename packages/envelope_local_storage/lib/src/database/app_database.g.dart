@@ -10387,6 +10387,20 @@ class $NotificationPreferencesTable extends NotificationPreferences
     ),
     defaultValue: const Constant(true),
   );
+  static const VerificationMeta _emailBillRemindersMeta =
+      const VerificationMeta('emailBillReminders');
+  @override
+  late final GeneratedColumn<bool> emailBillReminders = GeneratedColumn<bool>(
+    'email_bill_reminders',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("email_bill_reminders" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
   static const VerificationMeta _dailyLoggingReminderMeta =
       const VerificationMeta('dailyLoggingReminder');
   @override
@@ -10452,6 +10466,7 @@ class $NotificationPreferencesTable extends NotificationPreferences
     emailEnabled,
     overspendAlerts,
     billReminders,
+    emailBillReminders,
     dailyLoggingReminder,
     recurringTransactionAlerts,
     sharedBudgetActivity,
@@ -10510,6 +10525,15 @@ class $NotificationPreferencesTable extends NotificationPreferences
         billReminders.isAcceptableOrUnknown(
           data['bill_reminders']!,
           _billRemindersMeta,
+        ),
+      );
+    }
+    if (data.containsKey('email_bill_reminders')) {
+      context.handle(
+        _emailBillRemindersMeta,
+        emailBillReminders.isAcceptableOrUnknown(
+          data['email_bill_reminders']!,
+          _emailBillRemindersMeta,
         ),
       );
     }
@@ -10578,6 +10602,10 @@ class $NotificationPreferencesTable extends NotificationPreferences
         DriftSqlType.bool,
         data['${effectivePrefix}bill_reminders'],
       )!,
+      emailBillReminders: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}email_bill_reminders'],
+      )!,
       dailyLoggingReminder: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}daily_logging_reminder'],
@@ -10610,6 +10638,7 @@ class NotificationPreference extends DataClass
   final bool emailEnabled;
   final bool overspendAlerts;
   final bool billReminders;
+  final bool emailBillReminders;
   final bool dailyLoggingReminder;
   final bool recurringTransactionAlerts;
   final bool sharedBudgetActivity;
@@ -10620,6 +10649,7 @@ class NotificationPreference extends DataClass
     required this.emailEnabled,
     required this.overspendAlerts,
     required this.billReminders,
+    required this.emailBillReminders,
     required this.dailyLoggingReminder,
     required this.recurringTransactionAlerts,
     required this.sharedBudgetActivity,
@@ -10633,6 +10663,7 @@ class NotificationPreference extends DataClass
     map['email_enabled'] = Variable<bool>(emailEnabled);
     map['overspend_alerts'] = Variable<bool>(overspendAlerts);
     map['bill_reminders'] = Variable<bool>(billReminders);
+    map['email_bill_reminders'] = Variable<bool>(emailBillReminders);
     map['daily_logging_reminder'] = Variable<bool>(dailyLoggingReminder);
     map['recurring_transaction_alerts'] = Variable<bool>(
       recurringTransactionAlerts,
@@ -10649,6 +10680,7 @@ class NotificationPreference extends DataClass
       emailEnabled: Value(emailEnabled),
       overspendAlerts: Value(overspendAlerts),
       billReminders: Value(billReminders),
+      emailBillReminders: Value(emailBillReminders),
       dailyLoggingReminder: Value(dailyLoggingReminder),
       recurringTransactionAlerts: Value(recurringTransactionAlerts),
       sharedBudgetActivity: Value(sharedBudgetActivity),
@@ -10667,6 +10699,7 @@ class NotificationPreference extends DataClass
       emailEnabled: serializer.fromJson<bool>(json['emailEnabled']),
       overspendAlerts: serializer.fromJson<bool>(json['overspendAlerts']),
       billReminders: serializer.fromJson<bool>(json['billReminders']),
+      emailBillReminders: serializer.fromJson<bool>(json['emailBillReminders']),
       dailyLoggingReminder: serializer.fromJson<bool>(
         json['dailyLoggingReminder'],
       ),
@@ -10688,6 +10721,7 @@ class NotificationPreference extends DataClass
       'emailEnabled': serializer.toJson<bool>(emailEnabled),
       'overspendAlerts': serializer.toJson<bool>(overspendAlerts),
       'billReminders': serializer.toJson<bool>(billReminders),
+      'emailBillReminders': serializer.toJson<bool>(emailBillReminders),
       'dailyLoggingReminder': serializer.toJson<bool>(dailyLoggingReminder),
       'recurringTransactionAlerts': serializer.toJson<bool>(
         recurringTransactionAlerts,
@@ -10703,6 +10737,7 @@ class NotificationPreference extends DataClass
     bool? emailEnabled,
     bool? overspendAlerts,
     bool? billReminders,
+    bool? emailBillReminders,
     bool? dailyLoggingReminder,
     bool? recurringTransactionAlerts,
     bool? sharedBudgetActivity,
@@ -10713,6 +10748,7 @@ class NotificationPreference extends DataClass
     emailEnabled: emailEnabled ?? this.emailEnabled,
     overspendAlerts: overspendAlerts ?? this.overspendAlerts,
     billReminders: billReminders ?? this.billReminders,
+    emailBillReminders: emailBillReminders ?? this.emailBillReminders,
     dailyLoggingReminder: dailyLoggingReminder ?? this.dailyLoggingReminder,
     recurringTransactionAlerts:
         recurringTransactionAlerts ?? this.recurringTransactionAlerts,
@@ -10736,6 +10772,9 @@ class NotificationPreference extends DataClass
       billReminders: data.billReminders.present
           ? data.billReminders.value
           : this.billReminders,
+      emailBillReminders: data.emailBillReminders.present
+          ? data.emailBillReminders.value
+          : this.emailBillReminders,
       dailyLoggingReminder: data.dailyLoggingReminder.present
           ? data.dailyLoggingReminder.value
           : this.dailyLoggingReminder,
@@ -10759,6 +10798,7 @@ class NotificationPreference extends DataClass
           ..write('emailEnabled: $emailEnabled, ')
           ..write('overspendAlerts: $overspendAlerts, ')
           ..write('billReminders: $billReminders, ')
+          ..write('emailBillReminders: $emailBillReminders, ')
           ..write('dailyLoggingReminder: $dailyLoggingReminder, ')
           ..write('recurringTransactionAlerts: $recurringTransactionAlerts, ')
           ..write('sharedBudgetActivity: $sharedBudgetActivity, ')
@@ -10774,6 +10814,7 @@ class NotificationPreference extends DataClass
     emailEnabled,
     overspendAlerts,
     billReminders,
+    emailBillReminders,
     dailyLoggingReminder,
     recurringTransactionAlerts,
     sharedBudgetActivity,
@@ -10788,6 +10829,7 @@ class NotificationPreference extends DataClass
           other.emailEnabled == this.emailEnabled &&
           other.overspendAlerts == this.overspendAlerts &&
           other.billReminders == this.billReminders &&
+          other.emailBillReminders == this.emailBillReminders &&
           other.dailyLoggingReminder == this.dailyLoggingReminder &&
           other.recurringTransactionAlerts == this.recurringTransactionAlerts &&
           other.sharedBudgetActivity == this.sharedBudgetActivity &&
@@ -10801,6 +10843,7 @@ class NotificationPreferencesCompanion
   final Value<bool> emailEnabled;
   final Value<bool> overspendAlerts;
   final Value<bool> billReminders;
+  final Value<bool> emailBillReminders;
   final Value<bool> dailyLoggingReminder;
   final Value<bool> recurringTransactionAlerts;
   final Value<bool> sharedBudgetActivity;
@@ -10812,6 +10855,7 @@ class NotificationPreferencesCompanion
     this.emailEnabled = const Value.absent(),
     this.overspendAlerts = const Value.absent(),
     this.billReminders = const Value.absent(),
+    this.emailBillReminders = const Value.absent(),
     this.dailyLoggingReminder = const Value.absent(),
     this.recurringTransactionAlerts = const Value.absent(),
     this.sharedBudgetActivity = const Value.absent(),
@@ -10824,6 +10868,7 @@ class NotificationPreferencesCompanion
     this.emailEnabled = const Value.absent(),
     this.overspendAlerts = const Value.absent(),
     this.billReminders = const Value.absent(),
+    this.emailBillReminders = const Value.absent(),
     this.dailyLoggingReminder = const Value.absent(),
     this.recurringTransactionAlerts = const Value.absent(),
     this.sharedBudgetActivity = const Value.absent(),
@@ -10836,6 +10881,7 @@ class NotificationPreferencesCompanion
     Expression<bool>? emailEnabled,
     Expression<bool>? overspendAlerts,
     Expression<bool>? billReminders,
+    Expression<bool>? emailBillReminders,
     Expression<bool>? dailyLoggingReminder,
     Expression<bool>? recurringTransactionAlerts,
     Expression<bool>? sharedBudgetActivity,
@@ -10848,6 +10894,8 @@ class NotificationPreferencesCompanion
       if (emailEnabled != null) 'email_enabled': emailEnabled,
       if (overspendAlerts != null) 'overspend_alerts': overspendAlerts,
       if (billReminders != null) 'bill_reminders': billReminders,
+      if (emailBillReminders != null)
+        'email_bill_reminders': emailBillReminders,
       if (dailyLoggingReminder != null)
         'daily_logging_reminder': dailyLoggingReminder,
       if (recurringTransactionAlerts != null)
@@ -10865,6 +10913,7 @@ class NotificationPreferencesCompanion
     Value<bool>? emailEnabled,
     Value<bool>? overspendAlerts,
     Value<bool>? billReminders,
+    Value<bool>? emailBillReminders,
     Value<bool>? dailyLoggingReminder,
     Value<bool>? recurringTransactionAlerts,
     Value<bool>? sharedBudgetActivity,
@@ -10877,6 +10926,7 @@ class NotificationPreferencesCompanion
       emailEnabled: emailEnabled ?? this.emailEnabled,
       overspendAlerts: overspendAlerts ?? this.overspendAlerts,
       billReminders: billReminders ?? this.billReminders,
+      emailBillReminders: emailBillReminders ?? this.emailBillReminders,
       dailyLoggingReminder: dailyLoggingReminder ?? this.dailyLoggingReminder,
       recurringTransactionAlerts:
           recurringTransactionAlerts ?? this.recurringTransactionAlerts,
@@ -10903,6 +10953,9 @@ class NotificationPreferencesCompanion
     }
     if (billReminders.present) {
       map['bill_reminders'] = Variable<bool>(billReminders.value);
+    }
+    if (emailBillReminders.present) {
+      map['email_bill_reminders'] = Variable<bool>(emailBillReminders.value);
     }
     if (dailyLoggingReminder.present) {
       map['daily_logging_reminder'] = Variable<bool>(
@@ -10936,6 +10989,7 @@ class NotificationPreferencesCompanion
           ..write('emailEnabled: $emailEnabled, ')
           ..write('overspendAlerts: $overspendAlerts, ')
           ..write('billReminders: $billReminders, ')
+          ..write('emailBillReminders: $emailBillReminders, ')
           ..write('dailyLoggingReminder: $dailyLoggingReminder, ')
           ..write('recurringTransactionAlerts: $recurringTransactionAlerts, ')
           ..write('sharedBudgetActivity: $sharedBudgetActivity, ')
@@ -17647,6 +17701,7 @@ typedef $$NotificationPreferencesTableCreateCompanionBuilder =
       Value<bool> emailEnabled,
       Value<bool> overspendAlerts,
       Value<bool> billReminders,
+      Value<bool> emailBillReminders,
       Value<bool> dailyLoggingReminder,
       Value<bool> recurringTransactionAlerts,
       Value<bool> sharedBudgetActivity,
@@ -17660,6 +17715,7 @@ typedef $$NotificationPreferencesTableUpdateCompanionBuilder =
       Value<bool> emailEnabled,
       Value<bool> overspendAlerts,
       Value<bool> billReminders,
+      Value<bool> emailBillReminders,
       Value<bool> dailyLoggingReminder,
       Value<bool> recurringTransactionAlerts,
       Value<bool> sharedBudgetActivity,
@@ -17698,6 +17754,11 @@ class $$NotificationPreferencesTableFilterComposer
 
   ColumnFilters<bool> get billReminders => $composableBuilder(
     column: $table.billReminders,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get emailBillReminders => $composableBuilder(
+    column: $table.emailBillReminders,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -17756,6 +17817,11 @@ class $$NotificationPreferencesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get emailBillReminders => $composableBuilder(
+    column: $table.emailBillReminders,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get dailyLoggingReminder => $composableBuilder(
     column: $table.dailyLoggingReminder,
     builder: (column) => ColumnOrderings(column),
@@ -17806,6 +17872,11 @@ class $$NotificationPreferencesTableAnnotationComposer
 
   GeneratedColumn<bool> get billReminders => $composableBuilder(
     column: $table.billReminders,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get emailBillReminders => $composableBuilder(
+    column: $table.emailBillReminders,
     builder: (column) => column,
   );
 
@@ -17881,6 +17952,7 @@ class $$NotificationPreferencesTableTableManager
                 Value<bool> emailEnabled = const Value.absent(),
                 Value<bool> overspendAlerts = const Value.absent(),
                 Value<bool> billReminders = const Value.absent(),
+                Value<bool> emailBillReminders = const Value.absent(),
                 Value<bool> dailyLoggingReminder = const Value.absent(),
                 Value<bool> recurringTransactionAlerts = const Value.absent(),
                 Value<bool> sharedBudgetActivity = const Value.absent(),
@@ -17892,6 +17964,7 @@ class $$NotificationPreferencesTableTableManager
                 emailEnabled: emailEnabled,
                 overspendAlerts: overspendAlerts,
                 billReminders: billReminders,
+                emailBillReminders: emailBillReminders,
                 dailyLoggingReminder: dailyLoggingReminder,
                 recurringTransactionAlerts: recurringTransactionAlerts,
                 sharedBudgetActivity: sharedBudgetActivity,
@@ -17905,6 +17978,7 @@ class $$NotificationPreferencesTableTableManager
                 Value<bool> emailEnabled = const Value.absent(),
                 Value<bool> overspendAlerts = const Value.absent(),
                 Value<bool> billReminders = const Value.absent(),
+                Value<bool> emailBillReminders = const Value.absent(),
                 Value<bool> dailyLoggingReminder = const Value.absent(),
                 Value<bool> recurringTransactionAlerts = const Value.absent(),
                 Value<bool> sharedBudgetActivity = const Value.absent(),
@@ -17916,6 +17990,7 @@ class $$NotificationPreferencesTableTableManager
                 emailEnabled: emailEnabled,
                 overspendAlerts: overspendAlerts,
                 billReminders: billReminders,
+                emailBillReminders: emailBillReminders,
                 dailyLoggingReminder: dailyLoggingReminder,
                 recurringTransactionAlerts: recurringTransactionAlerts,
                 sharedBudgetActivity: sharedBudgetActivity,

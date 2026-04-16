@@ -6,9 +6,9 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   NotificationsCubit({
     required NotificationRepository notificationRepository,
     required String userId,
-  })  : _repository = notificationRepository,
-        _userId = userId,
-        super(const NotificationsState());
+  }) : _repository = notificationRepository,
+       _userId = userId,
+       super(const NotificationsState());
 
   final NotificationRepository _repository;
   final String _userId;
@@ -69,6 +69,12 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     final prefs = state.preferences;
     if (prefs == null) return;
     await updatePreference(prefs.copyWith(billReminders: enabled));
+  }
+
+  Future<void> toggleEmailBillReminders({required bool enabled}) async {
+    final prefs = state.preferences;
+    if (prefs == null) return;
+    await updatePreference(prefs.copyWith(emailBillReminders: enabled));
   }
 
   Future<void> toggleDailyReminder({required bool enabled}) async {

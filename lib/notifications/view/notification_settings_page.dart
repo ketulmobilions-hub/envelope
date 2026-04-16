@@ -97,8 +97,8 @@ class NotificationSettingsView extends StatelessWidget {
               if (prefs.emailEnabled) ...[
                 SwitchListTile(
                   title: Text(l10n.notificationEmailBillReminders),
-                  value: prefs.billReminders,
-                  onChanged: (v) => cubit.toggleBillReminders(enabled: v),
+                  value: prefs.emailBillReminders,
+                  onChanged: (v) => cubit.toggleEmailBillReminders(enabled: v),
                 ),
                 SwitchListTile(
                   title: Text(l10n.notificationWeeklySummary),

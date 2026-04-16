@@ -18,6 +18,7 @@ mixin _$NotificationPreferences {
   bool get emailEnabled;
   bool get overspendAlerts;
   bool get billReminders;
+  bool get emailBillReminders;
   bool get dailyLoggingReminder;
   bool get recurringTransactionAlerts;
   bool get sharedBudgetActivity;
@@ -50,6 +51,8 @@ mixin _$NotificationPreferences {
                 other.overspendAlerts == overspendAlerts) &&
             (identical(other.billReminders, billReminders) ||
                 other.billReminders == billReminders) &&
+            (identical(other.emailBillReminders, emailBillReminders) ||
+                other.emailBillReminders == emailBillReminders) &&
             (identical(other.dailyLoggingReminder, dailyLoggingReminder) ||
                 other.dailyLoggingReminder == dailyLoggingReminder) &&
             (identical(
@@ -73,6 +76,7 @@ mixin _$NotificationPreferences {
     emailEnabled,
     overspendAlerts,
     billReminders,
+    emailBillReminders,
     dailyLoggingReminder,
     recurringTransactionAlerts,
     sharedBudgetActivity,
@@ -81,7 +85,7 @@ mixin _$NotificationPreferences {
 
   @override
   String toString() {
-    return 'NotificationPreferences(userId: $userId, pushEnabled: $pushEnabled, emailEnabled: $emailEnabled, overspendAlerts: $overspendAlerts, billReminders: $billReminders, dailyLoggingReminder: $dailyLoggingReminder, recurringTransactionAlerts: $recurringTransactionAlerts, sharedBudgetActivity: $sharedBudgetActivity, weeklySummary: $weeklySummary)';
+    return 'NotificationPreferences(userId: $userId, pushEnabled: $pushEnabled, emailEnabled: $emailEnabled, overspendAlerts: $overspendAlerts, billReminders: $billReminders, emailBillReminders: $emailBillReminders, dailyLoggingReminder: $dailyLoggingReminder, recurringTransactionAlerts: $recurringTransactionAlerts, sharedBudgetActivity: $sharedBudgetActivity, weeklySummary: $weeklySummary)';
   }
 }
 
@@ -98,6 +102,7 @@ abstract mixin class $NotificationPreferencesCopyWith<$Res> {
     bool emailEnabled,
     bool overspendAlerts,
     bool billReminders,
+    bool emailBillReminders,
     bool dailyLoggingReminder,
     bool recurringTransactionAlerts,
     bool sharedBudgetActivity,
@@ -123,6 +128,7 @@ class _$NotificationPreferencesCopyWithImpl<$Res>
     Object? emailEnabled = null,
     Object? overspendAlerts = null,
     Object? billReminders = null,
+    Object? emailBillReminders = null,
     Object? dailyLoggingReminder = null,
     Object? recurringTransactionAlerts = null,
     Object? sharedBudgetActivity = null,
@@ -149,6 +155,10 @@ class _$NotificationPreferencesCopyWithImpl<$Res>
         billReminders: null == billReminders
             ? _self.billReminders
             : billReminders // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        emailBillReminders: null == emailBillReminders
+            ? _self.emailBillReminders
+            : emailBillReminders // ignore: cast_nullable_to_non_nullable
                   as bool,
         dailyLoggingReminder: null == dailyLoggingReminder
             ? _self.dailyLoggingReminder
@@ -270,6 +280,7 @@ extension NotificationPreferencesPatterns on NotificationPreferences {
       bool emailEnabled,
       bool overspendAlerts,
       bool billReminders,
+      bool emailBillReminders,
       bool dailyLoggingReminder,
       bool recurringTransactionAlerts,
       bool sharedBudgetActivity,
@@ -287,6 +298,7 @@ extension NotificationPreferencesPatterns on NotificationPreferences {
           _that.emailEnabled,
           _that.overspendAlerts,
           _that.billReminders,
+          _that.emailBillReminders,
           _that.dailyLoggingReminder,
           _that.recurringTransactionAlerts,
           _that.sharedBudgetActivity,
@@ -318,6 +330,7 @@ extension NotificationPreferencesPatterns on NotificationPreferences {
       bool emailEnabled,
       bool overspendAlerts,
       bool billReminders,
+      bool emailBillReminders,
       bool dailyLoggingReminder,
       bool recurringTransactionAlerts,
       bool sharedBudgetActivity,
@@ -334,6 +347,7 @@ extension NotificationPreferencesPatterns on NotificationPreferences {
           _that.emailEnabled,
           _that.overspendAlerts,
           _that.billReminders,
+          _that.emailBillReminders,
           _that.dailyLoggingReminder,
           _that.recurringTransactionAlerts,
           _that.sharedBudgetActivity,
@@ -364,6 +378,7 @@ extension NotificationPreferencesPatterns on NotificationPreferences {
       bool emailEnabled,
       bool overspendAlerts,
       bool billReminders,
+      bool emailBillReminders,
       bool dailyLoggingReminder,
       bool recurringTransactionAlerts,
       bool sharedBudgetActivity,
@@ -380,6 +395,7 @@ extension NotificationPreferencesPatterns on NotificationPreferences {
           _that.emailEnabled,
           _that.overspendAlerts,
           _that.billReminders,
+          _that.emailBillReminders,
           _that.dailyLoggingReminder,
           _that.recurringTransactionAlerts,
           _that.sharedBudgetActivity,
@@ -400,6 +416,7 @@ class _NotificationPreferences implements NotificationPreferences {
     this.emailEnabled = true,
     this.overspendAlerts = true,
     this.billReminders = true,
+    this.emailBillReminders = true,
     this.dailyLoggingReminder = true,
     this.recurringTransactionAlerts = true,
     this.sharedBudgetActivity = true,
@@ -422,6 +439,9 @@ class _NotificationPreferences implements NotificationPreferences {
   @override
   @JsonKey()
   final bool billReminders;
+  @override
+  @JsonKey()
+  final bool emailBillReminders;
   @override
   @JsonKey()
   final bool dailyLoggingReminder;
@@ -465,6 +485,8 @@ class _NotificationPreferences implements NotificationPreferences {
                 other.overspendAlerts == overspendAlerts) &&
             (identical(other.billReminders, billReminders) ||
                 other.billReminders == billReminders) &&
+            (identical(other.emailBillReminders, emailBillReminders) ||
+                other.emailBillReminders == emailBillReminders) &&
             (identical(other.dailyLoggingReminder, dailyLoggingReminder) ||
                 other.dailyLoggingReminder == dailyLoggingReminder) &&
             (identical(
@@ -488,6 +510,7 @@ class _NotificationPreferences implements NotificationPreferences {
     emailEnabled,
     overspendAlerts,
     billReminders,
+    emailBillReminders,
     dailyLoggingReminder,
     recurringTransactionAlerts,
     sharedBudgetActivity,
@@ -496,7 +519,7 @@ class _NotificationPreferences implements NotificationPreferences {
 
   @override
   String toString() {
-    return 'NotificationPreferences(userId: $userId, pushEnabled: $pushEnabled, emailEnabled: $emailEnabled, overspendAlerts: $overspendAlerts, billReminders: $billReminders, dailyLoggingReminder: $dailyLoggingReminder, recurringTransactionAlerts: $recurringTransactionAlerts, sharedBudgetActivity: $sharedBudgetActivity, weeklySummary: $weeklySummary)';
+    return 'NotificationPreferences(userId: $userId, pushEnabled: $pushEnabled, emailEnabled: $emailEnabled, overspendAlerts: $overspendAlerts, billReminders: $billReminders, emailBillReminders: $emailBillReminders, dailyLoggingReminder: $dailyLoggingReminder, recurringTransactionAlerts: $recurringTransactionAlerts, sharedBudgetActivity: $sharedBudgetActivity, weeklySummary: $weeklySummary)';
   }
 }
 
@@ -515,6 +538,7 @@ abstract mixin class _$NotificationPreferencesCopyWith<$Res>
     bool emailEnabled,
     bool overspendAlerts,
     bool billReminders,
+    bool emailBillReminders,
     bool dailyLoggingReminder,
     bool recurringTransactionAlerts,
     bool sharedBudgetActivity,
@@ -540,6 +564,7 @@ class __$NotificationPreferencesCopyWithImpl<$Res>
     Object? emailEnabled = null,
     Object? overspendAlerts = null,
     Object? billReminders = null,
+    Object? emailBillReminders = null,
     Object? dailyLoggingReminder = null,
     Object? recurringTransactionAlerts = null,
     Object? sharedBudgetActivity = null,
@@ -566,6 +591,10 @@ class __$NotificationPreferencesCopyWithImpl<$Res>
         billReminders: null == billReminders
             ? _self.billReminders
             : billReminders // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        emailBillReminders: null == emailBillReminders
+            ? _self.emailBillReminders
+            : emailBillReminders // ignore: cast_nullable_to_non_nullable
                   as bool,
         dailyLoggingReminder: null == dailyLoggingReminder
             ? _self.dailyLoggingReminder
