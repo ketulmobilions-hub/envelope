@@ -16,10 +16,10 @@ class SettingsCubit extends Cubit<SettingsState> {
     required AuthRepository authRepository,
     required EnvelopeApiClient apiClient,
     required AppDatabase localDatabase,
-  })  : _authRepository = authRepository,
-        _apiClient = apiClient,
-        _localDatabase = localDatabase,
-        super(const SettingsState());
+  }) : _authRepository = authRepository,
+       _apiClient = apiClient,
+       _localDatabase = localDatabase,
+       super(const SettingsState());
 
   final AuthRepository _authRepository;
   final EnvelopeApiClient _apiClient;
