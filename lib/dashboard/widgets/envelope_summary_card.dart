@@ -188,7 +188,8 @@ class _CategoryGroupSection extends StatelessWidget {
           // Envelope cards grid.
           LayoutBuilder(
             builder: (context, constraints) {
-              final cardWidth = (constraints.maxWidth - 8) / 2;
+              final columns = (constraints.maxWidth / 200).floor().clamp(2, 6);
+              final cardWidth = (constraints.maxWidth - (columns - 1) * 8) / columns;
               return Wrap(
                 spacing: 8,
                 runSpacing: 8,
