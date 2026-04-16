@@ -297,33 +297,36 @@ class AuthRepository {
         throw const UpdateProfileException('No authenticated user found.');
       }
 
-      // Fetch current user record, apply updates, and save.
-      final currentDto = await _apiClient.users.getUser(supabaseUser.id);
-      final updatedDto = UserDto(
-        id: currentDto.id,
-        email: currentDto.email,
-        displayName: displayName ?? currentDto.displayName,
-        createdAt: currentDto.createdAt,
+      // Optimistically update the cache and stream before the network call so
+      // the UI reflects the change immediately.
+      final previousUser = _cachedUser;
+      _cachedUser = _cachedUser.copyWith(
+        displayName: displayName ?? _cachedUser.displayName,
+        baseCurrency: baseCurrency ?? _cachedUser.baseCurrency,
+        themeMode: themeMode ?? _cachedUser.themeMode,
+        accentColor: accentColor ?? _cachedUser.accentColor,
         updatedAt: DateTime.now(),
-        baseCurrency: baseCurrency ?? currentDto.baseCurrency,
-        themeMode: themeMode ?? currentDto.themeMode,
-        accentColor: accentColor ?? currentDto.accentColor,
-      );
-
-      await _apiClient.users.updateUser(updatedDto);
-
-      // Update the cached user and push through the stream.
-      _cachedUser = User(
-        id: updatedDto.id,
-        email: updatedDto.email,
-        displayName: updatedDto.displayName,
-        createdAt: updatedDto.createdAt,
-        updatedAt: updatedDto.updatedAt,
-        baseCurrency: updatedDto.baseCurrency,
-        themeMode: updatedDto.themeMode,
-        accentColor: updatedDto.accentColor,
       );
       _profileUpdateController.add(_cachedUser);
+
+      try {
+        final updatedDto = UserDto(
+          id: _cachedUser.id,
+          email: _cachedUser.email,
+          displayName: _cachedUser.displayName,
+          createdAt: _cachedUser.createdAt,
+          updatedAt: _cachedUser.updatedAt,
+          baseCurrency: _cachedUser.baseCurrency,
+          themeMode: _cachedUser.themeMode,
+          accentColor: _cachedUser.accentColor,
+        );
+        await _apiClient.users.updateUser(updatedDto);
+      } on Exception {
+        // Revert the optimistic update on failure.
+        _cachedUser = previousUser;
+        _profileUpdateController.add(_cachedUser);
+        rethrow;
+      }
     } on UpdateProfileException {
       rethrow;
     } on Exception {
