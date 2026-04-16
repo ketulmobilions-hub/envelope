@@ -4,6 +4,7 @@ import 'package:async/async.dart';
 import 'package:auth_repository/src/exceptions.dart';
 import 'package:auth_repository/src/models/models.dart';
 import 'package:envelope_api_client/envelope_api_client.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart'
     hide SignInWithAppleException;
@@ -11,8 +12,10 @@ import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 /// Signature for obtaining Apple ID credentials.
 /// Defaults to [SignInWithApple.getAppleIDCredential].
-typedef AppleCredentialProvider = Future<AuthorizationCredentialAppleID>
-    Function({required List<AppleIDAuthorizationScopes> scopes});
+typedef AppleCredentialProvider =
+    Future<AuthorizationCredentialAppleID> Function({
+      required List<AppleIDAuthorizationScopes> scopes,
+    });
 
 /// Repository for authentication operations.
 class AuthRepository {
@@ -21,19 +24,24 @@ class AuthRepository {
     required EnvelopeApiClient apiClient,
     GoogleSignIn? googleSignIn,
     AppleCredentialProvider? appleCredentialProvider,
-  })  : _apiClient = apiClient,
-        _googleSignIn = googleSignIn ??
-            GoogleSignIn(
-              serverClientId:
-                  '767046810526-5rmr4ulbj24qdc52fllojlcino8ciesa'
-                  '.apps.googleusercontent.com',
-            ),
-        _getAppleCredential =
-            appleCredentialProvider ?? SignInWithApple.getAppleIDCredential;
+  }) : _apiClient = apiClient,
+       _googleSignIn =
+           googleSignIn ??
+           _buildGoogleSignIn(),
+       _getAppleCredential =
+           appleCredentialProvider ?? SignInWithApple.getAppleIDCredential;
 
   final EnvelopeApiClient _apiClient;
   final GoogleSignIn _googleSignIn;
   final AppleCredentialProvider _getAppleCredential;
+
+  static GoogleSignIn _buildGoogleSignIn() {
+    const clientId =
+        '767046810526-5rmr4ulbj24qdc52fllojlcino8ciesa'
+        '.apps.googleusercontent.com';
+    if (kIsWeb) return GoogleSignIn(clientId: clientId);
+    return GoogleSignIn(serverClientId: clientId);
+  }
 
   /// Cache of the current user to avoid unnecessary lookups.
   User _cachedUser = User.empty;
@@ -45,8 +53,9 @@ class AuthRepository {
   /// or when the profile is updated locally.
   /// Emits [User.empty] if the user is not authenticated.
   Stream<User> get user {
-    final authStream =
-        _apiClient.auth.onAuthStateChange.asyncMap((authState) async {
+    final authStream = _apiClient.auth.onAuthStateChange.asyncMap((
+      authState,
+    ) async {
       final supabaseUser = authState.session?.user;
       if (supabaseUser == null) {
         _cachedUser = User.empty;
@@ -371,7 +380,7 @@ class AuthRepository {
       }
     } on DeleteAccountException {
       rethrow;
-    } on Exception {
+    } on Exception catch (e) {
       throw const DeleteAccountException(
         'An unexpected error occurred while deleting account.',
       );
@@ -443,9 +452,9 @@ class AuthRepository {
           metadata['full_name'] as String? ??
           metadata['name'] as String? ??
           '',
-      createdAt:
-          DateTime.tryParse(supabaseUser.createdAt) ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(
+      createdAt: DateTime.tryParse(supabaseUser.createdAt) ?? DateTime.now(),
+      updatedAt:
+          DateTime.tryParse(
             supabaseUser.updatedAt ?? '',
           ) ??
           DateTime.now(),
