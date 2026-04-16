@@ -201,7 +201,8 @@ class UsersApiClient {
     }
   }
 
-  /// Fetches notification preferences for a user.
+  /// Fetches notification preferences for a user, creating a default row
+  /// if none exists yet.
   Future<NotificationPreferencesDto> getNotificationPreferences(
     String userId,
   ) async {
@@ -210,8 +211,16 @@ class UsersApiClient {
           .from('notification_preferences')
           .select()
           .eq('user_id', userId)
-          .single();
-      return NotificationPreferencesDto.fromJson(response);
+          .maybeSingle();
+
+      if (response != null) {
+        return NotificationPreferencesDto.fromJson(response);
+      }
+
+      // First visit — insert a row with all defaults enabled.
+      return createNotificationPreferences(
+        NotificationPreferencesDto(userId: userId),
+      );
     } catch (error) {
       throw EnvelopeApiException.fromPostgrestException(error);
     }
