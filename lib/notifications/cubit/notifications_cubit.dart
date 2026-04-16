@@ -36,13 +36,18 @@ class NotificationsCubit extends Cubit<NotificationsState> {
 
   Future<void> updatePreference(NotificationPreferences updated) async {
     final previous = state.preferences;
-    emit(state.copyWith(preferences: updated));
+    emit(state.copyWith(preferences: updated, saveErrorMessage: null));
     try {
       await _repository.updatePreferences(updated);
-    } on Exception catch (_) {
-      // Revert to previous state locally on failure.
+    } on Exception {
+      // Revert to previous state locally on failure and signal the UI.
       if (previous != null) {
-        emit(state.copyWith(preferences: previous));
+        emit(
+          state.copyWith(
+            preferences: previous,
+            saveErrorMessage: 'error',
+          ),
+        );
       }
     }
   }

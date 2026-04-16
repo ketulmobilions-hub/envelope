@@ -1,6 +1,7 @@
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/notifications/cubit/cubit.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:notification_repository/notification_repository.dart';
@@ -34,8 +35,19 @@ class NotificationSettingsView extends StatelessWidget {
       appBar: AppBar(
         title: Text(l10n.notificationSettingsTitle),
       ),
-      body: BlocBuilder<NotificationsCubit, NotificationsState>(
-        builder: (context, state) {
+      body: BlocListener<NotificationsCubit, NotificationsState>(
+        listenWhen: (prev, curr) =>
+            curr.saveErrorMessage != null &&
+            prev.saveErrorMessage != curr.saveErrorMessage,
+        listener: (context, state) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          showAppSnackBar(
+            context,
+            SnackBar(content: Text(context.l10n.notificationSaveError)),
+          );
+        },
+        child: BlocBuilder<NotificationsCubit, NotificationsState>(
+          builder: (context, state) {
           if (state.status == NotificationsStatus.loading) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -108,7 +120,8 @@ class NotificationSettingsView extends StatelessWidget {
               ],
             ],
           );
-        },
+          },
+        ),
       ),
     );
   }
