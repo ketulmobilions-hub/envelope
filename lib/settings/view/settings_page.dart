@@ -82,6 +82,7 @@ class _SettingsView extends StatelessWidget {
                       leading: const Icon(Icons.person_outline),
                       title: Text(l10n.settingsDisplayName),
                       subtitle: Text(user.displayName),
+                      trailing: const Icon(Icons.edit_outlined),
                       onTap: () => _showEditNameDialog(context, user),
                     ),
                     ListTile(
