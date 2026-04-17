@@ -137,18 +137,6 @@ void main() {
       expect(find.byType(AccountsStep), findsOneWidget);
     });
 
-    testWidgets('renders IncomeStep on income step',
-        (tester) async {
-      when(() => cubit.state).thenReturn(
-        const OnboardingState(
-          currentStep: OnboardingStep.income,
-        ),
-      );
-      await tester.pumpWidget(buildSubject());
-      await tester.pumpAndSettle();
-      expect(find.byType(IncomeStep), findsOneWidget);
-    });
-
     testWidgets('renders EnvelopesStep on envelopes step',
         (tester) async {
       when(() => cubit.state).thenReturn(

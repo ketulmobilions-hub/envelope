@@ -112,8 +112,6 @@ class OnboardingView extends StatelessWidget {
     return switch (error) {
       OnboardingError.accountRequired =>
         l10n.onboardingErrorAccountRequired,
-      OnboardingError.incomeRequired =>
-        l10n.onboardingErrorIncomeRequired,
       OnboardingError.envelopeRequired =>
         l10n.onboardingErrorEnvelopeRequired,
       OnboardingError.completionFailed =>
@@ -126,7 +124,6 @@ class OnboardingView extends StatelessWidget {
       OnboardingStep.welcome => const WelcomeStep(),
       OnboardingStep.currency => const CurrencyStep(),
       OnboardingStep.accounts => const AccountsStep(),
-      OnboardingStep.income => const IncomeStep(),
       OnboardingStep.envelopes => const EnvelopesStep(),
       OnboardingStep.allocation => const AllocationStep(),
     };

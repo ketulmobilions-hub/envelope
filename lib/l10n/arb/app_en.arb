@@ -233,18 +233,6 @@
     "@onboardingAccountTypeOther": {
         "description": "Other account type"
     },
-    "onboardingIncomeTitle": "Expected Monthly Income",
-    "@onboardingIncomeTitle": {
-        "description": "Income step title"
-    },
-    "onboardingIncomeDescription": "How much do you expect to earn each month? This helps pre-fill your envelope allocations.",
-    "@onboardingIncomeDescription": {
-        "description": "Income step description"
-    },
-    "onboardingIncomeLabel": "Monthly Income",
-    "@onboardingIncomeLabel": {
-        "description": "Income input label"
-    },
     "onboardingEnvelopesTitle": "Set Up Your Envelopes",
     "@onboardingEnvelopesTitle": {
         "description": "Envelopes step title"
@@ -281,21 +269,9 @@
     "@onboardingAllocationDescription": {
         "description": "Allocation step description"
     },
-    "onboardingIncomeToAllocate": "Income to Allocate",
-    "@onboardingIncomeToAllocate": {
-        "description": "Label for total income to allocate"
-    },
-    "onboardingRemainingToAllocate": "Remaining",
-    "@onboardingRemainingToAllocate": {
-        "description": "Label for remaining amount to allocate"
-    },
     "onboardingErrorAccountRequired": "Please add at least one account to continue.",
     "@onboardingErrorAccountRequired": {
         "description": "Error when no accounts added"
-    },
-    "onboardingErrorIncomeRequired": "Please enter your expected monthly income.",
-    "@onboardingErrorIncomeRequired": {
-        "description": "Error when income is zero"
     },
     "onboardingErrorEnvelopeRequired": "Please add at least one envelope to continue.",
     "@onboardingErrorEnvelopeRequired": {

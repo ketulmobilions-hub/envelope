@@ -96,11 +96,6 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     emit(state.copyWith(accounts: accounts));
   }
 
-  /// Sets the expected monthly income.
-  void setExpectedIncome(double amount) {
-    emit(state.copyWith(expectedIncome: amount));
-  }
-
   /// Adds a new category group.
   void addCategoryGroup(String name) {
     emit(
@@ -180,8 +175,6 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     return switch (state.currentStep) {
       OnboardingStep.accounts when state.accounts.isEmpty =>
         OnboardingError.accountRequired,
-      OnboardingStep.income when state.expectedIncome <= 0 =>
-        OnboardingError.incomeRequired,
       OnboardingStep.envelopes
           when state.categoryGroups.every((g) => g.envelopes.isEmpty) =>
         OnboardingError.envelopeRequired,
