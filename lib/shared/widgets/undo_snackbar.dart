@@ -32,5 +32,11 @@ void showUndoSnackBar(
       ),
     ),
   );
-  Future.delayed(duration, controller.close);
+  Future.delayed(duration, () {
+    try {
+      controller.close();
+    } catch (_) {
+      // Snackbar was already dismissed by Flutter's own timer.
+    }
+  });
 }

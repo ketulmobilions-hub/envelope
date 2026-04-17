@@ -5,6 +5,7 @@ import 'package:bloc/bloc.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import 'package:sharing_repository/sharing_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:transaction_repository/transaction_repository.dart';
@@ -124,7 +125,8 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       (_) {
         if (!isClosed) add(const _RemoteChangeReceived());
       },
-      onError: (Object _) {
+      onError: (Object e) {
+        debugPrint('Error in merge stream: $e');
         /* Ignore merge stream errors. */
       },
     );

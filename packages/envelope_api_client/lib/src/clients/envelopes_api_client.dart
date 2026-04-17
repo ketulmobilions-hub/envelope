@@ -111,6 +111,7 @@ class EnvelopesApiClient {
           .from('envelopes')
           .select()
           .eq('budget_id', budgetId)
+          .isFilter('deleted_at', null)
           .order('sort_order');
       return response.map(EnvelopeDto.fromJson).toList();
     } catch (error) {
@@ -127,6 +128,7 @@ class EnvelopesApiClient {
           .from('envelopes')
           .select()
           .eq('category_group_id', categoryGroupId)
+          .isFilter('deleted_at', null)
           .order('sort_order');
       return response.map(EnvelopeDto.fromJson).toList();
     } catch (error) {
