@@ -1,5 +1,6 @@
 import 'package:envelope/envelopes/cubit/cubit.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/widgets/app_option_picker.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:envelope_repository/envelope_repository.dart';
@@ -122,25 +123,16 @@ class _EnvelopeFormPageState extends State<EnvelopeFormPage> {
                   ),
                   const SizedBox(height: 16),
                   if (widget.categoryGroups.isNotEmpty)
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedGroupId.isNotEmpty
-                          ? _selectedGroupId
-                          : null,
-                      decoration: InputDecoration(
-                        labelText: l10n.envelopesCategoryGroupLabel,
-                        prefixIcon: const Icon(Icons.category_outlined),
-                      ),
-                      items: widget.categoryGroups.map((group) {
-                        return DropdownMenuItem(
-                          value: group.id,
-                          child: Text(group.name),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() => _selectedGroupId = value);
-                        }
-                      },
+                    AppOptionPicker<CategoryGroup>(
+                      options: widget.categoryGroups,
+                      value: widget.categoryGroups
+                          .where((g) => g.id == _selectedGroupId)
+                          .firstOrNull,
+                      onChanged: (g) =>
+                          setState(() => _selectedGroupId = g.id),
+                      labelText: l10n.envelopesCategoryGroupLabel,
+                      icon: Icons.category_outlined,
+                      itemLabel: (g) => g.name,
                     ),
                   const SizedBox(height: 16),
                   Text(

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:account_repository/account_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/widgets/app_option_picker.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/transactions/cubit/cubit.dart';
 import 'package:envelope/transactions/view/transfer_form_page.dart';
@@ -207,59 +208,36 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Account dropdown
+                      // Account picker
                       if (accounts.isNotEmpty)
-                        DropdownButtonFormField<String>(
-                          initialValue: _selectedAccountId,
-                          decoration: InputDecoration(
-                            labelText: l10n.transactionsAccountLabel,
-                            prefixIcon: const Icon(
-                              Icons.account_balance_outlined,
-                            ),
-                          ),
-                          items: accounts.map((account) {
-                            return DropdownMenuItem(
-                              value: account.id,
-                              child: Text(account.name),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            setState(() => _selectedAccountId = value);
-                          },
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return l10n.transactionsAccountRequired;
-                            }
-                            return null;
-                          },
+                        AppOptionPicker<Account>(
+                          options: accounts,
+                          value: accounts
+                              .where((a) => a.id == _selectedAccountId)
+                              .firstOrNull,
+                          onChanged: (a) =>
+                              setState(() => _selectedAccountId = a.id),
+                          labelText: l10n.transactionsAccountLabel,
+                          icon: Icons.account_balance_outlined,
+                          itemLabel: (a) => a.name,
                         ),
                       const SizedBox(height: 16),
 
-                      // Envelope dropdown — hidden for split/income/transfer.
+                      // Envelope picker — hidden for split/income/transfer.
                       if (!_isSplitMode &&
                           _selectedType != 'income' &&
                           _selectedType != 'transfer' &&
                           envelopes.isNotEmpty)
-                        DropdownButtonFormField<String>(
-                          initialValue: _selectedEnvelopeId,
-                          decoration: InputDecoration(
-                            labelText: l10n.transactionsEnvelopeLabel,
-                            prefixIcon: const Icon(Icons.mail_outlined),
-                          ),
-                          items: [
-                            DropdownMenuItem<String>(
-                              child: Text(l10n.transactionsNoEnvelope),
-                            ),
-                            ...(envelopes.map((env) {
-                              return DropdownMenuItem(
-                                value: env.id,
-                                child: Text(env.name),
-                              );
-                            })),
-                          ],
-                          onChanged: (value) {
-                            setState(() => _selectedEnvelopeId = value);
-                          },
+                        AppOptionPicker<Envelope>(
+                          options: envelopes,
+                          value: envelopes
+                              .where((e) => e.id == _selectedEnvelopeId)
+                              .firstOrNull,
+                          onChanged: (e) =>
+                              setState(() => _selectedEnvelopeId = e.id),
+                          labelText: l10n.transactionsEnvelopeLabel,
+                          icon: Icons.mail_outlined,
+                          itemLabel: (e) => e.name,
                         ),
                       if (!_isSplitMode) const SizedBox(height: 16),
 
@@ -563,26 +541,16 @@ class _RecurringSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Frequency dropdown
-          DropdownButtonFormField<String>(
-            initialValue: state.recurringFrequency,
-            decoration: InputDecoration(
-              labelText: l10n.recurringFrequencyLabel,
-              prefixIcon: const Icon(Icons.repeat),
-            ),
-            items: _kFrequencies.map((f) {
-              return DropdownMenuItem(
-                value: f,
-                child: Text(_localizedFrequency(f, l10n)),
-              );
-            }).toList(),
-            onChanged: (value) {
-              if (value != null) {
-                context
-                    .read<TransactionFormCubit>()
-                    .setRecurringFrequency(value);
-              }
-            },
+          // Frequency picker
+          AppOptionPicker<String>(
+            options: _kFrequencies,
+            value: state.recurringFrequency,
+            onChanged: (f) => context
+                .read<TransactionFormCubit>()
+                .setRecurringFrequency(f),
+            labelText: l10n.recurringFrequencyLabel,
+            icon: Icons.repeat,
+            itemLabel: (f) => _localizedFrequency(f, l10n),
           ),
 
           // Custom interval row (shown only for 'custom' frequency)

@@ -2,6 +2,7 @@ import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/goals/cubit/cubit.dart';
 import 'package:envelope/goals/widgets/goal_helpers.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/widgets/app_option_picker.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -115,23 +116,14 @@ class _GoalFormPageState extends State<GoalFormPage> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedType,
-                    decoration: InputDecoration(
-                      labelText: l10n.goalsTypeLabel,
-                      prefixIcon: const Icon(Icons.category_outlined),
-                    ),
-                    items: _goalTypes.map((type) {
-                      return DropdownMenuItem(
-                        value: type,
-                        child: Text(localizedGoalType(type, l10n)),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() => _selectedType = value);
-                      }
-                    },
+                  AppOptionPicker<String>(
+                    options: _goalTypes,
+                    value: _selectedType,
+                    onChanged: (type) =>
+                        setState(() => _selectedType = type),
+                    labelText: l10n.goalsTypeLabel,
+                    icon: Icons.category_outlined,
+                    itemLabel: (type) => localizedGoalType(type, l10n),
                   ),
                   const SizedBox(height: 16),
                   // Type-specific fields.

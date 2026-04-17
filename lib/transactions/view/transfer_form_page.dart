@@ -1,4 +1,6 @@
+import 'package:account_repository/account_repository.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/widgets/app_option_picker.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/transactions/cubit/cubit.dart';
 import 'package:envelope/transactions/widgets/transaction_helpers.dart';
@@ -77,54 +79,31 @@ class _TransferFormPageState extends State<TransferFormPage> {
                     children: [
                       // From account
                       if (accounts.isNotEmpty)
-                        DropdownButtonFormField<String>(
-                          initialValue: _fromAccountId,
-                          decoration: InputDecoration(
-                            labelText: l10n.transactionsTransferFrom,
-                            prefixIcon: const Icon(Icons.logout_outlined),
-                          ),
-                          items: accounts.map((a) {
-                            return DropdownMenuItem(
-                              value: a.id,
-                              child: Text(a.name),
-                            );
-                          }).toList(),
-                          onChanged: (value) =>
-                              setState(() => _fromAccountId = value),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return l10n.transactionsAccountRequired;
-                            }
-                            return null;
-                          },
+                        AppOptionPicker<Account>(
+                          options: accounts,
+                          value: accounts
+                              .where((a) => a.id == _fromAccountId)
+                              .firstOrNull,
+                          onChanged: (a) =>
+                              setState(() => _fromAccountId = a.id),
+                          labelText: l10n.transactionsTransferFrom,
+                          icon: Icons.logout_outlined,
+                          itemLabel: (a) => a.name,
                         ),
                       const SizedBox(height: 16),
 
                       // To account
                       if (accounts.isNotEmpty)
-                        DropdownButtonFormField<String>(
-                          initialValue: _toAccountId,
-                          decoration: InputDecoration(
-                            labelText: l10n.transactionsTransferTo,
-                            prefixIcon: const Icon(Icons.login_outlined),
-                          ),
-                          items: accounts.map((a) {
-                            return DropdownMenuItem(
-                              value: a.id,
-                              child: Text(a.name),
-                            );
-                          }).toList(),
-                          onChanged: (value) =>
-                              setState(() => _toAccountId = value),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return l10n.transactionsAccountRequired;
-                            }
-                            if (value == _fromAccountId) {
-                              return l10n.transactionsTransferSameAccount;
-                            }
-                            return null;
-                          },
+                        AppOptionPicker<Account>(
+                          options: accounts,
+                          value: accounts
+                              .where((a) => a.id == _toAccountId)
+                              .firstOrNull,
+                          onChanged: (a) =>
+                              setState(() => _toAccountId = a.id),
+                          labelText: l10n.transactionsTransferTo,
+                          icon: Icons.login_outlined,
+                          itemLabel: (a) => a.name,
                         ),
                       const SizedBox(height: 16),
 
