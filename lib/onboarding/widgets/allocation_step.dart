@@ -12,12 +12,6 @@ class AllocationStep extends StatelessWidget {
 
     return BlocBuilder<OnboardingCubit, OnboardingState>(
       builder: (context, state) {
-        final totalAllocated = state.allocations.values.fold<double>(
-          0,
-          (sum, v) => sum + v,
-        );
-        final remaining = state.expectedIncome - totalAllocated;
-
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -32,29 +26,6 @@ class AllocationStep extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(l10n.onboardingAllocationDescription),
-                  const SizedBox(height: 16),
-                  Wrap(
-                    alignment: WrapAlignment.spaceBetween,
-                    spacing: 16,
-                    children: [
-                      Text(
-                        '${l10n.onboardingIncomeToAllocate}: '
-                        '${state.baseCurrency} '
-                        '${state.expectedIncome.toStringAsFixed(2)}',
-                      ),
-                      Text(
-                        '${l10n.onboardingRemainingToAllocate}: '
-                        '${state.baseCurrency} '
-                        '${remaining.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: remaining < 0
-                              ? Theme.of(context).colorScheme.error
-                              : null,
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),

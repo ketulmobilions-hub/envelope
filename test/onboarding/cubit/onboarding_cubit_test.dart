@@ -49,7 +49,6 @@ void main() {
       expect(cubit.state.status, OnboardingStatus.initial);
       expect(cubit.state.baseCurrency, 'USD');
       expect(cubit.state.accounts, isEmpty);
-      expect(cubit.state.expectedIncome, 0);
       expect(cubit.state.categoryGroups, defaultCategoryGroups);
       expect(cubit.state.allocations, isEmpty);
     });
@@ -131,47 +130,6 @@ void main() {
               currency: 'USD',
             ),
           ],
-        ),
-        act: (cubit) => cubit.nextStep(),
-        expect: () => [
-          isA<OnboardingState>().having(
-            (s) => s.currentStep,
-            'currentStep',
-            OnboardingStep.income,
-          ),
-        ],
-      );
-    });
-
-    group('income validation', () {
-      blocTest<OnboardingCubit, OnboardingState>(
-        'nextStep fails on income step with zero income',
-        build: buildCubit,
-        seed: () => const OnboardingState(
-          currentStep: OnboardingStep.income,
-        ),
-        act: (cubit) => cubit.nextStep(),
-        expect: () => [
-          isA<OnboardingState>()
-              .having(
-                (s) => s.status,
-                'status',
-                OnboardingStatus.failure,
-              )
-              .having(
-                (s) => s.error,
-                'error',
-                OnboardingError.incomeRequired,
-              ),
-        ],
-      );
-
-      blocTest<OnboardingCubit, OnboardingState>(
-        'nextStep advances on income step with income set',
-        build: buildCubit,
-        seed: () => const OnboardingState(
-          currentStep: OnboardingStep.income,
-          expectedIncome: 5000,
         ),
         act: (cubit) => cubit.nextStep(),
         expect: () => [
@@ -270,17 +228,6 @@ void main() {
         act: (cubit) => cubit.removeAccount(0),
         expect: () => [
           const OnboardingState(),
-        ],
-      );
-    });
-
-    group('income', () {
-      blocTest<OnboardingCubit, OnboardingState>(
-        'setExpectedIncome updates income',
-        build: buildCubit,
-        act: (cubit) => cubit.setExpectedIncome(5000),
-        expect: () => [
-          const OnboardingState(expectedIncome: 5000),
         ],
       );
     });
