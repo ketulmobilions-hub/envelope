@@ -27,6 +27,9 @@ migrate_working_dir/
 # packages file containing multi-root paths
 .packages.generated
 
+# Web build artifacts
+*.dart.js.deps
+
 # Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id
