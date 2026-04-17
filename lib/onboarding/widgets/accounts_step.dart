@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:envelope/accounts/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/cubit.dart';
+import 'package:envelope/shared/widgets/app_option_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -130,27 +131,17 @@ class AccountsStep extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    initialValue: selectedType,
-                    decoration: InputDecoration(
-                      labelText: l10n.onboardingAccountType,
-                    ),
-                    items: _accountTypes.map((type) {
-                      return DropdownMenuItem(
-                        value: type,
-                        child: Text(
-                          _localizedAccountTypeStatic(l10n, type),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setSheetState(() {
-                          selectedType = value;
-                          isOnBudget = defaultIsOnBudget(value);
-                        });
-                      }
-                    },
+                  AppOptionPicker<String>(
+                    options: _accountTypes,
+                    value: selectedType,
+                    onChanged: (type) => setSheetState(() {
+                      selectedType = type;
+                      isOnBudget = defaultIsOnBudget(type);
+                    }),
+                    labelText: l10n.onboardingAccountType,
+                    icon: Icons.category_outlined,
+                    itemLabel: (type) =>
+                        _localizedAccountTypeStatic(l10n, type),
                   ),
                   const SizedBox(height: 12),
                   TextField(

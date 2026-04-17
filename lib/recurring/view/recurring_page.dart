@@ -7,6 +7,7 @@ import 'package:envelope/recurring/bloc/bloc.dart';
 import 'package:envelope/recurring/view/bill_reminder_form_page.dart';
 import 'package:envelope/recurring/view/recurring_rule_form_page.dart';
 import 'package:envelope/recurring/widgets/widgets.dart';
+import 'package:envelope/shared/widgets/app_option_picker.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
@@ -513,27 +514,16 @@ class _SimpleBillPaymentFormState extends State<_SimpleBillPaymentForm> {
               if (_isLoadingAccounts)
                 const Center(child: CircularProgressIndicator())
               else if (_accounts.isNotEmpty)
-                DropdownButtonFormField<String>(
-                  key: ValueKey('account_$_selectedAccountId'),
-                  initialValue: _selectedAccountId,
-                  decoration: InputDecoration(
-                    labelText: l10n.transactionsAccountLabel,
-                    prefixIcon: const Icon(Icons.account_balance_outlined),
-                  ),
-                  items: _accounts.map((account) {
-                    return DropdownMenuItem(
-                      value: account.id,
-                      child: Text(account.name),
-                    );
-                  }).toList(),
-                  onChanged: (value) =>
-                      setState(() => _selectedAccountId = value),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return l10n.transactionsAccountRequired;
-                    }
-                    return null;
-                  },
+                AppOptionPicker<Account>(
+                  options: _accounts,
+                  value: _accounts
+                      .where((a) => a.id == _selectedAccountId)
+                      .firstOrNull,
+                  onChanged: (a) =>
+                      setState(() => _selectedAccountId = a.id),
+                  labelText: l10n.transactionsAccountLabel,
+                  icon: Icons.account_balance_outlined,
+                  itemLabel: (a) => a.name,
                 ),
               const SizedBox(height: 16),
               TextFormField(
