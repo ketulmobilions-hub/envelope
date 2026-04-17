@@ -197,7 +197,9 @@ class _HomeView extends StatelessWidget {
           ),
           BlocListener<DashboardBloc, DashboardState>(
             listenWhen: (prev, curr) =>
-                !prev.hasRemoteUpdate && curr.hasRemoteUpdate,
+                !prev.hasRemoteUpdate &&
+                curr.hasRemoteUpdate &&
+                curr.status != DashboardStatus.budgetDeleted,
             listener: (context, state) {
               context.read<SyncBloc>().add(const SyncRequested());
               showAppSnackBar(
@@ -207,6 +209,16 @@ class _HomeView extends StatelessWidget {
                   duration: const Duration(seconds: 3),
                 ),
               );
+            },
+          ),
+          BlocListener<DashboardBloc, DashboardState>(
+            listenWhen: (prev, curr) =>
+                curr.status == DashboardStatus.budgetDeleted,
+            listener: (context, state) async {
+              await context
+                  .read<SharedPreferences>()
+                  .remove(activeBudgetIdKey);
+              if (context.mounted) context.go(AppRoutes.onboarding);
             },
           ),
         ],
@@ -319,8 +331,6 @@ class _HomeView extends StatelessWidget {
     );
     if (confirmed == true && context.mounted) {
       context.read<DashboardBloc>().add(const BudgetDeleteRequested());
-      // Navigate back to home — the budget stream will update.
-      context.go(AppRoutes.home);
     }
   }
 }

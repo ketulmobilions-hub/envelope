@@ -1,6 +1,6 @@
 part of 'dashboard_bloc.dart';
 
-enum DashboardStatus { initial, loading, loaded, error }
+enum DashboardStatus { initial, loading, loaded, error, budgetDeleted }
 
 enum DashboardError { loadFailed, allocationFailed }
 

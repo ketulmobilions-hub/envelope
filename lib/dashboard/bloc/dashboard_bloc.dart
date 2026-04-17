@@ -445,6 +445,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   ) async {
     try {
       await _budgetRepository.deleteBudget(_budgetId);
+      emit(state.copyWith(status: DashboardStatus.budgetDeleted));
     } on BudgetException {
       emit(
         state.copyWith(
