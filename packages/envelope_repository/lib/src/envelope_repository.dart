@@ -722,7 +722,12 @@ class EnvelopeRepository {
                 case PostgresChangeEvent.update:
                   if (newRecord.isNotEmpty) {
                     final dto = EnvelopeDto.fromJson(newRecord);
-                    await _cacheEnvelope(dto);
+                    // Soft-deleted envelopes must be removed locally, not cached.
+                    if (newRecord['deleted_at'] != null) {
+                      await _localDatabase.envelopesDao.deleteEnvelope(dto.id);
+                    } else {
+                      await _cacheEnvelope(dto);
+                    }
                     if (_localWriteCount == 0) {
                       _remoteChangeController.add(null);
                     }

@@ -59,7 +59,11 @@ class EnvelopesDao extends DatabaseAccessor<AppDatabase>
       (select(envelopes)..where((t) => t.budgetId.equals(budgetId))).get();
 
   Stream<List<Envelope>> watchEnvelopesByBudgetId(String budgetId) =>
-      (select(envelopes)..where((t) => t.budgetId.equals(budgetId))).watch();
+      (select(envelopes)
+            ..where(
+              (t) => t.budgetId.equals(budgetId) & t.deletedAt.isNull(),
+            ))
+          .watch();
 
   Future<List<Envelope>> getEnvelopesByCategoryGroupId(
     String categoryGroupId,
