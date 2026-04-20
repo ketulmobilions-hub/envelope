@@ -10,19 +10,31 @@ final class EnvelopeSummary extends Equatable {
     required this.envelope,
     required this.categoryGroupName,
     this.allocation,
+    this.spentFromTransactions = 0,
   });
 
   final Envelope envelope;
   final String categoryGroupName;
   final EnvelopeAllocation? allocation;
 
+  /// Spent amount computed from local transactions (used as fallback when
+  /// no allocation record exists yet — e.g. a never-allocated envelope).
+  final int spentFromTransactions;
+
   int get allocated => allocation?.allocatedAmount ?? 0;
-  int get spent => allocation?.spentAmount ?? 0;
+
+  int get spent => allocation?.spentAmount ?? spentFromTransactions;
+
   int get available => allocated - spent + (allocation?.rolloverAmount ?? 0);
   bool get isOverspent => available < 0;
 
   @override
-  List<Object?> get props => [envelope, categoryGroupName, allocation];
+  List<Object?> get props => [
+    envelope,
+    categoryGroupName,
+    allocation,
+    spentFromTransactions,
+  ];
 }
 
 final class DashboardState extends Equatable {
@@ -36,6 +48,7 @@ final class DashboardState extends Equatable {
     this.categoryGroups = const [],
     this.allocations = const [],
     this.recentTransactions = const [],
+    this.transactions = const [],
     this.hasRemoteUpdate = false,
   });
 
@@ -48,6 +61,11 @@ final class DashboardState extends Equatable {
   final List<CategoryGroup> categoryGroups;
   final List<EnvelopeAllocation> allocations;
   final List<Transaction> recentTransactions;
+
+  /// All transactions for the budget (used to compute per-envelope spending
+  /// as a fallback when no allocation record exists yet).
+  final List<Transaction> transactions;
+
   final bool hasRemoteUpdate;
 
   /// Sum of non-archived account balances.
@@ -60,6 +78,25 @@ final class DashboardState extends Equatable {
     final groupMap = {
       for (final g in categoryGroups) g.id: g.name,
     };
+
+    // Compute per-envelope spending from local transactions for the current
+    // period. Used as a fallback when no EnvelopeAllocation record exists yet
+    // (e.g. expense added to a never-allocated envelope before the server-side
+    // trigger has had a chance to create the allocation row).
+    final period = selectedPeriod;
+    final spentMap = <String, int>{};
+    if (period != null) {
+      for (final t in transactions) {
+        if (t.type == 'expense' &&
+            t.envelopeId != null &&
+            !t.date.isBefore(period.startDate) &&
+            !t.date.isAfter(period.endDate)) {
+          spentMap[t.envelopeId!] =
+              (spentMap[t.envelopeId!] ?? 0) + t.amount;
+        }
+      }
+    }
+
     return envelopes.where((e) => !e.isArchived).map((e) {
       final allocation = allocations
           .where((a) => a.envelopeId == e.id)
@@ -68,6 +105,7 @@ final class DashboardState extends Equatable {
         envelope: e,
         categoryGroupName: groupMap[e.categoryGroupId] ?? '',
         allocation: allocation,
+        spentFromTransactions: spentMap[e.id] ?? 0,
       );
     }).toList();
   }
@@ -82,6 +120,7 @@ final class DashboardState extends Equatable {
     List<CategoryGroup>? categoryGroups,
     List<EnvelopeAllocation>? allocations,
     List<Transaction>? recentTransactions,
+    List<Transaction>? transactions,
     bool? hasRemoteUpdate,
   }) {
     return DashboardState(
@@ -96,6 +135,7 @@ final class DashboardState extends Equatable {
       categoryGroups: categoryGroups ?? this.categoryGroups,
       allocations: allocations ?? this.allocations,
       recentTransactions: recentTransactions ?? this.recentTransactions,
+      transactions: transactions ?? this.transactions,
       hasRemoteUpdate: hasRemoteUpdate ?? this.hasRemoteUpdate,
     );
   }
@@ -113,6 +153,7 @@ final class DashboardState extends Equatable {
     categoryGroups,
     allocations,
     recentTransactions,
+    transactions,
     hasRemoteUpdate,
   ];
 }

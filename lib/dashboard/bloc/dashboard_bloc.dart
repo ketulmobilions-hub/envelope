@@ -334,6 +334,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       state.copyWith(
         status: _isLoaded ? DashboardStatus.loaded : state.status,
         recentTransactions: recent,
+        transactions: sorted,
       ),
     );
 
