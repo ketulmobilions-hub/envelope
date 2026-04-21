@@ -2,6 +2,7 @@ import 'package:account_repository/account_repository.dart';
 import 'package:envelope/accounts/cubit/cubit.dart';
 import 'package:envelope/accounts/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/shared/widgets/app_option_picker.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:flutter/material.dart';
@@ -67,6 +68,7 @@ class _AccountFormPageState extends State<AccountFormPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
 
     return BlocListener<AccountFormCubit, AccountFormState>(
       listener: (context, state) {
@@ -134,7 +136,7 @@ class _AccountFormPageState extends State<AccountFormPage> {
                       labelText: isCreditCard(_selectedType)
                           ? l10n.accountsAmountOwedLabel
                           : l10n.accountsStartingBalanceLabel,
-                      prefixIcon: const Icon(Icons.attach_money),
+                      prefixText: symbol,
                     ),
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),

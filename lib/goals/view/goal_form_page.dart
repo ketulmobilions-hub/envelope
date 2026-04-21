@@ -1,5 +1,6 @@
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/goals/cubit/cubit.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/goals/widgets/goal_helpers.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/shared/widgets/app_option_picker.dart';
@@ -69,6 +70,7 @@ class _GoalFormPageState extends State<GoalFormPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
 
     return BlocListener<GoalFormCubit, GoalFormState>(
       listener: (context, state) {
@@ -133,7 +135,7 @@ class _GoalFormPageState extends State<GoalFormPage> {
                       controller: _targetAmountController,
                       decoration: InputDecoration(
                         labelText: l10n.goalsTargetAmountLabel,
-                        prefixIcon: const Icon(Icons.attach_money),
+                        prefixText: symbol,
                       ),
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
@@ -168,7 +170,7 @@ class _GoalFormPageState extends State<GoalFormPage> {
                       controller: _monthlyContributionController,
                       decoration: InputDecoration(
                         labelText: l10n.goalsMonthlyContributionLabel,
-                        prefixIcon: const Icon(Icons.attach_money),
+                        prefixText: symbol,
                       ),
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),

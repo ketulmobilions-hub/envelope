@@ -1,4 +1,5 @@
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/transactions/bloc/bloc.dart';
 import 'package:envelope/transactions/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -67,7 +68,7 @@ class _TransactionSearchPageState extends State<TransactionSearchPage> {
           }
 
           final results =
-              _filterByQuery(state.filteredTransactions, _query);
+              _filterByQuery(state.filteredTransactions, _query, currencySymbol(context));
 
           if (results.isEmpty) {
             return Center(
@@ -109,6 +110,7 @@ class _TransactionSearchPageState extends State<TransactionSearchPage> {
   List<Transaction> _filterByQuery(
     List<Transaction> transactions,
     String query,
+    String symbol,
   ) {
     final lower = query.toLowerCase();
     return transactions.where((txn) {
@@ -116,7 +118,7 @@ class _TransactionSearchPageState extends State<TransactionSearchPage> {
           txn.payee?.toLowerCase().contains(lower) ?? false;
       final notesMatch =
           txn.notes?.toLowerCase().contains(lower) ?? false;
-      final amountMatch = formatCents(txn.amount).contains(lower);
+      final amountMatch = formatCents(txn.amount, symbol: symbol).contains(lower);
       return payeeMatch || notesMatch || amountMatch;
     }).toList()
       ..sort((a, b) => b.date.compareTo(a.date));

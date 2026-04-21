@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:envelope/budget/bloc/bloc.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -73,6 +74,7 @@ class _TransferDialogState extends State<_TransferDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
 
     return AlertDialog(
       title: Text(l10n.budgetTransferTitle),
@@ -116,7 +118,7 @@ class _TransferDialogState extends State<_TransferDialog> {
               controller: _amountController,
               decoration: InputDecoration(
                 labelText: l10n.budgetTransferAmount,
-                prefixText: r'$',
+                prefixText: symbol,
               ),
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),

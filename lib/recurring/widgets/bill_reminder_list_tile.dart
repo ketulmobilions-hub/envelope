@@ -1,5 +1,6 @@
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/recurring/widgets/frequency_label.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/transactions/widgets/transaction_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:transaction_repository/transaction_repository.dart';
@@ -24,6 +25,7 @@ class BillReminderListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final colorScheme = Theme.of(context).colorScheme;
+    final symbol = currencySymbol(context);
 
     return Dismissible(
       key: Key('bill_reminder_${reminder.id}'),
@@ -61,7 +63,7 @@ class BillReminderListTile extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              formatCents(reminder.estimatedAmount),
+              formatCents(reminder.estimatedAmount, symbol: symbol),
               style: Theme.of(context).textTheme.titleSmall,
             ),
             const SizedBox(width: 8),

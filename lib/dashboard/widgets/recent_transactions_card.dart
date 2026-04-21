@@ -1,4 +1,5 @@
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/transactions/widgets/transaction_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:transaction_repository/transaction_repository.dart';
@@ -97,6 +98,7 @@ class _TransactionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final symbol = currencySymbol(context);
     final typeColor = colorForTransactionType(transaction.type, colorScheme);
     final typeIcon = iconForTransactionType(transaction.type);
 
@@ -126,7 +128,7 @@ class _TransactionRow extends StatelessWidget {
             ),
           ),
           Text(
-            formatCents(transaction.amount),
+            formatCents(transaction.amount, symbol: symbol),
             style: theme.textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w600,
               color: typeColor,

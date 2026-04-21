@@ -2,6 +2,7 @@ import 'package:account_repository/account_repository.dart';
 import 'package:envelope/accounts/widgets/account_helpers.dart';
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:flutter/material.dart';
 
 /// A list tile for displaying an account summary.
@@ -22,6 +23,7 @@ class AccountListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
 
     return ListTile(
       leading: CircleAvatar(
@@ -43,8 +45,8 @@ class AccountListTile extends StatelessWidget {
       ),
       subtitle: Text(
         account.isOnBudget
-            ? formatCents(account.currentBalance)
-            : '${formatCents(account.currentBalance)} · ${l10n.accountsOffBudgetIndicator}',
+            ? formatCents(account.currentBalance, symbol: symbol)
+            : '${formatCents(account.currentBalance, symbol: symbol)} · ${l10n.accountsOffBudgetIndicator}',
         style: TextStyle(
           color: account.currentBalance < 0
               ? Theme.of(context).colorScheme.error

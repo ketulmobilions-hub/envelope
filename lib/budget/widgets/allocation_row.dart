@@ -1,6 +1,7 @@
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/budget/bloc/bloc.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -68,6 +69,7 @@ class _AllocationRowState extends State<AllocationRow> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
     final allocation = widget.allocation;
     final spent = allocation?.spentAmount ?? 0;
     final available = allocation != null
@@ -92,11 +94,11 @@ class _AllocationRowState extends State<AllocationRow> {
                     children: [
                       TextSpan(
                         text: '${l10n.budgetSpentLabel}: '
-                            '${formatCents(spent)}  ',
+                            '${formatCents(spent, symbol: symbol)}  ',
                       ),
                       TextSpan(
                         text: '${l10n.budgetAvailableLabel}: '
-                            '${formatCents(available)}',
+                            '${formatCents(available, symbol: symbol)}',
                         style: available < 0
                             ? TextStyle(
                                 color: Theme.of(context).colorScheme.error,
@@ -124,8 +126,8 @@ class _AllocationRowState extends State<AllocationRow> {
                 FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
               ],
               textAlign: TextAlign.right,
-              decoration: const InputDecoration(
-                prefixText: r'$',
+              decoration: InputDecoration(
+                prefixText: symbol,
                 isDense: true,
                 contentPadding: EdgeInsets.symmetric(
                   horizontal: 8,

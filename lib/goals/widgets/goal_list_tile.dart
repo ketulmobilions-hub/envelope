@@ -2,6 +2,7 @@ import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/goals/widgets/goal_helpers.dart';
 import 'package:envelope/goals/widgets/goal_progress_bar.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:goal_repository/goal_repository.dart';
 
@@ -25,6 +26,7 @@ class GoalListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
     final progress = goalProgress(goal);
 
     return ListTile(
@@ -53,8 +55,8 @@ class GoalListTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${formatCents(goal.currentAmount)} / '
-                  '${formatCents(goal.targetAmount!)}',
+                  '${formatCents(goal.currentAmount, symbol: symbol)} / '
+                  '${formatCents(goal.targetAmount!, symbol: symbol)}',
                 ),
                 const SizedBox(height: 4),
                 GoalProgressBar(progress: progress),
@@ -62,7 +64,7 @@ class GoalListTile extends StatelessWidget {
             )
           : goal.monthlyContribution != null
               ? Text(l10n.goalsPerMonth(
-                  formatCents(goal.monthlyContribution!),
+                  formatCents(goal.monthlyContribution!, symbol: symbol),
                 ))
               : null,
       isThreeLine: goal.targetAmount != null,

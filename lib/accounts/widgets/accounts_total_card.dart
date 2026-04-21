@@ -1,5 +1,6 @@
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:flutter/material.dart';
 
 /// Displays the total balance across all active accounts.
@@ -11,6 +12,7 @@ class AccountsTotalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
 
     return Card(
       margin: const EdgeInsets.all(16),
@@ -26,7 +28,7 @@ class AccountsTotalCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              formatCents(totalBalance),
+              formatCents(totalBalance, symbol: symbol),
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: totalBalance < 0

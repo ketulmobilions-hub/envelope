@@ -1,4 +1,5 @@
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:envelope/transactions/widgets/transaction_helpers.dart';
 import 'package:flutter/material.dart';
@@ -33,6 +34,7 @@ class TimelineTransactionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final symbol = currencySymbol(context);
     final typeColor = colorForTransactionType(transaction.type, colorScheme);
     final l10n = context.l10n;
 
@@ -190,7 +192,7 @@ class TimelineTransactionTile extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        _formattedAmount,
+                        _formattedAmount(symbol),
                         style: theme.textTheme.titleSmall?.copyWith(
                           color: typeColor,
                           fontWeight: FontWeight.w600,
@@ -208,8 +210,8 @@ class TimelineTransactionTile extends StatelessWidget {
     );
   }
 
-  String get _formattedAmount {
+  String _formattedAmount(String symbol) {
     final prefix = transaction.type == 'income' ? '+' : '';
-    return '$prefix${formatCents(transaction.amount)}';
+    return '$prefix${formatCents(transaction.amount, symbol: symbol)}';
   }
 }

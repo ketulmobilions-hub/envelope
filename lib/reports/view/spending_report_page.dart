@@ -1,6 +1,8 @@
+import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/reports/bloc/bloc.dart';
 import 'package:envelope/reports/widgets/widgets.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -131,6 +133,7 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final symbol = currencySymbol(context);
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -150,7 +153,7 @@ class _SummaryCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              formatCents(amount),
+              formatCents(amount, symbol: symbol),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: color,
                     fontWeight: FontWeight.bold,

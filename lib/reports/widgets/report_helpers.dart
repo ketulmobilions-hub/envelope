@@ -1,14 +1,5 @@
 import 'package:envelope/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-
-/// Formats cents as a currency string using locale-aware formatting.
-///
-/// Uses `NumberFormat.simpleCurrency` for proper symbol and formatting.
-String formatCents(int cents) {
-  final formatter = NumberFormat.simpleCurrency();
-  return formatter.format(cents / 100);
-}
 
 /// Shared category colors for donut chart and category list.
 const List<Color> reportCategoryColors = [

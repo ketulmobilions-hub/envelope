@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:account_repository/account_repository.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/recurring/widgets/frequency_label.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/shared/widgets/app_option_picker.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/transactions/widgets/transaction_helpers.dart';
@@ -121,6 +122,7 @@ class _RecurringRuleFormPageState extends State<RecurringRuleFormPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -193,7 +195,7 @@ class _RecurringRuleFormPageState extends State<RecurringRuleFormPage> {
                   controller: _amountController,
                   decoration: InputDecoration(
                     labelText: l10n.transactionsAmountLabel,
-                    prefixIcon: const Icon(Icons.attach_money),
+                    prefixText: symbol,
                   ),
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,

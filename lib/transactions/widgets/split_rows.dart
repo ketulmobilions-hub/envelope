@@ -1,4 +1,5 @@
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:envelope/transactions/widgets/transaction_helpers.dart';
 import 'package:envelope_repository/envelope_repository.dart';
@@ -47,6 +48,7 @@ class SplitRows extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
     final splitTotal = splits.fold(0, (sum, s) => sum + s.amountCents);
     final remaining = totalAmountCents - splitTotal;
 
@@ -61,7 +63,7 @@ class SplitRows extends StatelessWidget {
               style: Theme.of(context).textTheme.titleSmall,
             ),
             Text(
-              '${l10n.transactionsRemaining}: ${formatCents(remaining)}',
+              '${l10n.transactionsRemaining}: ${formatCents(remaining, symbol: symbol)}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: remaining == 0
                         ? AppColors.income

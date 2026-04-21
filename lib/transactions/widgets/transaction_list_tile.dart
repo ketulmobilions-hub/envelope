@@ -1,4 +1,5 @@
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/transactions/widgets/transaction_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:transaction_repository/transaction_repository.dart';
@@ -24,6 +25,7 @@ class TransactionListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final colorScheme = Theme.of(context).colorScheme;
+    final symbol = currencySymbol(context);
     final typeColor = colorForTransactionType(transaction.type, colorScheme);
 
     return Dismissible(
@@ -72,7 +74,7 @@ class TransactionListTile extends StatelessWidget {
               )
             : null,
         trailing: Text(
-          _formattedAmount,
+          _formattedAmount(symbol),
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 color: typeColor,
                 fontWeight: FontWeight.w600,
@@ -83,8 +85,8 @@ class TransactionListTile extends StatelessWidget {
     );
   }
 
-  String get _formattedAmount {
+  String _formattedAmount(String symbol) {
     final prefix = transaction.type == 'income' ? '+' : '';
-    return '$prefix${formatCents(transaction.amount)}';
+    return '$prefix${formatCents(transaction.amount, symbol: symbol)}';
   }
 }

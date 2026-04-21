@@ -1,5 +1,7 @@
+import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/budget/bloc/bloc.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -20,6 +22,7 @@ class ReadyToAssignCard extends StatelessWidget {
       builder: (context, state) {
         final amount = state.localReadyToAssign;
         final isOver = state.isOverAllocated;
+        final symbol = currencySymbol(context);
         final color = isOver
             ? Theme.of(context).colorScheme.error
             : Theme.of(context).colorScheme.primary;
@@ -44,7 +47,7 @@ class ReadyToAssignCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                _formatCents(amount),
+                formatCents(amount, symbol: symbol),
                 style: Theme.of(context).textTheme.displaySmall?.copyWith(
                       color: color,
                       fontWeight: FontWeight.bold,
@@ -78,11 +81,4 @@ class ReadyToAssignCard extends StatelessWidget {
     );
   }
 
-  static String _formatCents(int cents) {
-    final isNegative = cents < 0;
-    final absolute = cents.abs();
-    final value = absolute / 100;
-    final formatted = value.toStringAsFixed(2);
-    return isNegative ? '-\$$formatted' : '\$$formatted';
-  }
 }

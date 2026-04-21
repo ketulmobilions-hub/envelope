@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:envelope/envelopes/cubit/cubit.dart';
 import 'package:envelope/envelopes/view/envelope_form_page.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:envelope/transactions/widgets/transaction_helpers.dart';
@@ -213,6 +214,7 @@ class _EnvelopeAppBarState extends State<_EnvelopeAppBar>
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
     final state = widget.state;
     final envelope = state.envelope;
 
@@ -269,7 +271,7 @@ class _EnvelopeAppBarState extends State<_EnvelopeAppBar>
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    formatCents(state.available),
+                    formatCents(state.available, symbol: symbol),
                     style: GoogleFonts.playfairDisplay(
                       color: AppColors.onPrimary,
                       fontSize: 36,
@@ -520,6 +522,7 @@ class _HeaderDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final symbol = currencySymbol(context);
     return Column(
       children: [
         Text(
@@ -532,7 +535,7 @@ class _HeaderDetail extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          formatCents(amount),
+          formatCents(amount, symbol: symbol),
           style: const TextStyle(
             color: AppColors.onPrimary,
             fontWeight: FontWeight.w600,
@@ -561,6 +564,7 @@ class _TransactionRow extends StatelessWidget {
     final iconColor = AppColors.onPrimary.withValues(alpha: 0.7);
     final prefix = transaction.type == 'income' ? '+' : '';
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
@@ -591,7 +595,7 @@ class _TransactionRow extends StatelessWidget {
             )
           : null,
       trailing: Text(
-        '$prefix${formatCents(transaction.amount)}',
+        '$prefix${formatCents(transaction.amount, symbol: symbol)}',
         style: TextStyle(
           color: typeColor,
           fontWeight: FontWeight.w600,

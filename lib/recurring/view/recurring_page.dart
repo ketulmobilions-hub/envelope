@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:account_repository/account_repository.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/recurring/bloc/bloc.dart';
 import 'package:envelope/recurring/view/bill_reminder_form_page.dart';
 import 'package:envelope/recurring/view/recurring_rule_form_page.dart';
@@ -499,6 +500,7 @@ class _SimpleBillPaymentFormState extends State<_SimpleBillPaymentForm> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -530,7 +532,7 @@ class _SimpleBillPaymentFormState extends State<_SimpleBillPaymentForm> {
                 controller: _amountController,
                 decoration: InputDecoration(
                   labelText: l10n.transactionsAmountLabel,
-                  prefixIcon: const Icon(Icons.attach_money),
+                  prefixText: symbol,
                 ),
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,

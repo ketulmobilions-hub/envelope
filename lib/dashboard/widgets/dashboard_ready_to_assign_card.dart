@@ -1,5 +1,6 @@
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
@@ -20,6 +21,7 @@ class DashboardReadyToAssignCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final colorScheme = Theme.of(context).colorScheme;
+    final symbol = currencySymbol(context);
 
     final Color color;
     if (readyToAssign > 0) {
@@ -58,7 +60,7 @@ class DashboardReadyToAssignCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  formatCents(readyToAssign),
+                  formatCents(readyToAssign, symbol: symbol),
                   style: Theme.of(context)
                       .textTheme
                       .displaySmall

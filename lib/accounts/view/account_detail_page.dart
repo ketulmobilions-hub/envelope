@@ -4,6 +4,7 @@ import 'package:envelope/accounts/cubit/cubit.dart';
 import 'package:envelope/accounts/view/account_form_page.dart';
 import 'package:envelope/accounts/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -40,6 +41,7 @@ class AccountDetailPage extends StatelessWidget {
       },
       builder: (context, state) {
         final account = state.account;
+        final symbol = currencySymbol(context);
 
         return Scaffold(
           appBar: AppBar(
@@ -70,7 +72,7 @@ class AccountDetailPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        formatCents(account.currentBalance),
+                        formatCents(account.currentBalance, symbol: symbol),
                         style: Theme.of(context)
                             .textTheme
                             .headlineLarge
@@ -189,6 +191,7 @@ class AccountDetailPage extends StatelessWidget {
     Account account,
   ) async {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
     final cubit = context.read<AccountDetailCubit>();
     final controller = TextEditingController();
 
@@ -208,7 +211,7 @@ class AccountDetailPage extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     '${l10n.accountsCurrentBalance}: '
-                    '${formatCents(account.currentBalance)}',
+                    '${formatCents(account.currentBalance, symbol: symbol)}',
                     style: Theme.of(dialogContext).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 16),
@@ -218,7 +221,7 @@ class AccountDetailPage extends StatelessWidget {
                       labelText: isCreditCard(account.type)
                           ? l10n.accountsAmountOwedLabel
                           : l10n.accountsReconcileActualBalance,
-                      prefixIcon: const Icon(Icons.attach_money),
+                      prefixText: symbol,
                       errorText: balanceError,
                     ),
                     keyboardType:
@@ -286,6 +289,7 @@ class _BalanceDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final symbol = currencySymbol(context);
     return Column(
       children: [
         Text(
@@ -296,7 +300,7 @@ class _BalanceDetail extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          formatCents(amount),
+          formatCents(amount, symbol: symbol),
           style: Theme.of(context).textTheme.titleMedium,
         ),
       ],

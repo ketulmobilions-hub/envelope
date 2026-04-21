@@ -1,4 +1,6 @@
+import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/reports/widgets/report_helpers.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:report_repository/report_repository.dart';
@@ -29,6 +31,7 @@ class _CategoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final symbol = currencySymbol(context);
     return ExpansionTile(
       leading: CircleAvatar(
         radius: 8,
@@ -41,7 +44,7 @@ class _CategoryTile extends StatelessWidget {
             ),
       ),
       trailing: Text(
-        formatCents(category.amount),
+        formatCents(category.amount, symbol: symbol),
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppColors.expense,
               fontWeight: FontWeight.w600,
@@ -53,7 +56,7 @@ class _CategoryTile extends StatelessWidget {
             contentPadding: const EdgeInsets.only(left: 56, right: 16),
             title: Text(envelope.envelopeName),
             trailing: Text(
-              formatCents(envelope.amount),
+              formatCents(envelope.amount, symbol: symbol),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.secondaryText,
                   ),

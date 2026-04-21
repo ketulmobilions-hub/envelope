@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/dashboard/bloc/bloc.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/envelopes/cubit/cubit.dart';
 import 'package:envelope/envelopes/view/envelope_detail_page.dart';
 import 'package:envelope/envelopes/widgets/envelope_card.dart';
@@ -130,6 +131,7 @@ class _CategoryGroupSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final symbol = currencySymbol(context);
 
     // Compute group totals.
     final totalAllocated = summaries.fold(0, (sum, s) => sum + s.allocated);
@@ -157,14 +159,14 @@ class _CategoryGroupSection extends StatelessWidget {
                 ),
               ),
               Text(
-                formatCents(totalAvailable),
+                formatCents(totalAvailable, symbol: symbol),
                 style: theme.textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: availColor,
                 ),
               ),
               Text(
-                '/${formatCents(totalAllocated)}',
+                '/${formatCents(totalAllocated, symbol: symbol)}',
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: AppColors.secondaryText,
                 ),

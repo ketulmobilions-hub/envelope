@@ -1,5 +1,6 @@
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/goals/cubit/cubit.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/goals/view/goal_form_page.dart';
 import 'package:envelope/goals/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
@@ -52,6 +53,7 @@ class GoalDetailPage extends StatelessWidget {
         final goal = state.goal;
         final progress = goalProgress(goal);
         final monthly = monthlyContributionNeeded(goal);
+        final symbol = currencySymbol(context);
 
         return Scaffold(
           appBar: AppBar(
@@ -100,7 +102,7 @@ class GoalDetailPage extends StatelessWidget {
                       if (monthly > 0 && !goal.isCompleted) ...[
                         const SizedBox(height: 12),
                         Text(
-                          '${l10n.goalsMonthlyNeeded}: ${formatCents(monthly)}',
+                          '${l10n.goalsMonthlyNeeded}: ${formatCents(monthly, symbol: symbol)}',
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color:
@@ -138,7 +140,7 @@ class GoalDetailPage extends StatelessWidget {
                         const Divider(),
                         _InfoRow(
                           label: l10n.goalsMonthlyContributionLabel,
-                          value: formatCents(goal.monthlyContribution!),
+                          value: formatCents(goal.monthlyContribution!, symbol: symbol),
                         ),
                       ],
                       if (goal.isCompleted) ...[
@@ -349,6 +351,7 @@ class _AmountDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final symbol = currencySymbol(context);
     return Column(
       children: [
         Text(
@@ -359,7 +362,7 @@ class _AmountDetail extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          formatCents(amount),
+          formatCents(amount, symbol: symbol),
           style: Theme.of(context).textTheme.titleMedium,
         ),
       ],
@@ -379,6 +382,7 @@ class _ContributionsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
 
     return Card(
       child: Padding(
@@ -410,7 +414,7 @@ class _ContributionsCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '+${formatCents(c.amountCents)}',
+                            '+${formatCents(c.amountCents, symbol: symbol)}',
                             style: Theme.of(context)
                                 .textTheme
                                 .bodyMedium

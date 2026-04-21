@@ -1,6 +1,8 @@
+import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/reports/bloc/bloc.dart';
 import 'package:envelope/reports/widgets/widgets.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -89,6 +91,7 @@ class _BudgetSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
     final remaining = totalAllocated - totalSpent;
     final isOver = remaining < 0;
 
@@ -112,7 +115,7 @@ class _BudgetSummary extends StatelessWidget {
                         ),
                   ),
                   Text(
-                    formatCents(totalAllocated),
+                    formatCents(totalAllocated, symbol: symbol),
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                 ],
@@ -128,7 +131,7 @@ class _BudgetSummary extends StatelessWidget {
                         ),
                   ),
                   Text(
-                    formatCents(totalSpent),
+                    formatCents(totalSpent, symbol: symbol),
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                 ],
@@ -144,7 +147,7 @@ class _BudgetSummary extends StatelessWidget {
                         ),
                   ),
                   Text(
-                    formatCents(remaining),
+                    formatCents(remaining, symbol: symbol),
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           color:
                               isOver ? AppColors.expense : AppColors.income,
