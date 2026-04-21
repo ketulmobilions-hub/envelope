@@ -1,4 +1,3 @@
-import 'package:envelope/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 /// A card-style selector that opens a bottom-sheet list picker.
@@ -48,15 +47,15 @@ class AppOptionPicker<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final selected = value;
     final selectedLabel = selected != null ? itemLabel(selected) : null;
 
     final Color leadingColor;
     if (selected != null && itemIconColor != null) {
-      leadingColor =
-          itemIconColor!(selected) ?? AppColors.secondaryText;
+      leadingColor = itemIconColor!(selected) ?? colorScheme.outline;
     } else {
-      leadingColor = AppColors.secondaryText;
+      leadingColor = colorScheme.outline;
     }
 
     return InkWell(
@@ -65,9 +64,8 @@ class AppOptionPicker<T> extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.divider),
+          border: Border.all(color: colorScheme.outlineVariant),
         ),
         child: Row(
           children: [
@@ -80,10 +78,10 @@ class AppOptionPicker<T> extends StatelessWidget {
                 children: [
                   Text(
                     labelText,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.secondaryText,
+                      color: colorScheme.outline,
                       letterSpacing: 0.4,
                     ),
                   ),
@@ -91,19 +89,19 @@ class AppOptionPicker<T> extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       selectedLabel,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
-                        color: AppColors.charcoal,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                   ],
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.chevron_right,
-              color: AppColors.secondaryText,
+              color: colorScheme.outline,
               size: 20,
             ),
           ],
@@ -156,6 +154,8 @@ class _OptionPickerSheet<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return DraggableScrollableSheet(
       minChildSize: 0.3,
       maxChildSize: 0.9,
@@ -171,7 +171,7 @@ class _OptionPickerSheet<T> extends StatelessWidget {
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.divider,
+                  color: colorScheme.outlineVariant,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -182,10 +182,10 @@ class _OptionPickerSheet<T> extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
               child: Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.charcoal,
+                  color: colorScheme.onSurface,
                 ),
               ),
             ),
@@ -204,7 +204,7 @@ class _OptionPickerSheet<T> extends StatelessWidget {
                   final isSelected = option == selectedValue;
                   final icon = itemIcon?.call(option) ?? defaultIcon;
                   final color =
-                      itemIconColor?.call(option) ?? AppColors.secondaryText;
+                      itemIconColor?.call(option) ?? colorScheme.outline;
                   return InkWell(
                     onTap: () => Navigator.of(ctx).pop(option),
                     child: Padding(
@@ -224,15 +224,15 @@ class _OptionPickerSheet<T> extends StatelessWidget {
                                 fontWeight: isSelected
                                     ? FontWeight.w600
                                     : FontWeight.w400,
-                                color: AppColors.charcoal,
+                                color: colorScheme.onSurface,
                               ),
                             ),
                           ),
                           if (isSelected)
-                            const Icon(
+                            Icon(
                               Icons.check_rounded,
                               size: 20,
-                              color: AppColors.primary,
+                              color: colorScheme.primary,
                             ),
                         ],
                       ),

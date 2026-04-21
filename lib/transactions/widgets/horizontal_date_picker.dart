@@ -1,4 +1,3 @@
-import 'package:envelope/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -43,6 +42,7 @@ class _HorizontalDatePickerState extends State<HorizontalDatePicker> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final today = DateTime.now();
     final startDate = today.subtract(Duration(days: widget.pastDays));
     final dayCount = widget.pastDays + widget.futureDays + 1;
@@ -78,8 +78,8 @@ class _HorizontalDatePickerState extends State<HorizontalDatePicker> {
                       fontWeight: FontWeight.w600,
                       letterSpacing: 1,
                       color: isSelected
-                          ? AppColors.charcoal
-                          : AppColors.secondaryText,
+                          ? colorScheme.onSurface
+                          : colorScheme.outline,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -88,7 +88,7 @@ class _HorizontalDatePickerState extends State<HorizontalDatePicker> {
                     height: 36,
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppColors.charcoal
+                          ? colorScheme.onSurface
                           : Colors.transparent,
                       shape: BoxShape.circle,
                     ),
@@ -100,8 +100,8 @@ class _HorizontalDatePickerState extends State<HorizontalDatePicker> {
                         fontWeight:
                             isSelected ? FontWeight.w700 : FontWeight.w500,
                         color: isSelected
-                            ? AppColors.onPrimary
-                            : AppColors.charcoal,
+                            ? colorScheme.surface
+                            : colorScheme.onSurface,
                       ),
                     ),
                   ),
