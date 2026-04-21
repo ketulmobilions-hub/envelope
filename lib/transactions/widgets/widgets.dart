@@ -1,4 +1,5 @@
 export 'cover_overspend_dialog.dart';
+export 'envelope_picker.dart';
 export 'horizontal_date_picker.dart';
 export 'overspend_warning_dialog.dart';
 export 'split_rows.dart';

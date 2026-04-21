@@ -46,6 +46,9 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
       final envelopes = await _envelopeRepository
           .watchEnvelopes(budgetId)
           .first;
+      final categoryGroups = await _envelopeRepository
+          .watchCategoryGroups(budgetId)
+          .first;
       final tags = await _transactionRepository.getTags(budgetId);
 
       var selectedTagIds = <String>[];
@@ -71,6 +74,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
           status: TransactionFormStatus.loaded,
           accounts: accounts,
           envelopes: envelopes,
+          categoryGroups: categoryGroups,
           tags: tags,
           selectedTagIds: selectedTagIds,
           initialSplits: initialSplits,
@@ -104,6 +108,18 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
       if (isClosed) return;
       emit(state.copyWith(tagError: 'Failed to create tag.'));
       emit(state.copyWith());
+    }
+  }
+
+  Future<void> reloadEnvelopes() async {
+    try {
+      final envelopes = await _envelopeRepository.watchEnvelopes(budgetId).first;
+      final categoryGroups =
+          await _envelopeRepository.watchCategoryGroups(budgetId).first;
+      if (isClosed) return;
+      emit(state.copyWith(envelopes: envelopes, categoryGroups: categoryGroups));
+    } on Exception {
+      // Best-effort — stale data remains usable.
     }
   }
 

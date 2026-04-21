@@ -42,6 +42,7 @@ final class TransactionFormState extends Equatable {
     this.status = TransactionFormStatus.loading,
     this.accounts = const [],
     this.envelopes = const [],
+    this.categoryGroups = const [],
     this.tags = const [],
     this.selectedTagIds = const [],
     this.initialSplits = const [],
@@ -59,6 +60,7 @@ final class TransactionFormState extends Equatable {
   final TransactionFormStatus status;
   final List<Account> accounts;
   final List<Envelope> envelopes;
+  final List<CategoryGroup> categoryGroups;
   final List<Tag> tags;
   final List<String> selectedTagIds;
   final List<SplitEntry> initialSplits;
@@ -82,6 +84,7 @@ final class TransactionFormState extends Equatable {
     TransactionFormStatus? status,
     List<Account>? accounts,
     List<Envelope>? envelopes,
+    List<CategoryGroup>? categoryGroups,
     List<Tag>? tags,
     List<String>? selectedTagIds,
     List<SplitEntry>? initialSplits,
@@ -99,6 +102,7 @@ final class TransactionFormState extends Equatable {
       status: status ?? this.status,
       accounts: accounts ?? this.accounts,
       envelopes: envelopes ?? this.envelopes,
+      categoryGroups: categoryGroups ?? this.categoryGroups,
       tags: tags ?? this.tags,
       selectedTagIds: selectedTagIds ?? this.selectedTagIds,
       initialSplits: initialSplits ?? this.initialSplits,
@@ -126,6 +130,7 @@ final class TransactionFormState extends Equatable {
         status,
         accounts,
         envelopes,
+        categoryGroups,
         tags,
         selectedTagIds,
         initialSplits,
