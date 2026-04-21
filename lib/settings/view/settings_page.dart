@@ -449,45 +449,25 @@ class _ThemeSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          const Icon(Icons.palette_outlined),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(l10n.settingsTheme,
-                    style: Theme.of(context).textTheme.bodyLarge),
-                const SizedBox(height: 8),
-                SegmentedButton<String>(
-                  segments: [
-                    ButtonSegment(
-                      value: 'light',
-                      label: Text(l10n.settingsThemeLight),
-                    ),
-                    ButtonSegment(
-                      value: 'dark',
-                      label: Text(l10n.settingsThemeDark),
-                    ),
-                    ButtonSegment(
-                      value: 'system',
-                      label: Text(l10n.settingsThemeSystem),
-                    ),
-                  ],
-                  selected: {currentMode},
-                  onSelectionChanged: (selected) {
-                    context
-                        .read<SettingsCubit>()
-                        .updateThemeMode(selected.first);
-                  },
-                ),
-              ],
-            ),
-          ),
+    return ListTile(
+      leading: const Icon(Icons.palette_outlined),
+      title: Text(l10n.settingsTheme),
+      trailing: SegmentedButton<String>(
+        showSelectedIcon: false,
+        style: SegmentedButton.styleFrom(
+          padding: EdgeInsets.zero,
+          textStyle: const TextStyle(fontSize: 12),
+          visualDensity: VisualDensity.compact,
+        ),
+        segments: [
+          ButtonSegment(value: 'light', label: Text(l10n.settingsThemeLight)),
+          ButtonSegment(value: 'dark', label: Text(l10n.settingsThemeDark)),
+          ButtonSegment(value: 'system', label: Text(l10n.settingsThemeSystem)),
         ],
+        selected: {currentMode},
+        onSelectionChanged: (selected) {
+          context.read<SettingsCubit>().updateThemeMode(selected.first);
+        },
       ),
     );
   }
