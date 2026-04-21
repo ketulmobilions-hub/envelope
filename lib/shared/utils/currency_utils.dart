@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// Returns the currency symbol for the current user's base currency.
 String currencySymbol(BuildContext context) {
   final code =
-      context.read<AuthBloc>().state.user?.baseCurrency ?? 'USD';
+      context.watch<AuthBloc>().state.user?.baseCurrency ?? 'USD';
   return supportedCurrencies
       .firstWhere(
         (c) => c.code == code,
