@@ -169,6 +169,7 @@ class _EmptyState extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             l10n.transactionsEmptySubtitle,
+            textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.outline,
             ),
