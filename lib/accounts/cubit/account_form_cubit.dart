@@ -1,6 +1,8 @@
 import 'package:account_repository/account_repository.dart';
 import 'package:bloc/bloc.dart';
 import 'package:budget_repository/budget_repository.dart';
+import 'package:envelope/accounts/widgets/account_helpers.dart';
+import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
 
 part 'account_form_state.dart';
@@ -10,13 +12,16 @@ class AccountFormCubit extends Cubit<AccountFormState> {
     required AccountRepository accountRepository,
     required this.budgetId,
     BudgetRepository? budgetRepository,
+    EnvelopeRepository? envelopeRepository,
     this.account,
   })  : _accountRepository = accountRepository,
         _budgetRepository = budgetRepository,
+        _envelopeRepository = envelopeRepository,
         super(const AccountFormState());
 
   final AccountRepository _accountRepository;
   final BudgetRepository? _budgetRepository;
+  final EnvelopeRepository? _envelopeRepository;
   final String budgetId;
   final Account? account;
 
@@ -69,7 +74,7 @@ class AccountFormCubit extends Cubit<AccountFormState> {
           }
         }
       } else {
-        await _accountRepository.createAccount(
+        final created = await _accountRepository.createAccount(
           budgetId: budgetId,
           name: name,
           type: type,
@@ -83,6 +88,10 @@ class AccountFormCubit extends Cubit<AccountFormState> {
             budgetId: budgetId,
             amount: balanceCents,
           );
+        }
+
+        if (isCreditCard(type) && _envelopeRepository != null) {
+          await _createCCPaymentEnvelope(accountId: created.id, cardName: name);
         }
       }
       emit(state.copyWith(status: AccountFormStatus.success));
@@ -107,6 +116,45 @@ class AccountFormCubit extends Cubit<AccountFormState> {
           errorMessage: 'An unexpected error occurred.',
         ),
       );
+    }
+  }
+
+  // Finds or creates the "Credit Card Payments" category group, then creates
+  // a linked payment envelope for the given CC account.
+  Future<void> _createCCPaymentEnvelope({
+    required String accountId,
+    required String cardName,
+  }) async {
+    try {
+      final repo = _envelopeRepository!;
+      final group = await _findOrCreateCCPaymentsGroup(repo);
+      await repo.createEnvelope(
+        categoryGroupId: group.id,
+        budgetId: budgetId,
+        name: '$cardName Payment',
+        linkedAccountId: accountId,
+      );
+    } on Exception {
+      // Best-effort; the user can create the envelope manually if needed.
+    }
+  }
+
+  Future<CategoryGroup> _findOrCreateCCPaymentsGroup(
+    EnvelopeRepository repo,
+  ) async {
+    const groupName = 'Credit Card Payments';
+    final groups = await repo.watchCategoryGroups(budgetId).first;
+    final existing = groups.where((g) => g.name == groupName).firstOrNull;
+    if (existing != null) return existing;
+    try {
+      return await repo.createCategoryGroup(
+        budgetId: budgetId,
+        name: groupName,
+      );
+    } on Exception {
+      // Another operation may have created it concurrently — re-fetch.
+      final retry = await repo.watchCategoryGroups(budgetId).first;
+      return retry.firstWhere((g) => g.name == groupName);
     }
   }
 }

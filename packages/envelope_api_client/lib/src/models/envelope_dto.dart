@@ -15,6 +15,7 @@ abstract class EnvelopeDto with _$EnvelopeDto {
     @JsonKey(name: 'sort_order') @Default(0) int sortOrder,
     @JsonKey(name: 'is_archived') @Default(false) bool isArchived,
     @Default(null) String? color,
+    @JsonKey(name: 'linked_account_id') @Default(null) String? linkedAccountId,
   }) = _EnvelopeDto;
 
   factory EnvelopeDto.fromJson(Map<String, dynamic> json) =>

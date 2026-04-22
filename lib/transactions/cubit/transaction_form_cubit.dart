@@ -1,6 +1,9 @@
+import 'dart:math' show min, max;
+
 import 'package:account_repository/account_repository.dart';
 import 'package:bloc/bloc.dart';
 import 'package:budget_repository/budget_repository.dart';
+import 'package:envelope/accounts/widgets/account_helpers.dart';
 import 'package:envelope/transactions/widgets/split_rows.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
@@ -324,6 +327,15 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
             // Best-effort.
           }
 
+          if (type == 'expense' && budgetPeriodId != null) {
+            await _transferToCCPaymentEnvelope(
+              accountId: accountId,
+              envelopeId: isSplitMode ? null : envelopeId,
+              splits: isSplitMode ? splits : [],
+              expenseAmount: amountCents,
+            );
+          }
+
           // Rule starts from the next occurrence so it doesn't banner today.
           await _createRecurringRuleFromForm(
             type: type,
@@ -445,6 +457,15 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
           await _accountRepository.refreshAccounts(budgetId);
         } on AccountException {
           // Best-effort.
+        }
+
+        if (type == 'expense' && budgetPeriodId != null) {
+          await _transferToCCPaymentEnvelope(
+            accountId: accountId,
+            envelopeId: isSplitMode ? null : envelopeId,
+            splits: isSplitMode ? splits : [],
+            expenseAmount: amountCents,
+          );
         }
 
         final overspendData = await _checkOverspend(
@@ -699,5 +720,80 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     } on Exception {
       return null;
     }
+  }
+
+  // When a CC expense is recorded, moves funds from the spending envelope
+  // allocation to the linked CC Payment envelope allocation (best-effort).
+  Future<void> _transferToCCPaymentEnvelope({
+    required String accountId,
+    required String? envelopeId,
+    required List<SplitEntry> splits,
+    required int expenseAmount,
+  }) async {
+    try {
+      final account = state.accounts.where((a) => a.id == accountId).firstOrNull;
+      if (account == null || !isCreditCard(account.type)) return;
+
+      final ccPaymentEnvelope = await _envelopeRepository
+          .getEnvelopeByLinkedAccountId(accountId, budgetId);
+      if (ccPaymentEnvelope == null || budgetPeriodId == null) return;
+
+      await _envelopeRepository.ensureAllocation(
+        envelopeId: ccPaymentEnvelope.id,
+        budgetPeriodId: budgetPeriodId!,
+      );
+
+      if (splits.isEmpty && envelopeId != null) {
+        await _transferSingleEnvelopeToCCPayment(
+          spendingEnvelopeId: envelopeId,
+          ccPaymentEnvelopeId: ccPaymentEnvelope.id,
+          expenseAmount: expenseAmount,
+        );
+      } else {
+        for (final split in splits) {
+          if (split.envelopeId != null && split.amountCents > 0) {
+            await _transferSingleEnvelopeToCCPayment(
+              spendingEnvelopeId: split.envelopeId!,
+              ccPaymentEnvelopeId: ccPaymentEnvelope.id,
+              expenseAmount: split.amountCents,
+            );
+          }
+        }
+      }
+    } on Exception {
+      // Best-effort; does not block transaction recording.
+    }
+  }
+
+  Future<void> _transferSingleEnvelopeToCCPayment({
+    required String spendingEnvelopeId,
+    required String ccPaymentEnvelopeId,
+    required int expenseAmount,
+  }) async {
+    final spendingAlloc = await _envelopeRepository
+        .getEnvelopeAllocationByEnvelopeAndPeriod(
+          envelopeId: spendingEnvelopeId,
+          budgetPeriodId: budgetPeriodId!,
+        );
+    if (spendingAlloc == null) return;
+
+    final ccPaymentAlloc = await _envelopeRepository
+        .getEnvelopeAllocationByEnvelopeAndPeriod(
+          envelopeId: ccPaymentEnvelopeId,
+          budgetPeriodId: budgetPeriodId!,
+        );
+    if (ccPaymentAlloc == null) return;
+
+    // spentAmount already includes this expense (DB trigger ran before we get
+    // here), so available = allocated - spent (no adjustment needed).
+    final available = max(0, EnvelopeRepository.calculateRollover(spendingAlloc));
+    final transferAmount = min(expenseAmount, available);
+    if (transferAmount <= 0) return;
+
+    await _budgetRepository.transferBetweenEnvelopes(
+      fromAllocationId: spendingAlloc.id,
+      toAllocationId: ccPaymentAlloc.id,
+      amount: transferAmount,
+    );
   }
 }

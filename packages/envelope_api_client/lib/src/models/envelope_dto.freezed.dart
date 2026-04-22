@@ -26,6 +26,8 @@ mixin _$EnvelopeDto {
   @JsonKey(name: 'is_archived')
   bool get isArchived;
   String? get color;
+  @JsonKey(name: 'linked_account_id')
+  String? get linkedAccountId;
 
   /// Create a copy of EnvelopeDto
   /// with the given fields replaced by the non-null parameter values.
@@ -54,7 +56,9 @@ mixin _$EnvelopeDto {
                 other.sortOrder == sortOrder) &&
             (identical(other.isArchived, isArchived) ||
                 other.isArchived == isArchived) &&
-            (identical(other.color, color) || other.color == color));
+            (identical(other.color, color) || other.color == color) &&
+            (identical(other.linkedAccountId, linkedAccountId) ||
+                other.linkedAccountId == linkedAccountId));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -69,11 +73,12 @@ mixin _$EnvelopeDto {
     sortOrder,
     isArchived,
     color,
+    linkedAccountId,
   );
 
   @override
   String toString() {
-    return 'EnvelopeDto(id: $id, categoryGroupId: $categoryGroupId, budgetId: $budgetId, name: $name, createdAt: $createdAt, sortOrder: $sortOrder, isArchived: $isArchived, color: $color)';
+    return 'EnvelopeDto(id: $id, categoryGroupId: $categoryGroupId, budgetId: $budgetId, name: $name, createdAt: $createdAt, sortOrder: $sortOrder, isArchived: $isArchived, color: $color, linkedAccountId: $linkedAccountId)';
   }
 }
 
@@ -93,6 +98,7 @@ abstract mixin class $EnvelopeDtoCopyWith<$Res> {
     @JsonKey(name: 'sort_order') int sortOrder,
     @JsonKey(name: 'is_archived') bool isArchived,
     String? color,
+    @JsonKey(name: 'linked_account_id') String? linkedAccountId,
   });
 }
 
@@ -116,6 +122,7 @@ class _$EnvelopeDtoCopyWithImpl<$Res> implements $EnvelopeDtoCopyWith<$Res> {
     Object? sortOrder = null,
     Object? isArchived = null,
     Object? color = freezed,
+    Object? linkedAccountId = freezed,
   }) {
     return _then(
       _self.copyWith(
@@ -150,6 +157,10 @@ class _$EnvelopeDtoCopyWithImpl<$Res> implements $EnvelopeDtoCopyWith<$Res> {
         color: freezed == color
             ? _self.color
             : color // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        linkedAccountId: freezed == linkedAccountId
+            ? _self.linkedAccountId
+            : linkedAccountId // ignore: cast_nullable_to_non_nullable
                   as String?,
       ),
     );
@@ -258,6 +269,7 @@ extension EnvelopeDtoPatterns on EnvelopeDto {
       @JsonKey(name: 'sort_order') int sortOrder,
       @JsonKey(name: 'is_archived') bool isArchived,
       String? color,
+      @JsonKey(name: 'linked_account_id') String? linkedAccountId,
     )?
     $default, {
     required TResult orElse(),
@@ -274,6 +286,7 @@ extension EnvelopeDtoPatterns on EnvelopeDto {
           _that.sortOrder,
           _that.isArchived,
           _that.color,
+          _that.linkedAccountId,
         );
       case _:
         return orElse();
@@ -304,6 +317,7 @@ extension EnvelopeDtoPatterns on EnvelopeDto {
       @JsonKey(name: 'sort_order') int sortOrder,
       @JsonKey(name: 'is_archived') bool isArchived,
       String? color,
+      @JsonKey(name: 'linked_account_id') String? linkedAccountId,
     )
     $default,
   ) {
@@ -319,6 +333,7 @@ extension EnvelopeDtoPatterns on EnvelopeDto {
           _that.sortOrder,
           _that.isArchived,
           _that.color,
+          _that.linkedAccountId,
         );
       case _:
         throw StateError('Unexpected subclass');
@@ -348,6 +363,7 @@ extension EnvelopeDtoPatterns on EnvelopeDto {
       @JsonKey(name: 'sort_order') int sortOrder,
       @JsonKey(name: 'is_archived') bool isArchived,
       String? color,
+      @JsonKey(name: 'linked_account_id') String? linkedAccountId,
     )?
     $default,
   ) {
@@ -363,6 +379,7 @@ extension EnvelopeDtoPatterns on EnvelopeDto {
           _that.sortOrder,
           _that.isArchived,
           _that.color,
+          _that.linkedAccountId,
         );
       case _:
         return null;
@@ -382,6 +399,7 @@ class _EnvelopeDto implements EnvelopeDto {
     @JsonKey(name: 'sort_order') this.sortOrder = 0,
     @JsonKey(name: 'is_archived') this.isArchived = false,
     this.color = null,
+    @JsonKey(name: 'linked_account_id') this.linkedAccountId = null,
   });
   factory _EnvelopeDto.fromJson(Map<String, dynamic> json) =>
       _$EnvelopeDtoFromJson(json);
@@ -408,6 +426,9 @@ class _EnvelopeDto implements EnvelopeDto {
   @override
   @JsonKey()
   final String? color;
+  @override
+  @JsonKey(name: 'linked_account_id')
+  final String? linkedAccountId;
 
   /// Create a copy of EnvelopeDto
   /// with the given fields replaced by the non-null parameter values.
@@ -439,7 +460,9 @@ class _EnvelopeDto implements EnvelopeDto {
                 other.sortOrder == sortOrder) &&
             (identical(other.isArchived, isArchived) ||
                 other.isArchived == isArchived) &&
-            (identical(other.color, color) || other.color == color));
+            (identical(other.color, color) || other.color == color) &&
+            (identical(other.linkedAccountId, linkedAccountId) ||
+                other.linkedAccountId == linkedAccountId));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -454,11 +477,12 @@ class _EnvelopeDto implements EnvelopeDto {
     sortOrder,
     isArchived,
     color,
+    linkedAccountId,
   );
 
   @override
   String toString() {
-    return 'EnvelopeDto(id: $id, categoryGroupId: $categoryGroupId, budgetId: $budgetId, name: $name, createdAt: $createdAt, sortOrder: $sortOrder, isArchived: $isArchived, color: $color)';
+    return 'EnvelopeDto(id: $id, categoryGroupId: $categoryGroupId, budgetId: $budgetId, name: $name, createdAt: $createdAt, sortOrder: $sortOrder, isArchived: $isArchived, color: $color, linkedAccountId: $linkedAccountId)';
   }
 }
 
@@ -480,6 +504,7 @@ abstract mixin class _$EnvelopeDtoCopyWith<$Res>
     @JsonKey(name: 'sort_order') int sortOrder,
     @JsonKey(name: 'is_archived') bool isArchived,
     String? color,
+    @JsonKey(name: 'linked_account_id') String? linkedAccountId,
   });
 }
 
@@ -503,6 +528,7 @@ class __$EnvelopeDtoCopyWithImpl<$Res> implements _$EnvelopeDtoCopyWith<$Res> {
     Object? sortOrder = null,
     Object? isArchived = null,
     Object? color = freezed,
+    Object? linkedAccountId = freezed,
   }) {
     return _then(
       _EnvelopeDto(
@@ -537,6 +563,10 @@ class __$EnvelopeDtoCopyWithImpl<$Res> implements _$EnvelopeDtoCopyWith<$Res> {
         color: freezed == color
             ? _self.color
             : color // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        linkedAccountId: freezed == linkedAccountId
+            ? _self.linkedAccountId
+            : linkedAccountId // ignore: cast_nullable_to_non_nullable
                   as String?,
       ),
     );

@@ -80,6 +80,19 @@ class EnvelopesDao extends DatabaseAccessor<AppDatabase>
   Future<Envelope?> getEnvelope(String id) =>
       (select(envelopes)..where((t) => t.id.equals(id))).getSingleOrNull();
 
+  Future<Envelope?> getEnvelopeByLinkedAccountId(
+    String accountId,
+    String budgetId,
+  ) =>
+      (select(envelopes)
+            ..where(
+              (t) =>
+                  t.linkedAccountId.equals(accountId) &
+                  t.budgetId.equals(budgetId) &
+                  t.deletedAt.isNull(),
+            ))
+          .getSingleOrNull();
+
   Future<int> insertEnvelope(
     EnvelopesCompanion envelope, {
     InsertMode mode = InsertMode.insert,

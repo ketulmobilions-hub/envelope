@@ -248,6 +248,7 @@ class EnvelopeRepository {
     required String budgetId,
     required String name,
     String? color,
+    String? linkedAccountId,
   }) async {
     _beginLocalWrite();
     try {
@@ -257,6 +258,7 @@ class EnvelopeRepository {
         budgetId: budgetId,
         name: name,
         color: color,
+        linkedAccountId: linkedAccountId,
         createdAt: DateTime.now(),
       );
 
@@ -270,6 +272,29 @@ class EnvelopeRepository {
         'Failed to create envelope',
         error: e,
       );
+    }
+  }
+
+  /// Returns the CC Payment envelope linked to [accountId], or null if none exists.
+  Future<Envelope?> getEnvelopeByLinkedAccountId(
+    String accountId,
+    String budgetId,
+  ) async {
+    try {
+      final local = await _localDatabase.envelopesDao
+          .getEnvelopeByLinkedAccountId(accountId, budgetId);
+      if (local != null) return _mapEnvelopeFromLocal(local);
+
+      // Fallback: search remote envelopes for the budget and find the match.
+      final remote =
+          await _apiClient.envelopes.getEnvelopesByBudget(budgetId);
+      final match = remote.where((e) => e.linkedAccountId == accountId);
+      if (match.isEmpty) return null;
+      final dto = match.first;
+      await _cacheEnvelope(dto);
+      return _mapEnvelopeFromDto(dto);
+    } on Exception {
+      return null;
     }
   }
 
@@ -543,6 +568,17 @@ class EnvelopeRepository {
       budgetPeriodId: budgetPeriodId,
       amount: 0,
     );
+  }
+
+  /// Gets the allocation for [envelopeId] in [budgetPeriodId], or null.
+  Future<EnvelopeAllocation?> getEnvelopeAllocationByEnvelopeAndPeriod({
+    required String envelopeId,
+    required String budgetPeriodId,
+  }) async {
+    final local = await _localDatabase.envelopesDao
+        .getAllocationByEnvelopeAndPeriod(envelopeId, budgetPeriodId);
+    if (local != null) return _mapAllocationFromLocal(local);
+    return null;
   }
 
   /// Watches all allocations for a [budgetPeriodId].
@@ -936,6 +972,7 @@ class EnvelopeRepository {
       sortOrder: dto.sortOrder,
       isArchived: dto.isArchived,
       color: dto.color,
+      linkedAccountId: dto.linkedAccountId,
       createdAt: dto.createdAt,
     );
   }
@@ -949,6 +986,7 @@ class EnvelopeRepository {
       sortOrder: row.sortOrder,
       isArchived: row.isArchived,
       color: row.color,
+      linkedAccountId: row.linkedAccountId,
       createdAt: row.createdAt,
     );
   }
@@ -962,6 +1000,7 @@ class EnvelopeRepository {
       sortOrder: envelope.sortOrder,
       isArchived: envelope.isArchived,
       color: envelope.color,
+      linkedAccountId: envelope.linkedAccountId,
       createdAt: envelope.createdAt,
     );
   }
@@ -1044,6 +1083,7 @@ class EnvelopeRepository {
       sortOrder: Value(dto.sortOrder),
       isArchived: Value(dto.isArchived),
       color: Value(dto.color),
+      linkedAccountId: Value(dto.linkedAccountId),
       createdAt: dto.createdAt,
     );
   }

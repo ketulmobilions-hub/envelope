@@ -27,6 +27,7 @@ class AccountsPage extends StatelessWidget {
       create: (_) => AccountsBloc(
         accountRepository: context.read<AccountRepository>(),
         budgetRepository: context.read<BudgetRepository>(),
+        envelopeRepository: context.read<EnvelopeRepository>(),
         budgetId: budgetId,
       )..add(const AccountsStarted()),
       child: AccountsView(budgetId: budgetId),
@@ -104,6 +105,7 @@ class AccountsView extends StatelessWidget {
           create: (_) => AccountFormCubit(
             accountRepository: context.read<AccountRepository>(),
             budgetRepository: context.read<BudgetRepository>(),
+            envelopeRepository: context.read<EnvelopeRepository>(),
             budgetId: budgetId,
           ),
           child: const AccountFormPage(),
@@ -176,13 +178,20 @@ class _AccountsList extends StatelessWidget {
         AccountsTotalCard(totalBalance: state.totalBalance),
         for (final type in typeOrder) ...[
           _TypeHeader(type: type, l10n: l10n),
-          for (final account in grouped[type]!)
+          for (final account in grouped[type]!) ...[
             AccountListTile(
               account: account,
               onTap: () => _openDetail(context, account),
               onArchive: () => _confirmArchive(context, account),
               onDelete: () => _confirmDelete(context, account),
             ),
+            if (isCreditCard(account.type) && account.currentBalance < 0)
+              CreditCardFloatWarning(
+                accountId: account.id,
+                budgetId: budgetId,
+                accountBalance: account.currentBalance,
+              ),
+          ],
         ],
         if (archived.isNotEmpty) ...[
           Padding(

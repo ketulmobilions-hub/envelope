@@ -21,6 +21,7 @@ mixin _$Envelope {
   int get sortOrder;
   bool get isArchived;
   String? get color;
+  String? get linkedAccountId;
 
   /// Create a copy of Envelope
   /// with the given fields replaced by the non-null parameter values.
@@ -49,7 +50,9 @@ mixin _$Envelope {
                 other.sortOrder == sortOrder) &&
             (identical(other.isArchived, isArchived) ||
                 other.isArchived == isArchived) &&
-            (identical(other.color, color) || other.color == color));
+            (identical(other.color, color) || other.color == color) &&
+            (identical(other.linkedAccountId, linkedAccountId) ||
+                other.linkedAccountId == linkedAccountId));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -64,11 +67,12 @@ mixin _$Envelope {
     sortOrder,
     isArchived,
     color,
+    linkedAccountId,
   );
 
   @override
   String toString() {
-    return 'Envelope(id: $id, categoryGroupId: $categoryGroupId, budgetId: $budgetId, name: $name, createdAt: $createdAt, sortOrder: $sortOrder, isArchived: $isArchived, color: $color)';
+    return 'Envelope(id: $id, categoryGroupId: $categoryGroupId, budgetId: $budgetId, name: $name, createdAt: $createdAt, sortOrder: $sortOrder, isArchived: $isArchived, color: $color, linkedAccountId: $linkedAccountId)';
   }
 }
 
@@ -86,6 +90,7 @@ abstract mixin class $EnvelopeCopyWith<$Res> {
     int sortOrder,
     bool isArchived,
     String? color,
+    String? linkedAccountId,
   });
 }
 
@@ -109,6 +114,7 @@ class _$EnvelopeCopyWithImpl<$Res> implements $EnvelopeCopyWith<$Res> {
     Object? sortOrder = null,
     Object? isArchived = null,
     Object? color = freezed,
+    Object? linkedAccountId = freezed,
   }) {
     return _then(
       _self.copyWith(
@@ -143,6 +149,10 @@ class _$EnvelopeCopyWithImpl<$Res> implements $EnvelopeCopyWith<$Res> {
         color: freezed == color
             ? _self.color
             : color // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        linkedAccountId: freezed == linkedAccountId
+            ? _self.linkedAccountId
+            : linkedAccountId // ignore: cast_nullable_to_non_nullable
                   as String?,
       ),
     );
@@ -251,6 +261,7 @@ extension EnvelopePatterns on Envelope {
       int sortOrder,
       bool isArchived,
       String? color,
+      String? linkedAccountId,
     )?
     $default, {
     required TResult orElse(),
@@ -267,6 +278,7 @@ extension EnvelopePatterns on Envelope {
           _that.sortOrder,
           _that.isArchived,
           _that.color,
+          _that.linkedAccountId,
         );
       case _:
         return orElse();
@@ -297,6 +309,7 @@ extension EnvelopePatterns on Envelope {
       int sortOrder,
       bool isArchived,
       String? color,
+      String? linkedAccountId,
     )
     $default,
   ) {
@@ -312,6 +325,7 @@ extension EnvelopePatterns on Envelope {
           _that.sortOrder,
           _that.isArchived,
           _that.color,
+          _that.linkedAccountId,
         );
       case _:
         throw StateError('Unexpected subclass');
@@ -341,6 +355,7 @@ extension EnvelopePatterns on Envelope {
       int sortOrder,
       bool isArchived,
       String? color,
+      String? linkedAccountId,
     )?
     $default,
   ) {
@@ -356,6 +371,7 @@ extension EnvelopePatterns on Envelope {
           _that.sortOrder,
           _that.isArchived,
           _that.color,
+          _that.linkedAccountId,
         );
       case _:
         return null;
@@ -375,6 +391,7 @@ class _Envelope implements Envelope {
     this.sortOrder = 0,
     this.isArchived = false,
     this.color = null,
+    this.linkedAccountId = null,
   });
   factory _Envelope.fromJson(Map<String, dynamic> json) =>
       _$EnvelopeFromJson(json);
@@ -398,6 +415,9 @@ class _Envelope implements Envelope {
   @override
   @JsonKey()
   final String? color;
+  @override
+  @JsonKey()
+  final String? linkedAccountId;
 
   /// Create a copy of Envelope
   /// with the given fields replaced by the non-null parameter values.
@@ -429,7 +449,9 @@ class _Envelope implements Envelope {
                 other.sortOrder == sortOrder) &&
             (identical(other.isArchived, isArchived) ||
                 other.isArchived == isArchived) &&
-            (identical(other.color, color) || other.color == color));
+            (identical(other.color, color) || other.color == color) &&
+            (identical(other.linkedAccountId, linkedAccountId) ||
+                other.linkedAccountId == linkedAccountId));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -444,11 +466,12 @@ class _Envelope implements Envelope {
     sortOrder,
     isArchived,
     color,
+    linkedAccountId,
   );
 
   @override
   String toString() {
-    return 'Envelope(id: $id, categoryGroupId: $categoryGroupId, budgetId: $budgetId, name: $name, createdAt: $createdAt, sortOrder: $sortOrder, isArchived: $isArchived, color: $color)';
+    return 'Envelope(id: $id, categoryGroupId: $categoryGroupId, budgetId: $budgetId, name: $name, createdAt: $createdAt, sortOrder: $sortOrder, isArchived: $isArchived, color: $color, linkedAccountId: $linkedAccountId)';
   }
 }
 
@@ -468,6 +491,7 @@ abstract mixin class _$EnvelopeCopyWith<$Res>
     int sortOrder,
     bool isArchived,
     String? color,
+    String? linkedAccountId,
   });
 }
 
@@ -491,6 +515,7 @@ class __$EnvelopeCopyWithImpl<$Res> implements _$EnvelopeCopyWith<$Res> {
     Object? sortOrder = null,
     Object? isArchived = null,
     Object? color = freezed,
+    Object? linkedAccountId = freezed,
   }) {
     return _then(
       _Envelope(
@@ -525,6 +550,10 @@ class __$EnvelopeCopyWithImpl<$Res> implements _$EnvelopeCopyWith<$Res> {
         color: freezed == color
             ? _self.color
             : color // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        linkedAccountId: freezed == linkedAccountId
+            ? _self.linkedAccountId
+            : linkedAccountId // ignore: cast_nullable_to_non_nullable
                   as String?,
       ),
     );
