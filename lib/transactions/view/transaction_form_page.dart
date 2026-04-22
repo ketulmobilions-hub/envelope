@@ -122,6 +122,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
               prev.status != curr.status ||
               prev.accounts != curr.accounts ||
               prev.envelopes != curr.envelopes ||
+              prev.categoryGroups != curr.categoryGroups ||
               prev.tags != curr.tags ||
               prev.selectedTagIds != curr.selectedTagIds,
           builder: (context, state) {
@@ -228,18 +229,13 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                       // Envelope picker — hidden for split/income/transfer.
                       if (!_isSplitMode &&
                           _selectedType != 'income' &&
-                          _selectedType != 'transfer' &&
-                          envelopes.isNotEmpty)
-                        AppOptionPicker<Envelope>(
-                          options: envelopes,
+                          _selectedType != 'transfer')
+                        EnvelopePicker(
                           value: envelopes
                               .where((e) => e.id == _selectedEnvelopeId)
                               .firstOrNull,
                           onChanged: (e) =>
                               setState(() => _selectedEnvelopeId = e.id),
-                          labelText: l10n.transactionsEnvelopeLabel,
-                          icon: Icons.mail_outlined,
-                          itemLabel: (e) => e.name,
                         ),
                       if (!_isSplitMode) const SizedBox(height: 16),
 

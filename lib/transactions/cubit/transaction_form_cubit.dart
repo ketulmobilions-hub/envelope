@@ -19,11 +19,11 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     required this.userId,
     this.budgetPeriodId,
     this.transaction,
-  })  : _transactionRepository = transactionRepository,
-        _accountRepository = accountRepository,
-        _envelopeRepository = envelopeRepository,
-        _budgetRepository = budgetRepository,
-        super(const TransactionFormState()) {
+  }) : _transactionRepository = transactionRepository,
+       _accountRepository = accountRepository,
+       _envelopeRepository = envelopeRepository,
+       _budgetRepository = budgetRepository,
+       super(const TransactionFormState()) {
     _loadData();
   }
 
@@ -40,28 +40,33 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
 
   Future<void> _loadData() async {
     try {
-      final accounts = await _accountRepository
-          .watchAccounts(budgetId)
-          .first;
+      final accounts = await _accountRepository.watchAccounts(budgetId).first;
       final envelopes = await _envelopeRepository
           .watchEnvelopes(budgetId)
+          .first;
+      final categoryGroups = await _envelopeRepository
+          .watchCategoryGroups(budgetId)
           .first;
       final tags = await _transactionRepository.getTags(budgetId);
 
       var selectedTagIds = <String>[];
       var initialSplits = <SplitEntry>[];
       if (isEditing) {
-        selectedTagIds = await _transactionRepository
-            .getTagIdsForTransaction(transaction!.id);
+        selectedTagIds = await _transactionRepository.getTagIdsForTransaction(
+          transaction!.id,
+        );
 
-        final splits = await _transactionRepository
-            .getTransactionSplits(transaction!.id);
-        
+        final splits = await _transactionRepository.getTransactionSplits(
+          transaction!.id,
+        );
+
         initialSplits = splits
-            .map((s) => SplitEntry(
-                  envelopeId: s.envelopeId,
-                  amountText: (s.amount / 100).toStringAsFixed(2),
-                ))
+            .map(
+              (s) => SplitEntry(
+                envelopeId: s.envelopeId,
+                amountText: (s.amount / 100).toStringAsFixed(2),
+              ),
+            )
             .toList();
       }
 
@@ -71,6 +76,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
           status: TransactionFormStatus.loaded,
           accounts: accounts,
           envelopes: envelopes,
+          categoryGroups: categoryGroups,
           tags: tags,
           selectedTagIds: selectedTagIds,
           initialSplits: initialSplits,
@@ -104,6 +110,23 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
       if (isClosed) return;
       emit(state.copyWith(tagError: 'Failed to create tag.'));
       emit(state.copyWith());
+    }
+  }
+
+  Future<void> reloadEnvelopes() async {
+    try {
+      final envelopes = await _envelopeRepository
+          .watchEnvelopes(budgetId)
+          .first;
+      final categoryGroups = await _envelopeRepository
+          .watchCategoryGroups(budgetId)
+          .first;
+      if (isClosed) return;
+      emit(
+        state.copyWith(envelopes: envelopes, categoryGroups: categoryGroups),
+      );
+    } on Exception {
+      // Best-effort — stale data remains usable.
     }
   }
 
@@ -169,8 +192,9 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         await _saveTags(transactionId, selectedTagIds);
 
         // Income delta for edits.
-        final oldIncome =
-            transaction!.type == 'income' ? transaction!.amount : 0;
+        final oldIncome = transaction!.type == 'income'
+            ? transaction!.amount
+            : 0;
         final newIncome = type == 'income' ? amountCents : 0;
         final incomeDelta = newIncome - oldIncome;
         if (incomeDelta != 0) {
@@ -227,6 +251,35 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
 
         if (!isFutureDate) {
           // Today or past: post the transaction immediately.
+
+          // Ensure allocation rows exist before the transaction so the DB
+          // spent-amount trigger has a row to update (even for $0-allocated envelopes).
+          if (type == 'expense' && budgetPeriodId != null) {
+            if (!isSplitMode && envelopeId != null) {
+              try {
+                await _envelopeRepository.ensureAllocation(
+                  envelopeId: envelopeId,
+                  budgetPeriodId: budgetPeriodId!,
+                );
+              } on EnvelopeException {
+                // Best-effort.
+              }
+            } else if (isSplitMode) {
+              for (final split in splits) {
+                if (split.envelopeId != null) {
+                  try {
+                    await _envelopeRepository.ensureAllocation(
+                      envelopeId: split.envelopeId!,
+                      budgetPeriodId: budgetPeriodId!,
+                    );
+                  } on EnvelopeException {
+                    // Best-effort.
+                  }
+                }
+              }
+            }
+          }
+
           final created = await _transactionRepository.createTransaction(
             budgetId: budgetId,
             accountId: accountId,
@@ -488,10 +541,10 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
       'monthly' => _addMonths(from, 1),
       'yearly' => _addMonths(from, 12),
       'custom' => _addCustomInterval(
-          from,
-          customInterval ?? 1,
-          customUnit ?? 'days',
-        ),
+        from,
+        customInterval ?? 1,
+        customUnit ?? 'days',
+      ),
       _ => from.add(const Duration(days: 30)),
     };
   }
@@ -508,12 +561,11 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     DateTime date,
     int interval,
     String unit,
-  ) =>
-      switch (unit) {
-        'weeks' => date.add(Duration(days: interval * 7)),
-        'months' => _addMonths(date, interval),
-        _ => date.add(Duration(days: interval)),
-      };
+  ) => switch (unit) {
+    'weeks' => date.add(Duration(days: interval * 7)),
+    'months' => _addMonths(date, interval),
+    _ => date.add(Duration(days: interval)),
+  };
 
   Future<void> _saveSplits(
     String transactionId,
@@ -556,9 +608,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     final existing = await _transactionRepository.getTagIdsForTransaction(
       transactionId,
     );
-    final toAdd = selectedTagIds
-        .where((id) => !existing.contains(id))
-        .toList();
+    final toAdd = selectedTagIds.where((id) => !existing.contains(id)).toList();
     final toRemove = existing
         .where((id) => !selectedTagIds.contains(id))
         .toList();
@@ -609,8 +659,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         final alloc = allocations
             .where((a) => a.envelopeId == envId)
             .firstOrNull;
-        if (alloc != null &&
-            EnvelopeRepository.calculateRollover(alloc) < 0) {
+        if (alloc != null && EnvelopeRepository.calculateRollover(alloc) < 0) {
           overspent = alloc;
           break;
         }
@@ -618,7 +667,8 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
       if (overspent == null) return null;
 
       final available = EnvelopeRepository.calculateRollover(overspent);
-      final envelopeName = state.envelopes
+      final envelopeName =
+          state.envelopes
               .where((e) => e.id == overspent!.envelopeId)
               .firstOrNull
               ?.name ??

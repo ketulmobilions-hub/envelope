@@ -89,7 +89,7 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
   void _submitEditing() {
     final text = _controller.text.trim();
     final cents = parseCents(text);
-    if (cents != null && cents > 0) {
+    if (cents != null && cents >= 0) {
       widget.onAllocate?.call(cents);
     }
     setState(() => _isEditing = false);

@@ -9,8 +9,11 @@ import 'package:envelope/accounts/view/account_form_page.dart';
 import 'package:envelope/accounts/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
+import 'package:envelope/transactions/bloc/bloc.dart';
+import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:transaction_repository/transaction_repository.dart';
 
 /// Page that provides [AccountsBloc] and displays the accounts list.
 class AccountsPage extends StatelessWidget {
@@ -211,11 +214,29 @@ class _AccountsList extends StatelessWidget {
   ) async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => BlocProvider(
-          create: (_) => AccountDetailCubit(
-            accountRepository: context.read<AccountRepository>(),
-            account: account,
-          ),
+        builder: (_) => MultiBlocProvider(
+          providers: [
+            BlocProvider(
+              create: (_) => AccountDetailCubit(
+                accountRepository: context.read<AccountRepository>(),
+                account: account,
+              ),
+            ),
+            BlocProvider(
+              create: (_) => TransactionsBloc(
+                transactionRepository: context.read<TransactionRepository>(),
+                accountRepository: context.read<AccountRepository>(),
+                envelopeRepository: context.read<EnvelopeRepository>(),
+                budgetId: account.budgetId,
+              )
+                ..add(const TransactionsStarted())
+                ..add(
+                  TransactionsFilterChanged(
+                    TransactionsFilter(accountId: account.id),
+                  ),
+                ),
+            ),
+          ],
           child: const AccountDetailPage(),
         ),
       ),

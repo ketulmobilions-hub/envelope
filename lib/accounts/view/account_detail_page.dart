@@ -6,9 +6,15 @@ import 'package:envelope/accounts/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
+import 'package:envelope/transactions/bloc/bloc.dart';
+import 'package:envelope/transactions/cubit/cubit.dart';
+import 'package:envelope/transactions/view/transaction_form_page.dart';
+import 'package:envelope/transactions/widgets/widgets.dart';
+import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:transaction_repository/transaction_repository.dart';
 
 /// Detail page for a single account showing balance info and reconciliation.
 ///
@@ -136,28 +142,9 @@ class AccountDetailPage extends StatelessWidget {
                 label: Text(l10n.accountsReconcile),
               ),
               const SizedBox(height: 24),
-              // Transactions placeholder.
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.receipt_long_outlined,
-                        size: 48,
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n.accountsTransactionsPlaceholder,
-                        style:
-                            Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.outline,
-                                ),
-                      ),
-                    ],
-                  ),
-                ),
+              _AccountTransactionsList(
+                account: account,
+                budgetId: account.budgetId,
               ),
             ],
           ),
@@ -278,6 +265,140 @@ class AccountDetailPage extends StatelessWidget {
     if (result != null && context.mounted) {
       await cubit.reconcile(result);
     }
+  }
+}
+
+class _AccountTransactionsList extends StatelessWidget {
+  const _AccountTransactionsList({
+    required this.account,
+    required this.budgetId,
+  });
+
+  final Account account;
+  final String budgetId;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
+    return BlocConsumer<TransactionsBloc, TransactionsState>(
+      listenWhen: (prev, curr) =>
+          curr.status == TransactionsStatus.error && curr.error != null,
+      listener: (context, state) {
+        final message = switch (state.error!) {
+          TransactionsError.loadFailed => l10n.transactionsErrorLoadFailed,
+          TransactionsError.deleteFailed => l10n.transactionsErrorDeleteFailed,
+          TransactionsError.undoFailed => l10n.transactionsErrorUndoFailed,
+        };
+        showAppSnackBar(context, SnackBar(content: Text(message)));
+      },
+      builder: (context, state) {
+        if (state.status == TransactionsStatus.loading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final grouped = state.transactionsByDate;
+
+        if (grouped.isEmpty) {
+          return Card(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.receipt_long_outlined,
+                    size: 48,
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.accountsTransactionsPlaceholder,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final sortedDates = grouped.keys.toList()
+          ..sort((a, b) => b.compareTo(a));
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final date in sortedDates)
+              TransactionDateGroup(
+                date: date,
+                transactions: grouped[date]!,
+                allTransactions: state.transactions,
+                accounts: state.accounts,
+                envelopes: state.envelopes,
+                splitEnvelopeIds: state.splitEnvelopeIds,
+                onTap: (txn) => _openEdit(context, txn),
+                onEdit: (txn) => _openEdit(context, txn),
+                onDelete: (txn) => _onDelete(context, txn),
+              ),
+            const SizedBox(height: 24),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _openEdit(BuildContext context, Transaction transaction) async {
+    final bloc = context.read<TransactionsBloc>();
+    final budgetRepository = context.read<BudgetRepository>();
+    final periods =
+        await budgetRepository.watchBudgetPeriods(budgetId).first;
+    String? periodId;
+    if (periods.isNotEmpty) {
+      final now = DateTime.now();
+      final current = periods.firstWhere(
+        (p) =>
+            !p.isClosed &&
+            !p.startDate.isAfter(now) &&
+            !p.endDate.isBefore(now),
+        orElse: () =>
+            periods.where((p) => !p.isClosed).lastOrNull ?? periods.last,
+      );
+      periodId = current.id;
+    }
+    if (!context.mounted) return;
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => BlocProvider(
+          create: (_) => TransactionFormCubit(
+            transactionRepository: context.read<TransactionRepository>(),
+            accountRepository: context.read<AccountRepository>(),
+            envelopeRepository: context.read<EnvelopeRepository>(),
+            budgetRepository: context.read<BudgetRepository>(),
+            budgetId: budgetId,
+            userId: transaction.createdBy,
+            budgetPeriodId: periodId,
+            transaction: transaction,
+          ),
+          child: TransactionFormPage(transaction: transaction),
+        ),
+      ),
+    );
+    if (result == true && context.mounted) {
+      bloc.add(const TransactionsRefreshRequested());
+    }
+  }
+
+  void _onDelete(BuildContext context, Transaction transaction) {
+    final l10n = context.l10n;
+    final bloc = context.read<TransactionsBloc>()
+      ..add(TransactionDeleted(transaction.id));
+    showUndoSnackBar(
+      context,
+      message: l10n.transactionsDeleted,
+      undoLabel: l10n.transactionsUndo,
+      onUndo: () => bloc.add(const TransactionUndoDeleteRequested()),
+    );
   }
 }
 
