@@ -420,8 +420,10 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
           create: (_) => TransferFormCubit(
             transactionRepository: context.read<TransactionRepository>(),
             accountRepository: context.read<AccountRepository>(),
+            envelopeRepository: context.read<EnvelopeRepository>(),
             budgetId: cubit.budgetId,
             userId: cubit.userId,
+            budgetPeriodId: cubit.budgetPeriodId,
           ),
           child: const TransferFormPage(),
         ),

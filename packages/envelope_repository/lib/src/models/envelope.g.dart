@@ -15,6 +15,7 @@ _Envelope _$EnvelopeFromJson(Map<String, dynamic> json) => _Envelope(
   sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
   isArchived: json['isArchived'] as bool? ?? false,
   color: json['color'] as String? ?? null,
+  linkedAccountId: json['linkedAccountId'] as String? ?? null,
 );
 
 Map<String, dynamic> _$EnvelopeToJson(_Envelope instance) => <String, dynamic>{
@@ -26,4 +27,5 @@ Map<String, dynamic> _$EnvelopeToJson(_Envelope instance) => <String, dynamic>{
   'sortOrder': instance.sortOrder,
   'isArchived': instance.isArchived,
   'color': instance.color,
+  'linkedAccountId': instance.linkedAccountId,
 };

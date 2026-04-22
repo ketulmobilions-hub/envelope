@@ -2203,5 +2203,11 @@
     "inviteRevoked": "Invite revoked",
     "@inviteRevoked": { "description": "Snackbar after revoking invite" },
     "inviteGenerating": "Generating invite link...",
-    "@inviteGenerating": { "description": "Loading message while generating invite" }
+    "@inviteGenerating": { "description": "Loading message while generating invite" },
+    "ccPaymentsCategoryGroupName": "Credit Card Payments",
+    "@ccPaymentsCategoryGroupName": { "description": "Name for the auto-created category group that holds CC payment envelopes" },
+    "ccPaymentEnvelopeName": "{name} Payment",
+    "@ccPaymentEnvelopeName": { "description": "Name for an auto-created CC payment envelope", "placeholders": { "name": { "type": "String" } } },
+    "ccFloatWarning": "Riding the float — reserve more funds to cover your balance",
+    "@ccFloatWarning": { "description": "Warning shown when CC account balance exceeds CC payment envelope balance" }
 }
