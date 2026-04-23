@@ -465,6 +465,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       overspentEnvelopeName: data.envelopeName,
       deficitCents: data.deficitCents.abs(),
       readyToAssign: data.readyToAssign,
+      ccPaymentAllocation: data.ccPaymentAllocation,
     );
 
     if (!mounted) return;

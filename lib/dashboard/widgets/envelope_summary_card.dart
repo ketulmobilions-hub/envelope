@@ -1,13 +1,14 @@
 import 'dart:async';
 
 import 'package:budget_repository/budget_repository.dart';
+import 'package:envelope/accounts/widgets/account_helpers.dart';
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/dashboard/bloc/bloc.dart';
-import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/envelopes/cubit/cubit.dart';
 import 'package:envelope/envelopes/view/envelope_detail_page.dart';
 import 'package:envelope/envelopes/widgets/envelope_card.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:envelope/transactions/widgets/cover_overspend_dialog.dart';
 import 'package:envelope_repository/envelope_repository.dart';
@@ -236,6 +237,31 @@ class _CategoryGroupSection extends StatelessWidget {
     EnvelopeSummary summary,
   ) async {
     final dashState = context.read<DashboardBloc>().state;
+
+    // Find a CC account used for this envelope's transactions, then look up
+    // its linked CC Payment allocation so it can be funded alongside the cover.
+    final ccAccountId = dashState.transactions
+        .where((t) => t.envelopeId == summary.envelope.id)
+        .map((t) => t.accountId)
+        .where((id) {
+          final account =
+              dashState.accounts.where((a) => a.id == id).firstOrNull;
+          return account != null && isCreditCard(account.type);
+        })
+        .firstOrNull;
+
+    final ccPaymentEnvelope = ccAccountId != null
+        ? dashState.envelopes
+            .where((e) => e.linkedAccountId == ccAccountId)
+            .firstOrNull
+        : null;
+
+    final ccPaymentAllocation = ccPaymentEnvelope != null
+        ? dashState.allocations
+            .where((a) => a.envelopeId == ccPaymentEnvelope.id)
+            .firstOrNull
+        : null;
+
     final result = await showCoverOverspendDialog(
       context,
       budgetRepository: context.read<BudgetRepository>(),
@@ -246,6 +272,7 @@ class _CategoryGroupSection extends StatelessWidget {
       overspentEnvelopeName: summary.envelope.name,
       deficitCents: -summary.available,
       readyToAssign: dashState.readyToAssign,
+      ccPaymentAllocation: ccPaymentAllocation,
     );
 
     if (result == true && context.mounted) {

@@ -17,6 +17,7 @@ final class OverspendData extends Equatable {
     required this.allocations,
     required this.envelopes,
     this.readyToAssign = 0,
+    this.ccPaymentAllocation,
   });
 
   final String envelopeName;
@@ -26,6 +27,11 @@ final class OverspendData extends Equatable {
   final List<Envelope> envelopes;
   final int readyToAssign;
 
+  /// The CC Payment envelope allocation for the account that made this
+  /// expense, if it was a credit card transaction. When present, covering the
+  /// overspend should also fund this allocation by the same amount.
+  final EnvelopeAllocation? ccPaymentAllocation;
+
   @override
   List<Object?> get props => [
         envelopeName,
@@ -34,6 +40,7 @@ final class OverspendData extends Equatable {
         allocations,
         envelopes,
         readyToAssign,
+        ccPaymentAllocation,
       ];
 }
 

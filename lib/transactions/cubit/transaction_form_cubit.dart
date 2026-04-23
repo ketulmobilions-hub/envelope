@@ -229,6 +229,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
           envelopeId: envelopeId,
           isSplitMode: isSplitMode,
           splits: splits,
+          accountId: accountId,
         );
 
         if (isClosed) return;
@@ -353,6 +354,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
             envelopeId: envelopeId,
             isSplitMode: isSplitMode,
             splits: splits,
+            accountId: accountId,
           );
 
           if (isClosed) return;
@@ -473,6 +475,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
           envelopeId: envelopeId,
           isSplitMode: isSplitMode,
           splits: splits,
+          accountId: accountId,
         );
 
         if (isClosed) return;
@@ -653,6 +656,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     required String? envelopeId,
     required bool isSplitMode,
     required List<SplitEntry> splits,
+    String? accountId,
   }) async {
     final periodId = budgetPeriodId;
     if (periodId == null) return null;
@@ -709,6 +713,27 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         // Fallback to 0 if unavailable.
       }
 
+      EnvelopeAllocation? ccPaymentAllocation;
+      if (accountId != null && budgetPeriodId != null) {
+        final account =
+            state.accounts.where((a) => a.id == accountId).firstOrNull;
+        if (account != null && isCreditCard(account.type)) {
+          try {
+            final ccEnvelope = await _envelopeRepository
+                .getEnvelopeByLinkedAccountId(accountId, budgetId);
+            if (ccEnvelope != null) {
+              ccPaymentAllocation = await _envelopeRepository
+                  .getEnvelopeAllocationByEnvelopeAndPeriod(
+                    envelopeId: ccEnvelope.id,
+                    budgetPeriodId: budgetPeriodId!,
+                  );
+            }
+          } on Exception {
+            // Best-effort; omit CC Payment funding if lookup fails.
+          }
+        }
+      }
+
       return OverspendData(
         envelopeName: envelopeName,
         deficitCents: available,
@@ -716,6 +741,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         allocations: allocations,
         envelopes: envelopes,
         readyToAssign: readyToAssign,
+        ccPaymentAllocation: ccPaymentAllocation,
       );
     } on Exception {
       return null;
@@ -784,10 +810,14 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         );
     if (ccPaymentAlloc == null) return;
 
-    // Cap the CC Payment increase at the spending envelope's available balance
-    // to avoid over-funding when the envelope is already overspent.
-    // spentAmount already includes this expense (DB trigger ran before we get here).
-    final available = max(0, EnvelopeRepository.calculateRollover(spendingAlloc));
+    // spentAmount already includes this expense (DB trigger ran before we get
+    // here), so add expenseAmount back to recover the pre-expense available
+    // balance. This ensures the CC Payment envelope is funded for any portion
+    // of the expense that was actually covered by the spending envelope.
+    final available = max(
+      0,
+      EnvelopeRepository.calculateRollover(spendingAlloc) + expenseAmount,
+    );
     final transferAmount = min(expenseAmount, available);
     if (transferAmount <= 0) return;
 
