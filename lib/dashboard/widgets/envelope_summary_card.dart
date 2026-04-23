@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:account_repository/account_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/accounts/widgets/account_helpers.dart';
 import 'package:envelope/accounts/widgets/format_cents.dart';
@@ -21,12 +22,16 @@ class EnvelopeSummaryCard extends StatelessWidget {
   const EnvelopeSummaryCard({
     required this.summaries,
     this.categoryGroups = const [],
+    this.accounts = const [],
+    this.ccCreditLimits = const {},
     this.onViewAll,
     super.key,
   });
 
   final List<EnvelopeSummary> summaries;
   final List<CategoryGroup> categoryGroups;
+  final List<Account> accounts;
+  final Map<String, int?> ccCreditLimits;
   final VoidCallback? onViewAll;
 
   @override
@@ -108,6 +113,8 @@ class EnvelopeSummaryCard extends StatelessWidget {
               groupName: entry.key,
               summaries: entry.value,
               categoryGroups: categoryGroups,
+              accounts: accounts,
+              ccCreditLimits: ccCreditLimits,
               onViewAll: onViewAll,
             ),
         ],
@@ -121,12 +128,16 @@ class _CategoryGroupSection extends StatelessWidget {
     required this.groupName,
     required this.summaries,
     required this.categoryGroups,
+    this.accounts = const [],
+    this.ccCreditLimits = const {},
     this.onViewAll,
   });
 
   final String groupName;
   final List<EnvelopeSummary> summaries;
   final List<CategoryGroup> categoryGroups;
+  final List<Account> accounts;
+  final Map<String, int?> ccCreditLimits;
   final VoidCallback? onViewAll;
 
   @override
@@ -198,30 +209,54 @@ class _CategoryGroupSection extends StatelessWidget {
                 runSpacing: 8,
                 children: summaries
                     .map(
-                      (s) => SizedBox(
-                        width: cardWidth,
-                        child: EnvelopeCard(
-                          name: s.envelope.name,
-                          availableCents: s.available,
-                          allocatedCents: s.allocated,
-                          spentCents: s.spent,
-                          isOverspent: s.isOverspent,
-                          color: AppColors.fromHex(s.envelope.color),
-                          heroTag: 'envelope_${s.envelope.id}',
-                          onTap: () => _openDetail(context, s),
-                          onAllocate: (cents) {
-                            context.read<DashboardBloc>().add(
-                              QuickAllocationRequested(
-                                envelopeId: s.envelope.id,
-                                amount: cents,
-                              ),
-                            );
-                          },
-                          onFixOverspend: s.isOverspent && s.allocation != null
-                              ? () => _fixOverspend(context, s)
-                              : null,
-                        ),
-                      ),
+                      (s) {
+                        final linkedId = s.envelope.linkedAccountId;
+                        final creditLimit = linkedId != null
+                            ? ccCreditLimits[linkedId]
+                            : null;
+                        final ccAccount = linkedId != null
+                            ? accounts
+                                .where((a) => a.id == linkedId)
+                                .firstOrNull
+                            : null;
+
+                        final hasCreditInfo =
+                            creditLimit != null && ccAccount != null;
+                        final displayAvailable = hasCreditInfo
+                            ? creditLimit + ccAccount.currentBalance
+                            : s.available;
+                        final displayAllocated =
+                            hasCreditInfo ? creditLimit : s.allocated;
+                        final displayOverspent = hasCreditInfo
+                            ? displayAvailable < 0
+                            : s.isOverspent;
+
+                        return SizedBox(
+                          width: cardWidth,
+                          child: EnvelopeCard(
+                            name: s.envelope.name,
+                            availableCents: displayAvailable,
+                            allocatedCents: displayAllocated,
+                            spentCents: s.spent,
+                            isOverspent: displayOverspent,
+                            color: AppColors.fromHex(s.envelope.color),
+                            heroTag: 'envelope_${s.envelope.id}',
+                            onTap: () => _openDetail(context, s),
+                            onAllocate: (cents) {
+                              context.read<DashboardBloc>().add(
+                                QuickAllocationRequested(
+                                  envelopeId: s.envelope.id,
+                                  amount: cents,
+                                ),
+                              );
+                            },
+                            onFixOverspend:
+                                s.isOverspent && s.allocation != null
+                                    ? () => _fixOverspend(context, s)
+                                    : null,
+                          ),
+                        );
+                      },
                     )
                     .toList(),
               );

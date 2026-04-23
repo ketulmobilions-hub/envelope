@@ -12,6 +12,7 @@ abstract class DebtAccountDto with _$DebtAccountDto {
     @JsonKey(name: 'minimum_payment') required int minimumPayment,
     @JsonKey(name: 'original_balance') required int originalBalance,
     @JsonKey(name: 'payoff_strategy') String? payoffStrategy,
+    @JsonKey(name: 'credit_limit', includeIfNull: false) int? creditLimit,
   }) = _DebtAccountDto;
 
   factory DebtAccountDto.fromJson(Map<String, dynamic> json) =>

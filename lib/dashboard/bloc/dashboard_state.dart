@@ -49,6 +49,7 @@ final class DashboardState extends Equatable {
     this.allocations = const [],
     this.recentTransactions = const [],
     this.transactions = const [],
+    this.ccCreditLimits = const {},
     this.hasRemoteUpdate = false,
   });
 
@@ -65,6 +66,10 @@ final class DashboardState extends Equatable {
   /// All transactions for the budget (used to compute per-envelope spending
   /// as a fallback when no allocation record exists yet).
   final List<Transaction> transactions;
+
+  /// Maps CC account ID → credit limit (in cents). Only populated for CC
+  /// accounts that have a credit limit set on their debt account record.
+  final Map<String, int?> ccCreditLimits;
 
   final bool hasRemoteUpdate;
 
@@ -121,6 +126,7 @@ final class DashboardState extends Equatable {
     List<EnvelopeAllocation>? allocations,
     List<Transaction>? recentTransactions,
     List<Transaction>? transactions,
+    Map<String, int?>? ccCreditLimits,
     bool? hasRemoteUpdate,
   }) {
     return DashboardState(
@@ -136,6 +142,7 @@ final class DashboardState extends Equatable {
       allocations: allocations ?? this.allocations,
       recentTransactions: recentTransactions ?? this.recentTransactions,
       transactions: transactions ?? this.transactions,
+      ccCreditLimits: ccCreditLimits ?? this.ccCreditLimits,
       hasRemoteUpdate: hasRemoteUpdate ?? this.hasRemoteUpdate,
     );
   }
@@ -154,6 +161,7 @@ final class DashboardState extends Equatable {
     allocations,
     recentTransactions,
     transactions,
+    ccCreditLimits,
     hasRemoteUpdate,
   ];
 }

@@ -102,6 +102,16 @@ final class BudgetDeleteRequested extends DashboardEvent {
   const BudgetDeleteRequested();
 }
 
+/// Internal event when CC credit limits are fetched from debt accounts.
+final class _CcCreditLimitsLoaded extends DashboardEvent {
+  const _CcCreditLimitsLoaded(this.limits);
+
+  final Map<String, int?> limits;
+
+  @override
+  List<Object?> get props => [limits];
+}
+
 /// Internal event when a remote collaborator change is received.
 final class _RemoteChangeReceived extends DashboardEvent {
   const _RemoteChangeReceived();

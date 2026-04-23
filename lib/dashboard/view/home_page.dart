@@ -288,6 +288,8 @@ class _HomeView extends StatelessWidget {
                   EnvelopeSummaryCard(
                     summaries: state.envelopeSummaries,
                     categoryGroups: state.categoryGroups,
+                    accounts: state.accounts,
+                    ccCreditLimits: state.ccCreditLimits,
                     onViewAll: () => context.push(
                       '${AppRoutes.envelopes}?budgetId=$budgetId',
                     ),

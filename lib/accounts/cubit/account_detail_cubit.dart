@@ -1,5 +1,6 @@
 import 'package:account_repository/account_repository.dart';
 import 'package:bloc/bloc.dart';
+import 'package:envelope/accounts/widgets/account_helpers.dart';
 import 'package:equatable/equatable.dart';
 
 part 'account_detail_state.dart';
@@ -9,9 +10,20 @@ class AccountDetailCubit extends Cubit<AccountDetailState> {
     required AccountRepository accountRepository,
     required Account account,
   })  : _accountRepository = accountRepository,
-        super(AccountDetailState(account: account));
+        super(AccountDetailState(account: account)) {
+    if (isCreditCard(account.type)) _loadDebtAccount();
+  }
 
   final AccountRepository _accountRepository;
+
+  Future<void> _loadDebtAccount() async {
+    try {
+      final debt = await _accountRepository.getDebtAccount(state.account.id);
+      emit(state.copyWith(debtAccount: debt));
+    } on AccountException {
+      // Non-critical; detail page still works without debt account.
+    }
+  }
 
   /// Refreshes the account data from the repository.
   Future<void> refresh() async {
@@ -19,6 +31,7 @@ class AccountDetailCubit extends Cubit<AccountDetailState> {
       final updated =
           await _accountRepository.getAccount(state.account.id);
       emit(state.copyWith(account: updated));
+      if (isCreditCard(updated.type)) await _loadDebtAccount();
     } on AccountException {
       // Keep current data if refresh fails.
     }

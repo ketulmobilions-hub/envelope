@@ -27,12 +27,28 @@ class AccountFormCubit extends Cubit<AccountFormState> {
 
   bool get isEditing => account != null;
 
+  /// Loads the existing credit limit for the account being edited.
+  ///
+  /// Emits [AccountFormState.existingCreditLimitCents] once resolved.
+  Future<void> loadExistingCreditLimit() async {
+    if (account == null) return;
+    try {
+      final debt = await _accountRepository.getDebtAccount(account!.id);
+      emit(
+        state.copyWith(existingCreditLimitCents: debt?.creditLimit),
+      );
+    } on AccountException {
+      // Non-critical; form still works without the pre-fill.
+    }
+  }
+
   Future<void> submit({
     required String name,
     required String type,
     required int balanceCents,
     required String currency,
     required bool isOnBudget,
+    int? creditLimitCents,
   }) async {
     emit(state.copyWith(status: AccountFormStatus.submitting));
     try {
@@ -49,6 +65,13 @@ class AccountFormCubit extends Cubit<AccountFormState> {
           updatedAt: DateTime.now(),
         );
         await _accountRepository.updateAccount(updated);
+
+        if (isCreditCard(type) && creditLimitCents != null) {
+          await _accountRepository.upsertDebtAccountCreditLimit(
+            oldAccount.id,
+            creditLimitCents,
+          );
+        }
 
         // Adjust income when isOnBudget or startingBalance changes.
         if (_budgetRepository != null) {
@@ -90,8 +113,19 @@ class AccountFormCubit extends Cubit<AccountFormState> {
           );
         }
 
-        if (isCreditCard(type) && _envelopeRepository != null) {
-          await _createCCPaymentEnvelope(accountId: created.id, cardName: name);
+        if (isCreditCard(type)) {
+          if (_envelopeRepository != null) {
+            await _createCCPaymentEnvelope(
+              accountId: created.id,
+              cardName: name,
+            );
+          }
+          if (creditLimitCents != null) {
+            await _accountRepository.upsertDebtAccountCreditLimit(
+              created.id,
+              creditLimitCents,
+            );
+          }
         }
       }
       emit(state.copyWith(status: AccountFormStatus.success));

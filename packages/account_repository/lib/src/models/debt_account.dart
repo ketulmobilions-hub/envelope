@@ -11,6 +11,7 @@ abstract class DebtAccount with _$DebtAccount {
     required int minimumPayment,
     required int originalBalance,
     String? payoffStrategy,
+    int? creditLimit,
   }) = _DebtAccount;
 
   factory DebtAccount.fromJson(Map<String, dynamic> json) =>

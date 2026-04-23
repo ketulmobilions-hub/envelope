@@ -18,6 +18,7 @@ mixin _$DebtAccount {
   int get minimumPayment;
   int get originalBalance;
   String? get payoffStrategy;
+  int? get creditLimit;
 
   /// Create a copy of DebtAccount
   /// with the given fields replaced by the non-null parameter values.
@@ -43,7 +44,9 @@ mixin _$DebtAccount {
             (identical(other.originalBalance, originalBalance) ||
                 other.originalBalance == originalBalance) &&
             (identical(other.payoffStrategy, payoffStrategy) ||
-                other.payoffStrategy == payoffStrategy));
+                other.payoffStrategy == payoffStrategy) &&
+            (identical(other.creditLimit, creditLimit) ||
+                other.creditLimit == creditLimit));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -55,11 +58,12 @@ mixin _$DebtAccount {
     minimumPayment,
     originalBalance,
     payoffStrategy,
+    creditLimit,
   );
 
   @override
   String toString() {
-    return 'DebtAccount(accountId: $accountId, interestRate: $interestRate, minimumPayment: $minimumPayment, originalBalance: $originalBalance, payoffStrategy: $payoffStrategy)';
+    return 'DebtAccount(accountId: $accountId, interestRate: $interestRate, minimumPayment: $minimumPayment, originalBalance: $originalBalance, payoffStrategy: $payoffStrategy, creditLimit: $creditLimit)';
   }
 }
 
@@ -76,6 +80,7 @@ abstract mixin class $DebtAccountCopyWith<$Res> {
     int minimumPayment,
     int originalBalance,
     String? payoffStrategy,
+    int? creditLimit,
   });
 }
 
@@ -96,6 +101,7 @@ class _$DebtAccountCopyWithImpl<$Res> implements $DebtAccountCopyWith<$Res> {
     Object? minimumPayment = null,
     Object? originalBalance = null,
     Object? payoffStrategy = freezed,
+    Object? creditLimit = freezed,
   }) {
     return _then(
       _self.copyWith(
@@ -119,6 +125,10 @@ class _$DebtAccountCopyWithImpl<$Res> implements $DebtAccountCopyWith<$Res> {
             ? _self.payoffStrategy
             : payoffStrategy // ignore: cast_nullable_to_non_nullable
                   as String?,
+        creditLimit: freezed == creditLimit
+            ? _self.creditLimit
+            : creditLimit // ignore: cast_nullable_to_non_nullable
+                  as int?,
       ),
     );
   }
@@ -223,6 +233,7 @@ extension DebtAccountPatterns on DebtAccount {
       int minimumPayment,
       int originalBalance,
       String? payoffStrategy,
+      int? creditLimit,
     )?
     $default, {
     required TResult orElse(),
@@ -236,6 +247,7 @@ extension DebtAccountPatterns on DebtAccount {
           _that.minimumPayment,
           _that.originalBalance,
           _that.payoffStrategy,
+          _that.creditLimit,
         );
       case _:
         return orElse();
@@ -263,6 +275,7 @@ extension DebtAccountPatterns on DebtAccount {
       int minimumPayment,
       int originalBalance,
       String? payoffStrategy,
+      int? creditLimit,
     )
     $default,
   ) {
@@ -275,6 +288,7 @@ extension DebtAccountPatterns on DebtAccount {
           _that.minimumPayment,
           _that.originalBalance,
           _that.payoffStrategy,
+          _that.creditLimit,
         );
       case _:
         throw StateError('Unexpected subclass');
@@ -301,6 +315,7 @@ extension DebtAccountPatterns on DebtAccount {
       int minimumPayment,
       int originalBalance,
       String? payoffStrategy,
+      int? creditLimit,
     )?
     $default,
   ) {
@@ -313,6 +328,7 @@ extension DebtAccountPatterns on DebtAccount {
           _that.minimumPayment,
           _that.originalBalance,
           _that.payoffStrategy,
+          _that.creditLimit,
         );
       case _:
         return null;
@@ -329,6 +345,7 @@ class _DebtAccount implements DebtAccount {
     required this.minimumPayment,
     required this.originalBalance,
     this.payoffStrategy,
+    this.creditLimit,
   });
   factory _DebtAccount.fromJson(Map<String, dynamic> json) =>
       _$DebtAccountFromJson(json);
@@ -343,6 +360,8 @@ class _DebtAccount implements DebtAccount {
   final int originalBalance;
   @override
   final String? payoffStrategy;
+  @override
+  final int? creditLimit;
 
   /// Create a copy of DebtAccount
   /// with the given fields replaced by the non-null parameter values.
@@ -371,7 +390,9 @@ class _DebtAccount implements DebtAccount {
             (identical(other.originalBalance, originalBalance) ||
                 other.originalBalance == originalBalance) &&
             (identical(other.payoffStrategy, payoffStrategy) ||
-                other.payoffStrategy == payoffStrategy));
+                other.payoffStrategy == payoffStrategy) &&
+            (identical(other.creditLimit, creditLimit) ||
+                other.creditLimit == creditLimit));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -383,11 +404,12 @@ class _DebtAccount implements DebtAccount {
     minimumPayment,
     originalBalance,
     payoffStrategy,
+    creditLimit,
   );
 
   @override
   String toString() {
-    return 'DebtAccount(accountId: $accountId, interestRate: $interestRate, minimumPayment: $minimumPayment, originalBalance: $originalBalance, payoffStrategy: $payoffStrategy)';
+    return 'DebtAccount(accountId: $accountId, interestRate: $interestRate, minimumPayment: $minimumPayment, originalBalance: $originalBalance, payoffStrategy: $payoffStrategy, creditLimit: $creditLimit)';
   }
 }
 
@@ -406,6 +428,7 @@ abstract mixin class _$DebtAccountCopyWith<$Res>
     int minimumPayment,
     int originalBalance,
     String? payoffStrategy,
+    int? creditLimit,
   });
 }
 
@@ -426,6 +449,7 @@ class __$DebtAccountCopyWithImpl<$Res> implements _$DebtAccountCopyWith<$Res> {
     Object? minimumPayment = null,
     Object? originalBalance = null,
     Object? payoffStrategy = freezed,
+    Object? creditLimit = freezed,
   }) {
     return _then(
       _DebtAccount(
@@ -449,6 +473,10 @@ class __$DebtAccountCopyWithImpl<$Res> implements _$DebtAccountCopyWith<$Res> {
             ? _self.payoffStrategy
             : payoffStrategy // ignore: cast_nullable_to_non_nullable
                   as String?,
+        creditLimit: freezed == creditLimit
+            ? _self.creditLimit
+            : creditLimit // ignore: cast_nullable_to_non_nullable
+                  as int?,
       ),
     );
   }

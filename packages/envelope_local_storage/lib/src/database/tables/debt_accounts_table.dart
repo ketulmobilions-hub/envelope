@@ -7,6 +7,7 @@ class DebtAccounts extends Table {
   IntColumn get originalBalance => integer().named('original_balance')();
   TextColumn get payoffStrategy =>
       text().named('payoff_strategy').nullable()();
+  IntColumn get creditLimit => integer().named('credit_limit').nullable()();
 
   @override
   Set<Column> get primaryKey => {accountId};

@@ -382,6 +382,14 @@
     "@accountsRunningBalance": {
         "description": "Short label for running balance"
     },
+    "accountsCreditLimitLabel": "Credit Limit",
+    "@accountsCreditLimitLabel": {
+        "description": "Label for credit card credit limit field"
+    },
+    "accountsAvailableCreditLabel": "Available Credit",
+    "@accountsAvailableCreditLabel": {
+        "description": "Label showing remaining available credit on a CC account"
+    },
     "accountsCurrencyLabel": "Currency",
     "@accountsCurrencyLabel": {
         "description": "Label for currency field"

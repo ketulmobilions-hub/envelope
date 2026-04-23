@@ -2,6 +2,7 @@ import 'package:account_repository/account_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/accounts/cubit/cubit.dart';
 import 'package:envelope/accounts/view/account_form_page.dart';
+import 'package:envelope/accounts/widgets/account_helpers.dart';
 import 'package:envelope/accounts/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
@@ -48,6 +49,8 @@ class AccountDetailPage extends StatelessWidget {
       builder: (context, state) {
         final account = state.account;
         final symbol = currencySymbol(context);
+        final creditLimit = state.debtAccount?.creditLimit;
+        final isCC = isCreditCard(account.type);
 
         return Scaffold(
           appBar: AppBar(
@@ -100,6 +103,25 @@ class AccountDetailPage extends StatelessWidget {
                           ),
                         ],
                       ),
+                      if (isCC && creditLimit != null) ...[
+                        const SizedBox(height: 16),
+                        const Divider(),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _BalanceDetail(
+                              label: l10n.accountsCreditLimitLabel,
+                              amount: creditLimit,
+                            ),
+                            _BalanceDetail(
+                              label: l10n.accountsAvailableCreditLabel,
+                              amount: creditLimit + account.currentBalance,
+                              errorWhenNegative: true,
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -403,14 +425,20 @@ class _AccountTransactionsList extends StatelessWidget {
 }
 
 class _BalanceDetail extends StatelessWidget {
-  const _BalanceDetail({required this.label, required this.amount});
+  const _BalanceDetail({
+    required this.label,
+    required this.amount,
+    this.errorWhenNegative = false,
+  });
 
   final String label;
   final int amount;
+  final bool errorWhenNegative;
 
   @override
   Widget build(BuildContext context) {
     final symbol = currencySymbol(context);
+    final isOverLimit = errorWhenNegative && amount < 0;
     return Column(
       children: [
         Text(
@@ -422,7 +450,11 @@ class _BalanceDetail extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           formatCents(amount, symbol: symbol),
-          style: Theme.of(context).textTheme.titleMedium,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: isOverLimit
+                    ? Theme.of(context).colorScheme.error
+                    : null,
+              ),
         ),
       ],
     );

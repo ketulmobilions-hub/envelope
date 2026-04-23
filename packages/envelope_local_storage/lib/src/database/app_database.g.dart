@@ -9522,6 +9522,17 @@ class $DebtAccountsTable extends DebtAccounts
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _creditLimitMeta = const VerificationMeta(
+    'creditLimit',
+  );
+  @override
+  late final GeneratedColumn<int> creditLimit = GeneratedColumn<int>(
+    'credit_limit',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     accountId,
@@ -9529,6 +9540,7 @@ class $DebtAccountsTable extends DebtAccounts
     minimumPayment,
     originalBalance,
     payoffStrategy,
+    creditLimit,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -9592,6 +9604,15 @@ class $DebtAccountsTable extends DebtAccounts
         ),
       );
     }
+    if (data.containsKey('credit_limit')) {
+      context.handle(
+        _creditLimitMeta,
+        creditLimit.isAcceptableOrUnknown(
+          data['credit_limit']!,
+          _creditLimitMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -9621,6 +9642,10 @@ class $DebtAccountsTable extends DebtAccounts
         DriftSqlType.string,
         data['${effectivePrefix}payoff_strategy'],
       ),
+      creditLimit: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}credit_limit'],
+      ),
     );
   }
 
@@ -9636,12 +9661,14 @@ class DebtAccount extends DataClass implements Insertable<DebtAccount> {
   final int minimumPayment;
   final int originalBalance;
   final String? payoffStrategy;
+  final int? creditLimit;
   const DebtAccount({
     required this.accountId,
     required this.interestRate,
     required this.minimumPayment,
     required this.originalBalance,
     this.payoffStrategy,
+    this.creditLimit,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -9652,6 +9679,9 @@ class DebtAccount extends DataClass implements Insertable<DebtAccount> {
     map['original_balance'] = Variable<int>(originalBalance);
     if (!nullToAbsent || payoffStrategy != null) {
       map['payoff_strategy'] = Variable<String>(payoffStrategy);
+    }
+    if (!nullToAbsent || creditLimit != null) {
+      map['credit_limit'] = Variable<int>(creditLimit);
     }
     return map;
   }
@@ -9665,6 +9695,9 @@ class DebtAccount extends DataClass implements Insertable<DebtAccount> {
       payoffStrategy: payoffStrategy == null && nullToAbsent
           ? const Value.absent()
           : Value(payoffStrategy),
+      creditLimit: creditLimit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(creditLimit),
     );
   }
 
@@ -9679,6 +9712,7 @@ class DebtAccount extends DataClass implements Insertable<DebtAccount> {
       minimumPayment: serializer.fromJson<int>(json['minimumPayment']),
       originalBalance: serializer.fromJson<int>(json['originalBalance']),
       payoffStrategy: serializer.fromJson<String?>(json['payoffStrategy']),
+      creditLimit: serializer.fromJson<int?>(json['creditLimit']),
     );
   }
   @override
@@ -9690,6 +9724,7 @@ class DebtAccount extends DataClass implements Insertable<DebtAccount> {
       'minimumPayment': serializer.toJson<int>(minimumPayment),
       'originalBalance': serializer.toJson<int>(originalBalance),
       'payoffStrategy': serializer.toJson<String?>(payoffStrategy),
+      'creditLimit': serializer.toJson<int?>(creditLimit),
     };
   }
 
@@ -9699,6 +9734,7 @@ class DebtAccount extends DataClass implements Insertable<DebtAccount> {
     int? minimumPayment,
     int? originalBalance,
     Value<String?> payoffStrategy = const Value.absent(),
+    Value<int?> creditLimit = const Value.absent(),
   }) => DebtAccount(
     accountId: accountId ?? this.accountId,
     interestRate: interestRate ?? this.interestRate,
@@ -9707,6 +9743,7 @@ class DebtAccount extends DataClass implements Insertable<DebtAccount> {
     payoffStrategy: payoffStrategy.present
         ? payoffStrategy.value
         : this.payoffStrategy,
+    creditLimit: creditLimit.present ? creditLimit.value : this.creditLimit,
   );
   DebtAccount copyWithCompanion(DebtAccountsCompanion data) {
     return DebtAccount(
@@ -9723,6 +9760,9 @@ class DebtAccount extends DataClass implements Insertable<DebtAccount> {
       payoffStrategy: data.payoffStrategy.present
           ? data.payoffStrategy.value
           : this.payoffStrategy,
+      creditLimit: data.creditLimit.present
+          ? data.creditLimit.value
+          : this.creditLimit,
     );
   }
 
@@ -9733,7 +9773,8 @@ class DebtAccount extends DataClass implements Insertable<DebtAccount> {
           ..write('interestRate: $interestRate, ')
           ..write('minimumPayment: $minimumPayment, ')
           ..write('originalBalance: $originalBalance, ')
-          ..write('payoffStrategy: $payoffStrategy')
+          ..write('payoffStrategy: $payoffStrategy, ')
+          ..write('creditLimit: $creditLimit')
           ..write(')'))
         .toString();
   }
@@ -9745,6 +9786,7 @@ class DebtAccount extends DataClass implements Insertable<DebtAccount> {
     minimumPayment,
     originalBalance,
     payoffStrategy,
+    creditLimit,
   );
   @override
   bool operator ==(Object other) =>
@@ -9754,7 +9796,8 @@ class DebtAccount extends DataClass implements Insertable<DebtAccount> {
           other.interestRate == this.interestRate &&
           other.minimumPayment == this.minimumPayment &&
           other.originalBalance == this.originalBalance &&
-          other.payoffStrategy == this.payoffStrategy);
+          other.payoffStrategy == this.payoffStrategy &&
+          other.creditLimit == this.creditLimit);
 }
 
 class DebtAccountsCompanion extends UpdateCompanion<DebtAccount> {
@@ -9763,6 +9806,7 @@ class DebtAccountsCompanion extends UpdateCompanion<DebtAccount> {
   final Value<int> minimumPayment;
   final Value<int> originalBalance;
   final Value<String?> payoffStrategy;
+  final Value<int?> creditLimit;
   final Value<int> rowid;
   const DebtAccountsCompanion({
     this.accountId = const Value.absent(),
@@ -9770,6 +9814,7 @@ class DebtAccountsCompanion extends UpdateCompanion<DebtAccount> {
     this.minimumPayment = const Value.absent(),
     this.originalBalance = const Value.absent(),
     this.payoffStrategy = const Value.absent(),
+    this.creditLimit = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DebtAccountsCompanion.insert({
@@ -9778,6 +9823,7 @@ class DebtAccountsCompanion extends UpdateCompanion<DebtAccount> {
     required int minimumPayment,
     required int originalBalance,
     this.payoffStrategy = const Value.absent(),
+    this.creditLimit = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : accountId = Value(accountId),
        interestRate = Value(interestRate),
@@ -9789,6 +9835,7 @@ class DebtAccountsCompanion extends UpdateCompanion<DebtAccount> {
     Expression<int>? minimumPayment,
     Expression<int>? originalBalance,
     Expression<String>? payoffStrategy,
+    Expression<int>? creditLimit,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -9797,6 +9844,7 @@ class DebtAccountsCompanion extends UpdateCompanion<DebtAccount> {
       if (minimumPayment != null) 'minimum_payment': minimumPayment,
       if (originalBalance != null) 'original_balance': originalBalance,
       if (payoffStrategy != null) 'payoff_strategy': payoffStrategy,
+      if (creditLimit != null) 'credit_limit': creditLimit,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -9807,6 +9855,7 @@ class DebtAccountsCompanion extends UpdateCompanion<DebtAccount> {
     Value<int>? minimumPayment,
     Value<int>? originalBalance,
     Value<String?>? payoffStrategy,
+    Value<int?>? creditLimit,
     Value<int>? rowid,
   }) {
     return DebtAccountsCompanion(
@@ -9815,6 +9864,7 @@ class DebtAccountsCompanion extends UpdateCompanion<DebtAccount> {
       minimumPayment: minimumPayment ?? this.minimumPayment,
       originalBalance: originalBalance ?? this.originalBalance,
       payoffStrategy: payoffStrategy ?? this.payoffStrategy,
+      creditLimit: creditLimit ?? this.creditLimit,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -9837,6 +9887,9 @@ class DebtAccountsCompanion extends UpdateCompanion<DebtAccount> {
     if (payoffStrategy.present) {
       map['payoff_strategy'] = Variable<String>(payoffStrategy.value);
     }
+    if (creditLimit.present) {
+      map['credit_limit'] = Variable<int>(creditLimit.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -9851,6 +9904,7 @@ class DebtAccountsCompanion extends UpdateCompanion<DebtAccount> {
           ..write('minimumPayment: $minimumPayment, ')
           ..write('originalBalance: $originalBalance, ')
           ..write('payoffStrategy: $payoffStrategy, ')
+          ..write('creditLimit: $creditLimit, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -17311,6 +17365,7 @@ typedef $$DebtAccountsTableCreateCompanionBuilder =
       required int minimumPayment,
       required int originalBalance,
       Value<String?> payoffStrategy,
+      Value<int?> creditLimit,
       Value<int> rowid,
     });
 typedef $$DebtAccountsTableUpdateCompanionBuilder =
@@ -17320,6 +17375,7 @@ typedef $$DebtAccountsTableUpdateCompanionBuilder =
       Value<int> minimumPayment,
       Value<int> originalBalance,
       Value<String?> payoffStrategy,
+      Value<int?> creditLimit,
       Value<int> rowid,
     });
 
@@ -17354,6 +17410,11 @@ class $$DebtAccountsTableFilterComposer
 
   ColumnFilters<String> get payoffStrategy => $composableBuilder(
     column: $table.payoffStrategy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get creditLimit => $composableBuilder(
+    column: $table.creditLimit,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -17391,6 +17452,11 @@ class $$DebtAccountsTableOrderingComposer
     column: $table.payoffStrategy,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get creditLimit => $composableBuilder(
+    column: $table.creditLimit,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$DebtAccountsTableAnnotationComposer
@@ -17422,6 +17488,11 @@ class $$DebtAccountsTableAnnotationComposer
 
   GeneratedColumn<String> get payoffStrategy => $composableBuilder(
     column: $table.payoffStrategy,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get creditLimit => $composableBuilder(
+    column: $table.creditLimit,
     builder: (column) => column,
   );
 }
@@ -17462,6 +17533,7 @@ class $$DebtAccountsTableTableManager
                 Value<int> minimumPayment = const Value.absent(),
                 Value<int> originalBalance = const Value.absent(),
                 Value<String?> payoffStrategy = const Value.absent(),
+                Value<int?> creditLimit = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DebtAccountsCompanion(
                 accountId: accountId,
@@ -17469,6 +17541,7 @@ class $$DebtAccountsTableTableManager
                 minimumPayment: minimumPayment,
                 originalBalance: originalBalance,
                 payoffStrategy: payoffStrategy,
+                creditLimit: creditLimit,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -17478,6 +17551,7 @@ class $$DebtAccountsTableTableManager
                 required int minimumPayment,
                 required int originalBalance,
                 Value<String?> payoffStrategy = const Value.absent(),
+                Value<int?> creditLimit = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DebtAccountsCompanion.insert(
                 accountId: accountId,
@@ -17485,6 +17559,7 @@ class $$DebtAccountsTableTableManager
                 minimumPayment: minimumPayment,
                 originalBalance: originalBalance,
                 payoffStrategy: payoffStrategy,
+                creditLimit: creditLimit,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

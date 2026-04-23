@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:account_repository/account_repository.dart';
 import 'package:bloc/bloc.dart';
 import 'package:budget_repository/budget_repository.dart';
+import 'package:envelope/accounts/widgets/account_helpers.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +41,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     on<DashboardRefreshRequested>(_onRefreshRequested);
     on<QuickAllocationRequested>(_onQuickAllocationRequested);
     on<BudgetDeleteRequested>(_onBudgetDeleteRequested);
+    on<_CcCreditLimitsLoaded>(_onCcCreditLimitsLoaded);
   }
 
   final BudgetRepository _budgetRepository;
@@ -260,6 +262,29 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         accounts: event.accounts,
       ),
     );
+    unawaited(_fetchCcCreditLimits(event.accounts));
+  }
+
+  Future<void> _fetchCcCreditLimits(List<Account> accounts) async {
+    final ccAccounts = accounts.where((a) => isCreditCard(a.type)).toList();
+    if (ccAccounts.isEmpty) return;
+    final limits = <String, int?>{};
+    for (final account in ccAccounts) {
+      try {
+        final debt = await _accountRepository.getDebtAccount(account.id);
+        limits[account.id] = debt?.creditLimit;
+      } on Exception {
+        // Non-critical; skip this account.
+      }
+    }
+    if (!isClosed) add(_CcCreditLimitsLoaded(limits));
+  }
+
+  void _onCcCreditLimitsLoaded(
+    _CcCreditLimitsLoaded event,
+    Emitter<DashboardState> emit,
+  ) {
+    emit(state.copyWith(ccCreditLimits: event.limits));
   }
 
   void _onEnvelopesUpdated(
