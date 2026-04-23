@@ -236,6 +236,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                               .firstOrNull,
                           onChanged: (e) =>
                               setState(() => _selectedEnvelopeId = e.id),
+                          hideCCPaymentsGroup: true,
                         ),
                       if (!_isSplitMode) const SizedBox(height: 16),
 

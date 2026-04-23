@@ -24,11 +24,13 @@ class EnvelopePicker extends StatelessWidget {
   const EnvelopePicker({
     required this.value,
     required this.onChanged,
+    this.hideCCPaymentsGroup = false,
     super.key,
   });
 
   final Envelope? value;
   final void Function(Envelope) onChanged;
+  final bool hideCCPaymentsGroup;
 
   @override
   Widget build(BuildContext context) {
@@ -97,6 +99,7 @@ class EnvelopePicker extends StatelessWidget {
         envelopes: state.envelopes,
         categoryGroups: state.categoryGroups,
         selectedValue: value,
+        hideCCPaymentsGroup: hideCCPaymentsGroup,
       ),
     );
 
@@ -143,11 +146,13 @@ class _EnvelopePickerSheet extends StatelessWidget {
     required this.envelopes,
     required this.categoryGroups,
     required this.selectedValue,
+    this.hideCCPaymentsGroup = false,
   });
 
   final List<Envelope> envelopes;
   final List<CategoryGroup> categoryGroups;
   final Envelope? selectedValue;
+  final bool hideCCPaymentsGroup;
 
   @override
   Widget build(BuildContext context) {
@@ -155,19 +160,32 @@ class _EnvelopePickerSheet extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     // Build group → envelopes map preserving group sort order.
+    final visibleGroups = hideCCPaymentsGroup
+        ? categoryGroups
+            .where((g) => g.name != l10n.ccPaymentsCategoryGroupName)
+            .toList()
+        : categoryGroups;
     final groupedEnvelopes = <CategoryGroup, List<Envelope>>{};
-    for (final group in categoryGroups) {
+    for (final group in visibleGroups) {
       groupedEnvelopes[group] = envelopes
           .where((e) => e.categoryGroupId == group.id && !e.isArchived)
           .toList();
     }
 
     // Guard: envelopes that don't match any known group.
-    final knownGroupIds = categoryGroups.map((g) => g.id).toSet();
+    final knownGroupIds = visibleGroups.map((g) => g.id).toSet();
+    final hiddenGroupIds = hideCCPaymentsGroup
+        ? categoryGroups
+            .where((g) => g.name == l10n.ccPaymentsCategoryGroupName)
+            .map((g) => g.id)
+            .toSet()
+        : const <String>{};
     final ungrouped = envelopes
         .where(
           (e) =>
-              !knownGroupIds.contains(e.categoryGroupId) && !e.isArchived,
+              !knownGroupIds.contains(e.categoryGroupId) &&
+              !hiddenGroupIds.contains(e.categoryGroupId) &&
+              !e.isArchived,
         )
         .toList();
 
