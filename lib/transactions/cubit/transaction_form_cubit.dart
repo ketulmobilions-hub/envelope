@@ -784,15 +784,18 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         );
     if (ccPaymentAlloc == null) return;
 
-    // spentAmount already includes this expense (DB trigger ran before we get
-    // here), so available = allocated - spent (no adjustment needed).
+    // Cap the CC Payment increase at the spending envelope's available balance
+    // to avoid over-funding when the envelope is already overspent.
+    // spentAmount already includes this expense (DB trigger ran before we get here).
     final available = max(0, EnvelopeRepository.calculateRollover(spendingAlloc));
     final transferAmount = min(expenseAmount, available);
     if (transferAmount <= 0) return;
 
-    await _budgetRepository.transferBetweenEnvelopes(
-      fromAllocationId: spendingAlloc.id,
-      toAllocationId: ccPaymentAlloc.id,
+    // Only increase the CC Payment envelope's allocation — do NOT reduce the
+    // spending envelope's allocatedAmount. The spentAmount increase (from the
+    // DB trigger) already reduces its available balance correctly.
+    await _budgetRepository.increaseEnvelopeAllocation(
+      allocationId: ccPaymentAlloc.id,
       amount: transferAmount,
     );
   }

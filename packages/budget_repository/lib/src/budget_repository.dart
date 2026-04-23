@@ -507,6 +507,31 @@ class BudgetRepository {
     }
   }
 
+  /// Increases a single allocation's allocatedAmount by [amount].
+  /// Used for CC payment envelope funding — does NOT reduce any source allocation.
+  Future<void> increaseEnvelopeAllocation({
+    required String allocationId,
+    required int amount,
+  }) async {
+    if (amount <= 0) {
+      throw const BudgetException('Amount must be positive');
+    }
+    try {
+      final dto =
+          await _apiClient.envelopes.getEnvelopeAllocation(allocationId);
+      final updated =
+          dto.copyWith(allocatedAmount: dto.allocatedAmount + amount);
+      final result =
+          await _apiClient.envelopes.updateEnvelopeAllocation(updated);
+      await _cacheAllocation(result);
+    } on EnvelopeApiException catch (e) {
+      throw BudgetException(
+        'Failed to update envelope allocation',
+        error: e,
+      );
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Allocation Templates
   // ---------------------------------------------------------------------------
