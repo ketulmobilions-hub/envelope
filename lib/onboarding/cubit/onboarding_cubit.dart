@@ -206,9 +206,11 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       // floating-point imprecision from the double input.
       var totalStartingBalance = 0;
       for (final account in state.accounts) {
-        final clampedBalance = account.startingBalance
-          .clamp(-maxDollarAmount, maxDollarAmount);
-      final balanceCents = (clampedBalance * 100).round();
+        final clampedBalance = account.startingBalance.clamp(
+          -maxDollarAmount,
+          maxDollarAmount,
+        );
+        final balanceCents = (clampedBalance * 100).round();
         if (account.isOnBudget && balanceCents > 0) {
           totalStartingBalance += balanceCents;
         }
@@ -227,8 +229,10 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       // so that "Ready to Assign" reflects money available to budget.
       final now = DateTime.now();
       final periodStart = DateTime(now.year, now.month);
-      final periodEnd = DateTime(now.year, now.month + 1)
-          .subtract(const Duration(days: 1));
+      final periodEnd = DateTime(
+        now.year,
+        now.month + 1,
+      ).subtract(const Duration(days: 1));
       final period = await _budgetRepository.createBudgetPeriod(
         budgetId: budgetId,
         startDate: periodStart,
@@ -268,7 +272,8 @@ class OnboardingCubit extends Cubit<OnboardingState> {
 
       await _prefs.setString(activeBudgetIdKey, budgetId);
       emit(state.copyWith(status: OnboardingStatus.success));
-    } on Exception {
+    } on Exception catch (e) {
+      print(e);
       emit(
         state.copyWith(
           status: OnboardingStatus.failure,

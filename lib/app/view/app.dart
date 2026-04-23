@@ -171,8 +171,9 @@ class _FcmAuthListenerState extends State<_FcmAuthListener> {
         ),
       );
       // Chain after any pending clear so restore never races with it.
-      _sessionTask = (_sessionTask ?? Future.value())
-          .then((_) => _restoreSessionForUser(state.user!.id));
+      _sessionTask = (_sessionTask ?? Future.value()).then(
+        (_) => _restoreSessionForUser(state.user!.id),
+      );
     } else if (state.status == AuthStatus.unauthenticated) {
       unawaited(
         _fcmService.unregisterCurrentToken(

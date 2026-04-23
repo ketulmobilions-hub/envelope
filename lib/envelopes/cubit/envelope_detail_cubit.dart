@@ -27,7 +27,9 @@ class EnvelopeDetailCubit extends Cubit<EnvelopeDetailState> {
     _transactionSubscription = transactionRepository
         .watchTransactions(
           budgetId: envelope.budgetId,
-          envelopeId: envelope.id,
+          accountId: envelope.linkedAccountId,
+          envelopeId:
+              envelope.linkedAccountId == null ? envelope.id : null,
         )
         .listen((txns) {
           if (_initialTransactionsLoaded && _currentPeriodId != null) {
