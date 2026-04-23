@@ -219,7 +219,7 @@ class _EnvelopeAppBarState extends State<_EnvelopeAppBar>
     final envelope = state.envelope;
 
     return SliverAppBar(
-      expandedHeight: 200,
+      expandedHeight: 210,
       pinned: true,
       backgroundColor: widget.envelopeColor,
       iconTheme: const IconThemeData(color: AppColors.onPrimary),
