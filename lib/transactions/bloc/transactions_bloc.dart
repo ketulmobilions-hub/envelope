@@ -165,6 +165,19 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
             amount: deleted.amount,
           ),
         );
+        final ccPaymentEnvelope = state.envelopes
+            .where((e) => e.linkedAccountId == deleted.accountId)
+            .firstOrNull;
+        if (ccPaymentEnvelope != null) {
+          unawaited(
+            _envelopeRepository.decreaseCCPaymentAllocatedAmount(
+              envelopeId: ccPaymentEnvelope.id,
+              budgetId: deleted.budgetId,
+              date: deleted.date,
+              amount: deleted.amount,
+            ),
+          );
+        }
       }
     } on TransactionException {
       emit(

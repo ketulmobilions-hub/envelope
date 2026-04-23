@@ -697,6 +697,40 @@ class EnvelopeRepository {
     }
   }
 
+  /// Decreases the CC Payment envelope's `allocatedAmount` in Supabase and
+  /// local cache when a CC expense transaction is deleted. Best-effort — does
+  /// not throw. Floors at zero.
+  Future<void> decreaseCCPaymentAllocatedAmount({
+    required String envelopeId,
+    required String budgetId,
+    required DateTime date,
+    required int amount,
+  }) async {
+    try {
+      final periods = await _localDatabase.budgetsDao
+          .getPeriodsByBudgetId(budgetId);
+      storage.BudgetPeriod? period;
+      for (final p in periods) {
+        if (!p.startDate.isAfter(date) && !p.endDate.isBefore(date)) {
+          period = p;
+          break;
+        }
+      }
+      if (period == null) return;
+
+      final alloc = await getEnvelopeAllocationByEnvelopeAndPeriod(
+        envelopeId: envelopeId,
+        budgetPeriodId: period.id,
+      );
+      if (alloc == null) return;
+
+      final newAllocated = max(0, alloc.allocatedAmount - amount);
+      await updateAllocation(alloc.copyWith(allocatedAmount: newAllocated));
+    } on Exception {
+      // Best-effort — refreshAllocations will correct on next round-trip.
+    }
+  }
+
   /// Fetches allocations from the API and syncs to local storage.
   Future<void> refreshAllocations(String budgetPeriodId) async {
     try {
