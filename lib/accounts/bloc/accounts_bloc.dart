@@ -195,6 +195,20 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
           amount: -account.startingBalance,
         );
       }
+      final repo = _envelopeRepository;
+      if (repo != null && isCreditCard(account.type)) {
+        try {
+          final envelope = await repo.getEnvelopeByLinkedAccountId(
+            event.accountId,
+            _budgetId,
+          );
+          if (envelope != null) {
+            await repo.deleteEnvelope(envelope.id);
+          }
+        } on Exception {
+          // Silently ignore — account deletion already succeeded.
+        }
+      }
     } on AccountException {
       emit(
         state.copyWith(
