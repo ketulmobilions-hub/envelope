@@ -4,17 +4,21 @@ import 'package:account_repository/account_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/accounts/widgets/account_helpers.dart';
 import 'package:envelope/accounts/widgets/format_cents.dart';
+import 'package:envelope/auth/auth.dart';
 import 'package:envelope/dashboard/bloc/bloc.dart';
 import 'package:envelope/envelopes/cubit/cubit.dart';
 import 'package:envelope/envelopes/view/envelope_detail_page.dart';
 import 'package:envelope/envelopes/widgets/envelope_card.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/theme/app_colors.dart';
+import 'package:envelope/transactions/widgets/cc_pay_bottom_sheet.dart';
 import 'package:envelope/transactions/widgets/cover_overspend_dialog.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 
 /// Displays envelopes grouped by category on the dashboard.
@@ -203,7 +207,8 @@ class _CategoryGroupSection extends StatelessWidget {
           LayoutBuilder(
             builder: (context, constraints) {
               final columns = (constraints.maxWidth / 200).floor().clamp(2, 6);
-              final cardWidth = (constraints.maxWidth - (columns - 1) * 8) / columns;
+              final cardWidth =
+                  (constraints.maxWidth - (columns - 1) * 8) / columns;
               return Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -231,6 +236,28 @@ class _CategoryGroupSection extends StatelessWidget {
                             ? displayAvailable < 0
                             : s.isOverspent;
 
+                        final ccDebt = hasCreditInfo
+                            ? (-ccAccount.currentBalance)
+                                .clamp(0, maxCentsAmount)
+                            : 0;
+                        final primaryLabel = hasCreditInfo
+                            ? context.l10n.ccDueLabel(
+                                formatCents(ccDebt, symbol: symbol),
+                              )
+                            : null;
+                        final limitLabel = hasCreditInfo
+                            ? context.l10n.ccLimitLabel(
+                                formatCents(
+                                  displayAvailable,
+                                  symbol: symbol,
+                                ),
+                                formatCents(
+                                  displayAllocated,
+                                  symbol: symbol,
+                                ),
+                              )
+                            : null;
+
                         return SizedBox(
                           width: cardWidth,
                           child: EnvelopeCard(
@@ -239,21 +266,34 @@ class _CategoryGroupSection extends StatelessWidget {
                             allocatedCents: displayAllocated,
                             spentCents: s.spent,
                             isOverspent: displayOverspent,
+                            primaryLabel: primaryLabel,
+                            limitLabel: limitLabel,
                             color: AppColors.fromHex(s.envelope.color),
                             heroTag: 'envelope_${s.envelope.id}',
                             onTap: () => _openDetail(context, s),
-                            onAllocate: (cents) {
-                              context.read<DashboardBloc>().add(
-                                QuickAllocationRequested(
-                                  envelopeId: s.envelope.id,
-                                  amount: cents,
-                                ),
-                              );
-                            },
+                            onAllocate: linkedId != null
+                                ? null
+                                : (cents) {
+                                    context.read<DashboardBloc>().add(
+                                      QuickAllocationRequested(
+                                        envelopeId: s.envelope.id,
+                                        amount: cents,
+                                      ),
+                                    );
+                                  },
                             onFixOverspend:
-                                s.isOverspent && s.allocation != null
+                                linkedId == null &&
+                                        s.isOverspent &&
+                                        s.allocation != null
                                     ? () => _fixOverspend(context, s)
                                     : null,
+                            onPay: linkedId != null && ccAccount != null
+                                ? () => _showCCPayBottomSheet(
+                                    context,
+                                    ccAccount,
+                                    linkedId,
+                                  )
+                                : null,
                           ),
                         );
                       },
@@ -311,6 +351,35 @@ class _CategoryGroupSection extends StatelessWidget {
     );
 
     if (result == true && context.mounted) {
+      context.read<DashboardBloc>().add(const DashboardRefreshRequested());
+    }
+  }
+
+  Future<void> _showCCPayBottomSheet(
+    BuildContext context,
+    Account ccAccount,
+    String linkedId,
+  ) async {
+    final dashState = context.read<DashboardBloc>().state;
+    final budgetId =
+        context.read<SharedPreferences>().getString(activeBudgetIdKey) ?? '';
+    final userId =
+        context.read<AuthBloc>().state.user?.id ?? '';
+    final budgetPeriodId = dashState.selectedPeriod?.id;
+    final ccDebtCents = (-ccAccount.currentBalance).clamp(0, maxCentsAmount);
+
+    await showCCPayBottomSheet(
+      context,
+      ccAccountId: linkedId,
+      ccAccountName: ccAccount.name,
+      ccDebtCents: ccDebtCents,
+      accounts: dashState.accounts,
+      budgetId: budgetId,
+      userId: userId,
+      budgetPeriodId: budgetPeriodId,
+    );
+
+    if (context.mounted) {
       context.read<DashboardBloc>().add(const DashboardRefreshRequested());
     }
   }

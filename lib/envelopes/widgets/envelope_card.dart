@@ -14,11 +14,14 @@ class EnvelopeCard extends StatefulWidget {
     required this.allocatedCents,
     required this.spentCents,
     this.isOverspent = false,
+    this.primaryLabel,
+    this.limitLabel,
     this.color,
     this.heroTag,
     this.onTap,
     this.onAllocate,
     this.onFixOverspend,
+    this.onPay,
     super.key,
   });
 
@@ -27,6 +30,12 @@ class EnvelopeCard extends StatefulWidget {
   final int allocatedCents;
   final int spentCents;
   final bool isOverspent;
+
+  /// When set, replaces the big amount with this text (e.g. "Due: $450").
+  final String? primaryLabel;
+
+  /// Small secondary line shown below [primaryLabel] (e.g. "$550 of $1,000").
+  final String? limitLabel;
   final Color? color;
   final String? heroTag;
   final VoidCallback? onTap;
@@ -36,6 +45,9 @@ class EnvelopeCard extends StatefulWidget {
 
   /// Called when the user taps "Fix Overspend" on an overspent card.
   final VoidCallback? onFixOverspend;
+
+  /// Called when the user taps "Pay" on a CC payment envelope card.
+  final VoidCallback? onPay;
 
   @override
   State<EnvelopeCard> createState() => _EnvelopeCardState();
@@ -154,14 +166,35 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const Spacer(),
-                        Text(
-                          formatCents(widget.availableCents, symbol: symbol),
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: textColor,
+                        if (widget.primaryLabel != null) ...[
+                          Text(
+                            widget.primaryLabel!,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
                           ),
-                        ),
+                          if (widget.limitLabel != null)
+                            Text(
+                              widget.limitLabel!,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: textColor.withValues(alpha: 0.7),
+                              ),
+                            ),
+                        ] else
+                          Text(
+                            formatCents(
+                              widget.availableCents,
+                              symbol: symbol,
+                            ),
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
                       ],
                       ),
                     ),
@@ -174,9 +207,32 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
                   color: textColor.withValues(alpha: 0.3),
                 ),
                 const SizedBox(height: 4),
-                // Bottom area — "Fix Overspend" when overspent,
-                // inline allocation editing otherwise.
-                if (widget.isOverspent && widget.onFixOverspend != null)
+                // Bottom area — "Pay" for CC envelopes, "Fix Overspend"
+                // when overspent, inline allocation editing otherwise.
+                if (widget.onPay != null)
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: widget.onPay,
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.credit_card_outlined,
+                          size: 10,
+                          color: textColor,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          l10n.ccPayButton,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: textColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else if (widget.isOverspent && widget.onFixOverspend != null)
                   GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onTap: widget.onFixOverspend,

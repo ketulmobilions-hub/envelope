@@ -1,11 +1,14 @@
 import 'dart:async';
 
+import 'package:account_repository/account_repository.dart';
+import 'package:envelope/auth/auth.dart';
 import 'package:envelope/envelopes/cubit/cubit.dart';
 import 'package:envelope/envelopes/view/envelope_form_page.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/theme/app_colors.dart';
+import 'package:envelope/transactions/widgets/cc_pay_bottom_sheet.dart';
 import 'package:envelope/transactions/widgets/transaction_helpers.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
@@ -26,10 +29,19 @@ class EnvelopeDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<EnvelopeDetailCubit, EnvelopeDetailState>(
       builder: (context, state) {
+        final l10n = context.l10n;
         final envelopeColor =
             AppColors.fromHex(state.envelope.color) ?? AppColors.primary;
         return Scaffold(
           backgroundColor: envelopeColor,
+          floatingActionButton: state.envelope.linkedAccountId != null
+              ? FloatingActionButton.extended(
+                  onPressed: () => _payCC(context, state),
+                  label: Text(l10n.ccPayButton),
+                  backgroundColor: AppColors.onPrimary,
+                  foregroundColor: envelopeColor,
+                )
+              : null,
           body: CustomScrollView(
             slivers: [
               _EnvelopeAppBar(
@@ -44,6 +56,34 @@ class EnvelopeDetailPage extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Future<void> _payCC(
+    BuildContext context,
+    EnvelopeDetailState state,
+  ) async {
+    final linkedId = state.envelope.linkedAccountId!;
+    final budgetId = state.envelope.budgetId;
+    final userId = context.read<AuthBloc>().state.user?.id ?? '';
+    final budgetPeriodId = state.allocation?.budgetPeriodId;
+    final accounts =
+        await context.read<AccountRepository>().watchAccounts(budgetId).first;
+    if (!context.mounted) return;
+    final ccAccount =
+        accounts.where((a) => a.id == linkedId).firstOrNull;
+    final ccDebtCents = ccAccount != null
+        ? (-ccAccount.currentBalance).clamp(0, maxCentsAmount)
+        : 0;
+    await showCCPayBottomSheet(
+      context,
+      ccAccountId: linkedId,
+      ccAccountName: ccAccount?.name ?? '',
+      ccDebtCents: ccDebtCents,
+      accounts: accounts,
+      budgetId: budgetId,
+      userId: userId,
+      budgetPeriodId: budgetPeriodId,
     );
   }
 
