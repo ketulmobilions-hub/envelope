@@ -159,17 +159,19 @@ class _EnvelopePickerSheet extends StatelessWidget {
     final l10n = context.l10n;
     final colorScheme = Theme.of(context).colorScheme;
 
-    // Build group → envelopes map preserving group sort order.
-    final visibleGroups = hideCCPaymentsGroup
-        ? categoryGroups
-            .where((g) => g.name != l10n.ccPaymentsCategoryGroupName)
-            .toList()
-        : categoryGroups;
+    // Build group → envelopes map in sortOrder.
+    final visibleGroups = (hideCCPaymentsGroup
+            ? categoryGroups
+                .where((g) => g.name != l10n.ccPaymentsCategoryGroupName)
+                .toList()
+            : categoryGroups.toList())
+      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
     final groupedEnvelopes = <CategoryGroup, List<Envelope>>{};
     for (final group in visibleGroups) {
       groupedEnvelopes[group] = envelopes
           .where((e) => e.categoryGroupId == group.id && !e.isArchived)
-          .toList();
+          .toList()
+        ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
     }
 
     // Guard: envelopes that don't match any known group.
