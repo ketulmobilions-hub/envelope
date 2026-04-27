@@ -207,6 +207,7 @@ class _AllocationList extends StatelessWidget {
               key: ValueKey(pair.$1.id),
               group: pair.$1,
               envelopesWithAllocations: pair.$2,
+              ccPaymentAvailable: state.ccPaymentAvailable,
             ),
           )
           .toList(),

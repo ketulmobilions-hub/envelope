@@ -206,11 +206,42 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
       }
     }
 
+    final ccAvailable = await _computeCCPaymentAvailable(
+      allocations: event.allocations,
+      envelopes: state.envelopes,
+    );
+
     emit(state.copyWith(
       status: _isLoaded ? BudgetStatus.loaded : state.status,
       allocations: event.allocations,
       readyToAssign: readyToAssign,
+      ccPaymentAvailable: ccAvailable,
     ));
+  }
+
+  Future<Map<String, int>> _computeCCPaymentAvailable({
+    required List<EnvelopeAllocation> allocations,
+    required List<Envelope> envelopes,
+  }) async {
+    final period = state.selectedPeriod;
+    if (period == null) return const {};
+    final ccEnvelopes = envelopes.where((e) => e.linkedAccountId != null);
+    final result = <String, int>{};
+    for (final env in ccEnvelopes) {
+      final alloc =
+          allocations.where((a) => a.envelopeId == env.id).firstOrNull;
+      try {
+        result[env.id] = await _envelopeRepository.calculateCCPaymentAvailable(
+          allocation: alloc,
+          ccAccountId: env.linkedAccountId!,
+          periodStart: period.startDate,
+          periodEnd: period.endDate,
+        );
+      } on Exception {
+        // Best-effort; fall back to standard calculation.
+      }
+    }
+    return result;
   }
 
   void _onCategoryGroupsUpdated(
@@ -225,15 +256,20 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     ));
   }
 
-  void _onEnvelopesUpdated(
+  Future<void> _onEnvelopesUpdated(
     _EnvelopesUpdated event,
     Emitter<BudgetState> emit,
-  ) {
+  ) async {
     if (event.generation != _generation) return;
     _envelopesReceived = true;
+    final ccAvailable = await _computeCCPaymentAvailable(
+      allocations: state.allocations,
+      envelopes: event.envelopes,
+    );
     emit(state.copyWith(
       status: _isLoaded ? BudgetStatus.loaded : state.status,
       envelopes: event.envelopes,
+      ccPaymentAvailable: ccAvailable,
     ));
   }
 

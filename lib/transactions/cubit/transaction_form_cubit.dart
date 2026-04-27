@@ -1,4 +1,3 @@
-import 'dart:math' show min, max;
 
 import 'package:account_repository/account_repository.dart';
 import 'package:bloc/bloc.dart';
@@ -337,17 +336,12 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
           }
 
           if (type == 'expense' && budgetPeriodId != null) {
-            _envelopeRepository.beginExternalWrite();
-            try {
-              await _transferToCCPaymentEnvelope(
-                accountId: accountId,
-                envelopeId: isSplitMode ? null : envelopeId,
-                splits: isSplitMode ? splits : [],
-                expenseAmount: amountCents,
-              );
-            } finally {
-              _envelopeRepository.endExternalWrite();
-            }
+            await _transferToCCPaymentEnvelope(
+              accountId: accountId,
+              envelopeId: isSplitMode ? null : envelopeId,
+              splits: isSplitMode ? splits : [],
+              expenseAmount: amountCents,
+            );
           }
 
           // Rule starts from the next occurrence so it doesn't banner today.
@@ -483,17 +477,12 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         }
 
         if (type == 'expense' && budgetPeriodId != null) {
-          _envelopeRepository.beginExternalWrite();
-          try {
-            await _transferToCCPaymentEnvelope(
-              accountId: accountId,
-              envelopeId: isSplitMode ? null : envelopeId,
-              splits: isSplitMode ? splits : [],
-              expenseAmount: amountCents,
-            );
-          } finally {
-            _envelopeRepository.endExternalWrite();
-          }
+          await _transferToCCPaymentEnvelope(
+            accountId: accountId,
+            envelopeId: isSplitMode ? null : envelopeId,
+            splits: isSplitMode ? splits : [],
+            expenseAmount: amountCents,
+          );
         }
 
         final overspendData = await _checkOverspend(
@@ -774,8 +763,9 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     }
   }
 
-  // When a CC expense is recorded, moves funds from the spending envelope
-  // allocation to the linked CC Payment envelope allocation (best-effort).
+  // Ensures the CC Payment envelope has an allocation row for the current
+  // period so it appears in the budget page. No allocation amounts are changed —
+  // CC Payment available is derived from transaction history (YNAB approach).
   Future<void> _transferToCCPaymentEnvelope({
     required String accountId,
     required String? envelopeId,
@@ -783,7 +773,8 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     required int expenseAmount,
   }) async {
     try {
-      final account = state.accounts.where((a) => a.id == accountId).firstOrNull;
+      final account =
+          state.accounts.where((a) => a.id == accountId).firstOrNull;
       if (account == null || !isCreditCard(account.type)) return;
 
       final ccPaymentEnvelope = await _envelopeRepository
@@ -794,65 +785,8 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         envelopeId: ccPaymentEnvelope.id,
         budgetPeriodId: budgetPeriodId!,
       );
-
-      if (splits.isEmpty && envelopeId != null) {
-        await _transferSingleEnvelopeToCCPayment(
-          spendingEnvelopeId: envelopeId,
-          ccPaymentEnvelopeId: ccPaymentEnvelope.id,
-          expenseAmount: expenseAmount,
-        );
-      } else {
-        for (final split in splits) {
-          if (split.envelopeId != null && split.amountCents > 0) {
-            await _transferSingleEnvelopeToCCPayment(
-              spendingEnvelopeId: split.envelopeId!,
-              ccPaymentEnvelopeId: ccPaymentEnvelope.id,
-              expenseAmount: split.amountCents,
-            );
-          }
-        }
-      }
     } on Exception {
       // Best-effort; does not block transaction recording.
     }
-  }
-
-  Future<void> _transferSingleEnvelopeToCCPayment({
-    required String spendingEnvelopeId,
-    required String ccPaymentEnvelopeId,
-    required int expenseAmount,
-  }) async {
-    final spendingAlloc = await _envelopeRepository
-        .getEnvelopeAllocationByEnvelopeAndPeriod(
-          envelopeId: spendingEnvelopeId,
-          budgetPeriodId: budgetPeriodId!,
-        );
-    if (spendingAlloc == null) return;
-
-    final ccPaymentAlloc = await _envelopeRepository
-        .getEnvelopeAllocationByEnvelopeAndPeriod(
-          envelopeId: ccPaymentEnvelopeId,
-          budgetPeriodId: budgetPeriodId!,
-        );
-    if (ccPaymentAlloc == null) return;
-
-    // spentAmount already includes this expense (DB trigger ran before we get
-    // here), so add expenseAmount back to recover the pre-expense available
-    // balance. This ensures the CC Payment envelope is funded for any portion
-    // of the expense that was actually covered by the spending envelope.
-    final available = max(
-      0,
-      EnvelopeRepository.calculateRollover(spendingAlloc) + expenseAmount,
-    );
-    final transferAmount = min(expenseAmount, available);
-    if (transferAmount <= 0) return;
-
-    // Only increase the CC Payment envelope's allocation — do NOT reduce the
-    // spending envelope's allocatedAmount. The spentAmount increase (from the
-    // DB trigger) already reduces its available balance correctly.
-    await _budgetRepository.increaseEnvelopeAllocation(
-      allocationId: ccPaymentAlloc.id,
-      amount: transferAmount,
-    );
   }
 }

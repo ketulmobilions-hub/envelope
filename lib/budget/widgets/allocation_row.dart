@@ -16,11 +16,16 @@ class AllocationRow extends StatefulWidget {
   const AllocationRow({
     required this.envelope,
     required this.allocation,
+    this.availableOverride,
     super.key,
   });
 
   final Envelope envelope;
   final EnvelopeAllocation? allocation;
+
+  /// When non-null, overrides the computed available amount. Used for CC
+  /// Payment envelopes where available is derived from transaction history.
+  final int? availableOverride;
 
   @override
   State<AllocationRow> createState() => _AllocationRowState();
@@ -72,9 +77,10 @@ class _AllocationRowState extends State<AllocationRow> {
     final symbol = currencySymbol(context);
     final allocation = widget.allocation;
     final spent = allocation?.spentAmount ?? 0;
-    final available = allocation != null
-        ? EnvelopeRepository.calculateRollover(allocation)
-        : 0;
+    final available = widget.availableOverride ??
+        (allocation != null
+            ? EnvelopeRepository.calculateRollover(allocation)
+            : 0);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),

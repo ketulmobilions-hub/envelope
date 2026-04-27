@@ -22,6 +22,7 @@ final class BudgetState extends Equatable {
     this.templates = const [],
     this.readyToAssign = 0,
     this.localAllocations = const {},
+    this.ccPaymentAvailable = const {},
     this.error,
   });
 
@@ -38,6 +39,9 @@ final class BudgetState extends Equatable {
 
   /// Locally-edited allocation amounts (envelopeId → cents) not yet saved.
   final Map<String, int> localAllocations;
+
+  /// Derived available balance for CC Payment envelopes (envelopeId → cents).
+  final Map<String, int> ccPaymentAvailable;
 
   final BudgetError? error;
 
@@ -110,6 +114,7 @@ final class BudgetState extends Equatable {
     List<AllocationTemplate>? templates,
     int? readyToAssign,
     Map<String, int>? localAllocations,
+    Map<String, int>? ccPaymentAvailable,
     Object? error = _sentinel,
   }) {
     return BudgetState(
@@ -124,6 +129,7 @@ final class BudgetState extends Equatable {
       templates: templates ?? this.templates,
       readyToAssign: readyToAssign ?? this.readyToAssign,
       localAllocations: localAllocations ?? this.localAllocations,
+      ccPaymentAvailable: ccPaymentAvailable ?? this.ccPaymentAvailable,
       error: error == _sentinel ? this.error : error as BudgetError?,
     );
   }
@@ -141,6 +147,7 @@ final class BudgetState extends Equatable {
         templates,
         readyToAssign,
         localAllocations,
+        ccPaymentAvailable,
         error,
       ];
 }

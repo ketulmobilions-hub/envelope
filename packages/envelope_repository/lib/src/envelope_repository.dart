@@ -697,38 +697,38 @@ class EnvelopeRepository {
     }
   }
 
-  /// Decreases the CC Payment envelope's `allocatedAmount` in Supabase and
-  /// local cache when a CC expense transaction is deleted. Best-effort — does
-  /// not throw. Floors at zero.
-  Future<void> decreaseCCPaymentAllocatedAmount({
-    required String envelopeId,
-    required String budgetId,
-    required DateTime date,
-    required int amount,
+  /// Computes the available balance for a CC Payment envelope using
+  /// transaction history instead of allocated_amount manipulation.
+  ///
+  /// Formula: allocated + CC charges in period - CC payments in period + rollover
+  Future<int> calculateCCPaymentAvailable({
+    required EnvelopeAllocation? allocation,
+    required String ccAccountId,
+    required DateTime periodStart,
+    required DateTime periodEnd,
   }) async {
-    try {
-      final periods = await _localDatabase.budgetsDao
-          .getPeriodsByBudgetId(budgetId);
-      storage.BudgetPeriod? period;
-      for (final p in periods) {
-        if (!p.startDate.isAfter(date) && !p.endDate.isBefore(date)) {
-          period = p;
-          break;
-        }
-      }
-      if (period == null) return;
+    final allocated = allocation?.allocatedAmount ?? 0;
+    final rollover = allocation?.rolloverAmount ?? 0;
 
-      final alloc = await getEnvelopeAllocationByEnvelopeAndPeriod(
-        envelopeId: envelopeId,
-        budgetPeriodId: period.id,
-      );
-      if (alloc == null) return;
+    final txns = await _localDatabase.transactionsDao
+        .getTransactionsByAccountId(ccAccountId);
 
-      final newAllocated = max(0, alloc.allocatedAmount - amount);
-      await updateAllocation(alloc.copyWith(allocatedAmount: newAllocated));
-    } on Exception {
-      // Best-effort — refreshAllocations will correct on next round-trip.
-    }
+    final inPeriod = txns.where(
+      (t) =>
+          t.deletedAt == null &&
+          !t.date.isBefore(periodStart) &&
+          !t.date.isAfter(periodEnd),
+    );
+
+    final charges = inPeriod
+        .where((t) => t.type == 'expense')
+        .fold(0, (sum, t) => sum + t.amount);
+
+    final payments = inPeriod
+        .where((t) => t.type == 'transfer' && t.amount > 0)
+        .fold(0, (sum, t) => sum + t.amount);
+
+    return allocated + charges - payments + rollover;
   }
 
   /// Fetches allocations from the API and syncs to local storage.

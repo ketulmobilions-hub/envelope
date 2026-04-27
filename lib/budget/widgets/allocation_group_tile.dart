@@ -8,11 +8,13 @@ class AllocationGroupTile extends StatelessWidget {
   const AllocationGroupTile({
     required this.group,
     required this.envelopesWithAllocations,
+    this.ccPaymentAvailable = const {},
     super.key,
   });
 
   final CategoryGroup group;
   final List<(Envelope, EnvelopeAllocation?)> envelopesWithAllocations;
+  final Map<String, int> ccPaymentAvailable;
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +52,7 @@ class AllocationGroupTile extends StatelessWidget {
                     key: ValueKey(pair.$1.id),
                     envelope: pair.$1,
                     allocation: pair.$2,
+                    availableOverride: ccPaymentAvailable[pair.$1.id],
                   ),
                 )
                 .toList(),
