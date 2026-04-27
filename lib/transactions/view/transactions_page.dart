@@ -26,6 +26,7 @@ class TransactionsPage extends StatelessWidget {
         transactionRepository: context.read<TransactionRepository>(),
         accountRepository: context.read<AccountRepository>(),
         envelopeRepository: context.read<EnvelopeRepository>(),
+        budgetRepository: context.read<BudgetRepository>(),
         budgetId: budgetId,
       )..add(const TransactionsStarted()),
       child: TransactionsView(budgetId: budgetId),

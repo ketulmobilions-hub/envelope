@@ -268,6 +268,35 @@ class BudgetRepository {
     }
   }
 
+  /// Decrements `totalIncome` on the budget period that contains [date].
+  Future<void> removeIncomeFromPeriod({
+    required String budgetId,
+    required DateTime date,
+    required int amount,
+  }) async {
+    try {
+      final periods =
+          await _localDatabase.budgetsDao.getPeriodsByBudgetId(budgetId);
+      storage.BudgetPeriod? period;
+      for (final p in periods) {
+        if (!p.startDate.isAfter(date) && !p.endDate.isBefore(date)) {
+          period = p;
+          break;
+        }
+      }
+      if (period == null) return;
+
+      final updatedPeriod = _mapBudgetPeriodFromLocal(period).copyWith(
+        totalIncome: (period.totalIncome - amount).clamp(0, double.maxFinite.toInt()),
+      );
+      await updateBudgetPeriod(updatedPeriod);
+    } on BudgetException {
+      rethrow;
+    } on Exception catch (e) {
+      throw BudgetException('Failed to remove income from period', error: e);
+    }
+  }
+
   /// Watches all budget periods for a [budgetId].
   ///
   /// Returns a reactive stream from local storage.
