@@ -70,10 +70,25 @@ class EnvelopeSummaryCard extends StatelessWidget {
       );
     }
 
-    // Group summaries by category group name.
+    // Group summaries by category group ID, sorted by group sortOrder.
     final grouped = <String, List<EnvelopeSummary>>{};
     for (final s in summaries) {
-      grouped.putIfAbsent(s.categoryGroupName, () => []).add(s);
+      grouped
+          .putIfAbsent(s.envelope.categoryGroupId, () => [])
+          .add(s);
+    }
+    final sortedGroupIds = grouped.keys.toList()
+      ..sort((a, b) {
+        final aOrder =
+            categoryGroups.where((g) => g.id == a).firstOrNull?.sortOrder ?? 0;
+        final bOrder =
+            categoryGroups.where((g) => g.id == b).firstOrNull?.sortOrder ?? 0;
+        return aOrder.compareTo(bOrder);
+      });
+    for (final groupId in sortedGroupIds) {
+      grouped[groupId]!.sort(
+        (a, b) => a.envelope.sortOrder.compareTo(b.envelope.sortOrder),
+      );
     }
 
     return Padding(
@@ -111,11 +126,15 @@ class EnvelopeSummaryCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // Category groups.
-          for (final entry in grouped.entries)
+          // Category groups in sortOrder.
+          for (final groupId in sortedGroupIds)
             _CategoryGroupSection(
-              groupName: entry.key,
-              summaries: entry.value,
+              groupName: categoryGroups
+                      .where((g) => g.id == groupId)
+                      .firstOrNull
+                      ?.name ??
+                  grouped[groupId]!.first.categoryGroupName,
+              summaries: grouped[groupId]!,
               categoryGroups: categoryGroups,
               accounts: accounts,
               ccCreditLimits: ccCreditLimits,
