@@ -364,7 +364,7 @@ class _SettingsView extends StatelessWidget {
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
             onPressed: () {
-              if (controller.text.trim().toUpperCase() == 'DELETE') {
+              if (controller.text.trim() == 'DELETE') {
                 Navigator.pop(dialogContext);
                 context.read<SettingsCubit>().deleteAccount();
               }
