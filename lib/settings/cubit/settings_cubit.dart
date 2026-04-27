@@ -119,14 +119,16 @@ class SettingsCubit extends Cubit<SettingsState> {
     try {
       await _authRepository.deleteAccount();
       await _localDatabase.clearAllTables();
-      emit(state.copyWith(status: SettingsStatus.success));
+      if (!isClosed) emit(state.copyWith(status: SettingsStatus.success));
     } on Exception {
-      emit(
-        state.copyWith(
-          status: SettingsStatus.error,
-          errorMessage: SettingsMessage.deleteAccountFailed,
-        ),
-      );
+      if (!isClosed) {
+        emit(
+          state.copyWith(
+            status: SettingsStatus.error,
+            errorMessage: SettingsMessage.deleteAccountFailed,
+          ),
+        );
+      }
     }
   }
 
