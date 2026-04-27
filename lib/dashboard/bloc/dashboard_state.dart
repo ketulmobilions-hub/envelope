@@ -102,7 +102,15 @@ final class DashboardState extends Equatable {
       }
     }
 
-    return envelopes.where((e) => !e.isArchived).map((e) {
+    return envelopes.where((e) {
+      if (e.isArchived) return false;
+      if (e.linkedAccountId != null) {
+        final linked =
+            accounts.where((a) => a.id == e.linkedAccountId).firstOrNull;
+        if (linked != null && linked.isArchived) return false;
+      }
+      return true;
+    }).map((e) {
       final allocation = allocations
           .where((a) => a.envelopeId == e.id)
           .firstOrNull;
