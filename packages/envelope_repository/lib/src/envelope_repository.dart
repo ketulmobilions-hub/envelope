@@ -938,6 +938,10 @@ class EnvelopeRepository {
     return channel;
   }
 
+  void beginExternalWrite() => _beginLocalWrite();
+
+  void endExternalWrite() => _endLocalWrite();
+
   void _beginLocalWrite() => _localWriteCount++;
 
   void _endLocalWrite() {

@@ -356,6 +356,10 @@ class AccountRepository {
     return channel;
   }
 
+  void beginExternalWrite() => _beginLocalWrite();
+
+  void endExternalWrite() => _endLocalWrite();
+
   /// Marks a local write as in progress to suppress self-change notifications.
   void _beginLocalWrite() => _localWriteCount++;
 

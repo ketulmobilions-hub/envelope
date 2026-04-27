@@ -212,6 +212,7 @@ class BudgetRepository {
   ///
   /// Sends the update to the API and syncs locally.
   Future<void> updateBudgetPeriod(BudgetPeriod period) async {
+    _beginLocalWrite();
     try {
       final dto = BudgetPeriodDto(
         id: period.id,
@@ -225,7 +226,9 @@ class BudgetRepository {
       );
       final updated = await _apiClient.budgets.updateBudgetPeriod(dto);
       await _cacheBudgetPeriod(updated);
+      _endLocalWrite();
     } on EnvelopeApiException catch (e) {
+      _endLocalWrite();
       throw BudgetException(
         'Failed to update budget period',
         error: e,

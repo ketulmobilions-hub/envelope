@@ -284,18 +284,26 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
             }
           }
 
-          final created = await _transactionRepository.createTransaction(
-            budgetId: budgetId,
-            accountId: accountId,
-            type: type,
-            amount: amountCents,
-            currency: 'USD',
-            date: date,
-            createdBy: userId,
-            envelopeId: isSplitMode ? null : envelopeId,
-            payee: payee,
-            notes: notes,
-          );
+          _envelopeRepository.beginExternalWrite();
+          _accountRepository.beginExternalWrite();
+          late Transaction created;
+          try {
+            created = await _transactionRepository.createTransaction(
+              budgetId: budgetId,
+              accountId: accountId,
+              type: type,
+              amount: amountCents,
+              currency: 'USD',
+              date: date,
+              createdBy: userId,
+              envelopeId: isSplitMode ? null : envelopeId,
+              payee: payee,
+              notes: notes,
+            );
+          } finally {
+            _envelopeRepository.endExternalWrite();
+            _accountRepository.endExternalWrite();
+          }
           final transactionId = created.id;
 
           if (isSplitMode) {
@@ -329,12 +337,17 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
           }
 
           if (type == 'expense' && budgetPeriodId != null) {
-            await _transferToCCPaymentEnvelope(
-              accountId: accountId,
-              envelopeId: isSplitMode ? null : envelopeId,
-              splits: isSplitMode ? splits : [],
-              expenseAmount: amountCents,
-            );
+            _envelopeRepository.beginExternalWrite();
+            try {
+              await _transferToCCPaymentEnvelope(
+                accountId: accountId,
+                envelopeId: isSplitMode ? null : envelopeId,
+                splits: isSplitMode ? splits : [],
+                expenseAmount: amountCents,
+              );
+            } finally {
+              _envelopeRepository.endExternalWrite();
+            }
           }
 
           // Rule starts from the next occurrence so it doesn't banner today.
@@ -417,18 +430,26 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
           }
         }
 
-        final created = await _transactionRepository.createTransaction(
-          budgetId: budgetId,
-          accountId: accountId,
-          type: type,
-          amount: amountCents,
-          currency: 'USD',
-          date: date,
-          createdBy: userId,
-          envelopeId: isSplitMode ? null : envelopeId,
-          payee: payee,
-          notes: notes,
-        );
+        _envelopeRepository.beginExternalWrite();
+        _accountRepository.beginExternalWrite();
+        late Transaction created;
+        try {
+          created = await _transactionRepository.createTransaction(
+            budgetId: budgetId,
+            accountId: accountId,
+            type: type,
+            amount: amountCents,
+            currency: 'USD',
+            date: date,
+            createdBy: userId,
+            envelopeId: isSplitMode ? null : envelopeId,
+            payee: payee,
+            notes: notes,
+          );
+        } finally {
+          _envelopeRepository.endExternalWrite();
+          _accountRepository.endExternalWrite();
+        }
         final transactionId = created.id;
 
         if (isSplitMode) {
@@ -462,12 +483,17 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         }
 
         if (type == 'expense' && budgetPeriodId != null) {
-          await _transferToCCPaymentEnvelope(
-            accountId: accountId,
-            envelopeId: isSplitMode ? null : envelopeId,
-            splits: isSplitMode ? splits : [],
-            expenseAmount: amountCents,
-          );
+          _envelopeRepository.beginExternalWrite();
+          try {
+            await _transferToCCPaymentEnvelope(
+              accountId: accountId,
+              envelopeId: isSplitMode ? null : envelopeId,
+              splits: isSplitMode ? splits : [],
+              expenseAmount: amountCents,
+            );
+          } finally {
+            _envelopeRepository.endExternalWrite();
+          }
         }
 
         final overspendData = await _checkOverspend(
