@@ -336,42 +336,67 @@ class _SettingsView extends StatelessWidget {
   void _showDeleteAccountDialog(BuildContext context) {
     final controller = TextEditingController();
     final l10n = context.l10n;
+    final cubit = context.read<SettingsCubit>();
 
     showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.settingsDeleteAccount),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(l10n.settingsDeleteConfirmation),
-            const SizedBox(height: 16),
-            TextField(
-              controller: controller,
-              decoration: InputDecoration(
-                hintText: l10n.settingsTypeDelete,
+      barrierDismissible: false,
+      builder: (dialogContext) => BlocProvider.value(
+        value: cubit,
+        child: BlocConsumer<SettingsCubit, SettingsState>(
+          listenWhen: (prev, curr) =>
+              prev.status != curr.status &&
+              curr.status == SettingsStatus.error,
+          listener: (_, _) => Navigator.pop(dialogContext),
+          buildWhen: (prev, curr) => prev.status != curr.status,
+          builder: (builderContext, state) {
+            final isLoading = state.status == SettingsStatus.loading;
+            return AlertDialog(
+              title: Text(l10n.settingsDeleteAccount),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(l10n.settingsDeleteConfirmation),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: controller,
+                    enabled: !isLoading,
+                    decoration: InputDecoration(
+                      hintText: l10n.settingsTypeDelete,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+              actions: [
+                TextButton(
+                  onPressed: isLoading
+                      ? null
+                      : () => Navigator.pop(dialogContext),
+                  child: Text(l10n.settingsCancel),
+                ),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor:
+                        Theme.of(builderContext).colorScheme.error,
+                  ),
+                  onPressed: isLoading
+                      ? null
+                      : () {
+                          if (controller.text.trim() == 'DELETE') {
+                            cubit.deleteAccount();
+                          }
+                        },
+                  child: isLoading
+                      ? const SizedBox.square(
+                          dimension: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(l10n.settingsDeleteAccount),
+                ),
+              ],
+            );
+          },
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(l10n.settingsCancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            onPressed: () {
-              if (controller.text.trim() == 'DELETE') {
-                Navigator.pop(dialogContext);
-                context.read<SettingsCubit>().deleteAccount();
-              }
-            },
-            child: Text(l10n.settingsDeleteAccount),
-          ),
-        ],
       ),
     );
   }
