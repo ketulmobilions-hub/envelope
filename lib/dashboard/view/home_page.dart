@@ -185,6 +185,13 @@ class _HomeView extends StatelessWidget {
       ),
       body: MultiBlocListener(
         listeners: [
+          BlocListener<AuthBloc, AuthState>(
+            listenWhen: (prev, curr) =>
+                prev.status == AuthStatus.authenticated &&
+                curr.status == AuthStatus.unauthenticated,
+            listener: (context, _) =>
+                context.read<DashboardBloc>().cancelRealtimeSubscriptions(),
+          ),
           BlocListener<DashboardBloc, DashboardState>(
             listenWhen: (prev, curr) =>
                 prev.error != curr.error && curr.error != null,
@@ -215,9 +222,7 @@ class _HomeView extends StatelessWidget {
             listenWhen: (prev, curr) =>
                 curr.status == DashboardStatus.budgetDeleted,
             listener: (context, state) async {
-              await context
-                  .read<SharedPreferences>()
-                  .remove(activeBudgetIdKey);
+              await context.read<SharedPreferences>().remove(activeBudgetIdKey);
               if (context.mounted) context.go(AppRoutes.onboarding);
             },
           ),
@@ -265,7 +270,8 @@ class _HomeView extends StatelessWidget {
                               actions: [
                                 TextButton(
                                   onPressed: () => context.push(
-                                    '${AppRoutes.recurring}?budgetId=$budgetId&initialTab=1',
+                                    '${AppRoutes.recurring}'
+                                    '?budgetId=$budgetId&initialTab=1',
                                   ),
                                   child: Text(l10n.recurringTabBills),
                                 ),

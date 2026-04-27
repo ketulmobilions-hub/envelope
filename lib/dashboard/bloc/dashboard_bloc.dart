@@ -66,6 +66,8 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   int _generation = 0;
   int _allocationsGeneration = 0;
 
+  bool _signedOut = false;
+
   bool _periodsReceived = false;
   bool _accountsReceived = false;
   bool _envelopesReceived = false;
@@ -524,10 +526,21 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         );
   }
 
+  // Stops remote-update snackbars from cascade-delete events on sign-out.
+  void cancelRealtimeSubscriptions() {
+    _signedOut = true;
+    for (final ch in _realtimeChannels) {
+      unawaited(ch.unsubscribe());
+    }
+    unawaited(_allocationRealtimeChannel?.unsubscribe() ?? Future.value());
+    unawaited(_remoteChangeSubscription?.cancel() ?? Future.value());
+  }
+
   Future<void> _onRemoteChangeReceived(
     _RemoteChangeReceived event,
     Emitter<DashboardState> emit,
   ) async {
+    if (_signedOut) return;
     emit(state.copyWith(hasRemoteUpdate: true));
     await Future<void>.delayed(const Duration(seconds: 3));
     if (!isClosed) {
