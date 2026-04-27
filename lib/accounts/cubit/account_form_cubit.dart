@@ -14,10 +14,10 @@ class AccountFormCubit extends Cubit<AccountFormState> {
     BudgetRepository? budgetRepository,
     EnvelopeRepository? envelopeRepository,
     this.account,
-  })  : _accountRepository = accountRepository,
-        _budgetRepository = budgetRepository,
-        _envelopeRepository = envelopeRepository,
-        super(const AccountFormState());
+  }) : _accountRepository = accountRepository,
+       _budgetRepository = budgetRepository,
+       _envelopeRepository = envelopeRepository,
+       super(const AccountFormState());
 
   final AccountRepository _accountRepository;
   final BudgetRepository? _budgetRepository;

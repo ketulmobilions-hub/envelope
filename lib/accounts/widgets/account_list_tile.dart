@@ -10,15 +10,11 @@ class AccountListTile extends StatelessWidget {
   const AccountListTile({
     required this.account,
     required this.onTap,
-    required this.onArchive,
-    required this.onDelete,
     super.key,
   });
 
   final Account account;
   final VoidCallback onTap;
-  final VoidCallback onArchive;
-  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -46,39 +42,13 @@ class AccountListTile extends StatelessWidget {
       subtitle: Text(
         account.isOnBudget
             ? formatCents(account.currentBalance, symbol: symbol)
-            : '${formatCents(account.currentBalance, symbol: symbol)} · ${l10n.accountsOffBudgetIndicator}',
+            : '${formatCents(account.currentBalance, symbol: symbol)}'
+                ' · ${l10n.accountsOffBudgetIndicator}',
         style: TextStyle(
           color: account.currentBalance < 0
               ? Theme.of(context).colorScheme.error
               : null,
         ),
-      ),
-      trailing: PopupMenuButton<String>(
-        onSelected: (value) {
-          switch (value) {
-            case 'archive':
-              onArchive();
-            case 'delete':
-              onDelete();
-          }
-        },
-        itemBuilder: (_) => [
-          PopupMenuItem(
-            value: 'archive',
-            child: Text(
-              account.isArchived
-                  ? l10n.accountsUnarchive
-                  : l10n.accountsArchive,
-            ),
-          ),
-          PopupMenuItem(
-            value: 'delete',
-            child: Text(
-              l10n.accountsDelete,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-          ),
-        ],
       ),
       onTap: onTap,
     );

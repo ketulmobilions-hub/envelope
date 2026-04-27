@@ -182,8 +182,6 @@ class _AccountsList extends StatelessWidget {
             AccountListTile(
               account: account,
               onTap: () => _openDetail(context, account),
-              onArchive: () => _confirmArchive(context, account),
-              onDelete: () => _confirmDelete(context, account),
             ),
             if (isCreditCard(account.type) && account.currentBalance < 0)
               CreditCardFloatWarning(
@@ -207,10 +205,6 @@ class _AccountsList extends StatelessWidget {
             AccountListTile(
               account: account,
               onTap: () => _openDetail(context, account),
-              onArchive: () => context
-                  .read<AccountsBloc>()
-                  .add(AccountArchiveToggled(account)),
-              onDelete: () => _confirmDelete(context, account),
             ),
         ],
       ],
@@ -255,63 +249,6 @@ class _AccountsList extends StatelessWidget {
     }
   }
 
-  Future<void> _confirmArchive(
-    BuildContext context,
-    Account account,
-  ) async {
-    final l10n = context.l10n;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.accountsArchiveConfirmTitle),
-        content: Text(l10n.accountsArchiveConfirmMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(l10n.accountsReconcileCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(l10n.accountsArchive),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true && context.mounted) {
-      context.read<AccountsBloc>().add(AccountArchiveToggled(account));
-    }
-  }
-
-  Future<void> _confirmDelete(
-    BuildContext context,
-    Account account,
-  ) async {
-    final l10n = context.l10n;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.accountsDeleteConfirmTitle),
-        content: Text(l10n.accountsDeleteConfirmMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(l10n.accountsReconcileCancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor:
-                  Theme.of(dialogContext).colorScheme.error,
-            ),
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(l10n.accountsDelete),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true && context.mounted) {
-      context.read<AccountsBloc>().add(AccountDeleted(account.id));
-    }
-  }
 }
 
 class _TypeHeader extends StatelessWidget {
