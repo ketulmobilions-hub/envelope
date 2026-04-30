@@ -13,10 +13,10 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     required BudgetRepository budgetRepository,
     required EnvelopeRepository envelopeRepository,
     required String budgetId,
-  })  : _budgetRepository = budgetRepository,
-        _envelopeRepository = envelopeRepository,
-        _budgetId = budgetId,
-        super(BudgetState()) {
+  }) : _budgetRepository = budgetRepository,
+       _envelopeRepository = envelopeRepository,
+       _budgetId = budgetId,
+       super(BudgetState()) {
     on<BudgetStarted>(_onStarted);
     on<_PeriodsUpdated>(_onPeriodsUpdated);
     on<_AllocationsUpdated>(_onAllocationsUpdated);
@@ -177,11 +177,13 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
       _waitingForAllocations = true;
     }
 
-    emit(state.copyWith(
-      status: _isLoaded ? BudgetStatus.loaded : state.status,
-      periods: event.periods,
-      selectedPeriod: selected,
-    ));
+    emit(
+      state.copyWith(
+        status: _isLoaded ? BudgetStatus.loaded : state.status,
+        periods: event.periods,
+        selectedPeriod: selected,
+      ),
+    );
 
     // Subscribe to allocations when period is determined or changed.
     if (selected != null && selected.id != previousSelectedId) {
@@ -199,8 +201,9 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     var readyToAssign = state.readyToAssign;
     if (state.selectedPeriod != null) {
       try {
-        readyToAssign = await _budgetRepository
-            .calculateReadyToAssign(state.selectedPeriod!.id);
+        readyToAssign = await _budgetRepository.calculateReadyToAssign(
+          state.selectedPeriod!.id,
+        );
       } on BudgetException {
         // Keep previous value on error.
       }
@@ -211,12 +214,14 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
       envelopes: state.envelopes,
     );
 
-    emit(state.copyWith(
-      status: _isLoaded ? BudgetStatus.loaded : state.status,
-      allocations: event.allocations,
-      readyToAssign: readyToAssign,
-      ccPaymentAvailable: ccAvailable,
-    ));
+    emit(
+      state.copyWith(
+        status: _isLoaded ? BudgetStatus.loaded : state.status,
+        allocations: event.allocations,
+        readyToAssign: readyToAssign,
+        ccPaymentAvailable: ccAvailable,
+      ),
+    );
   }
 
   Future<Map<String, int>> _computeCCPaymentAvailable({
@@ -228,8 +233,9 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     final ccEnvelopes = envelopes.where((e) => e.linkedAccountId != null);
     final result = <String, int>{};
     for (final env in ccEnvelopes) {
-      final alloc =
-          allocations.where((a) => a.envelopeId == env.id).firstOrNull;
+      final alloc = allocations
+          .where((a) => a.envelopeId == env.id)
+          .firstOrNull;
       try {
         result[env.id] = await _envelopeRepository.calculateCCPaymentAvailable(
           allocation: alloc,
@@ -250,10 +256,12 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
   ) {
     if (event.generation != _generation) return;
     _groupsReceived = true;
-    emit(state.copyWith(
-      status: _isLoaded ? BudgetStatus.loaded : state.status,
-      categoryGroups: event.categoryGroups,
-    ));
+    emit(
+      state.copyWith(
+        status: _isLoaded ? BudgetStatus.loaded : state.status,
+        categoryGroups: event.categoryGroups,
+      ),
+    );
   }
 
   Future<void> _onEnvelopesUpdated(
@@ -266,11 +274,13 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
       allocations: state.allocations,
       envelopes: event.envelopes,
     );
-    emit(state.copyWith(
-      status: _isLoaded ? BudgetStatus.loaded : state.status,
-      envelopes: event.envelopes,
-      ccPaymentAvailable: ccAvailable,
-    ));
+    emit(
+      state.copyWith(
+        status: _isLoaded ? BudgetStatus.loaded : state.status,
+        envelopes: event.envelopes,
+        ccPaymentAvailable: ccAvailable,
+      ),
+    );
   }
 
   void _onTemplatesUpdated(
@@ -279,20 +289,24 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
   ) {
     if (event.generation != _generation) return;
     _templatesReceived = true;
-    emit(state.copyWith(
-      status: _isLoaded ? BudgetStatus.loaded : state.status,
-      templates: event.templates,
-    ));
+    emit(
+      state.copyWith(
+        status: _isLoaded ? BudgetStatus.loaded : state.status,
+        templates: event.templates,
+      ),
+    );
   }
 
   void _onStreamError(
     _BudgetStreamError event,
     Emitter<BudgetState> emit,
   ) {
-    emit(state.copyWith(
-      status: BudgetStatus.error,
-      error: BudgetError.loadFailed,
-    ));
+    emit(
+      state.copyWith(
+        status: BudgetStatus.error,
+        error: BudgetError.loadFailed,
+      ),
+    );
     emit(state.copyWith(status: BudgetStatus.loaded, error: null));
   }
 
@@ -330,12 +344,14 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     if (idx <= 0) return;
 
     final newPeriod = sorted[idx - 1];
-    emit(state.copyWith(
-      selectedPeriod: newPeriod,
-      allocations: const [],
-      localAllocations: const {},
-      readyToAssign: 0,
-    ));
+    emit(
+      state.copyWith(
+        selectedPeriod: newPeriod,
+        allocations: const [],
+        localAllocations: const {},
+        readyToAssign: 0,
+      ),
+    );
     await _subscribeToAllocations(newPeriod.id);
   }
 
@@ -348,12 +364,14 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     if (idx < 0 || idx >= sorted.length - 1) return;
 
     final newPeriod = sorted[idx + 1];
-    emit(state.copyWith(
-      selectedPeriod: newPeriod,
-      allocations: const [],
-      localAllocations: const {},
-      readyToAssign: 0,
-    ));
+    emit(
+      state.copyWith(
+        selectedPeriod: newPeriod,
+        allocations: const [],
+        localAllocations: const {},
+        readyToAssign: 0,
+      ),
+    );
     await _subscribeToAllocations(newPeriod.id);
   }
 
@@ -388,8 +406,9 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
             .firstOrNull;
 
         if (existing != null) {
-          await _envelopeRepository
-              .updateAllocation(existing.copyWith(allocatedAmount: amount));
+          await _envelopeRepository.updateAllocation(
+            existing.copyWith(allocatedAmount: amount),
+          );
         } else {
           await _envelopeRepository.allocate(
             envelopeId: envelopeId,
@@ -403,16 +422,20 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     } on EnvelopeException {
       // Preserve only the entries that were not yet written so the user can
       // retry without re-sending allocations that already succeeded.
-      emit(state.copyWith(
-        localAllocations: remaining,
-        status: BudgetStatus.error,
-        error: BudgetError.allocationFailed,
-      ));
-      emit(state.copyWith(
-        localAllocations: remaining,
-        status: BudgetStatus.loaded,
-        error: null,
-      ));
+      emit(
+        state.copyWith(
+          localAllocations: remaining,
+          status: BudgetStatus.error,
+          error: BudgetError.allocationFailed,
+        ),
+      );
+      emit(
+        state.copyWith(
+          localAllocations: remaining,
+          status: BudgetStatus.loaded,
+          error: null,
+        ),
+      );
     }
   }
 
@@ -427,10 +450,12 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
         amount: event.amount,
       );
     } on BudgetException {
-      emit(state.copyWith(
-        status: BudgetStatus.error,
-        error: BudgetError.transferFailed,
-      ));
+      emit(
+        state.copyWith(
+          status: BudgetStatus.error,
+          error: BudgetError.transferFailed,
+        ),
+      );
       emit(state.copyWith(status: BudgetStatus.loaded, error: null));
     }
   }
@@ -447,10 +472,12 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
         totalAmount: event.totalAmount,
       );
     } on BudgetException {
-      emit(state.copyWith(
-        status: BudgetStatus.error,
-        error: BudgetError.templateFailed,
-      ));
+      emit(
+        state.copyWith(
+          status: BudgetStatus.error,
+          error: BudgetError.templateFailed,
+        ),
+      );
       emit(state.copyWith(status: BudgetStatus.loaded, error: null));
     }
   }
@@ -466,10 +493,12 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
         items: event.items,
       );
     } on BudgetException {
-      emit(state.copyWith(
-        status: BudgetStatus.error,
-        error: BudgetError.templateFailed,
-      ));
+      emit(
+        state.copyWith(
+          status: BudgetStatus.error,
+          error: BudgetError.templateFailed,
+        ),
+      );
       emit(state.copyWith(status: BudgetStatus.loaded, error: null));
     }
   }
@@ -481,10 +510,12 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     try {
       await _budgetRepository.updateAllocationTemplate(event.template);
     } on BudgetException {
-      emit(state.copyWith(
-        status: BudgetStatus.error,
-        error: BudgetError.templateFailed,
-      ));
+      emit(
+        state.copyWith(
+          status: BudgetStatus.error,
+          error: BudgetError.templateFailed,
+        ),
+      );
       emit(state.copyWith(status: BudgetStatus.loaded, error: null));
     }
   }
@@ -496,10 +527,12 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     try {
       await _budgetRepository.deleteAllocationTemplate(event.templateId);
     } on BudgetException {
-      emit(state.copyWith(
-        status: BudgetStatus.error,
-        error: BudgetError.templateFailed,
-      ));
+      emit(
+        state.copyWith(
+          status: BudgetStatus.error,
+          error: BudgetError.templateFailed,
+        ),
+      );
       emit(state.copyWith(status: BudgetStatus.loaded, error: null));
     }
   }
@@ -520,10 +553,12 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
         toPeriodId: state.selectedPeriod!.id,
       );
     } on BudgetException {
-      emit(state.copyWith(
-        status: BudgetStatus.error,
-        error: BudgetError.allocationFailed,
-      ));
+      emit(
+        state.copyWith(
+          status: BudgetStatus.error,
+          error: BudgetError.allocationFailed,
+        ),
+      );
       emit(state.copyWith(status: BudgetStatus.loaded, error: null));
     }
   }

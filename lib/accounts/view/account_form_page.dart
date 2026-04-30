@@ -56,8 +56,8 @@ class _AccountFormPageState extends State<AccountFormPage> {
     _creditLimitController = TextEditingController();
     _selectedType = widget.account?.type ?? _accountTypes.first;
     _selectedCurrency = widget.account?.currency ?? 'USD';
-    _isOnBudget = widget.account?.isOnBudget ??
-        defaultIsOnBudget(_selectedType);
+    _isOnBudget =
+        widget.account?.isOnBudget ?? defaultIsOnBudget(_selectedType);
 
     if (_isEditing && isCreditCard(_selectedType)) {
       context.read<AccountFormCubit>().loadExistingCreditLimit();
@@ -93,8 +93,8 @@ class _AccountFormPageState extends State<AccountFormPage> {
         }
         if (state.existingCreditLimitCents != null &&
             _creditLimitController.text.isEmpty) {
-          _creditLimitController.text =
-              (state.existingCreditLimitCents! / 100).toStringAsFixed(2);
+          _creditLimitController.text = (state.existingCreditLimitCents! / 100)
+              .toStringAsFixed(2);
         }
       },
       child: Scaffold(
@@ -150,8 +150,9 @@ class _AccountFormPageState extends State<AccountFormPage> {
                           : l10n.accountsStartingBalanceLabel,
                       prefixText: symbol,
                     ),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(
                         isCreditCard(_selectedType)
@@ -161,10 +162,8 @@ class _AccountFormPageState extends State<AccountFormPage> {
                     ],
                     textInputAction: TextInputAction.done,
                     validator: (value) {
-                      final parsed =
-                          double.tryParse(value?.trim() ?? '');
-                      if (parsed != null &&
-                          parsed.abs() > maxDollarAmount) {
+                      final parsed = double.tryParse(value?.trim() ?? '');
+                      if (parsed != null && parsed.abs() > maxDollarAmount) {
                         return l10n.accountsBalanceTooLarge;
                       }
                       return null;

@@ -148,16 +148,16 @@ class _SummaryCard extends StatelessWidget {
             Text(
               label,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.secondaryText,
-                  ),
+                color: AppColors.secondaryText,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
               formatCents(amount, symbol: symbol),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.bold,
-                  ),
+                color: color,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),

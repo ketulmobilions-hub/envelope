@@ -45,5 +45,4 @@ abstract final class AppColors {
     if (value == null) return null;
     return Color(0xFF000000 | value);
   }
-
 }

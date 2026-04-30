@@ -20,8 +20,7 @@ void main() {
       when(() => cubit.state).thenReturn(const OnboardingState());
     });
 
-    testWidgets('renders welcome text and get started button',
-        (tester) async {
+    testWidgets('renders welcome text and get started button', (tester) async {
       await tester.pumpApp(
         BlocProvider<OnboardingCubit>.value(
           value: cubit,
@@ -32,8 +31,7 @@ void main() {
       expect(find.text('Get Started'), findsOneWidget);
     });
 
-    testWidgets('get started button calls nextStep',
-        (tester) async {
+    testWidgets('get started button calls nextStep', (tester) async {
       await tester.pumpApp(
         BlocProvider<OnboardingCubit>.value(
           value: cubit,

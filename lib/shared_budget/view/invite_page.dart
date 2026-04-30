@@ -42,8 +42,7 @@ class _InvitePageState extends State<InvitePage> {
         listeners: [
           BlocListener<SharedBudgetBloc, SharedBudgetState>(
             listenWhen: (prev, curr) =>
-                curr.status == SharedBudgetStatus.error &&
-                curr.error != null,
+                curr.status == SharedBudgetStatus.error && curr.error != null,
             listener: (context, state) {
               final message = switch (state.error!) {
                 SharedBudgetError.inviteFailed =>
@@ -57,8 +56,7 @@ class _InvitePageState extends State<InvitePage> {
           ),
           BlocListener<SharedBudgetBloc, SharedBudgetState>(
             listenWhen: (prev, curr) =>
-                prev.success != curr.success &&
-                curr.success != null,
+                prev.success != curr.success && curr.success != null,
             listener: (context, state) {
               showAppSnackBar(
                 context,
@@ -186,8 +184,7 @@ class _InvitePageState extends State<InvitePage> {
                             child: Text(
                               l10n.inviteRevoke,
                               style: TextStyle(
-                                color:
-                                    Theme.of(context).colorScheme.error,
+                                color: Theme.of(context).colorScheme.error,
                               ),
                             ),
                           ),

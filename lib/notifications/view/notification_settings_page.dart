@@ -48,78 +48,79 @@ class NotificationSettingsView extends StatelessWidget {
         },
         child: BlocBuilder<NotificationsCubit, NotificationsState>(
           builder: (context, state) {
-          if (state.status == NotificationsStatus.loading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+            if (state.status == NotificationsStatus.loading) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          if (state.status == NotificationsStatus.error) {
-            return Center(
-              child: Text(l10n.notificationError),
+            if (state.status == NotificationsStatus.error) {
+              return Center(
+                child: Text(l10n.notificationError),
+              );
+            }
+
+            final prefs = state.preferences;
+            if (prefs == null) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final cubit = context.read<NotificationsCubit>();
+
+            return ListView(
+              children: [
+                _SectionHeader(title: l10n.notificationPushSectionTitle),
+                SwitchListTile(
+                  title: Text(l10n.notificationPushEnabled),
+                  value: prefs.pushEnabled,
+                  onChanged: (v) => cubit.togglePush(enabled: v),
+                ),
+                if (prefs.pushEnabled) ...[
+                  SwitchListTile(
+                    title: Text(l10n.notificationOverspendAlerts),
+                    value: prefs.overspendAlerts,
+                    onChanged: (v) => cubit.toggleOverspend(enabled: v),
+                  ),
+                  SwitchListTile(
+                    title: Text(l10n.notificationBillReminders),
+                    value: prefs.billReminders,
+                    onChanged: (v) => cubit.toggleBillReminders(enabled: v),
+                  ),
+                  SwitchListTile(
+                    title: Text(l10n.notificationDailyLoggingReminder),
+                    value: prefs.dailyLoggingReminder,
+                    onChanged: (v) => cubit.toggleDailyReminder(enabled: v),
+                  ),
+                  SwitchListTile(
+                    title: Text(l10n.notificationRecurringAlerts),
+                    value: prefs.recurringTransactionAlerts,
+                    onChanged: (v) => cubit.toggleRecurringAlerts(enabled: v),
+                  ),
+                  SwitchListTile(
+                    title: Text(l10n.notificationSharedBudgetActivity),
+                    value: prefs.sharedBudgetActivity,
+                    onChanged: (v) => cubit.toggleSharedActivity(enabled: v),
+                  ),
+                ],
+                _SectionHeader(title: l10n.notificationEmailSectionTitle),
+                SwitchListTile(
+                  title: Text(l10n.notificationEmailEnabled),
+                  value: prefs.emailEnabled,
+                  onChanged: (v) => cubit.toggleEmail(enabled: v),
+                ),
+                if (prefs.emailEnabled) ...[
+                  SwitchListTile(
+                    title: Text(l10n.notificationEmailBillReminders),
+                    value: prefs.emailBillReminders,
+                    onChanged: (v) =>
+                        cubit.toggleEmailBillReminders(enabled: v),
+                  ),
+                  SwitchListTile(
+                    title: Text(l10n.notificationWeeklySummary),
+                    value: prefs.weeklySummary,
+                    onChanged: (v) => cubit.toggleWeeklySummary(enabled: v),
+                  ),
+                ],
+              ],
             );
-          }
-
-          final prefs = state.preferences;
-          if (prefs == null) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final cubit = context.read<NotificationsCubit>();
-
-          return ListView(
-            children: [
-              _SectionHeader(title: l10n.notificationPushSectionTitle),
-              SwitchListTile(
-                title: Text(l10n.notificationPushEnabled),
-                value: prefs.pushEnabled,
-                onChanged: (v) => cubit.togglePush(enabled: v),
-              ),
-              if (prefs.pushEnabled) ...[
-                SwitchListTile(
-                  title: Text(l10n.notificationOverspendAlerts),
-                  value: prefs.overspendAlerts,
-                  onChanged: (v) => cubit.toggleOverspend(enabled: v),
-                ),
-                SwitchListTile(
-                  title: Text(l10n.notificationBillReminders),
-                  value: prefs.billReminders,
-                  onChanged: (v) => cubit.toggleBillReminders(enabled: v),
-                ),
-                SwitchListTile(
-                  title: Text(l10n.notificationDailyLoggingReminder),
-                  value: prefs.dailyLoggingReminder,
-                  onChanged: (v) => cubit.toggleDailyReminder(enabled: v),
-                ),
-                SwitchListTile(
-                  title: Text(l10n.notificationRecurringAlerts),
-                  value: prefs.recurringTransactionAlerts,
-                  onChanged: (v) => cubit.toggleRecurringAlerts(enabled: v),
-                ),
-                SwitchListTile(
-                  title: Text(l10n.notificationSharedBudgetActivity),
-                  value: prefs.sharedBudgetActivity,
-                  onChanged: (v) => cubit.toggleSharedActivity(enabled: v),
-                ),
-              ],
-              _SectionHeader(title: l10n.notificationEmailSectionTitle),
-              SwitchListTile(
-                title: Text(l10n.notificationEmailEnabled),
-                value: prefs.emailEnabled,
-                onChanged: (v) => cubit.toggleEmail(enabled: v),
-              ),
-              if (prefs.emailEnabled) ...[
-                SwitchListTile(
-                  title: Text(l10n.notificationEmailBillReminders),
-                  value: prefs.emailBillReminders,
-                  onChanged: (v) => cubit.toggleEmailBillReminders(enabled: v),
-                ),
-                SwitchListTile(
-                  title: Text(l10n.notificationWeeklySummary),
-                  value: prefs.weeklySummary,
-                  onChanged: (v) => cubit.toggleWeeklySummary(enabled: v),
-                ),
-              ],
-            ],
-          );
           },
         ),
       ),
@@ -139,8 +140,8 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-            ),
+          color: Theme.of(context).colorScheme.primary,
+        ),
       ),
     );
   }

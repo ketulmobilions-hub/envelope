@@ -42,14 +42,12 @@ class OnboardingView extends StatelessWidget {
 
     return BlocConsumer<OnboardingCubit, OnboardingState>(
       listenWhen: (previous, current) =>
-          previous.status != current.status ||
-          previous.error != current.error,
+          previous.status != current.status || previous.error != current.error,
       listener: (context, state) {
         if (state.status == OnboardingStatus.success) {
           context.go(AppRoutes.home);
         }
-        if (state.status == OnboardingStatus.failure &&
-            state.error != null) {
+        if (state.status == OnboardingStatus.failure && state.error != null) {
           showAppSnackBar(
             context,
             SnackBar(
@@ -110,12 +108,9 @@ class OnboardingView extends StatelessWidget {
 
   String _localizeError(AppLocalizations l10n, OnboardingError error) {
     return switch (error) {
-      OnboardingError.accountRequired =>
-        l10n.onboardingErrorAccountRequired,
-      OnboardingError.envelopeRequired =>
-        l10n.onboardingErrorEnvelopeRequired,
-      OnboardingError.completionFailed =>
-        l10n.onboardingErrorCompletionFailed,
+      OnboardingError.accountRequired => l10n.onboardingErrorAccountRequired,
+      OnboardingError.envelopeRequired => l10n.onboardingErrorEnvelopeRequired,
+      OnboardingError.completionFailed => l10n.onboardingErrorCompletionFailed,
     };
   }
 

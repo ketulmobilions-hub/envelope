@@ -42,16 +42,16 @@ class ReadyToAssignCard extends StatelessWidget {
               Text(
                 l10n.budgetReadyToAssign,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: color,
-                    ),
+                  color: color,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
                 formatCents(amount, symbol: symbol),
                 style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               if (isOver) ...[
                 const SizedBox(height: 8),
@@ -67,8 +67,8 @@ class ReadyToAssignCard extends StatelessWidget {
                       child: Text(
                         l10n.budgetOverAllocatedWarning,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: color,
-                            ),
+                          color: color,
+                        ),
                       ),
                     ),
                   ],
@@ -80,5 +80,4 @@ class ReadyToAssignCard extends StatelessWidget {
       },
     );
   }
-
 }

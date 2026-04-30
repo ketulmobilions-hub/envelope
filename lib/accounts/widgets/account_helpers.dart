@@ -16,8 +16,7 @@ String localizedAccountType(String type, AppLocalizations l10n) {
 /// Returns whether the given account type is a credit card.
 ///
 /// Handles both camelCase (`'creditCard'`) and snake_case (`'credit_card'`).
-bool isCreditCard(String type) =>
-    type == 'credit_card' || type == 'creditCard';
+bool isCreditCard(String type) => type == 'credit_card' || type == 'creditCard';
 
 /// Returns whether the given account type should default to on-budget.
 ///

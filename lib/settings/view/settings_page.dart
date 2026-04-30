@@ -8,8 +8,7 @@ import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
 import 'package:envelope/onboarding/data/currencies.dart';
 import 'package:envelope/settings/cubit/cubit.dart';
 import 'package:envelope_api_client/envelope_api_client.dart';
-import 'package:envelope_local_storage/envelope_local_storage.dart'
-    hide User;
+import 'package:envelope_local_storage/envelope_local_storage.dart' hide User;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -113,8 +112,7 @@ class _SettingsView extends StatelessWidget {
                           builder: (_) => BlocProvider.value(
                             value: context.read<AuthBloc>(),
                             child: RepositoryProvider.value(
-                              value:
-                                  context.read<NotificationRepository>(),
+                              value: context.read<NotificationRepository>(),
                               child: const NotificationSettingsPage(),
                             ),
                           ),
@@ -128,9 +126,10 @@ class _SettingsView extends StatelessWidget {
                       title: Text(l10n.settingsExportData),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () {
-                        final budgetId = context
-                                .read<SharedPreferences>()
-                                .getString(activeBudgetIdKey) ??
+                        final budgetId =
+                            context.read<SharedPreferences>().getString(
+                              activeBudgetIdKey,
+                            ) ??
                             '';
                         context.go(
                           '${AppRoutes.reports}?budgetId=$budgetId',
@@ -141,9 +140,8 @@ class _SettingsView extends StatelessWidget {
                       leading: const Icon(Icons.file_download_outlined),
                       title: Text(l10n.settingsExportAllData),
                       subtitle: Text(l10n.settingsExportAllDataSubtitle),
-                      onTap: () => context
-                          .read<SettingsCubit>()
-                          .exportAllData(user.id),
+                      onTap: () =>
+                          context.read<SettingsCubit>().exportAllData(user.id),
                     ),
                     const Divider(),
                     _SectionHeader(title: l10n.settingsAccount),
@@ -345,8 +343,7 @@ class _SettingsView extends StatelessWidget {
         value: cubit,
         child: BlocConsumer<SettingsCubit, SettingsState>(
           listenWhen: (prev, curr) =>
-              prev.status != curr.status &&
-              curr.status == SettingsStatus.error,
+              prev.status != curr.status && curr.status == SettingsStatus.error,
           listener: (_, _) => Navigator.pop(dialogContext),
           buildWhen: (prev, curr) => prev.status != curr.status,
           builder: (builderContext, state) {
@@ -376,8 +373,7 @@ class _SettingsView extends StatelessWidget {
                 ),
                 FilledButton(
                   style: FilledButton.styleFrom(
-                    backgroundColor:
-                        Theme.of(builderContext).colorScheme.error,
+                    backgroundColor: Theme.of(builderContext).colorScheme.error,
                   ),
                   onPressed: isLoading
                       ? null
@@ -470,8 +466,8 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-            ),
+          color: Theme.of(context).colorScheme.primary,
+        ),
       ),
     );
   }
@@ -505,8 +501,9 @@ class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return Padding(
-      padding:
-          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: SizedBox(
         height: MediaQuery.of(context).size.height * 0.6,
         child: Column(
@@ -527,15 +524,13 @@ class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
               ),
             ),
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: TextField(
                 decoration: InputDecoration(
                   hintText: l10n.onboardingCurrencySearch,
                   prefixIcon: const Icon(Icons.search),
                 ),
-                onChanged: (value) =>
-                    setState(() => _searchQuery = value),
+                onChanged: (value) => setState(() => _searchQuery = value),
               ),
             ),
             if (_filteredCurrencies.isEmpty)
@@ -548,8 +543,7 @@ class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
                   itemCount: _filteredCurrencies.length,
                   itemBuilder: (_, index) {
                     final currency = _filteredCurrencies[index];
-                    final isSelected =
-                        currency.code == widget.baseCurrency;
+                    final isSelected = currency.code == widget.baseCurrency;
                     return ListTile(
                       dense: true,
                       visualDensity: VisualDensity.compact,
@@ -558,12 +552,11 @@ class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
                         ' - ${currency.name}',
                         style: const TextStyle(fontSize: 15),
                       ),
-                      trailing:
-                          isSelected ? const Icon(Icons.check) : null,
+                      trailing: isSelected ? const Icon(Icons.check) : null,
                       onTap: () {
-                        context
-                            .read<SettingsCubit>()
-                            .updateBaseCurrency(currency.code);
+                        context.read<SettingsCubit>().updateBaseCurrency(
+                          currency.code,
+                        );
                         Navigator.pop(context);
                       },
                     );

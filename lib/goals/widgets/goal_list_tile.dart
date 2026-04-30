@@ -63,10 +63,12 @@ class GoalListTile extends StatelessWidget {
               ],
             )
           : goal.monthlyContribution != null
-              ? Text(l10n.goalsPerMonth(
-                  formatCents(goal.monthlyContribution!, symbol: symbol),
-                ))
-              : null,
+          ? Text(
+              l10n.goalsPerMonth(
+                formatCents(goal.monthlyContribution!, symbol: symbol),
+              ),
+            )
+          : null,
       isThreeLine: goal.targetAmount != null,
       trailing: PopupMenuButton<String>(
         onSelected: (value) {

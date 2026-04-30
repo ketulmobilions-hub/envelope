@@ -39,8 +39,9 @@ void main() {
       blocTest<NotificationsCubit, NotificationsState>(
         'emits [loading, loaded] when successful',
         setUp: () {
-          when(() => repository.getPreferences(userId))
-              .thenAnswer((_) async => testPreferences);
+          when(
+            () => repository.getPreferences(userId),
+          ).thenAnswer((_) async => testPreferences);
         },
         build: () => NotificationsCubit(
           notificationRepository: repository,
@@ -59,8 +60,9 @@ void main() {
       blocTest<NotificationsCubit, NotificationsState>(
         'emits [loading, error] when fails',
         setUp: () {
-          when(() => repository.getPreferences(userId))
-              .thenThrow(Exception('network error'));
+          when(
+            () => repository.getPreferences(userId),
+          ).thenThrow(Exception('network error'));
         },
         build: () => NotificationsCubit(
           notificationRepository: repository,
@@ -88,8 +90,9 @@ void main() {
       blocTest<NotificationsCubit, NotificationsState>(
         'updates push enabled preference',
         setUp: () {
-          when(() => repository.updatePreferences(any()))
-              .thenAnswer((_) async {});
+          when(
+            () => repository.updatePreferences(any()),
+          ).thenAnswer((_) async {});
         },
         build: () => NotificationsCubit(
           notificationRepository: repository,
@@ -116,8 +119,9 @@ void main() {
       blocTest<NotificationsCubit, NotificationsState>(
         'updates email enabled preference',
         setUp: () {
-          when(() => repository.updatePreferences(any()))
-              .thenAnswer((_) async {});
+          when(
+            () => repository.updatePreferences(any()),
+          ).thenAnswer((_) async {});
         },
         build: () => NotificationsCubit(
           notificationRepository: repository,
@@ -141,8 +145,9 @@ void main() {
       blocTest<NotificationsCubit, NotificationsState>(
         'updates overspend alerts preference',
         setUp: () {
-          when(() => repository.updatePreferences(any()))
-              .thenAnswer((_) async {});
+          when(
+            () => repository.updatePreferences(any()),
+          ).thenAnswer((_) async {});
         },
         build: () => NotificationsCubit(
           notificationRepository: repository,
@@ -166,8 +171,9 @@ void main() {
       blocTest<NotificationsCubit, NotificationsState>(
         'updates bill reminders preference',
         setUp: () {
-          when(() => repository.updatePreferences(any()))
-              .thenAnswer((_) async {});
+          when(
+            () => repository.updatePreferences(any()),
+          ).thenAnswer((_) async {});
         },
         build: () => NotificationsCubit(
           notificationRepository: repository,
@@ -191,8 +197,9 @@ void main() {
       blocTest<NotificationsCubit, NotificationsState>(
         'updates daily logging reminder preference',
         setUp: () {
-          when(() => repository.updatePreferences(any()))
-              .thenAnswer((_) async {});
+          when(
+            () => repository.updatePreferences(any()),
+          ).thenAnswer((_) async {});
         },
         build: () => NotificationsCubit(
           notificationRepository: repository,
@@ -206,8 +213,7 @@ void main() {
         expect: () => [
           NotificationsState(
             status: NotificationsStatus.loaded,
-            preferences:
-                testPreferences.copyWith(dailyLoggingReminder: false),
+            preferences: testPreferences.copyWith(dailyLoggingReminder: false),
           ),
         ],
       );
@@ -217,8 +223,9 @@ void main() {
       blocTest<NotificationsCubit, NotificationsState>(
         'updates recurring transaction alerts preference',
         setUp: () {
-          when(() => repository.updatePreferences(any()))
-              .thenAnswer((_) async {});
+          when(
+            () => repository.updatePreferences(any()),
+          ).thenAnswer((_) async {});
         },
         build: () => NotificationsCubit(
           notificationRepository: repository,
@@ -244,8 +251,9 @@ void main() {
       blocTest<NotificationsCubit, NotificationsState>(
         'updates shared budget activity preference',
         setUp: () {
-          when(() => repository.updatePreferences(any()))
-              .thenAnswer((_) async {});
+          when(
+            () => repository.updatePreferences(any()),
+          ).thenAnswer((_) async {});
         },
         build: () => NotificationsCubit(
           notificationRepository: repository,
@@ -259,8 +267,7 @@ void main() {
         expect: () => [
           NotificationsState(
             status: NotificationsStatus.loaded,
-            preferences:
-                testPreferences.copyWith(sharedBudgetActivity: false),
+            preferences: testPreferences.copyWith(sharedBudgetActivity: false),
           ),
         ],
       );

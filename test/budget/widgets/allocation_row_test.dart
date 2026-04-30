@@ -28,8 +28,9 @@ void main() {
   setUp(() {
     budgetBloc = MockBudgetBloc();
     when(() => budgetBloc.state).thenReturn(BudgetState());
-    when(() => budgetBloc.stream)
-        .thenAnswer((_) => Stream.value(BudgetState()));
+    when(
+      () => budgetBloc.stream,
+    ).thenAnswer((_) => Stream.value(BudgetState()));
   });
 
   Widget buildSubject({EnvelopeAllocation? allocation}) {
@@ -57,7 +58,9 @@ void main() {
       expect(field.controller?.text, isEmpty);
     });
 
-    testWidgets('pre-fills field with existing allocated amount', (tester) async {
+    testWidgets('pre-fills field with existing allocated amount', (
+      tester,
+    ) async {
       final allocation = EnvelopeAllocation(
         id: 'alloc-1',
         envelopeId: 'env-1',
@@ -70,8 +73,9 @@ void main() {
       expect(field.controller?.text, '1200.00');
     });
 
-    testWidgets('dispatches AllocationAmountChanged on text input',
-        (tester) async {
+    testWidgets('dispatches AllocationAmountChanged on text input', (
+      tester,
+    ) async {
       await tester.pumpApp(buildSubject());
       await tester.enterText(find.byType(TextFormField), '500.00');
       verify(

@@ -1,27 +1,23 @@
 import 'package:drift/drift.dart' show InsertMode;
 import 'package:envelope_api_client/envelope_api_client.dart';
-import 'package:envelope_local_storage/envelope_local_storage.dart'
-    as storage;
+import 'package:envelope_local_storage/envelope_local_storage.dart' as storage;
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
 
 class MockEnvelopeApiClient extends Mock implements EnvelopeApiClient {}
 
-class MockEnvelopesApiClient extends Mock
-    implements EnvelopesApiClient {}
+class MockEnvelopesApiClient extends Mock implements EnvelopesApiClient {}
 
 class MockAppDatabase extends Mock implements storage.AppDatabase {}
 
 class MockEnvelopesDao extends Mock implements storage.EnvelopesDao {}
 
-class FakeCategoryGroupDto extends Fake
-    implements CategoryGroupDto {}
+class FakeCategoryGroupDto extends Fake implements CategoryGroupDto {}
 
 class FakeEnvelopeDto extends Fake implements EnvelopeDto {}
 
-class FakeEnvelopeAllocationDto extends Fake
-    implements EnvelopeAllocationDto {}
+class FakeEnvelopeAllocationDto extends Fake implements EnvelopeAllocationDto {}
 
 class FakeCategoryGroupsCompanion extends Fake
     implements storage.CategoryGroupsCompanion {}
@@ -157,8 +153,9 @@ void main() {
     // -----------------------------------------------------------------
     group('createCategoryGroup', () {
       test('creates via API, caches, and returns model', () async {
-        when(() => envelopesApiClient.createCategoryGroup(any()))
-            .thenAnswer((_) async => testCategoryGroupDto);
+        when(
+          () => envelopesApiClient.createCategoryGroup(any()),
+        ).thenAnswer((_) async => testCategoryGroupDto);
         when(
           () => envelopesDao.insertCategoryGroup(
             any(),
@@ -185,8 +182,9 @@ void main() {
       });
 
       test('throws EnvelopeException on API failure', () async {
-        when(() => envelopesApiClient.createCategoryGroup(any()))
-            .thenThrow(const EnvelopeApiException('API error'));
+        when(
+          () => envelopesApiClient.createCategoryGroup(any()),
+        ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
           () => repository.createCategoryGroup(
@@ -200,11 +198,11 @@ void main() {
 
     group('getCategoryGroup', () {
       test('returns from local storage when available', () async {
-        when(() => envelopesDao.getCategoryGroup('cg-1'))
-            .thenAnswer((_) async => testLocalCategoryGroup);
+        when(
+          () => envelopesDao.getCategoryGroup('cg-1'),
+        ).thenAnswer((_) async => testLocalCategoryGroup);
 
-        final result =
-            await repository.getCategoryGroup('cg-1');
+        final result = await repository.getCategoryGroup('cg-1');
 
         expect(result.id, equals('cg-1'));
         verifyNever(
@@ -213,8 +211,9 @@ void main() {
       });
 
       test('falls back to API when not in local storage', () async {
-        when(() => envelopesDao.getCategoryGroup('cg-1'))
-            .thenAnswer((_) async => null);
+        when(
+          () => envelopesDao.getCategoryGroup('cg-1'),
+        ).thenAnswer((_) async => null);
         when(
           () => envelopesApiClient.getCategoryGroup('cg-1'),
         ).thenAnswer((_) async => testCategoryGroupDto);
@@ -225,8 +224,7 @@ void main() {
           ),
         ).thenAnswer((_) async => 1);
 
-        final result =
-            await repository.getCategoryGroup('cg-1');
+        final result = await repository.getCategoryGroup('cg-1');
 
         expect(result.id, equals('cg-1'));
         verify(
@@ -235,8 +233,9 @@ void main() {
       });
 
       test('throws EnvelopeException on API failure', () async {
-        when(() => envelopesDao.getCategoryGroup('cg-1'))
-            .thenAnswer((_) async => null);
+        when(
+          () => envelopesDao.getCategoryGroup('cg-1'),
+        ).thenAnswer((_) async => null);
         when(
           () => envelopesApiClient.getCategoryGroup('cg-1'),
         ).thenThrow(const EnvelopeApiException('API error'));
@@ -251,14 +250,12 @@ void main() {
     group('watchCategoryGroups', () {
       test('streams from local storage mapped to domain models', () {
         when(
-          () => envelopesDao
-              .watchCategoryGroupsByBudgetId('budget-1'),
+          () => envelopesDao.watchCategoryGroupsByBudgetId('budget-1'),
         ).thenAnswer(
           (_) => Stream.value([testLocalCategoryGroup]),
         );
 
-        final stream =
-            repository.watchCategoryGroups('budget-1');
+        final stream = repository.watchCategoryGroups('budget-1');
 
         expect(
           stream,
@@ -317,8 +314,9 @@ void main() {
         when(
           () => envelopesApiClient.deleteCategoryGroup('cg-1'),
         ).thenAnswer((_) async {});
-        when(() => envelopesDao.deleteCategoryGroup('cg-1'))
-            .thenAnswer((_) async => 1);
+        when(
+          () => envelopesDao.deleteCategoryGroup('cg-1'),
+        ).thenAnswer((_) async => 1);
 
         await repository.deleteCategoryGroup('cg-1');
 
@@ -345,8 +343,9 @@ void main() {
         when(
           () => envelopesApiClient.deleteCategoryGroup('cg-1'),
         ).thenAnswer((_) async {});
-        when(() => envelopesDao.deleteCategoryGroup('cg-1'))
-            .thenThrow(Exception('local error'));
+        when(
+          () => envelopesDao.deleteCategoryGroup('cg-1'),
+        ).thenThrow(Exception('local error'));
 
         await repository.deleteCategoryGroup('cg-1');
 
@@ -358,13 +357,13 @@ void main() {
 
     group('archiveCategoryGroup', () {
       test('sets isArchived to true and updates', () async {
-        when(() => envelopesDao.getCategoryGroup('cg-1'))
-            .thenAnswer((_) async => testLocalCategoryGroup);
+        when(
+          () => envelopesDao.getCategoryGroup('cg-1'),
+        ).thenAnswer((_) async => testLocalCategoryGroup);
         when(
           () => envelopesApiClient.updateCategoryGroup(any()),
         ).thenAnswer((inv) async {
-          return inv.positionalArguments.first
-              as CategoryGroupDto;
+          return inv.positionalArguments.first as CategoryGroupDto;
         });
         when(
           () => envelopesDao.insertCategoryGroup(
@@ -375,10 +374,11 @@ void main() {
 
         await repository.archiveCategoryGroup('cg-1');
 
-        final captured = verify(
-          () => envelopesApiClient
-              .updateCategoryGroup(captureAny()),
-        ).captured.single as CategoryGroupDto;
+        final captured =
+            verify(
+                  () => envelopesApiClient.updateCategoryGroup(captureAny()),
+                ).captured.single
+                as CategoryGroupDto;
         expect(captured.isArchived, isTrue);
       });
     });
@@ -394,13 +394,13 @@ void main() {
           isArchived: true,
           createdAt: now,
         );
-        when(() => envelopesDao.getCategoryGroup('cg-1'))
-            .thenAnswer((_) async => archivedLocal);
+        when(
+          () => envelopesDao.getCategoryGroup('cg-1'),
+        ).thenAnswer((_) async => archivedLocal);
         when(
           () => envelopesApiClient.updateCategoryGroup(any()),
         ).thenAnswer((inv) async {
-          return inv.positionalArguments.first
-              as CategoryGroupDto;
+          return inv.positionalArguments.first as CategoryGroupDto;
         });
         when(
           () => envelopesDao.insertCategoryGroup(
@@ -411,10 +411,11 @@ void main() {
 
         await repository.unarchiveCategoryGroup('cg-1');
 
-        final captured = verify(
-          () => envelopesApiClient
-              .updateCategoryGroup(captureAny()),
-        ).captured.single as CategoryGroupDto;
+        final captured =
+            verify(
+                  () => envelopesApiClient.updateCategoryGroup(captureAny()),
+                ).captured.single
+                as CategoryGroupDto;
         expect(captured.isArchived, isFalse);
       });
     });
@@ -438,8 +439,7 @@ void main() {
           when(
             () => envelopesApiClient.updateCategoryGroup(any()),
           ).thenAnswer((inv) async {
-            return inv.positionalArguments.first
-                as CategoryGroupDto;
+            return inv.positionalArguments.first as CategoryGroupDto;
           });
           when(
             () => envelopesDao.batchInsertCategoryGroups(
@@ -448,8 +448,7 @@ void main() {
             ),
           ).thenAnswer((_) async {});
 
-          await repository
-              .reorderCategoryGroups(['cg-2', 'cg-1']);
+          await repository.reorderCategoryGroups(['cg-2', 'cg-1']);
 
           verify(
             () => envelopesApiClient.updateCategoryGroup(any()),
@@ -478,8 +477,7 @@ void main() {
     group('refreshCategoryGroups', () {
       test('fetches from API and batch caches all groups', () async {
         when(
-          () => envelopesApiClient
-              .getCategoryGroupsByBudget('budget-1'),
+          () => envelopesApiClient.getCategoryGroupsByBudget('budget-1'),
         ).thenAnswer((_) async => [testCategoryGroupDto]);
         when(
           () => envelopesDao.batchInsertCategoryGroups(
@@ -491,8 +489,7 @@ void main() {
         await repository.refreshCategoryGroups('budget-1');
 
         verify(
-          () => envelopesApiClient
-              .getCategoryGroupsByBudget('budget-1'),
+          () => envelopesApiClient.getCategoryGroupsByBudget('budget-1'),
         ).called(1);
         verify(
           () => envelopesDao.batchInsertCategoryGroups(
@@ -504,8 +501,7 @@ void main() {
 
       test('throws EnvelopeException on API failure', () async {
         when(
-          () => envelopesApiClient
-              .getCategoryGroupsByBudget('budget-1'),
+          () => envelopesApiClient.getCategoryGroupsByBudget('budget-1'),
         ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
@@ -520,8 +516,9 @@ void main() {
     // -----------------------------------------------------------------
     group('createEnvelope', () {
       test('creates via API, caches, and returns model', () async {
-        when(() => envelopesApiClient.createEnvelope(any()))
-            .thenAnswer((_) async => testEnvelopeDto);
+        when(
+          () => envelopesApiClient.createEnvelope(any()),
+        ).thenAnswer((_) async => testEnvelopeDto);
         when(
           () => envelopesDao.insertEnvelope(
             any(),
@@ -549,8 +546,9 @@ void main() {
       });
 
       test('throws EnvelopeException on API failure', () async {
-        when(() => envelopesApiClient.createEnvelope(any()))
-            .thenThrow(const EnvelopeApiException('API error'));
+        when(
+          () => envelopesApiClient.createEnvelope(any()),
+        ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
           () => repository.createEnvelope(
@@ -565,8 +563,9 @@ void main() {
 
     group('getEnvelope', () {
       test('returns from local storage when available', () async {
-        when(() => envelopesDao.getEnvelope('env-1'))
-            .thenAnswer((_) async => testLocalEnvelope);
+        when(
+          () => envelopesDao.getEnvelope('env-1'),
+        ).thenAnswer((_) async => testLocalEnvelope);
 
         final result = await repository.getEnvelope('env-1');
 
@@ -577,10 +576,12 @@ void main() {
       });
 
       test('falls back to API when not in local storage', () async {
-        when(() => envelopesDao.getEnvelope('env-1'))
-            .thenAnswer((_) async => null);
-        when(() => envelopesApiClient.getEnvelope('env-1'))
-            .thenAnswer((_) async => testEnvelopeDto);
+        when(
+          () => envelopesDao.getEnvelope('env-1'),
+        ).thenAnswer((_) async => null);
+        when(
+          () => envelopesApiClient.getEnvelope('env-1'),
+        ).thenAnswer((_) async => testEnvelopeDto);
         when(
           () => envelopesDao.insertEnvelope(
             any(),
@@ -597,10 +598,12 @@ void main() {
       });
 
       test('throws EnvelopeException on API failure', () async {
-        when(() => envelopesDao.getEnvelope('env-1'))
-            .thenAnswer((_) async => null);
-        when(() => envelopesApiClient.getEnvelope('env-1'))
-            .thenThrow(const EnvelopeApiException('API error'));
+        when(
+          () => envelopesDao.getEnvelope('env-1'),
+        ).thenAnswer((_) async => null);
+        when(
+          () => envelopesApiClient.getEnvelope('env-1'),
+        ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
           () => repository.getEnvelope('env-1'),
@@ -637,14 +640,12 @@ void main() {
     group('watchEnvelopesByCategoryGroup', () {
       test('streams envelopes for a category group', () {
         when(
-          () => envelopesDao
-              .watchEnvelopesByCategoryGroupId('cg-1'),
+          () => envelopesDao.watchEnvelopesByCategoryGroupId('cg-1'),
         ).thenAnswer(
           (_) => Stream.value([testLocalEnvelope]),
         );
 
-        final stream =
-            repository.watchEnvelopesByCategoryGroup('cg-1');
+        final stream = repository.watchEnvelopesByCategoryGroup('cg-1');
 
         expect(
           stream,
@@ -663,8 +664,9 @@ void main() {
 
     group('updateEnvelope', () {
       test('updates via API and caches locally', () async {
-        when(() => envelopesApiClient.updateEnvelope(any()))
-            .thenAnswer((_) async => testEnvelopeDto);
+        when(
+          () => envelopesApiClient.updateEnvelope(any()),
+        ).thenAnswer((_) async => testEnvelopeDto);
         when(
           () => envelopesDao.insertEnvelope(
             any(),
@@ -686,8 +688,9 @@ void main() {
       });
 
       test('throws EnvelopeException on API failure', () async {
-        when(() => envelopesApiClient.updateEnvelope(any()))
-            .thenThrow(const EnvelopeApiException('API error'));
+        when(
+          () => envelopesApiClient.updateEnvelope(any()),
+        ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
           () => repository.updateEnvelope(testEnvelope),
@@ -701,8 +704,9 @@ void main() {
         when(
           () => envelopesApiClient.deleteEnvelope('env-1'),
         ).thenAnswer((_) async {});
-        when(() => envelopesDao.deleteEnvelope('env-1'))
-            .thenAnswer((_) async => 1);
+        when(
+          () => envelopesDao.deleteEnvelope('env-1'),
+        ).thenAnswer((_) async => 1);
 
         await repository.deleteEnvelope('env-1');
 
@@ -729,8 +733,9 @@ void main() {
         when(
           () => envelopesApiClient.deleteEnvelope('env-1'),
         ).thenAnswer((_) async {});
-        when(() => envelopesDao.deleteEnvelope('env-1'))
-            .thenThrow(Exception('local error'));
+        when(
+          () => envelopesDao.deleteEnvelope('env-1'),
+        ).thenThrow(Exception('local error'));
 
         await repository.deleteEnvelope('env-1');
 
@@ -742,10 +747,12 @@ void main() {
 
     group('archiveEnvelope', () {
       test('sets isArchived to true and updates', () async {
-        when(() => envelopesDao.getEnvelope('env-1'))
-            .thenAnswer((_) async => testLocalEnvelope);
-        when(() => envelopesApiClient.updateEnvelope(any()))
-            .thenAnswer((inv) async {
+        when(
+          () => envelopesDao.getEnvelope('env-1'),
+        ).thenAnswer((_) async => testLocalEnvelope);
+        when(() => envelopesApiClient.updateEnvelope(any())).thenAnswer((
+          inv,
+        ) async {
           return inv.positionalArguments.first as EnvelopeDto;
         });
         when(
@@ -757,20 +764,24 @@ void main() {
 
         await repository.archiveEnvelope('env-1');
 
-        final captured = verify(
-          () =>
-              envelopesApiClient.updateEnvelope(captureAny()),
-        ).captured.single as EnvelopeDto;
+        final captured =
+            verify(
+                  () => envelopesApiClient.updateEnvelope(captureAny()),
+                ).captured.single
+                as EnvelopeDto;
         expect(captured.isArchived, isTrue);
       });
 
       test('falls back to API when not in local storage', () async {
-        when(() => envelopesDao.getEnvelope('env-1'))
-            .thenAnswer((_) async => null);
-        when(() => envelopesApiClient.getEnvelope('env-1'))
-            .thenAnswer((_) async => testEnvelopeDto);
-        when(() => envelopesApiClient.updateEnvelope(any()))
-            .thenAnswer((inv) async {
+        when(
+          () => envelopesDao.getEnvelope('env-1'),
+        ).thenAnswer((_) async => null);
+        when(
+          () => envelopesApiClient.getEnvelope('env-1'),
+        ).thenAnswer((_) async => testEnvelopeDto);
+        when(() => envelopesApiClient.updateEnvelope(any())).thenAnswer((
+          inv,
+        ) async {
           return inv.positionalArguments.first as EnvelopeDto;
         });
         when(
@@ -788,10 +799,12 @@ void main() {
       });
 
       test('throws EnvelopeException on API failure', () async {
-        when(() => envelopesDao.getEnvelope('env-1'))
-            .thenAnswer((_) async => testLocalEnvelope);
-        when(() => envelopesApiClient.updateEnvelope(any()))
-            .thenThrow(const EnvelopeApiException('API error'));
+        when(
+          () => envelopesDao.getEnvelope('env-1'),
+        ).thenAnswer((_) async => testLocalEnvelope);
+        when(
+          () => envelopesApiClient.updateEnvelope(any()),
+        ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
           () => repository.archiveEnvelope('env-1'),
@@ -811,10 +824,12 @@ void main() {
           isArchived: true,
           createdAt: now,
         );
-        when(() => envelopesDao.getEnvelope('env-1'))
-            .thenAnswer((_) async => archivedLocal);
-        when(() => envelopesApiClient.updateEnvelope(any()))
-            .thenAnswer((inv) async {
+        when(
+          () => envelopesDao.getEnvelope('env-1'),
+        ).thenAnswer((_) async => archivedLocal);
+        when(() => envelopesApiClient.updateEnvelope(any())).thenAnswer((
+          inv,
+        ) async {
           return inv.positionalArguments.first as EnvelopeDto;
         });
         when(
@@ -826,18 +841,21 @@ void main() {
 
         await repository.unarchiveEnvelope('env-1');
 
-        final captured = verify(
-          () =>
-              envelopesApiClient.updateEnvelope(captureAny()),
-        ).captured.single as EnvelopeDto;
+        final captured =
+            verify(
+                  () => envelopesApiClient.updateEnvelope(captureAny()),
+                ).captured.single
+                as EnvelopeDto;
         expect(captured.isArchived, isFalse);
       });
 
       test('throws when envelope not found anywhere', () async {
-        when(() => envelopesDao.getEnvelope('env-1'))
-            .thenAnswer((_) async => null);
-        when(() => envelopesApiClient.getEnvelope('env-1'))
-            .thenThrow(const EnvelopeApiException('not found'));
+        when(
+          () => envelopesDao.getEnvelope('env-1'),
+        ).thenAnswer((_) async => null);
+        when(
+          () => envelopesApiClient.getEnvelope('env-1'),
+        ).thenThrow(const EnvelopeApiException('not found'));
 
         expect(
           () => repository.unarchiveEnvelope('env-1'),
@@ -848,10 +866,12 @@ void main() {
 
     group('moveEnvelope', () {
       test('updates categoryGroupId and syncs', () async {
-        when(() => envelopesDao.getEnvelope('env-1'))
-            .thenAnswer((_) async => testLocalEnvelope);
-        when(() => envelopesApiClient.updateEnvelope(any()))
-            .thenAnswer((inv) async {
+        when(
+          () => envelopesDao.getEnvelope('env-1'),
+        ).thenAnswer((_) async => testLocalEnvelope);
+        when(() => envelopesApiClient.updateEnvelope(any())).thenAnswer((
+          inv,
+        ) async {
           return inv.positionalArguments.first as EnvelopeDto;
         });
         when(
@@ -866,18 +886,21 @@ void main() {
           newCategoryGroupId: 'cg-2',
         );
 
-        final captured = verify(
-          () =>
-              envelopesApiClient.updateEnvelope(captureAny()),
-        ).captured.single as EnvelopeDto;
+        final captured =
+            verify(
+                  () => envelopesApiClient.updateEnvelope(captureAny()),
+                ).captured.single
+                as EnvelopeDto;
         expect(captured.categoryGroupId, equals('cg-2'));
       });
 
       test('throws when envelope not found anywhere', () async {
-        when(() => envelopesDao.getEnvelope('env-1'))
-            .thenAnswer((_) async => null);
-        when(() => envelopesApiClient.getEnvelope('env-1'))
-            .thenThrow(const EnvelopeApiException('not found'));
+        when(
+          () => envelopesDao.getEnvelope('env-1'),
+        ).thenAnswer((_) async => null);
+        when(
+          () => envelopesApiClient.getEnvelope('env-1'),
+        ).thenThrow(const EnvelopeApiException('not found'));
 
         expect(
           () => repository.moveEnvelope(
@@ -889,10 +912,12 @@ void main() {
       });
 
       test('throws on API update failure', () async {
-        when(() => envelopesDao.getEnvelope('env-1'))
-            .thenAnswer((_) async => testLocalEnvelope);
-        when(() => envelopesApiClient.updateEnvelope(any()))
-            .thenThrow(const EnvelopeApiException('API error'));
+        when(
+          () => envelopesDao.getEnvelope('env-1'),
+        ).thenAnswer((_) async => testLocalEnvelope);
+        when(
+          () => envelopesApiClient.updateEnvelope(any()),
+        ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
           () => repository.moveEnvelope(
@@ -914,10 +939,12 @@ void main() {
             name: 'Groceries',
           );
 
-          when(() => envelopesApiClient.getEnvelope('env-2'))
-              .thenAnswer((_) async => dto2);
-          when(() => envelopesApiClient.getEnvelope('env-1'))
-              .thenAnswer((_) async => testEnvelopeDto);
+          when(
+            () => envelopesApiClient.getEnvelope('env-2'),
+          ).thenAnswer((_) async => dto2);
+          when(
+            () => envelopesApiClient.getEnvelope('env-1'),
+          ).thenAnswer((_) async => testEnvelopeDto);
           when(
             () => envelopesApiClient.updateEnvelope(any()),
           ).thenAnswer((inv) async {
@@ -930,8 +957,7 @@ void main() {
             ),
           ).thenAnswer((_) async {});
 
-          await repository
-              .reorderEnvelopes(['env-2', 'env-1']);
+          await repository.reorderEnvelopes(['env-2', 'env-1']);
 
           verify(
             () => envelopesApiClient.updateEnvelope(any()),
@@ -946,8 +972,9 @@ void main() {
       );
 
       test('throws EnvelopeException on API failure', () async {
-        when(() => envelopesApiClient.getEnvelope('env-1'))
-            .thenThrow(const EnvelopeApiException('API error'));
+        when(
+          () => envelopesApiClient.getEnvelope('env-1'),
+        ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
           () => repository.reorderEnvelopes(['env-1']),
@@ -959,8 +986,7 @@ void main() {
     group('refreshEnvelopes', () {
       test('fetches from API and batch caches all', () async {
         when(
-          () => envelopesApiClient
-              .getEnvelopesByBudget('budget-1'),
+          () => envelopesApiClient.getEnvelopesByBudget('budget-1'),
         ).thenAnswer((_) async => [testEnvelopeDto]);
         when(
           () => envelopesDao.batchInsertEnvelopes(
@@ -972,8 +998,7 @@ void main() {
         await repository.refreshEnvelopes('budget-1');
 
         verify(
-          () => envelopesApiClient
-              .getEnvelopesByBudget('budget-1'),
+          () => envelopesApiClient.getEnvelopesByBudget('budget-1'),
         ).called(1);
         verify(
           () => envelopesDao.batchInsertEnvelopes(
@@ -985,8 +1010,7 @@ void main() {
 
       test('throws EnvelopeException on API failure', () async {
         when(
-          () => envelopesApiClient
-              .getEnvelopesByBudget('budget-1'),
+          () => envelopesApiClient.getEnvelopesByBudget('budget-1'),
         ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
@@ -1002,8 +1026,7 @@ void main() {
     group('allocate', () {
       test('creates via API, caches, and returns model', () async {
         when(
-          () => envelopesApiClient
-              .createEnvelopeAllocation(any()),
+          () => envelopesApiClient.createEnvelopeAllocation(any()),
         ).thenAnswer((_) async => testAllocationDto);
         when(
           () => envelopesDao.insertAllocation(
@@ -1021,8 +1044,7 @@ void main() {
         expect(result.id, equals('alloc-1'));
         expect(result.allocatedAmount, equals(100000));
         verify(
-          () => envelopesApiClient
-              .createEnvelopeAllocation(any()),
+          () => envelopesApiClient.createEnvelopeAllocation(any()),
         ).called(1);
         verify(
           () => envelopesDao.insertAllocation(
@@ -1034,8 +1056,7 @@ void main() {
 
       test('throws EnvelopeException on API failure', () async {
         when(
-          () => envelopesApiClient
-              .createEnvelopeAllocation(any()),
+          () => envelopesApiClient.createEnvelopeAllocation(any()),
         ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
@@ -1050,17 +1071,14 @@ void main() {
     });
 
     group('watchAllocations', () {
-      test('streams from local storage mapped to domain models',
-          () {
+      test('streams from local storage mapped to domain models', () {
         when(
-          () => envelopesDao
-              .watchAllocationsByPeriodId('period-1'),
+          () => envelopesDao.watchAllocationsByPeriodId('period-1'),
         ).thenAnswer(
           (_) => Stream.value([testLocalAllocation]),
         );
 
-        final stream =
-            repository.watchAllocations('period-1');
+        final stream = repository.watchAllocations('period-1');
 
         expect(
           stream,
@@ -1080,8 +1098,7 @@ void main() {
     group('updateAllocation', () {
       test('updates via API and caches locally', () async {
         when(
-          () => envelopesApiClient
-              .updateEnvelopeAllocation(any()),
+          () => envelopesApiClient.updateEnvelopeAllocation(any()),
         ).thenAnswer((_) async => testAllocationDto);
         when(
           () => envelopesDao.insertAllocation(
@@ -1093,8 +1110,7 @@ void main() {
         await repository.updateAllocation(testAllocation);
 
         verify(
-          () => envelopesApiClient
-              .updateEnvelopeAllocation(any()),
+          () => envelopesApiClient.updateEnvelopeAllocation(any()),
         ).called(1);
         verify(
           () => envelopesDao.insertAllocation(
@@ -1106,8 +1122,7 @@ void main() {
 
       test('throws EnvelopeException on API failure', () async {
         when(
-          () => envelopesApiClient
-              .updateEnvelopeAllocation(any()),
+          () => envelopesApiClient.updateEnvelopeAllocation(any()),
         ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
@@ -1120,17 +1135,16 @@ void main() {
     group('deleteAllocation', () {
       test('deletes from API and cleans up local cache', () async {
         when(
-          () => envelopesApiClient
-              .deleteEnvelopeAllocation('alloc-1'),
+          () => envelopesApiClient.deleteEnvelopeAllocation('alloc-1'),
         ).thenAnswer((_) async {});
-        when(() => envelopesDao.deleteAllocation('alloc-1'))
-            .thenAnswer((_) async => 1);
+        when(
+          () => envelopesDao.deleteAllocation('alloc-1'),
+        ).thenAnswer((_) async => 1);
 
         await repository.deleteAllocation('alloc-1');
 
         verify(
-          () => envelopesApiClient
-              .deleteEnvelopeAllocation('alloc-1'),
+          () => envelopesApiClient.deleteEnvelopeAllocation('alloc-1'),
         ).called(1);
         verify(
           () => envelopesDao.deleteAllocation('alloc-1'),
@@ -1139,8 +1153,7 @@ void main() {
 
       test('throws EnvelopeException on API failure', () async {
         when(
-          () => envelopesApiClient
-              .deleteEnvelopeAllocation('alloc-1'),
+          () => envelopesApiClient.deleteEnvelopeAllocation('alloc-1'),
         ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
@@ -1151,17 +1164,16 @@ void main() {
 
       test('succeeds even when local cleanup fails', () async {
         when(
-          () => envelopesApiClient
-              .deleteEnvelopeAllocation('alloc-1'),
+          () => envelopesApiClient.deleteEnvelopeAllocation('alloc-1'),
         ).thenAnswer((_) async {});
-        when(() => envelopesDao.deleteAllocation('alloc-1'))
-            .thenThrow(Exception('local error'));
+        when(
+          () => envelopesDao.deleteAllocation('alloc-1'),
+        ).thenThrow(Exception('local error'));
 
         await repository.deleteAllocation('alloc-1');
 
         verify(
-          () => envelopesApiClient
-              .deleteEnvelopeAllocation('alloc-1'),
+          () => envelopesApiClient.deleteEnvelopeAllocation('alloc-1'),
         ).called(1);
       });
     });
@@ -1169,8 +1181,7 @@ void main() {
     group('refreshAllocations', () {
       test('fetches from API and batch caches all', () async {
         when(
-          () => envelopesApiClient
-              .getAllocationsByPeriod('period-1'),
+          () => envelopesApiClient.getAllocationsByPeriod('period-1'),
         ).thenAnswer((_) async => [testAllocationDto]);
         when(
           () => envelopesDao.batchInsertAllocations(
@@ -1182,8 +1193,7 @@ void main() {
         await repository.refreshAllocations('period-1');
 
         verify(
-          () => envelopesApiClient
-              .getAllocationsByPeriod('period-1'),
+          () => envelopesApiClient.getAllocationsByPeriod('period-1'),
         ).called(1);
         verify(
           () => envelopesDao.batchInsertAllocations(
@@ -1195,8 +1205,7 @@ void main() {
 
       test('throws EnvelopeException on API failure', () async {
         when(
-          () => envelopesApiClient
-              .getAllocationsByPeriod('period-1'),
+          () => envelopesApiClient.getAllocationsByPeriod('period-1'),
         ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(

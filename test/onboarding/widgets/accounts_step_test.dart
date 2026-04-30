@@ -34,8 +34,7 @@ void main() {
       );
     });
 
-    testWidgets('renders title and add account button',
-        (tester) async {
+    testWidgets('renders title and add account button', (tester) async {
       await tester.pumpApp(
         BlocProvider<OnboardingCubit>.value(
           value: cubit,
@@ -71,8 +70,7 @@ void main() {
       expect(find.text('My Checking'), findsOneWidget);
     });
 
-    testWidgets('delete button calls removeAccount',
-        (tester) async {
+    testWidgets('delete button calls removeAccount', (tester) async {
       when(() => cubit.state).thenReturn(
         const OnboardingState(
           currentStep: OnboardingStep.accounts,

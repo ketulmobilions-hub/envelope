@@ -87,8 +87,9 @@ final class ReportsState extends Equatable {
           ? this.budgetVsActualReport
           : budgetVsActualReport as BudgetVsActualReport?,
       netWorthSnapshots: netWorthSnapshots ?? this.netWorthSnapshots,
-      startDate:
-          startDate == _sentinel ? this.startDate : startDate as DateTime?,
+      startDate: startDate == _sentinel
+          ? this.startDate
+          : startDate as DateTime?,
       endDate: endDate == _sentinel ? this.endDate : endDate as DateTime?,
       trendMonths: trendMonths ?? this.trendMonths,
       selectedPeriodId: selectedPeriodId == _sentinel

@@ -23,18 +23,18 @@ class AccountsTotalCard extends StatelessWidget {
             Text(
               l10n.accountsTotalBalance,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
+                color: Theme.of(context).colorScheme.outline,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               formatCents(totalBalance, symbol: symbol),
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: totalBalance < 0
-                        ? Theme.of(context).colorScheme.error
-                        : null,
-                  ),
+                fontWeight: FontWeight.bold,
+                color: totalBalance < 0
+                    ? Theme.of(context).colorScheme.error
+                    : null,
+              ),
             ),
           ],
         ),

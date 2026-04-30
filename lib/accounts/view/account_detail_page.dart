@@ -74,17 +74,14 @@ class AccountDetailPage extends StatelessWidget {
                     children: [
                       Text(
                         l10n.accountsCurrentBalance,
-                        style:
-                            Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.outline,
-                                ),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         formatCents(account.currentBalance, symbol: symbol),
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineLarge
+                        style: Theme.of(context).textTheme.headlineLarge
                             ?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -233,8 +230,9 @@ class AccountDetailPage extends StatelessWidget {
                       prefixText: symbol,
                       errorText: balanceError,
                     ),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(
                         isCreditCard(account.type)
@@ -258,8 +256,7 @@ class AccountDetailPage extends StatelessWidget {
                 ),
                 FilledButton(
                   onPressed: () {
-                    final raw =
-                        double.tryParse(controller.text.trim());
+                    final raw = double.tryParse(controller.text.trim());
                     if (raw != null && raw.abs() > maxDollarAmount) {
                       setDialogState(
                         () => balanceError = l10n.accountsBalanceTooLarge,
@@ -336,8 +333,8 @@ class _AccountTransactionsList extends StatelessWidget {
                   Text(
                     l10n.accountsTransactionsPlaceholder,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.outline,
-                        ),
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
                   ),
                 ],
               ),
@@ -373,8 +370,7 @@ class _AccountTransactionsList extends StatelessWidget {
   Future<void> _openEdit(BuildContext context, Transaction transaction) async {
     final bloc = context.read<TransactionsBloc>();
     final budgetRepository = context.read<BudgetRepository>();
-    final periods =
-        await budgetRepository.watchBudgetPeriods(budgetId).first;
+    final periods = await budgetRepository.watchBudgetPeriods(budgetId).first;
     String? periodId;
     if (periods.isNotEmpty) {
       final now = DateTime.now();
@@ -444,17 +440,15 @@ class _BalanceDetail extends StatelessWidget {
         Text(
           label,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Theme.of(context).colorScheme.outline,
-              ),
+            color: Theme.of(context).colorScheme.outline,
+          ),
         ),
         const SizedBox(height: 4),
         Text(
           formatCents(amount, symbol: symbol),
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: isOverLimit
-                    ? Theme.of(context).colorScheme.error
-                    : null,
-              ),
+            color: isOverLimit ? Theme.of(context).colorScheme.error : null,
+          ),
         ),
       ],
     );
@@ -477,8 +471,8 @@ class _InfoRow extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
+              color: Theme.of(context).colorScheme.outline,
+            ),
           ),
           Text(value, style: Theme.of(context).textTheme.bodyMedium),
         ],

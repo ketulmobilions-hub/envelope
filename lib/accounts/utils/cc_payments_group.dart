@@ -10,8 +10,9 @@ Future<CategoryGroup> findOrCreateCCPaymentsGroup({
   required String budgetId,
 }) async {
   final groups = await repository.watchCategoryGroups(budgetId).first;
-  final existing =
-      groups.where((g) => g.name == ccPaymentsGroupName).firstOrNull;
+  final existing = groups
+      .where((g) => g.name == ccPaymentsGroupName)
+      .firstOrNull;
   if (existing != null) return existing;
   try {
     return await repository.createCategoryGroup(

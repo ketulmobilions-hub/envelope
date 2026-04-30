@@ -73,8 +73,9 @@ void main() {
       blocTest<LoginCubit, LoginState>(
         'emits [submitting, success] on successful Google sign in',
         setUp: () {
-          when(() => authRepository.signInWithGoogle())
-              .thenAnswer((_) async {});
+          when(
+            () => authRepository.signInWithGoogle(),
+          ).thenAnswer((_) async {});
         },
         build: () => LoginCubit(authRepository: authRepository),
         act: (cubit) => cubit.signInWithGoogle(),
@@ -107,8 +108,7 @@ void main() {
       blocTest<LoginCubit, LoginState>(
         'emits [submitting, success] on successful Apple sign in',
         setUp: () {
-          when(() => authRepository.signInWithApple())
-              .thenAnswer((_) async {});
+          when(() => authRepository.signInWithApple()).thenAnswer((_) async {});
         },
         build: () => LoginCubit(authRepository: authRepository),
         act: (cubit) => cubit.signInWithApple(),

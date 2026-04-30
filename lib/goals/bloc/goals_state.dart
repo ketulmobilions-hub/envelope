@@ -26,12 +26,10 @@ final class GoalsState extends Equatable {
   }
 
   /// Non-completed goals.
-  List<Goal> get activeGoals =>
-      goals.where((g) => !g.isCompleted).toList();
+  List<Goal> get activeGoals => goals.where((g) => !g.isCompleted).toList();
 
   /// Completed goals.
-  List<Goal> get completedGoals =>
-      goals.where((g) => g.isCompleted).toList();
+  List<Goal> get completedGoals => goals.where((g) => g.isCompleted).toList();
 
   GoalsState copyWith({
     GoalsStatus? status,

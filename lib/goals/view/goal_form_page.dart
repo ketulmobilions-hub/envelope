@@ -121,8 +121,7 @@ class _GoalFormPageState extends State<GoalFormPage> {
                   AppOptionPicker<String>(
                     options: _goalTypes,
                     value: _selectedType,
-                    onChanged: (type) =>
-                        setState(() => _selectedType = type),
+                    onChanged: (type) => setState(() => _selectedType = type),
                     labelText: l10n.goalsTypeLabel,
                     icon: Icons.category_outlined,
                     itemLabel: (type) => localizedGoalType(type, l10n),
@@ -137,8 +136,9 @@ class _GoalFormPageState extends State<GoalFormPage> {
                         labelText: l10n.goalsTargetAmountLabel,
                         prefixText: symbol,
                       ),
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(
                           RegExp(r'^\d*\.?\d{0,2}'),
@@ -172,8 +172,9 @@ class _GoalFormPageState extends State<GoalFormPage> {
                         labelText: l10n.goalsMonthlyContributionLabel,
                         prefixText: symbol,
                       ),
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(
                           RegExp(r'^\d*\.?\d{0,2}'),
@@ -219,8 +220,9 @@ class _GoalFormPageState extends State<GoalFormPage> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final targetAmountCents = parseCents(_targetAmountController.text);
-    final monthlyContributionCents =
-        parseCents(_monthlyContributionController.text);
+    final monthlyContributionCents = parseCents(
+      _monthlyContributionController.text,
+    );
 
     context.read<GoalFormCubit>().submit(
       name: _nameController.text.trim(),
@@ -265,8 +267,8 @@ class _DatePickerField extends StatelessWidget {
         child: Text(
           value != null
               ? '${value!.month.toString().padLeft(2, '0')}/'
-                  '${value!.day.toString().padLeft(2, '0')}/'
-                  '${value!.year}'
+                    '${value!.day.toString().padLeft(2, '0')}/'
+                    '${value!.year}'
               : '',
         ),
       ),

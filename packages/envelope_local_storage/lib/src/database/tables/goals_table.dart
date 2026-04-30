@@ -8,8 +8,7 @@ class Goals extends Table {
   TextColumn get type => text()();
   TextColumn get name => text()();
   IntColumn get targetAmount => integer().named('target_amount').nullable()();
-  DateTimeColumn get targetDate =>
-      dateTime().named('target_date').nullable()();
+  DateTimeColumn get targetDate => dateTime().named('target_date').nullable()();
   IntColumn get monthlyContribution =>
       integer().named('monthly_contribution').nullable()();
   IntColumn get currentAmount =>

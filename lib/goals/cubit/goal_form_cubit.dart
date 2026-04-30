@@ -9,8 +9,8 @@ class GoalFormCubit extends Cubit<GoalFormState> {
     required GoalRepository goalRepository,
     required this.budgetId,
     this.goal,
-  })  : _goalRepository = goalRepository,
-        super(const GoalFormState());
+  }) : _goalRepository = goalRepository,
+       super(const GoalFormState());
 
   final GoalRepository _goalRepository;
   final String budgetId;

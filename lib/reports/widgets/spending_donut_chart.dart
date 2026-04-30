@@ -37,8 +37,7 @@ class _SpendingDonutChartState extends State<SpendingDonutChart> {
                   _touchedIndex = -1;
                   return;
                 }
-                _touchedIndex =
-                    response.touchedSection!.touchedSectionIndex;
+                _touchedIndex = response.touchedSection!.touchedSectionIndex;
               });
               if (_touchedIndex >= 0) {
                 widget.onCategoryTapped?.call(_touchedIndex);

@@ -65,10 +65,10 @@ class SplitRows extends StatelessWidget {
             Text(
               '${l10n.transactionsRemaining}: ${formatCents(remaining, symbol: symbol)}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: remaining == 0
-                        ? AppColors.income
-                        : Theme.of(context).colorScheme.error,
-                  ),
+                color: remaining == 0
+                    ? AppColors.income
+                    : Theme.of(context).colorScheme.error,
+              ),
             ),
           ],
         ),
@@ -120,8 +120,7 @@ class SplitRows extends StatelessWidget {
                     ],
                     onChanged: (value) {
                       final updated = List<SplitEntry>.from(splits);
-                      updated[i] =
-                          updated[i].copyWith(amountText: value);
+                      updated[i] = updated[i].copyWith(amountText: value);
                       onChanged(updated);
                     },
                   ),

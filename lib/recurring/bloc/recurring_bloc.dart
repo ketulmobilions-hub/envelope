@@ -13,10 +13,10 @@ class RecurringBloc extends Bloc<RecurringEvent, RecurringState> {
     required TransactionRepository transactionRepository,
     required String budgetId,
     required String userId,
-  })  : _transactionRepository = transactionRepository,
-        _budgetId = budgetId,
-        _userId = userId,
-        super(const RecurringState()) {
+  }) : _transactionRepository = transactionRepository,
+       _budgetId = budgetId,
+       _userId = userId,
+       super(const RecurringState()) {
     on<RecurringStarted>(_onStarted);
     on<_RecurringRulesUpdated>(_onRulesUpdated);
     on<_BillRemindersUpdated>(_onRemindersUpdated);

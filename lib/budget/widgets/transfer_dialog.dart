@@ -57,8 +57,9 @@ class _TransferDialogState extends State<_TransferDialog> {
     super.initState();
     _allocatedEnvelopes = widget.allocations
         .map((a) {
-          final env =
-              widget.envelopes.where((e) => e.id == a.envelopeId).firstOrNull;
+          final env = widget.envelopes
+              .where((e) => e.id == a.envelopeId)
+              .firstOrNull;
           return env != null ? (env, a) : null;
         })
         .whereType<(Envelope, EnvelopeAllocation)>()
@@ -120,8 +121,9 @@ class _TransferDialogState extends State<_TransferDialog> {
                 labelText: l10n.budgetTransferAmount,
                 prefixText: symbol,
               ),
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
               ],
@@ -132,8 +134,8 @@ class _TransferDialogState extends State<_TransferDialog> {
                 final availableCents = from == null
                     ? 0
                     : from.allocatedAmount -
-                        from.spentAmount +
-                        from.rolloverAmount;
+                          from.spentAmount +
+                          from.rolloverAmount;
                 if (cents > availableCents) {
                   return l10n.budgetTransferInsufficientFunds;
                 }

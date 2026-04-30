@@ -760,6 +760,10 @@
     "@budgetManageTemplates": {
         "description": "Action menu item to open the templates management page"
     },
+    "budgetSaveAsTemplate": "Save Current as Template",
+    "@budgetSaveAsTemplate": {
+        "description": "Action menu item and dialog title for saving the current period's allocation as a new named template"
+    },
     "budgetDuplicateFromPrevious": "Copy from Previous Period",
     "@budgetDuplicateFromPrevious": {
         "description": "Action menu item to duplicate allocations from prior period"

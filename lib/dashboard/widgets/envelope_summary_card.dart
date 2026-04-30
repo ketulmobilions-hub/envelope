@@ -73,9 +73,7 @@ class EnvelopeSummaryCard extends StatelessWidget {
     // Group summaries by category group ID, sorted by group sortOrder.
     final grouped = <String, List<EnvelopeSummary>>{};
     for (final s in summaries) {
-      grouped
-          .putIfAbsent(s.envelope.categoryGroupId, () => [])
-          .add(s);
+      grouped.putIfAbsent(s.envelope.categoryGroupId, () => []).add(s);
     }
     final sortedGroupIds = grouped.keys.toList()
       ..sort((a, b) {
@@ -129,7 +127,8 @@ class EnvelopeSummaryCard extends StatelessWidget {
           // Category groups in sortOrder.
           for (final groupId in sortedGroupIds)
             _CategoryGroupSection(
-              groupName: categoryGroups
+              groupName:
+                  categoryGroups
                       .where((g) => g.id == groupId)
                       .firstOrNull
                       ?.name ??
@@ -231,93 +230,89 @@ class _CategoryGroupSection extends StatelessWidget {
               return Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: summaries
-                    .map(
-                      (s) {
-                        final linkedId = s.envelope.linkedAccountId;
-                        final creditLimit = linkedId != null
-                            ? ccCreditLimits[linkedId]
-                            : null;
-                        final ccAccount = linkedId != null
-                            ? accounts
-                                .where((a) => a.id == linkedId)
-                                .firstOrNull
-                            : null;
+                children: summaries.map(
+                  (s) {
+                    final linkedId = s.envelope.linkedAccountId;
+                    final creditLimit = linkedId != null
+                        ? ccCreditLimits[linkedId]
+                        : null;
+                    final ccAccount = linkedId != null
+                        ? accounts.where((a) => a.id == linkedId).firstOrNull
+                        : null;
 
-                        final hasCreditInfo =
-                            creditLimit != null && ccAccount != null;
-                        final displayAvailable = hasCreditInfo
-                            ? creditLimit + ccAccount.currentBalance
-                            : s.available;
-                        final displayAllocated =
-                            hasCreditInfo ? creditLimit : s.allocated;
-                        final displayOverspent = hasCreditInfo
-                            ? displayAvailable < 0
-                            : s.isOverspent;
+                    final hasCreditInfo =
+                        creditLimit != null && ccAccount != null;
+                    final displayAvailable = hasCreditInfo
+                        ? creditLimit + ccAccount.currentBalance
+                        : s.available;
+                    final displayAllocated = hasCreditInfo
+                        ? creditLimit
+                        : s.allocated;
+                    final displayOverspent = hasCreditInfo
+                        ? displayAvailable < 0
+                        : s.isOverspent;
 
-                        final ccDebt = hasCreditInfo
-                            ? (-ccAccount.currentBalance)
-                                .clamp(0, maxCentsAmount)
-                            : 0;
-                        final primaryLabel = hasCreditInfo
-                            ? context.l10n.ccDueLabel(
-                                formatCents(ccDebt, symbol: symbol),
+                    final ccDebt = hasCreditInfo
+                        ? (-ccAccount.currentBalance).clamp(0, maxCentsAmount)
+                        : 0;
+                    final primaryLabel = hasCreditInfo
+                        ? context.l10n.ccDueLabel(
+                            formatCents(ccDebt, symbol: symbol),
+                          )
+                        : null;
+                    final limitLabel = hasCreditInfo
+                        ? context.l10n.ccLimitLabel(
+                            formatCents(
+                              displayAvailable,
+                              symbol: symbol,
+                            ),
+                            formatCents(
+                              displayAllocated,
+                              symbol: symbol,
+                            ),
+                          )
+                        : null;
+
+                    return SizedBox(
+                      width: cardWidth,
+                      child: EnvelopeCard(
+                        name: s.envelope.name,
+                        availableCents: displayAvailable,
+                        allocatedCents: displayAllocated,
+                        spentCents: s.spent,
+                        isOverspent: displayOverspent,
+                        primaryLabel: primaryLabel,
+                        limitLabel: limitLabel,
+                        color: AppColors.fromHex(s.envelope.color),
+                        heroTag: 'envelope_${s.envelope.id}',
+                        onTap: () => _openDetail(context, s),
+                        onAllocate: linkedId != null
+                            ? null
+                            : (cents) {
+                                context.read<DashboardBloc>().add(
+                                  QuickAllocationRequested(
+                                    envelopeId: s.envelope.id,
+                                    amount: cents,
+                                  ),
+                                );
+                              },
+                        onFixOverspend:
+                            linkedId == null &&
+                                s.isOverspent &&
+                                s.allocation != null
+                            ? () => _fixOverspend(context, s)
+                            : null,
+                        onPay: linkedId != null && ccAccount != null
+                            ? () => _showCCPayBottomSheet(
+                                context,
+                                ccAccount,
+                                linkedId,
                               )
-                            : null;
-                        final limitLabel = hasCreditInfo
-                            ? context.l10n.ccLimitLabel(
-                                formatCents(
-                                  displayAvailable,
-                                  symbol: symbol,
-                                ),
-                                formatCents(
-                                  displayAllocated,
-                                  symbol: symbol,
-                                ),
-                              )
-                            : null;
-
-                        return SizedBox(
-                          width: cardWidth,
-                          child: EnvelopeCard(
-                            name: s.envelope.name,
-                            availableCents: displayAvailable,
-                            allocatedCents: displayAllocated,
-                            spentCents: s.spent,
-                            isOverspent: displayOverspent,
-                            primaryLabel: primaryLabel,
-                            limitLabel: limitLabel,
-                            color: AppColors.fromHex(s.envelope.color),
-                            heroTag: 'envelope_${s.envelope.id}',
-                            onTap: () => _openDetail(context, s),
-                            onAllocate: linkedId != null
-                                ? null
-                                : (cents) {
-                                    context.read<DashboardBloc>().add(
-                                      QuickAllocationRequested(
-                                        envelopeId: s.envelope.id,
-                                        amount: cents,
-                                      ),
-                                    );
-                                  },
-                            onFixOverspend:
-                                linkedId == null &&
-                                        s.isOverspent &&
-                                        s.allocation != null
-                                    ? () => _fixOverspend(context, s)
-                                    : null,
-                            onPay: linkedId != null && ccAccount != null
-                                ? () => _showCCPayBottomSheet(
-                                    context,
-                                    ccAccount,
-                                    linkedId,
-                                  )
-                                : null,
-                          ),
-                        );
-                      },
-                    )
-                    .toList(),
+                            : null,
+                      ),
+                    );
+                  },
+                ).toList(),
               );
             },
           ),
@@ -338,22 +333,23 @@ class _CategoryGroupSection extends StatelessWidget {
         .where((t) => t.envelopeId == summary.envelope.id)
         .map((t) => t.accountId)
         .where((id) {
-          final account =
-              dashState.accounts.where((a) => a.id == id).firstOrNull;
+          final account = dashState.accounts
+              .where((a) => a.id == id)
+              .firstOrNull;
           return account != null && isCreditCard(account.type);
         })
         .firstOrNull;
 
     final ccPaymentEnvelope = ccAccountId != null
         ? dashState.envelopes
-            .where((e) => e.linkedAccountId == ccAccountId)
-            .firstOrNull
+              .where((e) => e.linkedAccountId == ccAccountId)
+              .firstOrNull
         : null;
 
     final ccPaymentAllocation = ccPaymentEnvelope != null
         ? dashState.allocations
-            .where((a) => a.envelopeId == ccPaymentEnvelope.id)
-            .firstOrNull
+              .where((a) => a.envelopeId == ccPaymentEnvelope.id)
+              .firstOrNull
         : null;
 
     final result = await showCoverOverspendDialog(
@@ -382,8 +378,7 @@ class _CategoryGroupSection extends StatelessWidget {
     final dashState = context.read<DashboardBloc>().state;
     final budgetId =
         context.read<SharedPreferences>().getString(activeBudgetIdKey) ?? '';
-    final userId =
-        context.read<AuthBloc>().state.user?.id ?? '';
+    final userId = context.read<AuthBloc>().state.user?.id ?? '';
     final budgetPeriodId = dashState.selectedPeriod?.id;
     final ccDebtCents = (-ccAccount.currentBalance).clamp(0, maxCentsAmount);
 

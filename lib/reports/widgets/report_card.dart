@@ -37,16 +37,16 @@ class ReportCard extends StatelessWidget {
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: AppColors.charcoal,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: AppColors.charcoal,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
                 subtitle,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.secondaryText,
-                    ),
+                  color: AppColors.secondaryText,
+                ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),

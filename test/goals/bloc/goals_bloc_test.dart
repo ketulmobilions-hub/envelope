@@ -41,10 +41,12 @@ void main() {
     blocTest<GoalsBloc, GoalsState>(
       'emits [loading, loaded] when GoalsStarted is added',
       build: () {
-        when(() => goalRepository.watchGoals('budget-1'))
-            .thenAnswer((_) => Stream.value(testGoals));
-        when(() => goalRepository.refreshGoals('budget-1'))
-            .thenAnswer((_) async {});
+        when(
+          () => goalRepository.watchGoals('budget-1'),
+        ).thenAnswer((_) => Stream.value(testGoals));
+        when(
+          () => goalRepository.refreshGoals('budget-1'),
+        ).thenAnswer((_) async {});
         return GoalsBloc(
           goalRepository: goalRepository,
           budgetId: 'budget-1',
@@ -67,10 +69,12 @@ void main() {
     blocTest<GoalsBloc, GoalsState>(
       'still loads from local stream when refresh fails',
       build: () {
-        when(() => goalRepository.watchGoals('budget-1'))
-            .thenAnswer((_) => Stream.value(testGoals));
-        when(() => goalRepository.refreshGoals('budget-1'))
-            .thenThrow(const GoalException('Network error'));
+        when(
+          () => goalRepository.watchGoals('budget-1'),
+        ).thenAnswer((_) => Stream.value(testGoals));
+        when(
+          () => goalRepository.refreshGoals('budget-1'),
+        ).thenThrow(const GoalException('Network error'));
         return GoalsBloc(
           goalRepository: goalRepository,
           budgetId: 'budget-1',
@@ -90,8 +94,9 @@ void main() {
       'completes goal when GoalCompleteToggled is added '
       'with non-completed goal',
       build: () {
-        when(() => goalRepository.completeGoal('goal-1'))
-            .thenAnswer((_) async {});
+        when(
+          () => goalRepository.completeGoal('goal-1'),
+        ).thenAnswer((_) async {});
         return GoalsBloc(
           goalRepository: goalRepository,
           budgetId: 'budget-1',
@@ -107,8 +112,9 @@ void main() {
       'uncompletes goal when GoalCompleteToggled is added '
       'with completed goal',
       build: () {
-        when(() => goalRepository.uncompleteGoal('goal-1'))
-            .thenAnswer((_) async {});
+        when(
+          () => goalRepository.uncompleteGoal('goal-1'),
+        ).thenAnswer((_) async {});
         return GoalsBloc(
           goalRepository: goalRepository,
           budgetId: 'budget-1',
@@ -127,8 +133,9 @@ void main() {
     blocTest<GoalsBloc, GoalsState>(
       'emits error then loaded when complete toggle fails',
       build: () {
-        when(() => goalRepository.completeGoal('goal-1'))
-            .thenThrow(const GoalException('Failed'));
+        when(
+          () => goalRepository.completeGoal('goal-1'),
+        ).thenThrow(const GoalException('Failed'));
         return GoalsBloc(
           goalRepository: goalRepository,
           budgetId: 'budget-1',
@@ -147,8 +154,9 @@ void main() {
     blocTest<GoalsBloc, GoalsState>(
       'emits error then loaded when delete fails',
       build: () {
-        when(() => goalRepository.deleteGoal('goal-1'))
-            .thenThrow(const GoalException('Failed'));
+        when(
+          () => goalRepository.deleteGoal('goal-1'),
+        ).thenThrow(const GoalException('Failed'));
         return GoalsBloc(
           goalRepository: goalRepository,
           budgetId: 'budget-1',
@@ -167,8 +175,9 @@ void main() {
     blocTest<GoalsBloc, GoalsState>(
       'deletes goal when GoalDeleted is added',
       build: () {
-        when(() => goalRepository.deleteGoal('goal-1'))
-            .thenAnswer((_) async {});
+        when(
+          () => goalRepository.deleteGoal('goal-1'),
+        ).thenAnswer((_) async {});
         return GoalsBloc(
           goalRepository: goalRepository,
           budgetId: 'budget-1',
@@ -183,8 +192,9 @@ void main() {
     blocTest<GoalsBloc, GoalsState>(
       'refreshes goals when GoalsRefreshRequested is added',
       build: () {
-        when(() => goalRepository.refreshGoals('budget-1'))
-            .thenAnswer((_) async {});
+        when(
+          () => goalRepository.refreshGoals('budget-1'),
+        ).thenAnswer((_) async {});
         return GoalsBloc(
           goalRepository: goalRepository,
           budgetId: 'budget-1',

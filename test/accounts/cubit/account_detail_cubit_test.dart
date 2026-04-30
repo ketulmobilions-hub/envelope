@@ -58,8 +58,9 @@ void main() {
     blocTest<AccountDetailCubit, AccountDetailState>(
       'refresh keeps current data on failure',
       build: () {
-        when(() => accountRepository.getAccount('acc-1'))
-            .thenThrow(const AccountException('Not found'));
+        when(
+          () => accountRepository.getAccount('acc-1'),
+        ).thenThrow(const AccountException('Not found'));
         return AccountDetailCubit(
           accountRepository: accountRepository,
           account: testAccount,
@@ -72,8 +73,9 @@ void main() {
     blocTest<AccountDetailCubit, AccountDetailState>(
       'reconcile emits submitting, reconciled, then idle',
       build: () {
-        when(() => accountRepository.reconcileAccount('acc-1', 20000))
-            .thenAnswer((_) async {});
+        when(
+          () => accountRepository.reconcileAccount('acc-1', 20000),
+        ).thenAnswer((_) async {});
         when(() => accountRepository.getAccount('acc-1')).thenAnswer(
           (_) async => testAccount.copyWith(currentBalance: 20000),
         );
@@ -101,8 +103,9 @@ void main() {
     blocTest<AccountDetailCubit, AccountDetailState>(
       'reconcile emits failure on error',
       build: () {
-        when(() => accountRepository.reconcileAccount('acc-1', 20000))
-            .thenThrow(const AccountException('Reconcile failed'));
+        when(
+          () => accountRepository.reconcileAccount('acc-1', 20000),
+        ).thenThrow(const AccountException('Reconcile failed'));
         return AccountDetailCubit(
           accountRepository: accountRepository,
           account: testAccount,

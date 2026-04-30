@@ -19,22 +19,20 @@ class SyncDao extends DatabaseAccessor<AppDatabase> with _$SyncDaoMixin {
 
   Future<List<SyncMetadataData>> getSyncMetadataByTableName(
     String tableName,
-  ) =>
-      (select(syncMetadata)..where((t) => t.syncTableName.equals(tableName)))
-          .get();
+  ) => (select(
+    syncMetadata,
+  )..where((t) => t.syncTableName.equals(tableName))).get();
 
   Future<List<SyncMetadataData>> getSyncMetadataByStatus(String status) =>
       (select(syncMetadata)..where((t) => t.syncStatus.equals(status))).get();
 
-  Future<List<SyncMetadataData>> getPendingSyncMetadata() =>
-      (select(syncMetadata)
-            ..where((t) => t.syncStatus.equals('pending')))
-          .get();
+  Future<List<SyncMetadataData>> getPendingSyncMetadata() => (select(
+    syncMetadata,
+  )..where((t) => t.syncStatus.equals('pending'))).get();
 
-  Stream<List<SyncMetadataData>> watchPendingSyncMetadata() =>
-      (select(syncMetadata)
-            ..where((t) => t.syncStatus.equals('pending')))
-          .watch();
+  Stream<List<SyncMetadataData>> watchPendingSyncMetadata() => (select(
+    syncMetadata,
+  )..where((t) => t.syncStatus.equals('pending'))).watch();
 
   Future<int> insertSyncMetadata(SyncMetadataCompanion metadata) =>
       into(syncMetadata).insert(metadata);

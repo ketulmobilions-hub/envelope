@@ -5,8 +5,7 @@ import 'package:envelope_local_storage/src/database/tables/tables.dart';
 part 'reports_dao.g.dart';
 
 @DriftAccessor(tables: [NetWorthSnapshots, ActivityLog])
-class ReportsDao extends DatabaseAccessor<AppDatabase>
-    with _$ReportsDaoMixin {
+class ReportsDao extends DatabaseAccessor<AppDatabase> with _$ReportsDaoMixin {
   ReportsDao(super.attachedDatabase);
 
   // Net Worth Snapshots CRUD
@@ -15,22 +14,23 @@ class ReportsDao extends DatabaseAccessor<AppDatabase>
 
   Future<List<NetWorthSnapshot>> getNetWorthSnapshotsByBudgetId(
     String budgetId,
-  ) =>
-      (select(netWorthSnapshots)..where((t) => t.budgetId.equals(budgetId)))
-          .get();
+  ) => (select(
+    netWorthSnapshots,
+  )..where((t) => t.budgetId.equals(budgetId))).get();
 
   Stream<List<NetWorthSnapshot>> watchNetWorthSnapshotsByBudgetId(
     String budgetId,
-  ) =>
-      (select(netWorthSnapshots)..where((t) => t.budgetId.equals(budgetId)))
-          .watch();
+  ) => (select(
+    netWorthSnapshots,
+  )..where((t) => t.budgetId.equals(budgetId))).watch();
 
   Future<int> insertNetWorthSnapshot(NetWorthSnapshotsCompanion snapshot) =>
       into(netWorthSnapshots).insert(snapshot);
 
   Future<int> upsertNetWorthSnapshot(NetWorthSnapshotsCompanion snapshot) =>
-      into(netWorthSnapshots)
-          .insert(snapshot, mode: InsertMode.insertOrReplace);
+      into(
+        netWorthSnapshots,
+      ).insert(snapshot, mode: InsertMode.insertOrReplace);
 
   Future<bool> updateNetWorthSnapshot(NetWorthSnapshotsCompanion snapshot) =>
       update(netWorthSnapshots).replace(snapshot);
@@ -54,8 +54,7 @@ class ReportsDao extends DatabaseAccessor<AppDatabase>
   Future<int> insertActivityLog(
     ActivityLogCompanion log, {
     InsertMode mode = InsertMode.insert,
-  }) =>
-      into(activityLog).insert(log, mode: mode);
+  }) => into(activityLog).insert(log, mode: mode);
 
   Future<void> batchInsertActivityLogs(
     List<ActivityLogCompanion> entries, {

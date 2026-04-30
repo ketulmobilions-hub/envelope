@@ -11,9 +11,9 @@ class GoalsBloc extends Bloc<GoalsEvent, GoalsState> {
   GoalsBloc({
     required GoalRepository goalRepository,
     required String budgetId,
-  })  : _goalRepository = goalRepository,
-        _budgetId = budgetId,
-        super(const GoalsState()) {
+  }) : _goalRepository = goalRepository,
+       _budgetId = budgetId,
+       super(const GoalsState()) {
     on<GoalsStarted>(_onStarted);
     on<_GoalsUpdated>(_onUpdated);
     on<_GoalsStreamError>(_onStreamError);

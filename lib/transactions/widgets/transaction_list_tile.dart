@@ -76,9 +76,9 @@ class TransactionListTile extends StatelessWidget {
         trailing: Text(
           _formattedAmount(symbol),
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: typeColor,
-                fontWeight: FontWeight.w600,
-              ),
+            color: typeColor,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         onTap: onTap,
       ),

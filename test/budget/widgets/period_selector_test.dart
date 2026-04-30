@@ -99,9 +99,9 @@ void main() {
       expect(nextButton.onPressed, isNull);
     });
 
-    testWidgets(
-        'tapping previous dispatches BudgetPreviousPeriodRequested',
-        (tester) async {
+    testWidgets('tapping previous dispatches BudgetPreviousPeriodRequested', (
+      tester,
+    ) async {
       await tester.pumpApp(
         buildSubject(
           BudgetState(
@@ -117,9 +117,9 @@ void main() {
       ).called(1);
     });
 
-    testWidgets(
-        'tapping next dispatches BudgetNextPeriodRequested',
-        (tester) async {
+    testWidgets('tapping next dispatches BudgetNextPeriodRequested', (
+      tester,
+    ) async {
       await tester.pumpApp(
         buildSubject(
           BudgetState(

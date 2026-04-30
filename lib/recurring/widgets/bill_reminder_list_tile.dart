@@ -77,5 +77,4 @@ class BillReminderListTile extends StatelessWidget {
       ),
     );
   }
-
 }

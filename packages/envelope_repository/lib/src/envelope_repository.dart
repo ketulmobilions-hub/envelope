@@ -286,8 +286,7 @@ class EnvelopeRepository {
       if (local != null) return _mapEnvelopeFromLocal(local);
 
       // Fallback: search remote envelopes for the budget and find the match.
-      final remote =
-          await _apiClient.envelopes.getEnvelopesByBudget(budgetId);
+      final remote = await _apiClient.envelopes.getEnvelopesByBudget(budgetId);
       final match = remote.where((e) => e.linkedAccountId == accountId);
       if (match.isEmpty) return null;
       final dto = match.first;
@@ -655,8 +654,9 @@ class EnvelopeRepository {
   }) async {
     try {
       // Find the budget period that contains this date (local DB only).
-      final periods = await _localDatabase.budgetsDao
-          .getPeriodsByBudgetId(budgetId);
+      final periods = await _localDatabase.budgetsDao.getPeriodsByBudgetId(
+        budgetId,
+      );
       storage.BudgetPeriod? period;
       for (final p in periods) {
         if (!p.startDate.isAfter(date) && !p.endDate.isBefore(date)) {
@@ -667,8 +667,9 @@ class EnvelopeRepository {
       if (period == null) return;
 
       // Find the local allocation for this envelope in that period.
-      final allocs = await _localDatabase.envelopesDao
-          .getAllocationsByPeriodId(period.id);
+      final allocs = await _localDatabase.envelopesDao.getAllocationsByPeriodId(
+        period.id,
+      );
       storage.EnvelopeAllocation? alloc;
       for (final a in allocs) {
         if (a.envelopeId == envelopeId) {
@@ -708,8 +709,9 @@ class EnvelopeRepository {
     required int amount,
   }) async {
     try {
-      final periods = await _localDatabase.budgetsDao
-          .getPeriodsByBudgetId(budgetId);
+      final periods = await _localDatabase.budgetsDao.getPeriodsByBudgetId(
+        budgetId,
+      );
       storage.BudgetPeriod? period;
       for (final p in periods) {
         if (!p.startDate.isAfter(date) && !p.endDate.isBefore(date)) {
@@ -719,8 +721,9 @@ class EnvelopeRepository {
       }
       if (period == null) return;
 
-      final allocs = await _localDatabase.envelopesDao
-          .getAllocationsByPeriodId(period.id);
+      final allocs = await _localDatabase.envelopesDao.getAllocationsByPeriodId(
+        period.id,
+      );
       storage.EnvelopeAllocation? alloc;
       for (final a in allocs) {
         if (a.envelopeId == envelopeId) {

@@ -39,13 +39,13 @@ final class OnboardingAccount extends Equatable {
 
   @override
   List<Object?> get props => [
-        name,
-        type,
-        currency,
-        startingBalance,
-        isOnBudget,
-        creditLimitCents,
-      ];
+    name,
+    type,
+    currency,
+    startingBalance,
+    isOnBudget,
+    creditLimitCents,
+  ];
 }
 
 /// A category group with its envelope names.
@@ -151,12 +151,12 @@ final class OnboardingState extends Equatable {
 
   @override
   List<Object?> get props => [
-        currentStep,
-        status,
-        error,
-        baseCurrency,
-        accounts,
-        categoryGroups,
-        allocations,
-      ];
+    currentStep,
+    status,
+    error,
+    baseCurrency,
+    accounts,
+    categoryGroups,
+    allocations,
+  ];
 }

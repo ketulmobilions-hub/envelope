@@ -16,10 +16,10 @@ class TransferFormCubit extends Cubit<TransferFormState> {
     required this.userId,
     EnvelopeRepository? envelopeRepository,
     this.budgetPeriodId,
-  })  : _transactionRepository = transactionRepository,
-        _accountRepository = accountRepository,
-        _envelopeRepository = envelopeRepository,
-        super(const TransferFormState()) {
+  }) : _transactionRepository = transactionRepository,
+       _accountRepository = accountRepository,
+       _envelopeRepository = envelopeRepository,
+       super(const TransferFormState()) {
     _loadAccounts();
   }
 
@@ -32,9 +32,7 @@ class TransferFormCubit extends Cubit<TransferFormState> {
 
   Future<void> _loadAccounts() async {
     try {
-      final accounts = await _accountRepository
-          .watchAccounts(budgetId)
-          .first;
+      final accounts = await _accountRepository.watchAccounts(budgetId).first;
       if (isClosed) return;
       emit(
         state.copyWith(
@@ -91,15 +89,15 @@ class TransferFormCubit extends Cubit<TransferFormState> {
 
       // When paying a CC bill, refresh allocations so BudgetBloc recomputes
       // CC Payment available from the new transaction in local storage.
-      final toAccount =
-          state.accounts.where((a) => a.id == toAccountId).firstOrNull;
+      final toAccount = state.accounts
+          .where((a) => a.id == toAccountId)
+          .firstOrNull;
       if (toAccount != null &&
           isCreditCard(toAccount.type) &&
           _envelopeRepository != null &&
           budgetPeriodId != null) {
         try {
-          await _envelopeRepository!
-              .refreshAllocations(budgetPeriodId!);
+          await _envelopeRepository!.refreshAllocations(budgetPeriodId!);
         } on Exception {
           // Best-effort.
         }
@@ -125,5 +123,4 @@ class TransferFormCubit extends Cubit<TransferFormState> {
       );
     }
   }
-
 }

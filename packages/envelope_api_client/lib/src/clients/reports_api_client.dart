@@ -6,7 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class ReportsApiClient {
   /// Creates a [ReportsApiClient] with the given [SupabaseClient].
   const ReportsApiClient({required SupabaseClient supabaseClient})
-      : _supabaseClient = supabaseClient;
+    : _supabaseClient = supabaseClient;
 
   final SupabaseClient _supabaseClient;
 

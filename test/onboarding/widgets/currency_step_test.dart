@@ -48,8 +48,7 @@ void main() {
       expect(find.text('USD - US Dollar'), findsOneWidget);
     });
 
-    testWidgets('selectCurrency called on radio tap',
-        (tester) async {
+    testWidgets('selectCurrency called on radio tap', (tester) async {
       await tester.pumpApp(
         BlocProvider<OnboardingCubit>.value(
           value: cubit,

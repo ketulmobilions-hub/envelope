@@ -59,10 +59,9 @@ class EnvelopesDao extends DatabaseAccessor<AppDatabase>
       (select(envelopes)..where((t) => t.budgetId.equals(budgetId))).get();
 
   Stream<List<Envelope>> watchEnvelopesByBudgetId(String budgetId) =>
-      (select(envelopes)
-            ..where(
-              (t) => t.budgetId.equals(budgetId) & t.deletedAt.isNull(),
-            ))
+      (select(envelopes)..where(
+            (t) => t.budgetId.equals(budgetId) & t.deletedAt.isNull(),
+          ))
           .watch();
 
   Future<List<Envelope>> getEnvelopesByCategoryGroupId(
@@ -84,13 +83,12 @@ class EnvelopesDao extends DatabaseAccessor<AppDatabase>
     String accountId,
     String budgetId,
   ) =>
-      (select(envelopes)
-            ..where(
-              (t) =>
-                  t.linkedAccountId.equals(accountId) &
-                  t.budgetId.equals(budgetId) &
-                  t.deletedAt.isNull(),
-            ))
+      (select(envelopes)..where(
+            (t) =>
+                t.linkedAccountId.equals(accountId) &
+                t.budgetId.equals(budgetId) &
+                t.deletedAt.isNull(),
+          ))
           .getSingleOrNull();
 
   Future<int> insertEnvelope(
@@ -169,10 +167,22 @@ class EnvelopesDao extends DatabaseAccessor<AppDatabase>
         allocationTemplates,
       )..where((t) => t.budgetId.equals(budgetId))).get();
 
-  Stream<List<AllocationTemplate>> watchTemplatesByBudgetId(String budgetId) =>
-      (select(
+  Stream<List<AllocationTemplate>> watchTemplatesByBudgetId(
+    String budgetId,
+  ) async* {
+    final query = select(allocationTemplates)
+      ..where((t) => t.budgetId.equals(budgetId));
+    yield await query.get();
+    final updates = attachedDatabase.tableUpdates(
+      TableUpdateQuery.onAllTables({
         allocationTemplates,
-      )..where((t) => t.budgetId.equals(budgetId))).watch();
+        allocationTemplateItems,
+      }),
+    );
+    await for (final _ in updates) {
+      yield await query.get();
+    }
+  }
 
   Future<int> insertTemplate(
     AllocationTemplatesCompanion template, {

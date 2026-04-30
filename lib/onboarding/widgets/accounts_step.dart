@@ -55,7 +55,7 @@ class AccountsStep extends StatelessWidget {
                           ' • ${account.currency}'
                           ' • \$$balance'
                           '${account.isOnBudget ? '' : ' • '
-                              '${l10n.accountsOffBudgetIndicator}'}',
+                                    '${l10n.accountsOffBudgetIndicator}'}',
                         ),
                         trailing: IconButton(
                           icon: const Icon(Icons.delete_outline),
@@ -268,8 +268,9 @@ class _AddAccountSheetState extends State<_AddAccountSheet> {
                 prefixText: symbol,
                 errorText: _creditLimitError,
               ),
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
               ],

@@ -31,17 +31,20 @@ class NotificationsState extends Equatable {
     return NotificationsState(
       status: status ?? this.status,
       preferences: preferences ?? this.preferences,
-      errorMessage:
-          identical(errorMessage, _sentinel)
-              ? this.errorMessage
-              : errorMessage as String?,
-      saveErrorMessage:
-          identical(saveErrorMessage, _sentinel)
-              ? this.saveErrorMessage
-              : saveErrorMessage as String?,
+      errorMessage: identical(errorMessage, _sentinel)
+          ? this.errorMessage
+          : errorMessage as String?,
+      saveErrorMessage: identical(saveErrorMessage, _sentinel)
+          ? this.saveErrorMessage
+          : saveErrorMessage as String?,
     );
   }
 
   @override
-  List<Object?> get props => [status, preferences, errorMessage, saveErrorMessage];
+  List<Object?> get props => [
+    status,
+    preferences,
+    errorMessage,
+    saveErrorMessage,
+  ];
 }

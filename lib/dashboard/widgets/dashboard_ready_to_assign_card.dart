@@ -53,21 +53,17 @@ class DashboardReadyToAssignCard extends StatelessWidget {
               children: [
                 Text(
                   l10n.dashboardReadyToAssign,
-                  style:
-                      Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: color,
-                          ),
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: color,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   formatCents(readyToAssign, symbol: symbol),
-                  style: Theme.of(context)
-                      .textTheme
-                      .displaySmall
-                      ?.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),

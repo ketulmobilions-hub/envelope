@@ -49,7 +49,8 @@ class _ActivityLogView extends StatelessWidget {
                   prev.filterByUserId != curr.filterByUserId ||
                   prev.filterByAction != curr.filterByAction,
               builder: (context, state) {
-                final hasFilters = state.filterByUserId != null ||
+                final hasFilters =
+                    state.filterByUserId != null ||
                     state.filterByAction != null;
                 return IconButton(
                   onPressed: () => _showFilterSheet(context),
@@ -75,8 +76,8 @@ class _ActivityLogView extends StatelessWidget {
                 child: Text(
                   l10n.activityLogEmpty,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
                 ),
               );
             }

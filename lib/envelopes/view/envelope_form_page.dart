@@ -91,9 +91,7 @@ class _EnvelopeFormPageState extends State<EnvelopeFormPage> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(
-            _isEditing
-                ? l10n.envelopesEditEnvelope
-                : l10n.envelopesAddEnvelope,
+            _isEditing ? l10n.envelopesEditEnvelope : l10n.envelopesAddEnvelope,
           ),
         ),
         body: SingleChildScrollView(
@@ -128,8 +126,7 @@ class _EnvelopeFormPageState extends State<EnvelopeFormPage> {
                       value: widget.categoryGroups
                           .where((g) => g.id == _selectedGroupId)
                           .firstOrNull,
-                      onChanged: (g) =>
-                          setState(() => _selectedGroupId = g.id),
+                      onChanged: (g) => setState(() => _selectedGroupId = g.id),
                       labelText: l10n.envelopesCategoryGroupLabel,
                       icon: Icons.category_outlined,
                       itemLabel: (g) => g.name,
@@ -154,8 +151,7 @@ class _EnvelopeFormPageState extends State<EnvelopeFormPage> {
                         child: GestureDetector(
                           onTap: () {
                             setState(() {
-                              _selectedColor =
-                                  isSelected ? null : swatch.hex;
+                              _selectedColor = isSelected ? null : swatch.hex;
                             });
                           },
                           child: Tooltip(

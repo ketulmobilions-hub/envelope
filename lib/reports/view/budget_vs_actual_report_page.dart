@@ -59,8 +59,7 @@ class BudgetVsActualReportPage extends StatelessWidget {
               if (state.budgetVsActualReport != null) ...[
                 // Summary
                 _BudgetSummary(
-                  totalAllocated:
-                      state.budgetVsActualReport!.totalAllocated,
+                  totalAllocated: state.budgetVsActualReport!.totalAllocated,
                   totalSpent: state.budgetVsActualReport!.totalSpent,
                 ),
                 const SizedBox(height: 16),
@@ -111,8 +110,8 @@ class _BudgetSummary extends StatelessWidget {
                   Text(
                     l10n.reportsAllocated,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.secondaryText,
-                        ),
+                      color: AppColors.secondaryText,
+                    ),
                   ),
                   Text(
                     formatCents(totalAllocated, symbol: symbol),
@@ -127,8 +126,8 @@ class _BudgetSummary extends StatelessWidget {
                   Text(
                     l10n.reportsSpent,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.secondaryText,
-                        ),
+                      color: AppColors.secondaryText,
+                    ),
                   ),
                   Text(
                     formatCents(totalSpent, symbol: symbol),
@@ -143,16 +142,15 @@ class _BudgetSummary extends StatelessWidget {
                   Text(
                     l10n.reportsRemaining,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.secondaryText,
-                        ),
+                      color: AppColors.secondaryText,
+                    ),
                   ),
                   Text(
                     formatCents(remaining, symbol: symbol),
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color:
-                              isOver ? AppColors.expense : AppColors.income,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      color: isOver ? AppColors.expense : AppColors.income,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),

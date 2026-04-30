@@ -61,22 +61,25 @@ class _TransactionSearchPageState extends State<TransactionSearchPage> {
               child: Text(
                 l10n.transactionsSearchEmpty,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
+                  color: Theme.of(context).colorScheme.outline,
+                ),
               ),
             );
           }
 
-          final results =
-              _filterByQuery(state.filteredTransactions, _query, currencySymbol(context));
+          final results = _filterByQuery(
+            state.filteredTransactions,
+            _query,
+            currencySymbol(context),
+          );
 
           if (results.isEmpty) {
             return Center(
               child: Text(
                 l10n.transactionsSearchNoResults,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
+                  color: Theme.of(context).colorScheme.outline,
+                ),
               ),
             );
           }
@@ -84,8 +87,11 @@ class _TransactionSearchPageState extends State<TransactionSearchPage> {
           // Group by date.
           final grouped = <DateTime, List<Transaction>>{};
           for (final txn in results) {
-            final dateOnly =
-                DateTime(txn.date.year, txn.date.month, txn.date.day);
+            final dateOnly = DateTime(
+              txn.date.year,
+              txn.date.month,
+              txn.date.day,
+            );
             grouped.putIfAbsent(dateOnly, () => []).add(txn);
           }
           final sortedDates = grouped.keys.toList()
@@ -114,13 +120,13 @@ class _TransactionSearchPageState extends State<TransactionSearchPage> {
   ) {
     final lower = query.toLowerCase();
     return transactions.where((txn) {
-      final payeeMatch =
-          txn.payee?.toLowerCase().contains(lower) ?? false;
-      final notesMatch =
-          txn.notes?.toLowerCase().contains(lower) ?? false;
-      final amountMatch = formatCents(txn.amount, symbol: symbol).contains(lower);
+      final payeeMatch = txn.payee?.toLowerCase().contains(lower) ?? false;
+      final notesMatch = txn.notes?.toLowerCase().contains(lower) ?? false;
+      final amountMatch = formatCents(
+        txn.amount,
+        symbol: symbol,
+      ).contains(lower);
       return payeeMatch || notesMatch || amountMatch;
-    }).toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
+    }).toList()..sort((a, b) => b.date.compareTo(a.date));
   }
 }

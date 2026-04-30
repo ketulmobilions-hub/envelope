@@ -96,31 +96,34 @@ final class DashboardState extends Equatable {
             t.envelopeId != null &&
             !t.date.isBefore(period.startDate) &&
             !t.date.isAfter(period.endDate)) {
-          spentMap[t.envelopeId!] =
-              (spentMap[t.envelopeId!] ?? 0) + t.amount;
+          spentMap[t.envelopeId!] = (spentMap[t.envelopeId!] ?? 0) + t.amount;
         }
       }
     }
 
-    return envelopes.where((e) {
-      if (e.isArchived) return false;
-      if (e.linkedAccountId != null) {
-        final linked =
-            accounts.where((a) => a.id == e.linkedAccountId).firstOrNull;
-        if (linked != null && linked.isArchived) return false;
-      }
-      return true;
-    }).map((e) {
-      final allocation = allocations
-          .where((a) => a.envelopeId == e.id)
-          .firstOrNull;
-      return EnvelopeSummary(
-        envelope: e,
-        categoryGroupName: groupMap[e.categoryGroupId] ?? '',
-        allocation: allocation,
-        spentFromTransactions: spentMap[e.id] ?? 0,
-      );
-    }).toList();
+    return envelopes
+        .where((e) {
+          if (e.isArchived) return false;
+          if (e.linkedAccountId != null) {
+            final linked = accounts
+                .where((a) => a.id == e.linkedAccountId)
+                .firstOrNull;
+            if (linked != null && linked.isArchived) return false;
+          }
+          return true;
+        })
+        .map((e) {
+          final allocation = allocations
+              .where((a) => a.envelopeId == e.id)
+              .firstOrNull;
+          return EnvelopeSummary(
+            envelope: e,
+            categoryGroupName: groupMap[e.categoryGroupId] ?? '',
+            allocation: allocation,
+            spentFromTransactions: spentMap[e.id] ?? 0,
+          );
+        })
+        .toList();
   }
 
   DashboardState copyWith({

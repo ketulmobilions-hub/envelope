@@ -13,8 +13,8 @@ class GoalRepository {
   const GoalRepository({
     required EnvelopeApiClient apiClient,
     required storage.AppDatabase localDatabase,
-  })  : _apiClient = apiClient,
-        _localDatabase = localDatabase;
+  }) : _apiClient = apiClient,
+       _localDatabase = localDatabase;
 
   final EnvelopeApiClient _apiClient;
   final storage.AppDatabase _localDatabase;
@@ -192,8 +192,10 @@ class GoalRepository {
       final goal = await getGoal(contribution.goalId);
       await updateGoal(
         goal.copyWith(
-          currentAmount:
-              (goal.currentAmount - contribution.amountCents).clamp(0, 999999999),
+          currentAmount: (goal.currentAmount - contribution.amountCents).clamp(
+            0,
+            999999999,
+          ),
         ),
       );
     } on Exception {
@@ -232,8 +234,7 @@ class GoalRepository {
   /// Fetches goals from the API and syncs them to local storage.
   Future<void> refreshGoals(String budgetId) async {
     try {
-      final remoteGoals =
-          await _apiClient.goals.getGoalsByBudget(budgetId);
+      final remoteGoals = await _apiClient.goals.getGoalsByBudget(budgetId);
       final companions = remoteGoals.map(_toGoalCompanion).toList();
       await _localDatabase.goalsDao.batchInsertGoals(
         companions,

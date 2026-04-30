@@ -296,8 +296,7 @@ class _AppViewState extends State<AppView> {
         _scaffoldMessengerKey.currentState?.clearSnackBars();
       },
       child: BlocBuilder<AuthBloc, AuthState>(
-        buildWhen: (prev, curr) =>
-            prev.user?.themeMode != curr.user?.themeMode,
+        buildWhen: (prev, curr) => prev.user?.themeMode != curr.user?.themeMode,
         builder: (context, authState) {
           return MaterialApp.router(
             scaffoldMessengerKey: _scaffoldMessengerKey,

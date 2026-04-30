@@ -6,7 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class TransactionsApiClient {
   /// Creates a [TransactionsApiClient] with the given [SupabaseClient].
   const TransactionsApiClient({required SupabaseClient supabaseClient})
-      : _supabaseClient = supabaseClient;
+    : _supabaseClient = supabaseClient;
 
   final SupabaseClient _supabaseClient;
 
@@ -98,10 +98,7 @@ class TransactionsApiClient {
   /// Deletes a transaction by its [id].
   Future<void> deleteTransaction(String id) async {
     try {
-      await _supabaseClient
-          .from('transactions')
-          .delete()
-          .eq('id', id);
+      await _supabaseClient.from('transactions').delete().eq('id', id);
     } catch (error) {
       throw EnvelopeApiException.fromPostgrestException(error);
     }
@@ -248,9 +245,7 @@ class TransactionsApiClient {
           .from('transaction_tags')
           .select('tag_id')
           .eq('transaction_id', transactionId);
-      return response
-          .map<String>((row) => row['tag_id'] as String)
-          .toList();
+      return response.map<String>((row) => row['tag_id'] as String).toList();
     } catch (error) {
       throw EnvelopeApiException.fromPostgrestException(error);
     }

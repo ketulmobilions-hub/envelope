@@ -9,8 +9,8 @@ class EnvelopeFormCubit extends Cubit<EnvelopeFormState> {
     required EnvelopeRepository envelopeRepository,
     required this.budgetId,
     this.envelope,
-  })  : _envelopeRepository = envelopeRepository,
-        super(const EnvelopeFormState());
+  }) : _envelopeRepository = envelopeRepository,
+       super(const EnvelopeFormState());
 
   final EnvelopeRepository _envelopeRepository;
   final String budgetId;

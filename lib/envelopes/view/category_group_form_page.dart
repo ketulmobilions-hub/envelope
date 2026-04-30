@@ -33,8 +33,9 @@ class _CategoryGroupFormPageState extends State<CategoryGroupFormPage> {
   @override
   void initState() {
     super.initState();
-    _nameController =
-        TextEditingController(text: widget.categoryGroup?.name ?? '');
+    _nameController = TextEditingController(
+      text: widget.categoryGroup?.name ?? '',
+    );
   }
 
   @override

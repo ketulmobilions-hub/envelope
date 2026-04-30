@@ -12,8 +12,8 @@ class GoalProgressBar extends StatelessWidget {
     final color = percentage >= 100
         ? Theme.of(context).colorScheme.tertiary
         : percentage >= 50
-            ? Theme.of(context).colorScheme.primary
-            : Theme.of(context).colorScheme.secondary;
+        ? Theme.of(context).colorScheme.primary
+        : Theme.of(context).colorScheme.secondary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -25,8 +25,9 @@ class GoalProgressBar extends StatelessWidget {
         const SizedBox(height: 4),
         LinearProgressIndicator(
           value: progress,
-          backgroundColor:
-              Theme.of(context).colorScheme.surfaceContainerHighest,
+          backgroundColor: Theme.of(
+            context,
+          ).colorScheme.surfaceContainerHighest,
           color: color,
         ),
       ],

@@ -70,9 +70,9 @@ class _BudgetViewState extends State<BudgetView> {
                   return const SizedBox.shrink();
                 }
                 return TextButton(
-                  onPressed: () => context
-                      .read<BudgetBloc>()
-                      .add(const AllocationsSaveRequested()),
+                  onPressed: () => context.read<BudgetBloc>().add(
+                    const AllocationsSaveRequested(),
+                  ),
                   child: Text(l10n.budgetSaveAllocations),
                 );
               },
@@ -150,8 +150,8 @@ class _EmptyState extends StatelessWidget {
               l10n.budgetNoPeriodsSubtitle,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
+                color: Theme.of(context).colorScheme.outline,
+              ),
             ),
           ),
         ],
@@ -191,8 +191,8 @@ class _AllocationList extends StatelessWidget {
             Text(
               l10n.budgetNoAllocationsSubtitle,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
+                color: Theme.of(context).colorScheme.outline,
+              ),
             ),
           ],
         ),

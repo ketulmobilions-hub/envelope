@@ -67,11 +67,12 @@ class EnvelopeDetailPage extends StatelessWidget {
     final budgetId = state.envelope.budgetId;
     final userId = context.read<AuthBloc>().state.user?.id ?? '';
     final budgetPeriodId = state.allocation?.budgetPeriodId;
-    final accounts =
-        await context.read<AccountRepository>().watchAccounts(budgetId).first;
+    final accounts = await context
+        .read<AccountRepository>()
+        .watchAccounts(budgetId)
+        .first;
     if (!context.mounted) return;
-    final ccAccount =
-        accounts.where((a) => a.id == linkedId).firstOrNull;
+    final ccAccount = accounts.where((a) => a.id == linkedId).firstOrNull;
     final ccDebtCents = ccAccount != null
         ? (-ccAccount.currentBalance).clamp(0, maxCentsAmount)
         : 0;

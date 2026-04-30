@@ -117,10 +117,7 @@ class GoalsApiClient {
   /// Deletes a goal contribution by [id].
   Future<void> deleteContribution(String id) async {
     try {
-      await _supabaseClient
-          .from('goal_contributions')
-          .delete()
-          .eq('id', id);
+      await _supabaseClient.from('goal_contributions').delete().eq('id', id);
     } catch (error) {
       throw EnvelopeApiException.fromPostgrestException(error);
     }

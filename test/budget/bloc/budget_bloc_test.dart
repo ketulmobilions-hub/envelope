@@ -72,36 +72,47 @@ void main() {
   });
 
   void stubHappyPath() {
-    when(() => budgetRepository.watchBudgetPeriods('budget-1'))
-        .thenAnswer((_) => Stream.value([testPeriod]));
-    when(() => envelopeRepository.watchCategoryGroups('budget-1'))
-        .thenAnswer((_) => Stream.value(testGroups));
-    when(() => envelopeRepository.watchEnvelopes('budget-1'))
-        .thenAnswer((_) => Stream.value(testEnvelopes));
-    when(() => budgetRepository.watchAllocationTemplates('budget-1'))
-        .thenAnswer((_) => Stream.value([]));
-    when(() => envelopeRepository.watchAllocations('period-1'))
-        .thenAnswer((_) => Stream.value(testAllocations));
+    when(
+      () => budgetRepository.watchBudgetPeriods('budget-1'),
+    ).thenAnswer((_) => Stream.value([testPeriod]));
+    when(
+      () => envelopeRepository.watchCategoryGroups('budget-1'),
+    ).thenAnswer((_) => Stream.value(testGroups));
+    when(
+      () => envelopeRepository.watchEnvelopes('budget-1'),
+    ).thenAnswer((_) => Stream.value(testEnvelopes));
+    when(
+      () => budgetRepository.watchAllocationTemplates('budget-1'),
+    ).thenAnswer((_) => Stream.value([]));
+    when(
+      () => envelopeRepository.watchAllocations('period-1'),
+    ).thenAnswer((_) => Stream.value(testAllocations));
 
-    when(() => budgetRepository.refreshBudgetPeriods('budget-1'))
-        .thenAnswer((_) async {});
-    when(() => envelopeRepository.refreshCategoryGroups('budget-1'))
-        .thenAnswer((_) async {});
-    when(() => envelopeRepository.refreshEnvelopes('budget-1'))
-        .thenAnswer((_) async {});
-    when(() => budgetRepository.refreshAllocationTemplates('budget-1'))
-        .thenAnswer((_) async {});
-    when(() => envelopeRepository.refreshAllocations('period-1'))
-        .thenAnswer((_) async {});
-    when(() => budgetRepository.calculateReadyToAssign('period-1'))
-        .thenAnswer((_) async => 50000);
+    when(
+      () => budgetRepository.refreshBudgetPeriods('budget-1'),
+    ).thenAnswer((_) async {});
+    when(
+      () => envelopeRepository.refreshCategoryGroups('budget-1'),
+    ).thenAnswer((_) async {});
+    when(
+      () => envelopeRepository.refreshEnvelopes('budget-1'),
+    ).thenAnswer((_) async {});
+    when(
+      () => budgetRepository.refreshAllocationTemplates('budget-1'),
+    ).thenAnswer((_) async {});
+    when(
+      () => envelopeRepository.refreshAllocations('period-1'),
+    ).thenAnswer((_) async {});
+    when(
+      () => budgetRepository.calculateReadyToAssign('period-1'),
+    ).thenAnswer((_) async => 50000);
   }
 
   BudgetBloc buildBloc() => BudgetBloc(
-        budgetRepository: budgetRepository,
-        envelopeRepository: envelopeRepository,
-        budgetId: 'budget-1',
-      );
+    budgetRepository: budgetRepository,
+    envelopeRepository: envelopeRepository,
+    budgetId: 'budget-1',
+  );
 
   group('BudgetBloc', () {
     group('BudgetStarted', () {
@@ -328,12 +339,15 @@ void main() {
         'navigates to previous period and clears local state',
         build: buildBloc,
         setUp: () {
-          when(() => envelopeRepository.watchAllocations('period-1'))
-              .thenAnswer((_) => Stream.value([]));
-          when(() => envelopeRepository.refreshAllocations('period-1'))
-              .thenAnswer((_) async {});
-          when(() => budgetRepository.calculateReadyToAssign('period-1'))
-              .thenAnswer((_) async => 0);
+          when(
+            () => envelopeRepository.watchAllocations('period-1'),
+          ).thenAnswer((_) => Stream.value([]));
+          when(
+            () => envelopeRepository.refreshAllocations('period-1'),
+          ).thenAnswer((_) async {});
+          when(
+            () => budgetRepository.calculateReadyToAssign('period-1'),
+          ).thenAnswer((_) async => 0);
         },
         seed: () => BudgetState(
           status: BudgetStatus.loaded,
@@ -376,12 +390,15 @@ void main() {
         'navigates to next period',
         build: buildBloc,
         setUp: () {
-          when(() => envelopeRepository.watchAllocations('period-2'))
-              .thenAnswer((_) => Stream.value([]));
-          when(() => envelopeRepository.refreshAllocations('period-2'))
-              .thenAnswer((_) async {});
-          when(() => budgetRepository.calculateReadyToAssign('period-2'))
-              .thenAnswer((_) async => 0);
+          when(
+            () => envelopeRepository.watchAllocations('period-2'),
+          ).thenAnswer((_) => Stream.value([]));
+          when(
+            () => envelopeRepository.refreshAllocations('period-2'),
+          ).thenAnswer((_) async {});
+          when(
+            () => budgetRepository.calculateReadyToAssign('period-2'),
+          ).thenAnswer((_) async => 0);
         },
         seed: () => BudgetState(
           status: BudgetStatus.loaded,
@@ -478,8 +495,9 @@ void main() {
         'calls deleteAllocationTemplate on repository',
         build: buildBloc,
         setUp: () {
-          when(() => budgetRepository.deleteAllocationTemplate('tpl-1'))
-              .thenAnswer((_) async {});
+          when(
+            () => budgetRepository.deleteAllocationTemplate('tpl-1'),
+          ).thenAnswer((_) async {});
         },
         seed: () => BudgetState(status: BudgetStatus.loaded),
         act: (bloc) => bloc.add(const AllocationTemplateDeleted('tpl-1')),
@@ -506,23 +524,26 @@ void main() {
         expect(state.localReadyToAssign, equals(30000));
       });
 
-      test('localReadyToAssign applies delta for edited existing allocation', () {
-        final state = BudgetState(
-          readyToAssign: 50000,
-          allocations: [
-            EnvelopeAllocation(
-              id: 'a1',
-              envelopeId: 'env-1',
-              budgetPeriodId: 'p1',
-              allocatedAmount: 10000,
-              createdAt: DateTime(2026),
-            ),
-          ],
-          localAllocations: const {'env-1': 15000},
-        );
-        // server delta: 15000 - 10000 = 5000 more allocated
-        expect(state.localReadyToAssign, equals(45000));
-      });
+      test(
+        'localReadyToAssign applies delta for edited existing allocation',
+        () {
+          final state = BudgetState(
+            readyToAssign: 50000,
+            allocations: [
+              EnvelopeAllocation(
+                id: 'a1',
+                envelopeId: 'env-1',
+                budgetPeriodId: 'p1',
+                allocatedAmount: 10000,
+                createdAt: DateTime(2026),
+              ),
+            ],
+            localAllocations: const {'env-1': 15000},
+          );
+          // server delta: 15000 - 10000 = 5000 more allocated
+          expect(state.localReadyToAssign, equals(45000));
+        },
+      );
 
       test('isOverAllocated is true when localReadyToAssign is negative', () {
         final state = BudgetState(

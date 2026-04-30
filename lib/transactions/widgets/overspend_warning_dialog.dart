@@ -35,13 +35,11 @@ Future<bool?> showOverspendWarningDialog(
         ),
         actions: [
           TextButton(
-            onPressed: () =>
-                Navigator.of(dialogContext).pop(false),
+            onPressed: () => Navigator.of(dialogContext).pop(false),
             child: Text(l10n.overspendDismiss),
           ),
           FilledButton(
-            onPressed: () =>
-                Navigator.of(dialogContext).pop(true),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
             child: Text(l10n.overspendCoverButton),
           ),
         ],
