@@ -697,6 +697,55 @@ class EnvelopeRepository {
     }
   }
 
+  /// Immediately increments `spentAmount` in local SQLite for the allocation
+  /// matching [envelopeId] + the budget period that contains [date] in
+  /// [budgetId]. No API call is made — this is an optimistic update to give
+  /// instant UI feedback after an expense transaction is created.
+  Future<void> incrementLocalSpentAmount({
+    required String envelopeId,
+    required String budgetId,
+    required DateTime date,
+    required int amount,
+  }) async {
+    try {
+      final periods = await _localDatabase.budgetsDao
+          .getPeriodsByBudgetId(budgetId);
+      storage.BudgetPeriod? period;
+      for (final p in periods) {
+        if (!p.startDate.isAfter(date) && !p.endDate.isBefore(date)) {
+          period = p;
+          break;
+        }
+      }
+      if (period == null) return;
+
+      final allocs = await _localDatabase.envelopesDao
+          .getAllocationsByPeriodId(period.id);
+      storage.EnvelopeAllocation? alloc;
+      for (final a in allocs) {
+        if (a.envelopeId == envelopeId) {
+          alloc = a;
+          break;
+        }
+      }
+      if (alloc == null) return;
+
+      await _localDatabase.envelopesDao.updateAllocation(
+        storage.EnvelopeAllocationsCompanion(
+          id: Value(alloc.id),
+          envelopeId: Value(alloc.envelopeId),
+          budgetPeriodId: Value(alloc.budgetPeriodId),
+          allocatedAmount: Value(alloc.allocatedAmount),
+          spentAmount: Value(alloc.spentAmount + amount),
+          rolloverAmount: Value(alloc.rolloverAmount),
+          createdAt: Value(alloc.createdAt),
+        ),
+      );
+    } on Exception {
+      // Best-effort — refreshAllocations will correct any discrepancy.
+    }
+  }
+
   /// Computes the available balance for a CC Payment envelope using
   /// transaction history instead of allocated_amount manipulation.
   ///

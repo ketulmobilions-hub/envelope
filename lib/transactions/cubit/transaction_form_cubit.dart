@@ -1,4 +1,6 @@
 
+import 'dart:async';
+
 import 'package:account_repository/account_repository.dart';
 import 'package:bloc/bloc.dart';
 import 'package:budget_repository/budget_repository.dart';
@@ -460,6 +462,33 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
             );
           } on BudgetException {
             // Best-effort.
+          }
+        }
+
+        if (type == 'expense') {
+          if (!isSplitMode && envelopeId != null) {
+            unawaited(
+              _envelopeRepository.incrementLocalSpentAmount(
+                envelopeId: envelopeId,
+                budgetId: budgetId,
+                date: date,
+                amount: amountCents,
+              ),
+            );
+          } else if (isSplitMode) {
+            for (final split in splits) {
+              final splitEnvId = split.envelopeId;
+              if (splitEnvId != null && split.amountCents > 0) {
+                unawaited(
+                  _envelopeRepository.incrementLocalSpentAmount(
+                    envelopeId: splitEnvId,
+                    budgetId: budgetId,
+                    date: date,
+                    amount: split.amountCents,
+                  ),
+                );
+              }
+            }
           }
         }
 
