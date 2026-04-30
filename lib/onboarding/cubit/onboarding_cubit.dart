@@ -23,11 +23,13 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     required AccountRepository accountRepository,
     required BudgetRepository budgetRepository,
     required String userId,
+    DateTime Function()? now,
   }) : _prefs = sharedPreferences,
        _envelopeRepository = envelopeRepository,
        _accountRepository = accountRepository,
        _budgetRepository = budgetRepository,
        _userId = userId,
+       _now = now ?? DateTime.now,
        super(const OnboardingState());
 
   final SharedPreferences _prefs;
@@ -35,6 +37,7 @@ class OnboardingCubit extends Cubit<OnboardingState> {
   final AccountRepository _accountRepository;
   final BudgetRepository _budgetRepository;
   final String _userId;
+  final DateTime Function() _now;
 
   /// Returns whether onboarding has been completed (user has a budget).
   static bool isOnboardingComplete(SharedPreferences prefs) {
@@ -245,7 +248,7 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       // Create the initial budget period for the current month.
       // totalIncome is seeded with the sum of all account starting balances
       // so that "Ready to Assign" reflects money available to budget.
-      final now = DateTime.now();
+      final now = _now();
       final periodStart = DateTime(now.year, now.month);
       final periodEnd = DateTime(
         now.year,

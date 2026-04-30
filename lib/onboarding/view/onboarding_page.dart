@@ -4,8 +4,9 @@ import 'package:envelope/app/routes/routes.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/cubit.dart';
-import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/onboarding/widgets/widgets.dart';
+import 'package:envelope/shared/services/app_clock.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -27,6 +28,7 @@ class OnboardingPage extends StatelessWidget {
         accountRepository: context.read<AccountRepository>(),
         budgetRepository: context.read<BudgetRepository>(),
         userId: user!.id,
+        now: context.read<AppClock>().now,
       ),
       child: const OnboardingView(),
     );
