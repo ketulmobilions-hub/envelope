@@ -1,7 +1,9 @@
 import 'package:account_repository/account_repository.dart';
 import 'package:bloc/bloc.dart';
-import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:budget_repository/budget_repository.dart';
+import 'package:envelope/accounts/utils/cc_payments_group.dart';
+import 'package:envelope/accounts/widgets/account_helpers.dart';
+import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -205,6 +207,7 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       // startingBalance is stored as cents (int) — use .round() to handle
       // floating-point imprecision from the double input.
       var totalStartingBalance = 0;
+      final ccAccounts = <({String accountId, String cardName})>[];
       for (final account in state.accounts) {
         final clampedBalance = account.startingBalance.clamp(
           -maxDollarAmount,
@@ -214,7 +217,7 @@ class OnboardingCubit extends Cubit<OnboardingState> {
         if (account.isOnBudget && balanceCents > 0) {
           totalStartingBalance += balanceCents;
         }
-        await _accountRepository.createAccount(
+        final created = await _accountRepository.createAccount(
           budgetId: budgetId,
           name: account.name,
           type: account.type,
@@ -222,6 +225,21 @@ class OnboardingCubit extends Cubit<OnboardingState> {
           startingBalance: balanceCents,
           isOnBudget: account.isOnBudget,
         );
+
+        if (isCreditCard(account.type)) {
+          final creditLimitCents = account.creditLimitCents;
+          if (creditLimitCents != null) {
+            try {
+              await _accountRepository.upsertDebtAccountCreditLimit(
+                created.id,
+                creditLimitCents,
+              );
+            } on Exception {
+              // Best-effort; user can edit the limit later from the account.
+            }
+          }
+          ccAccounts.add((accountId: created.id, cardName: account.name));
+        }
       }
 
       // Create the initial budget period for the current month.
@@ -270,10 +288,35 @@ class OnboardingCubit extends Cubit<OnboardingState> {
         groupIndex++;
       }
 
+      // Create CC Payments group + linked payment envelopes AFTER the user's
+      // groups so it appears at the bottom of the dashboard (matches the
+      // ordering produced by the regular Add Account flow).
+      if (ccAccounts.isNotEmpty) {
+        try {
+          final ccGroup = await findOrCreateCCPaymentsGroup(
+            repository: _envelopeRepository,
+            budgetId: budgetId,
+          );
+          for (final cc in ccAccounts) {
+            try {
+              await _envelopeRepository.createEnvelope(
+                categoryGroupId: ccGroup.id,
+                budgetId: budgetId,
+                name: '${cc.cardName} Payment',
+                linkedAccountId: cc.accountId,
+              );
+            } on Exception {
+              // Best-effort per-card.
+            }
+          }
+        } on Exception {
+          // Group creation failed; user can add the envelope manually.
+        }
+      }
+
       await _prefs.setString(activeBudgetIdKey, budgetId);
       emit(state.copyWith(status: OnboardingStatus.success));
-    } on Exception catch (e) {
-      print(e);
+    } on Exception {
       emit(
         state.copyWith(
           status: OnboardingStatus.failure,

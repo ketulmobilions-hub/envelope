@@ -386,6 +386,10 @@
     "@accountsCreditLimitLabel": {
         "description": "Label for credit card credit limit field"
     },
+    "accountsCreditLimitTooLarge": "Credit limit must be $999,999,999.99 or less",
+    "@accountsCreditLimitTooLarge": {
+        "description": "Error when credit limit exceeds maximum allowed amount"
+    },
     "accountsAvailableCreditLabel": "Available Credit",
     "@accountsAvailableCreditLabel": {
         "description": "Label showing remaining available credit on a CC account"
