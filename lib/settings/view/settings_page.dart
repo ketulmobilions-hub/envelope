@@ -1,14 +1,18 @@
+import 'dart:async';
+
 import 'package:auth_repository/auth_repository.dart';
 import 'package:envelope/app/routes/app_router.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/notifications/notifications.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
 import 'package:envelope/onboarding/data/currencies.dart';
 import 'package:envelope/settings/cubit/cubit.dart';
 import 'package:envelope_api_client/envelope_api_client.dart';
 import 'package:envelope_local_storage/envelope_local_storage.dart' hide User;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -184,6 +188,11 @@ class _SettingsView extends StatelessWidget {
                         Uri.parse('https://envelope.app/terms'),
                       ),
                     ),
+                    if (kDebugMode) ...[
+                      const Divider(),
+                      _SectionHeader(title: l10n.settingsDebugSection),
+                      const _DebugClockTiles(),
+                    ],
                     const SizedBox(height: 32),
                   ],
                 );
@@ -566,6 +575,93 @@ class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _DebugClockTiles extends StatefulWidget {
+  const _DebugClockTiles();
+
+  @override
+  State<_DebugClockTiles> createState() => _DebugClockTilesState();
+}
+
+class _DebugClockTilesState extends State<_DebugClockTiles> {
+  late final AppClock _appClock;
+
+  @override
+  void initState() {
+    super.initState();
+    _appClock = context.read<AppClock>();
+    _appClock.addListener(_onClockChanged);
+  }
+
+  @override
+  void dispose() {
+    _appClock.removeListener(_onClockChanged);
+    super.dispose();
+  }
+
+  void _onClockChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _pickDate() async {
+    final current = _appClock.now();
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: current,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (pickedDate == null || !mounted) return;
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(current),
+    );
+    if (pickedTime == null) return;
+    await _appClock.setOverride(
+      DateTime(
+        pickedDate.year,
+        pickedDate.month,
+        pickedDate.day,
+        pickedTime.hour,
+        pickedTime.minute,
+      ),
+    );
+  }
+
+  String _formatNow() {
+    final n = _appClock.now();
+    return '${n.year.toString().padLeft(4, '0')}-'
+        '${n.month.toString().padLeft(2, '0')}-'
+        '${n.day.toString().padLeft(2, '0')} '
+        '${n.hour.toString().padLeft(2, '0')}:'
+        '${n.minute.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final hasOverride = _appClock.hasOverride;
+    return Column(
+      children: [
+        ListTile(
+          leading: const Icon(Icons.schedule_outlined),
+          title: Text(l10n.settingsDebugSimulatedDate),
+          subtitle: Text(
+            hasOverride ? _formatNow() : l10n.settingsDebugSimulatedDateOff,
+          ),
+          trailing: const Icon(Icons.edit_outlined),
+          onTap: _pickDate,
+        ),
+        if (hasOverride)
+          ListTile(
+            leading: const Icon(Icons.history_toggle_off),
+            title: Text(l10n.settingsDebugClearSimulatedDate),
+            onTap: () => unawaited(_appClock.clearOverride()),
+          ),
+      ],
     );
   }
 }

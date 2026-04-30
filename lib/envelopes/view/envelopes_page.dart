@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/envelopes/bloc/bloc.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/widgets/confirm_delete_dialog.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/envelopes/cubit/cubit.dart';
@@ -307,6 +308,7 @@ class _EnvelopesViewState extends State<EnvelopesView> {
             transactionRepository: context.read<TransactionRepository>(),
             budgetRepository: context.read<BudgetRepository>(),
             envelope: envelope,
+            now: context.read<AppClock>().now,
           ),
           child: EnvelopeDetailPage(categoryGroups: activeGroups),
         ),

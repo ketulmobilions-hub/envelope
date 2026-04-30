@@ -8,6 +8,7 @@ import 'package:envelope/recurring/bloc/bloc.dart';
 import 'package:envelope/recurring/view/bill_reminder_form_page.dart';
 import 'package:envelope/recurring/view/recurring_rule_form_page.dart';
 import 'package:envelope/recurring/widgets/widgets.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/widgets/app_option_picker.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope_repository/envelope_repository.dart';
@@ -35,6 +36,7 @@ class RecurringPage extends StatelessWidget {
         transactionRepository: context.read<TransactionRepository>(),
         budgetId: budgetId,
         userId: userId,
+        now: context.read<AppClock>().now,
       )..add(const RecurringStarted()),
       child: RecurringView(budgetId: budgetId, initialTab: initialTab),
     );
@@ -194,7 +196,7 @@ class _RecurringRulesTab extends StatelessWidget {
           final isPending =
               !rule.isPaused &&
               !rule.autoPost &&
-              !rule.nextOccurrence.isAfter(DateTime.now());
+              !rule.nextOccurrence.isAfter(context.read<AppClock>().now());
           return RecurringRuleListTile(
             rule: rule,
             isPending: isPending,
@@ -577,7 +579,7 @@ class _SimpleBillPaymentFormState extends State<_SimpleBillPaymentForm> {
         type: 'expense',
         amount: amount.round(),
         currency: account?.currency ?? 'USD',
-        date: DateTime.now(),
+        date: context.read<AppClock>().now(),
         createdBy: widget.userId,
         envelopeId: widget.reminder.envelopeId,
         payee: widget.reminder.name,

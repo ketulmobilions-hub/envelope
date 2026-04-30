@@ -13,9 +13,11 @@ class RecurringBloc extends Bloc<RecurringEvent, RecurringState> {
     required TransactionRepository transactionRepository,
     required String budgetId,
     required String userId,
+    DateTime Function()? now,
   }) : _transactionRepository = transactionRepository,
        _budgetId = budgetId,
        _userId = userId,
+       _now = now ?? DateTime.now,
        super(const RecurringState()) {
     on<RecurringStarted>(_onStarted);
     on<_RecurringRulesUpdated>(_onRulesUpdated);
@@ -34,6 +36,7 @@ class RecurringBloc extends Bloc<RecurringEvent, RecurringState> {
   final TransactionRepository _transactionRepository;
   final String _budgetId;
   final String _userId;
+  final DateTime Function() _now;
   StreamSubscription<List<RecurringRule>>? _rulesSubscription;
   StreamSubscription<List<BillReminder>>? _remindersSubscription;
   RecurringRule? _lastDeletedRule;
@@ -216,7 +219,7 @@ class RecurringBloc extends Bloc<RecurringEvent, RecurringState> {
         type: rule.type,
         amount: rule.amount,
         currency: rule.currency,
-        date: DateTime.now(),
+        date: _now(),
         createdBy: _userId,
         envelopeId: rule.envelopeId,
         payee: rule.payee,

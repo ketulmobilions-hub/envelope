@@ -2,6 +2,7 @@ import 'package:account_repository/account_repository.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/data/currencies.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/widgets/app_option_picker.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/transactions/cubit/cubit.dart';
@@ -31,7 +32,7 @@ class _TransferFormPageState extends State<TransferFormPage> {
   void initState() {
     super.initState();
     _amountController = TextEditingController();
-    _selectedDate = DateTime.now();
+    _selectedDate = context.read<AppClock>().now();
   }
 
   @override

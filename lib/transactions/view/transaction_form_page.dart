@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:account_repository/account_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/shared/widgets/app_option_picker.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
@@ -64,7 +65,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     super.initState();
     final txn = widget.transaction;
     _selectedType = txn?.type ?? 'expense';
-    _selectedDate = txn?.date ?? DateTime.now();
+    _selectedDate = txn?.date ?? context.read<AppClock>().now();
     _amountController = TextEditingController(
       text: txn != null ? (txn.amount / 100).toStringAsFixed(2) : '',
     );

@@ -13,9 +13,11 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     required BudgetRepository budgetRepository,
     required EnvelopeRepository envelopeRepository,
     required String budgetId,
+    DateTime Function()? now,
   }) : _budgetRepository = budgetRepository,
        _envelopeRepository = envelopeRepository,
        _budgetId = budgetId,
+       _now = now ?? DateTime.now,
        super(BudgetState()) {
     on<BudgetStarted>(_onStarted);
     on<_PeriodsUpdated>(_onPeriodsUpdated);
@@ -40,6 +42,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
   final BudgetRepository _budgetRepository;
   final EnvelopeRepository _envelopeRepository;
   final String _budgetId;
+  final DateTime Function() _now;
 
   StreamSubscription<List<BudgetPeriod>>? _periodsSubscription;
   StreamSubscription<List<EnvelopeAllocation>>? _allocationsSubscription;
@@ -154,7 +157,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
 
     if (selected == null && sortedPeriods.isNotEmpty) {
       // Auto-select the period that contains today, or fall back to latest.
-      final now = DateTime.now();
+      final now = _now();
       selected = sortedPeriods.firstWhere(
         (p) => !p.startDate.isAfter(now) && !p.endDate.isBefore(now),
         orElse: () => sortedPeriods.last,

@@ -1,4 +1,6 @@
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 /// A horizontal scrollable date picker showing a range of dates.
@@ -43,7 +45,7 @@ class _HorizontalDatePickerState extends State<HorizontalDatePicker> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final today = DateTime.now();
+    final today = context.read<AppClock>().now();
     final startDate = today.subtract(Duration(days: widget.pastDays));
     final dayCount = widget.pastDays + widget.futureDays + 1;
 

@@ -6,6 +6,9 @@ import 'package:envelope/app/routes/app_router.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
+import 'package:envelope/shared/services/app_clock.dart';
+import 'package:envelope/shared/widgets/debug_clock_banner.dart';
+import 'package:flutter/foundation.dart';
 import 'package:envelope/transactions/cubit/cubit.dart';
 import 'package:envelope/transactions/view/transaction_form_page.dart';
 import 'package:envelope_repository/envelope_repository.dart';
@@ -123,9 +126,11 @@ class _AppShellState extends State<AppShell>
     final budgetId =
         context.read<SharedPreferences>().getString(activeBudgetIdKey) ?? '';
 
+    final appClock = context.read<AppClock>();
     final periodId = await _getCurrentPeriodId(
       context.read<BudgetRepository>(),
       budgetId,
+      now: appClock.now(),
     );
 
     if (!context.mounted) return;
@@ -142,6 +147,7 @@ class _AppShellState extends State<AppShell>
               budgetId: budgetId,
               budgetPeriodId: periodId,
               userId: user.id,
+              now: appClock.now,
             ),
             child: const TransactionFormPage(),
           ),
@@ -167,12 +173,20 @@ class _AppShellState extends State<AppShell>
     final l10n = context.l10n;
     final selectedIndex = _selectedIndex(context);
 
-    final animatedChild = ClipRect(
+    final clipped = ClipRect(
       child: SlideTransition(
         position: _slideAnimation,
         child: widget.child,
       ),
     );
+    final animatedChild = kDebugMode
+        ? Column(
+            children: [
+              DebugClockBanner(appClock: context.read<AppClock>()),
+              Expanded(child: clipped),
+            ],
+          )
+        : clipped;
 
     return Shortcuts(
       shortcuts: <ShortcutActivator, Intent>{
@@ -380,15 +394,18 @@ class _NavigateTabIntent extends Intent {
 /// Resolves the current (open) budget period ID.
 Future<String?> _getCurrentPeriodId(
   BudgetRepository budgetRepository,
-  String budgetId,
-) async {
+  String budgetId, {
+  DateTime? now,
+}) async {
   try {
     final periods = await budgetRepository.watchBudgetPeriods(budgetId).first;
     if (periods.isEmpty) return null;
-    final now = DateTime.now();
+    final effectiveNow = now ?? DateTime.now();
     final current = periods.firstWhere(
       (p) =>
-          !p.isClosed && !p.startDate.isAfter(now) && !p.endDate.isBefore(now),
+          !p.isClosed &&
+          !p.startDate.isAfter(effectiveNow) &&
+          !p.endDate.isBefore(effectiveNow),
       orElse: () =>
           periods.where((p) => !p.isClosed).lastOrNull ?? periods.last,
     );

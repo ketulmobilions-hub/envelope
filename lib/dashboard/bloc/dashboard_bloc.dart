@@ -22,12 +22,14 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     required TransactionRepository transactionRepository,
     required String budgetId,
     SharingRepository? sharingRepository,
+    DateTime Function()? now,
   }) : _budgetRepository = budgetRepository,
        _accountRepository = accountRepository,
        _envelopeRepository = envelopeRepository,
        _transactionRepository = transactionRepository,
        _budgetId = budgetId,
        _sharingRepository = sharingRepository,
+       _now = now ?? DateTime.now,
        super(const DashboardState()) {
     on<DashboardStarted>(_onStarted);
     on<_PeriodsUpdated>(_onPeriodsUpdated);
@@ -50,6 +52,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   final TransactionRepository _transactionRepository;
   final String _budgetId;
   final SharingRepository? _sharingRepository;
+  final DateTime Function() _now;
 
   StreamSubscription<List<BudgetPeriod>>? _periodsSubscription;
   StreamSubscription<List<Account>>? _accountsSubscription;
@@ -210,7 +213,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     // Select the current (non-closed) period containing today.
     BudgetPeriod? selected;
     if (sortedPeriods.isNotEmpty) {
-      final now = DateTime.now();
+      final now = _now();
       selected = sortedPeriods.firstWhere(
         (p) =>
             !p.isClosed &&

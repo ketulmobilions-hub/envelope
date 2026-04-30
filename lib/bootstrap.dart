@@ -6,6 +6,7 @@ import 'package:auth_repository/auth_repository.dart';
 import 'package:bloc/bloc.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/app/app.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope_api_client/envelope_api_client.dart';
 import 'package:envelope_local_storage/envelope_local_storage.dart';
 import 'package:envelope_repository/envelope_repository.dart';
@@ -116,9 +117,11 @@ Future<void> bootstrap({
     localDatabase: localDatabase,
     deviceId: deviceId,
   );
+  final appClock = AppClock(prefs);
 
   runApp(
     App(
+      appClock: appClock,
       authRepository: authRepository,
       accountRepository: accountRepository,
       budgetRepository: budgetRepository,

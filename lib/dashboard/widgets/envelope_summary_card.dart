@@ -11,6 +11,7 @@ import 'package:envelope/envelopes/view/envelope_detail_page.dart';
 import 'package:envelope/envelopes/widgets/envelope_card.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:envelope/transactions/widgets/cc_pay_bottom_sheet.dart';
@@ -411,6 +412,7 @@ class _CategoryGroupSection extends StatelessWidget {
               allocation: summary.allocation,
               transactionRepository: context.read<TransactionRepository>(),
               budgetRepository: context.read<BudgetRepository>(),
+              now: context.read<AppClock>().now,
             ),
             child: EnvelopeDetailPage(
               categoryGroups: categoryGroups,

@@ -37,15 +37,22 @@ Color colorForTransactionType(String type, ColorScheme colorScheme) {
 }
 
 /// Formats a date for display in date group headers.
-String formatDateHeader(DateTime date, AppLocalizations l10n) {
-  final now = DateTime.now();
-  final today = DateTime(now.year, now.month, now.day);
+///
+/// [now] overrides "today" so QA can verify Today/Yesterday labels under a
+/// simulated clock. Defaults to the real wall clock.
+String formatDateHeader(DateTime date, AppLocalizations l10n, {DateTime? now}) {
+  final effectiveNow = now ?? DateTime.now();
+  final today = DateTime(
+    effectiveNow.year,
+    effectiveNow.month,
+    effectiveNow.day,
+  );
   final yesterday = today.subtract(const Duration(days: 1));
   final dateOnly = DateTime(date.year, date.month, date.day);
 
   if (dateOnly == today) return l10n.transactionsToday;
   if (dateOnly == yesterday) return l10n.transactionsYesterday;
-  if (date.year == now.year) return DateFormat.MMMd().format(date);
+  if (date.year == effectiveNow.year) return DateFormat.MMMd().format(date);
   return DateFormat.yMMMd().format(date);
 }
 
