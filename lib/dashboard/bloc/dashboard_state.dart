@@ -23,9 +23,17 @@ final class EnvelopeSummary extends Equatable {
 
   int get allocated => allocation?.allocatedAmount ?? 0;
 
+  int get rollover => allocation?.rolloverAmount ?? 0;
+
+  /// Total funds budgeted for this envelope this period — fresh allocation
+  /// plus any rolled-over balance from prior periods. Use this as the "of N"
+  /// denominator in display, not [allocated] alone, otherwise pure-rollover
+  /// envelopes (allocated=0) read as "X of 0".
+  int get budgeted => allocated + rollover;
+
   int get spent => allocation?.spentAmount ?? spentFromTransactions;
 
-  int get available => allocated - spent + (allocation?.rolloverAmount ?? 0);
+  int get available => allocated - spent + rollover;
   bool get isOverspent => available < 0;
 
   @override

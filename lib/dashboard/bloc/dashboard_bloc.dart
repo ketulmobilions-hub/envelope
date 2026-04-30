@@ -214,6 +214,18 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     BudgetPeriod? selected;
     if (sortedPeriods.isNotEmpty) {
       final now = _now();
+      // If the latest period ends before "now", create the missing periods
+      // forward and bail; the watch stream will re-fire this handler with
+      // the new period list.
+      final latest = sortedPeriods.last;
+      if (latest.endDate.isBefore(now)) {
+        try {
+          await _budgetRepository.ensureCurrentPeriod(_budgetId, asOf: now);
+          return;
+        } on BudgetException {
+          // Fall through to existing selection on failure.
+        }
+      }
       selected = sortedPeriods.firstWhere(
         (p) =>
             !p.isClosed &&

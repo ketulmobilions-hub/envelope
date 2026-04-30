@@ -386,11 +386,24 @@ class BudgetRepository {
         budget.periodType,
       ).subtract(const Duration(days: 1));
 
-      return createBudgetPeriod(
+      final newPeriod = await createBudgetPeriod(
         budgetId: budgetId,
         startDate: startDate,
         endDate: endDate,
       );
+
+      if (periods.isNotEmpty) {
+        // Carry forward each envelope's remaining balance from the immediately
+        // previous period. `periods` was sorted by endDate desc above, so the
+        // first element is the latest existing period.
+        final previous = periods.first;
+        await _seedRolloverFromPreviousPeriod(
+          fromPeriodId: previous.id,
+          toPeriodId: newPeriod.id,
+        );
+      }
+
+      return newPeriod;
     } on BudgetException {
       rethrow;
     } on Exception catch (e) {
@@ -401,13 +414,83 @@ class BudgetRepository {
     }
   }
 
+  /// Carries forward each envelope's remaining balance from [fromPeriodId]
+  /// into [toPeriodId] as a new allocation with `allocatedAmount=0` and
+  /// `rolloverAmount=remaining`. Idempotent: skips envelopes already with an
+  /// allocation in the target period. Skips zero remainders.
+  Future<void> _seedRolloverFromPreviousPeriod({
+    required String fromPeriodId,
+    required String toPeriodId,
+  }) async {
+    final source = await _localDatabase.envelopesDao.getAllocationsByPeriodId(
+      fromPeriodId,
+    );
+    if (source.isEmpty) return;
+
+    final existing = await _localDatabase.envelopesDao.getAllocationsByPeriodId(
+      toPeriodId,
+    );
+    final existingEnvIds = existing.map((a) => a.envelopeId).toSet();
+
+    for (final src in source) {
+      if (existingEnvIds.contains(src.envelopeId)) continue;
+      final unspent =
+          src.allocatedAmount - src.spentAmount + src.rolloverAmount;
+      if (unspent == 0) continue;
+      final dto = EnvelopeAllocationDto(
+        id: '',
+        envelopeId: src.envelopeId,
+        budgetPeriodId: toPeriodId,
+        allocatedAmount: 0,
+        rolloverAmount: unspent,
+        createdAt: DateTime.now(),
+      );
+      final created = await _apiClient.envelopes.createEnvelopeAllocation(dto);
+      await _cacheAllocation(created);
+    }
+  }
+
+  /// Ensures a budget period exists that contains [asOf].
+  ///
+  /// If the latest existing period's `endDate` is before [asOf], calls
+  /// [autoCreateNextPeriod] repeatedly until a period covers [asOf] or the
+  /// safety cap is hit. Idempotent: returns immediately if a period already
+  /// contains [asOf], if [asOf] is in the past, or if no periods exist
+  /// (the seed period is created by onboarding).
+  Future<void> ensureCurrentPeriod(
+    String budgetId, {
+    required DateTime asOf,
+  }) async {
+    const safetyCap = 24;
+    for (var i = 0; i < safetyCap; i++) {
+      final periods = await _localDatabase.budgetsDao.getPeriodsByBudgetId(
+        budgetId,
+      );
+      if (periods.isEmpty) return;
+      final containsAsOf = periods.any(
+        (p) => !p.startDate.isAfter(asOf) && !p.endDate.isBefore(asOf),
+      );
+      if (containsAsOf) return;
+      final latest = periods.reduce(
+        (a, b) => a.endDate.isAfter(b.endDate) ? a : b,
+      );
+      if (!latest.endDate.isBefore(asOf)) return;
+      await autoCreateNextPeriod(budgetId);
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Budget-Level Allocation Operations
   // ---------------------------------------------------------------------------
 
   /// Calculates the "Ready to Assign" amount for a budget period.
   ///
-  /// Formula: totalIncome - sum(allocatedAmounts) + sum(rolloverAmounts)
+  /// Formula: `totalIncome - sum(allocatedAmounts)`.
+  ///
+  /// `rolloverAmount` is intentionally excluded: it represents money that
+  /// stays in its envelope across periods (YNAB-style per-envelope carry).
+  /// Including it would double-count those funds — they would appear both as
+  /// envelope balance and as free RTA.
   Future<int> calculateReadyToAssign(String budgetPeriodId) async {
     try {
       final period = await _localDatabase.budgetsDao.getBudgetPeriod(
@@ -426,12 +509,8 @@ class BudgetRepository {
         0,
         (sum, a) => sum + a.allocatedAmount,
       );
-      final totalRollover = allocations.fold<int>(
-        0,
-        (sum, a) => sum + a.rolloverAmount,
-      );
 
-      return period.totalIncome - totalAllocated + totalRollover;
+      return period.totalIncome - totalAllocated;
     } on BudgetException {
       rethrow;
     } on Exception catch (e) {
