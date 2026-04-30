@@ -4,6 +4,7 @@ import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/budget/bloc/bloc.dart';
 import 'package:envelope/budget/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +23,7 @@ class BudgetPage extends StatelessWidget {
         budgetRepository: context.read<BudgetRepository>(),
         envelopeRepository: context.read<EnvelopeRepository>(),
         budgetId: budgetId,
+        now: context.read<AppClock>().now,
       )..add(const BudgetStarted()),
       child: BudgetView(budgetId: budgetId),
     );

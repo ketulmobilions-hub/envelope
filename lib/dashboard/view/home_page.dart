@@ -7,6 +7,7 @@ import 'package:envelope/dashboard/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
 import 'package:envelope/recurring/cubit/recurring_check_cubit.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/widgets/confirm_delete_dialog.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/sync/sync.dart';
@@ -47,6 +48,7 @@ class HomePage extends StatelessWidget {
               transactionRepository: context.read<TransactionRepository>(),
               budgetId: budgetId,
               userId: userId,
+              nowProvider: context.read<AppClock>().now,
             );
             unawaited(cubit.check());
             return cubit;
@@ -60,6 +62,7 @@ class HomePage extends StatelessWidget {
             transactionRepository: context.read(),
             sharingRepository: context.read<SharingRepository>(),
             budgetId: budgetId,
+            now: context.read<AppClock>().now,
           )..add(const DashboardStarted()),
         ),
       ],

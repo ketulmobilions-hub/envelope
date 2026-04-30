@@ -15,9 +15,11 @@ class EnvelopeDetailCubit extends Cubit<EnvelopeDetailState> {
     required BudgetRepository budgetRepository,
     required Envelope envelope,
     EnvelopeAllocation? allocation,
+    DateTime Function()? now,
   }) : _envelopeRepository = envelopeRepository,
        _transactionRepository = transactionRepository,
        _budgetRepository = budgetRepository,
+       _now = now ?? DateTime.now,
        super(
          EnvelopeDetailState(
            envelope: envelope,
@@ -46,7 +48,7 @@ class EnvelopeDetailCubit extends Cubit<EnvelopeDetailState> {
 
           BudgetPeriod? selected;
           if (sortedPeriods.isNotEmpty) {
-            final now = DateTime.now();
+            final now = _now();
             selected = sortedPeriods.firstWhere(
               (p) =>
                   !p.isClosed &&
@@ -77,6 +79,7 @@ class EnvelopeDetailCubit extends Cubit<EnvelopeDetailState> {
   final EnvelopeRepository _envelopeRepository;
   final TransactionRepository _transactionRepository;
   final BudgetRepository _budgetRepository;
+  final DateTime Function() _now;
   StreamSubscription<List<Transaction>>? _transactionSubscription;
   StreamSubscription<List<BudgetPeriod>>? _periodsSubscription;
   StreamSubscription<List<EnvelopeAllocation>>? _allocationsSubscription;

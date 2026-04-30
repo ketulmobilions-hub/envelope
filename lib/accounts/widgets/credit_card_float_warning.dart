@@ -1,5 +1,6 @@
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -55,6 +56,7 @@ class CreditCardFloatWarning extends StatelessWidget {
     // Capture repos before async gaps to avoid stale context access.
     final envelopeRepo = context.read<EnvelopeRepository>();
     final budgetRepo = context.read<BudgetRepository>();
+    final now = context.read<AppClock>().now();
     try {
       final ccPaymentEnvelope = await envelopeRepo.getEnvelopeByLinkedAccountId(
         accountId,
@@ -65,7 +67,6 @@ class CreditCardFloatWarning extends StatelessWidget {
       // Find the current budget period.
       final periods = await budgetRepo.watchBudgetPeriods(budgetId).first;
       if (periods.isEmpty) return false;
-      final now = DateTime.now();
       final current = periods.firstWhere(
         (p) =>
             !p.isClosed &&

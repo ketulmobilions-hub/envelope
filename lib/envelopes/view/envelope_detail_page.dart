@@ -5,6 +5,7 @@ import 'package:envelope/auth/auth.dart';
 import 'package:envelope/envelopes/cubit/cubit.dart';
 import 'package:envelope/envelopes/view/envelope_form_page.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/theme/app_colors.dart';
@@ -500,6 +501,7 @@ class _EnvelopeContentState extends State<_EnvelopeContent>
                                   formatDateHeader(
                                     transactions[i].date,
                                     l10n,
+                                    now: context.read<AppClock>().now(),
                                   ),
                                   style: theme.textTheme.labelSmall?.copyWith(
                                     color: AppColors.onPrimary.withValues(

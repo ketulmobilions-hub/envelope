@@ -5,6 +5,7 @@ import 'package:envelope/accounts/view/account_form_page.dart';
 import 'package:envelope/accounts/widgets/account_helpers.dart';
 import 'package:envelope/accounts/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/transactions/bloc/bloc.dart';
@@ -370,10 +371,11 @@ class _AccountTransactionsList extends StatelessWidget {
   Future<void> _openEdit(BuildContext context, Transaction transaction) async {
     final bloc = context.read<TransactionsBloc>();
     final budgetRepository = context.read<BudgetRepository>();
+    final appClock = context.read<AppClock>();
     final periods = await budgetRepository.watchBudgetPeriods(budgetId).first;
     String? periodId;
     if (periods.isNotEmpty) {
-      final now = DateTime.now();
+      final now = appClock.now();
       final current = periods.firstWhere(
         (p) =>
             !p.isClosed &&
@@ -397,6 +399,7 @@ class _AccountTransactionsList extends StatelessWidget {
             userId: transaction.createdBy,
             budgetPeriodId: periodId,
             transaction: transaction,
+            now: appClock.now,
           ),
           child: TransactionFormPage(transaction: transaction),
         ),

@@ -4,6 +4,7 @@ import 'package:account_repository/account_repository.dart';
 import 'package:envelope/accounts/widgets/account_helpers.dart';
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:envelope/transactions/cubit/transfer_form_cubit.dart';
@@ -113,7 +114,7 @@ class _CCPayBottomSheetState extends State<_CCPayBottomSheet> {
         fromAccountId: fromAccountId,
         toAccountId: widget.ccAccountId,
         amountCents: amountCents,
-        date: DateTime.now(),
+        date: context.read<AppClock>().now(),
       ),
     );
   }

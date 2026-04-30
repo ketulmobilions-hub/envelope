@@ -9,6 +9,7 @@ import 'package:envelope/app/routes/routes.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/notifications/services/fcm_service.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/sync/sync.dart';
 import 'package:envelope/theme/theme.dart';
 import 'package:envelope_repository/envelope_repository.dart';
@@ -28,6 +29,7 @@ import 'package:transaction_repository/transaction_repository.dart';
 
 class App extends StatelessWidget {
   const App({
+    required this.appClock,
     required this.authRepository,
     required this.accountRepository,
     required this.budgetRepository,
@@ -45,6 +47,7 @@ class App extends StatelessWidget {
     super.key,
   });
 
+  final AppClock appClock;
   final AuthRepository authRepository;
   final AccountRepository accountRepository;
   final BudgetRepository budgetRepository;
@@ -64,6 +67,7 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiRepositoryProvider(
       providers: [
+        RepositoryProvider.value(value: appClock),
         RepositoryProvider.value(value: authRepository),
         RepositoryProvider.value(value: accountRepository),
         RepositoryProvider.value(value: budgetRepository),

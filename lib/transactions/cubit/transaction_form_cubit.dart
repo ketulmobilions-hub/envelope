@@ -22,10 +22,12 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     required this.userId,
     this.budgetPeriodId,
     this.transaction,
+    DateTime Function()? now,
   }) : _transactionRepository = transactionRepository,
        _accountRepository = accountRepository,
        _envelopeRepository = envelopeRepository,
        _budgetRepository = budgetRepository,
+       _now = now ?? DateTime.now,
        super(const TransactionFormState()) {
     _loadData();
   }
@@ -34,6 +36,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
   final AccountRepository _accountRepository;
   final EnvelopeRepository _envelopeRepository;
   final BudgetRepository _budgetRepository;
+  final DateTime Function() _now;
   final String budgetId;
   final String userId;
   final String? budgetPeriodId;
@@ -245,11 +248,8 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         }
       } else if (isRecurring) {
         // ── Create transaction (if today/past) + recurring rule ───────────
-        final today = DateTime(
-          DateTime.now().year,
-          DateTime.now().month,
-          DateTime.now().day,
-        );
+        final nowVal = _now();
+        final today = DateTime(nowVal.year, nowVal.month, nowVal.day);
         final selectedDay = DateTime(date.year, date.month, date.day);
         final isFutureDate = selectedDay.isAfter(today);
 

@@ -47,14 +47,17 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
     required TransactionRepository transactionRepository,
     required String budgetId,
     required String userId,
+    DateTime Function()? nowProvider,
   }) : _transactionRepository = transactionRepository,
        _budgetId = budgetId,
        _userId = userId,
+       _nowProvider = nowProvider ?? DateTime.now,
        super(const RecurringCheckState());
 
   final TransactionRepository _transactionRepository;
   final String _budgetId;
   final String _userId;
+  final DateTime Function() _nowProvider;
 
   /// Runs the due-check: auto-posts eligible rules, collects pending
   /// manual rules, and identifies upcoming bills.
@@ -70,7 +73,7 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
       final bills = await _transactionRepository
           .watchBillReminders(_budgetId)
           .first;
-      final effectiveNow = now ?? DateTime.now();
+      final effectiveNow = now ?? _nowProvider();
 
       final pendingRules = <RecurringRule>[];
 

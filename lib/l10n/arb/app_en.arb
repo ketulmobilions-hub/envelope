@@ -2156,6 +2156,31 @@
     "@settingsPrivacyPolicy": { "description": "Privacy policy link" },
     "settingsTermsOfService": "Terms of Service",
     "@settingsTermsOfService": { "description": "Terms of service link" },
+    "settingsDebugSection": "Debug (debug builds only)",
+    "@settingsDebugSection": {
+        "description": "Section header for QA/debug-only settings"
+    },
+    "settingsDebugSimulatedDate": "Simulated date",
+    "@settingsDebugSimulatedDate": {
+        "description": "Settings tile to set or change the simulated app clock"
+    },
+    "settingsDebugSimulatedDateOff": "Off (using real clock)",
+    "@settingsDebugSimulatedDateOff": {
+        "description": "Subtitle when no simulated clock override is active"
+    },
+    "settingsDebugClearSimulatedDate": "Clear simulated date",
+    "@settingsDebugClearSimulatedDate": {
+        "description": "Settings tile to clear the simulated app clock override"
+    },
+    "debugClockBannerLabel": "Simulated: {date}",
+    "@debugClockBannerLabel": {
+        "description": "Persistent banner shown when the simulated clock override is active",
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
     "settingsCancel": "Cancel",
     "@settingsCancel": { "description": "Cancel button" },
     "settingsSave": "Save",

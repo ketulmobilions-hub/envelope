@@ -2,6 +2,7 @@ import 'package:account_repository/account_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/transactions/bloc/bloc.dart';
 import 'package:envelope/transactions/cubit/cubit.dart';
@@ -109,7 +110,12 @@ class TransactionsView extends StatelessWidget {
   Future<void> _openAddTransaction(BuildContext context) async {
     final bloc = context.read<TransactionsBloc>();
     final budgetRepository = context.read<BudgetRepository>();
-    final periodId = await _getCurrentPeriodId(budgetRepository, budgetId);
+    final appClock = context.read<AppClock>();
+    final periodId = await _getCurrentPeriodId(
+      budgetRepository,
+      budgetId,
+      now: appClock.now(),
+    );
     if (!context.mounted) return;
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
@@ -122,6 +128,7 @@ class TransactionsView extends StatelessWidget {
             budgetId: budgetId,
             userId: context.read<AuthBloc>().state.user?.id ?? '',
             budgetPeriodId: periodId,
+            now: appClock.now,
           ),
           child: const TransactionFormPage(),
         ),
@@ -223,7 +230,12 @@ class _TransactionsList extends StatelessWidget {
   ) async {
     final bloc = context.read<TransactionsBloc>();
     final budgetRepository = context.read<BudgetRepository>();
-    final periodId = await _getCurrentPeriodId(budgetRepository, budgetId);
+    final appClock = context.read<AppClock>();
+    final periodId = await _getCurrentPeriodId(
+      budgetRepository,
+      budgetId,
+      now: appClock.now(),
+    );
     if (!context.mounted) return;
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
@@ -237,6 +249,7 @@ class _TransactionsList extends StatelessWidget {
             userId: transaction.createdBy,
             budgetPeriodId: periodId,
             transaction: transaction,
+            now: appClock.now,
           ),
           child: TransactionFormPage(transaction: transaction),
         ),
@@ -264,15 +277,18 @@ class _TransactionsList extends StatelessWidget {
 /// Resolves the current (open) budget period ID.
 Future<String?> _getCurrentPeriodId(
   BudgetRepository budgetRepository,
-  String budgetId,
-) async {
+  String budgetId, {
+  DateTime? now,
+}) async {
   try {
     final periods = await budgetRepository.watchBudgetPeriods(budgetId).first;
     if (periods.isEmpty) return null;
-    final now = DateTime.now();
+    final effectiveNow = now ?? DateTime.now();
     final current = periods.firstWhere(
       (p) =>
-          !p.isClosed && !p.startDate.isAfter(now) && !p.endDate.isBefore(now),
+          !p.isClosed &&
+          !p.startDate.isAfter(effectiveNow) &&
+          !p.endDate.isBefore(effectiveNow),
       orElse: () =>
           periods.where((p) => !p.isClosed).lastOrNull ?? periods.last,
     );

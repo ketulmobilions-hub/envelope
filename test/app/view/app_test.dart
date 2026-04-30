@@ -4,6 +4,7 @@ import 'package:account_repository/account_repository.dart';
 import 'package:auth_repository/auth_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/app/app.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:goal_repository/goal_repository.dart';
@@ -63,6 +64,7 @@ void main() {
     testWidgets('renders AppView', (tester) async {
       await tester.pumpWidget(
         App(
+          appClock: AppClock(prefs),
           authRepository: authRepository,
           accountRepository: MockAccountRepository(),
           budgetRepository: MockBudgetRepository(),
