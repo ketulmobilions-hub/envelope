@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:goal_repository/goal_repository.dart';
 import 'package:notification_repository/notification_repository.dart';
 import 'package:report_repository/report_repository.dart';
@@ -67,7 +68,7 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiRepositoryProvider(
       providers: [
-        RepositoryProvider.value(value: appClock),
+        ChangeNotifierProvider<AppClock>.value(value: appClock),
         RepositoryProvider.value(value: authRepository),
         RepositoryProvider.value(value: accountRepository),
         RepositoryProvider.value(value: budgetRepository),

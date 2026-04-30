@@ -158,6 +158,18 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     if (selected == null && sortedPeriods.isNotEmpty) {
       // Auto-select the period that contains today, or fall back to latest.
       final now = _now();
+      // If the latest period ends before "now", create the missing periods
+      // forward and bail; the watch stream will re-fire this handler with
+      // the new period list.
+      final latest = sortedPeriods.last;
+      if (latest.endDate.isBefore(now)) {
+        try {
+          await _budgetRepository.ensureCurrentPeriod(_budgetId, asOf: now);
+          return;
+        } on BudgetException {
+          // Fall through to existing selection on failure.
+        }
+      }
       selected = sortedPeriods.firstWhere(
         (p) => !p.startDate.isAfter(now) && !p.endDate.isBefore(now),
         orElse: () => sortedPeriods.last,

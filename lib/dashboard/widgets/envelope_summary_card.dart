@@ -248,7 +248,7 @@ class _CategoryGroupSection extends StatelessWidget {
                         : s.available;
                     final displayAllocated = hasCreditInfo
                         ? creditLimit
-                        : s.allocated;
+                        : s.budgeted;
                     final displayOverspent = hasCreditInfo
                         ? displayAvailable < 0
                         : s.isOverspent;
