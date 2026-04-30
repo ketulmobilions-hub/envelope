@@ -168,61 +168,92 @@ Future<void> _showSaveAsTemplateDialog(
   BudgetBloc bloc,
   BudgetState state,
 ) {
-  final l10n = context.l10n;
-  final messenger = ScaffoldMessenger.of(context);
-  final formKey = GlobalKey<FormState>();
-  final nameController = TextEditingController();
-
   return showDialog<void>(
     context: context,
-    builder: (dialogContext) {
-      return AlertDialog(
-        title: Text(l10n.budgetSaveAsTemplate),
-        content: Form(
-          key: formKey,
-          child: TextFormField(
-            controller: nameController,
-            autofocus: true,
-            decoration:
-                InputDecoration(labelText: l10n.budgetTemplateNameLabel),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return l10n.budgetTemplateNameRequired;
-              }
-              return null;
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(l10n.budgetCancel),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (!(formKey.currentState?.validate() ?? false)) return;
-              final items = _buildTemplateItemsFromAllocations(state);
-              if (items.isEmpty) {
-                Navigator.of(dialogContext).pop();
-                messenger.showSnackBar(
-                  SnackBar(content: Text(l10n.budgetTemplateNoItems)),
-                );
-                return;
-              }
-              bloc.add(
-                AllocationTemplateCreated(
-                  name: nameController.text.trim(),
-                  items: items,
-                ),
-              );
-              Navigator.of(dialogContext).pop();
-            },
-            child: Text(l10n.budgetSaveButton),
-          ),
-        ],
+    builder: (dialogContext) => _SaveAsTemplateDialog(
+      bloc: bloc,
+      budgetState: state,
+      messenger: ScaffoldMessenger.of(context),
+    ),
+  );
+}
+
+class _SaveAsTemplateDialog extends StatefulWidget {
+  const _SaveAsTemplateDialog({
+    required this.bloc,
+    required this.budgetState,
+    required this.messenger,
+  });
+
+  final BudgetBloc bloc;
+  final BudgetState budgetState;
+  final ScaffoldMessengerState messenger;
+
+  @override
+  State<_SaveAsTemplateDialog> createState() => _SaveAsTemplateDialogState();
+}
+
+class _SaveAsTemplateDialogState extends State<_SaveAsTemplateDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  void _onSave() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final l10n = context.l10n;
+    final items = _buildTemplateItemsFromAllocations(widget.budgetState);
+    if (items.isEmpty) {
+      Navigator.of(context).pop();
+      widget.messenger.showSnackBar(
+        SnackBar(content: Text(l10n.budgetTemplateNoItems)),
       );
-    },
-  ).whenComplete(nameController.dispose);
+      return;
+    }
+    widget.bloc.add(
+      AllocationTemplateCreated(
+        name: _nameController.text.trim(),
+        items: items,
+      ),
+    );
+    Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AlertDialog(
+      title: Text(l10n.budgetSaveAsTemplate),
+      content: Form(
+        key: _formKey,
+        child: TextFormField(
+          controller: _nameController,
+          autofocus: true,
+          decoration: InputDecoration(labelText: l10n.budgetTemplateNameLabel),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return l10n.budgetTemplateNameRequired;
+            }
+            return null;
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.budgetCancel),
+        ),
+        FilledButton(
+          onPressed: _onSave,
+          child: Text(l10n.budgetSaveButton),
+        ),
+      ],
+    );
+  }
 }
 
 /// Converts the period's current allocations into template items by computing
