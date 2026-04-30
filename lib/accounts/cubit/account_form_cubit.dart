@@ -1,6 +1,7 @@
 import 'package:account_repository/account_repository.dart';
 import 'package:bloc/bloc.dart';
 import 'package:budget_repository/budget_repository.dart';
+import 'package:envelope/accounts/utils/cc_payments_group.dart';
 import 'package:envelope/accounts/widgets/account_helpers.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
@@ -161,7 +162,10 @@ class AccountFormCubit extends Cubit<AccountFormState> {
   }) async {
     try {
       final repo = _envelopeRepository!;
-      final group = await _findOrCreateCCPaymentsGroup(repo);
+      final group = await findOrCreateCCPaymentsGroup(
+        repository: repo,
+        budgetId: budgetId,
+      );
       await repo.createEnvelope(
         categoryGroupId: group.id,
         budgetId: budgetId,
@@ -170,25 +174,6 @@ class AccountFormCubit extends Cubit<AccountFormState> {
       );
     } on Exception {
       // Best-effort; the user can create the envelope manually if needed.
-    }
-  }
-
-  Future<CategoryGroup> _findOrCreateCCPaymentsGroup(
-    EnvelopeRepository repo,
-  ) async {
-    const groupName = 'Credit Card Payments';
-    final groups = await repo.watchCategoryGroups(budgetId).first;
-    final existing = groups.where((g) => g.name == groupName).firstOrNull;
-    if (existing != null) return existing;
-    try {
-      return await repo.createCategoryGroup(
-        budgetId: budgetId,
-        name: groupName,
-      );
-    } on Exception {
-      // Another operation may have created it concurrently — re-fetch.
-      final retry = await repo.watchCategoryGroups(budgetId).first;
-      return retry.firstWhere((g) => g.name == groupName);
     }
   }
 }

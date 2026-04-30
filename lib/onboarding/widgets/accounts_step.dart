@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:envelope/accounts/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/cubit.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/shared/widgets/app_option_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class AccountsStep extends StatelessWidget {
@@ -13,7 +15,7 @@ class AccountsStep extends StatelessWidget {
   static const _accountTypes = [
     'checking',
     'savings',
-    'creditCard',
+    'credit_card',
     'cash',
     'investment',
     'other',
@@ -49,7 +51,7 @@ class AccountsStep extends StatelessWidget {
                       child: ListTile(
                         title: Text(account.name),
                         subtitle: Text(
-                          '${_localizedAccountType(l10n, account.type)}'
+                          '${_localizedOnboardingType(l10n, account.type)}'
                           ' • ${account.currency}'
                           ' • \$$balance'
                           '${account.isOnBudget ? '' : ' • '
@@ -82,149 +84,216 @@ class AccountsStep extends StatelessWidget {
     );
   }
 
-  String _localizedAccountType(AppLocalizations l10n, String type) {
-    return switch (type) {
-      'checking' => l10n.onboardingAccountTypeChecking,
-      'savings' => l10n.onboardingAccountTypeSavings,
-      'creditCard' => l10n.onboardingAccountTypeCreditCard,
-      'cash' => l10n.onboardingAccountTypeCash,
-      'investment' => l10n.onboardingAccountTypeInvestment,
-      _ => l10n.onboardingAccountTypeOther,
-    };
-  }
-
   void _showAddAccountSheet(BuildContext context) {
-    final l10n = context.l10n;
     final cubit = context.read<OnboardingCubit>();
-    final nameController = TextEditingController();
-    final balanceController = TextEditingController(text: '0');
-    var selectedType = _accountTypes.first;
-    var isOnBudget = defaultIsOnBudget(selectedType);
+    unawaited(
+      showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        builder: (sheetContext) => _AddAccountSheet(
+          accountTypes: _accountTypes,
+          baseCurrency: cubit.state.baseCurrency,
+          onAdd: cubit.addAccount,
+        ),
+      ),
+    );
+  }
+}
 
-    unawaited(showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (sheetContext, setSheetState) {
-            String? balanceError;
-            return Padding(
-              padding: EdgeInsets.fromLTRB(
-                24,
-                24,
-                24,
-                24 + MediaQuery.of(sheetContext).viewInsets.bottom,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    l10n.onboardingAddAccount,
-                    style: Theme.of(sheetContext).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: nameController,
-                    decoration: InputDecoration(
-                      labelText: l10n.onboardingAccountName,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  AppOptionPicker<String>(
-                    options: _accountTypes,
-                    value: selectedType,
-                    onChanged: (type) => setSheetState(() {
-                      selectedType = type;
-                      isOnBudget = defaultIsOnBudget(type);
-                    }),
-                    labelText: l10n.onboardingAccountType,
-                    icon: Icons.category_outlined,
-                    itemLabel: (type) =>
-                        _localizedAccountTypeStatic(l10n, type),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: balanceController,
-                    decoration: InputDecoration(
-                      labelText: isCreditCard(selectedType)
-                          ? l10n.accountsAmountOwedLabel
-                          : l10n.onboardingStartingBalance,
-                      errorText: balanceError,
-                    ),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    onTap: () {
-                      if (balanceController.text == '0') {
-                        balanceController.clear();
-                      }
-                    },
-                    onChanged: (_) {
-                      if (balanceError != null) {
-                        setSheetState(() => balanceError = null);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  SwitchListTile(
-                    title: Text(l10n.accountsOnBudgetLabel),
-                    subtitle: Text(l10n.accountsOnBudgetDescription),
-                    value: isOnBudget,
-                    onChanged: (value) =>
-                        setSheetState(() => isOnBudget = value),
-                  ),
-                  const SizedBox(height: 16),
-                  FilledButton(
-                    onPressed: () {
-                      final name = nameController.text.trim();
-                      if (name.isEmpty) return;
-                      var startingBalance =
-                          double.tryParse(balanceController.text) ?? 0;
-                      if (startingBalance.abs() > maxDollarAmount) {
-                        setSheetState(
-                          () => balanceError = l10n.accountsBalanceTooLarge,
-                        );
-                        return;
-                      }
-                      if (isCreditCard(selectedType) &&
-                          startingBalance > 0) {
-                        startingBalance = -startingBalance;
-                      }
-                      cubit.addAccount(
-                        OnboardingAccount(
-                          name: name,
-                          type: selectedType,
-                          currency: cubit.state.baseCurrency,
-                          startingBalance: startingBalance,
-                          isOnBudget: isOnBudget,
-                        ),
-                      );
-                      Navigator.of(sheetContext).pop();
-                    },
-                    child: Text(l10n.onboardingAddAccount),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    ));
+String _localizedOnboardingType(AppLocalizations l10n, String type) {
+  return switch (type) {
+    'checking' => l10n.onboardingAccountTypeChecking,
+    'savings' => l10n.onboardingAccountTypeSavings,
+    'credit_card' => l10n.onboardingAccountTypeCreditCard,
+    'cash' => l10n.onboardingAccountTypeCash,
+    'investment' => l10n.onboardingAccountTypeInvestment,
+    _ => l10n.onboardingAccountTypeOther,
+  };
+}
+
+class _AddAccountSheet extends StatefulWidget {
+  const _AddAccountSheet({
+    required this.accountTypes,
+    required this.baseCurrency,
+    required this.onAdd,
+  });
+
+  final List<String> accountTypes;
+  final String baseCurrency;
+  final void Function(OnboardingAccount) onAdd;
+
+  @override
+  State<_AddAccountSheet> createState() => _AddAccountSheetState();
+}
+
+class _AddAccountSheetState extends State<_AddAccountSheet> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _balanceController;
+  late final TextEditingController _creditLimitController;
+  late String _selectedType;
+  late bool _isOnBudget;
+  String? _balanceError;
+  String? _creditLimitError;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController();
+    _balanceController = TextEditingController(text: '0');
+    _creditLimitController = TextEditingController();
+    _selectedType = widget.accountTypes.first;
+    _isOnBudget = defaultIsOnBudget(_selectedType);
   }
 
-  static String _localizedAccountTypeStatic(
-    AppLocalizations l10n,
-    String type,
-  ) {
-    return switch (type) {
-      'checking' => l10n.onboardingAccountTypeChecking,
-      'savings' => l10n.onboardingAccountTypeSavings,
-      'creditCard' => l10n.onboardingAccountTypeCreditCard,
-      'cash' => l10n.onboardingAccountTypeCash,
-      'investment' => l10n.onboardingAccountTypeInvestment,
-      _ => l10n.onboardingAccountTypeOther,
-    };
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _balanceController.dispose();
+    _creditLimitController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final l10n = context.l10n;
+    final name = _nameController.text.trim();
+    if (name.isEmpty) return;
+
+    var startingBalance = double.tryParse(_balanceController.text) ?? 0;
+    if (startingBalance.abs() > maxDollarAmount) {
+      setState(() => _balanceError = l10n.accountsBalanceTooLarge);
+      return;
+    }
+    if (isCreditCard(_selectedType) && startingBalance > 0) {
+      startingBalance = -startingBalance;
+    }
+
+    int? creditLimitCents;
+    if (isCreditCard(_selectedType) &&
+        _creditLimitController.text.trim().isNotEmpty) {
+      final parsed = parseCents(_creditLimitController.text);
+      if (parsed == null || parsed < 0) {
+        setState(() => _creditLimitError = l10n.accountsCreditLimitTooLarge);
+        return;
+      }
+      creditLimitCents = parsed;
+    }
+
+    widget.onAdd(
+      OnboardingAccount(
+        name: name,
+        type: _selectedType,
+        currency: widget.baseCurrency,
+        startingBalance: startingBalance,
+        isOnBudget: _isOnBudget,
+        creditLimitCents: creditLimitCents,
+      ),
+    );
+    Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final symbol = currencySymbol(context);
+    final isCC = isCreditCard(_selectedType);
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        24,
+        24,
+        24,
+        24 + MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.onboardingAddAccount,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _nameController,
+            decoration: InputDecoration(
+              labelText: l10n.onboardingAccountName,
+            ),
+            textCapitalization: TextCapitalization.words,
+          ),
+          const SizedBox(height: 12),
+          AppOptionPicker<String>(
+            options: widget.accountTypes,
+            value: _selectedType,
+            onChanged: (type) => setState(() {
+              _selectedType = type;
+              _isOnBudget = defaultIsOnBudget(type);
+            }),
+            labelText: l10n.onboardingAccountType,
+            icon: Icons.category_outlined,
+            itemLabel: (type) => _localizedOnboardingType(l10n, type),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _balanceController,
+            decoration: InputDecoration(
+              labelText: isCC
+                  ? l10n.accountsAmountOwedLabel
+                  : l10n.onboardingStartingBalance,
+              prefixText: symbol,
+              errorText: _balanceError,
+            ),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(
+                isCC ? RegExp(r'^\d*\.?\d{0,2}') : RegExp(r'^\-?\d*\.?\d{0,2}'),
+              ),
+            ],
+            onTap: () {
+              if (_balanceController.text == '0') {
+                _balanceController.clear();
+              }
+            },
+            onChanged: (_) {
+              if (_balanceError != null) {
+                setState(() => _balanceError = null);
+              }
+            },
+          ),
+          if (isCC) ...[
+            const SizedBox(height: 12),
+            TextField(
+              controller: _creditLimitController,
+              decoration: InputDecoration(
+                labelText: l10n.accountsCreditLimitLabel,
+                prefixText: symbol,
+                errorText: _creditLimitError,
+              ),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+              ],
+              onChanged: (_) {
+                if (_creditLimitError != null) {
+                  setState(() => _creditLimitError = null);
+                }
+              },
+            ),
+          ],
+          const SizedBox(height: 12),
+          SwitchListTile(
+            title: Text(l10n.accountsOnBudgetLabel),
+            subtitle: Text(l10n.accountsOnBudgetDescription),
+            value: _isOnBudget,
+            onChanged: (value) => setState(() => _isOnBudget = value),
+          ),
+          const SizedBox(height: 16),
+          FilledButton(
+            onPressed: _submit,
+            child: Text(l10n.onboardingAddAccount),
+          ),
+        ],
+      ),
+    );
   }
 }

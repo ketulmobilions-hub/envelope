@@ -12,6 +12,16 @@ class MockOnboardingCubit extends MockCubit<OnboardingState>
     implements OnboardingCubit {}
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(
+      const OnboardingAccount(
+        name: '_',
+        type: 'checking',
+        currency: 'USD',
+      ),
+    );
+  });
+
   group('AccountsStep', () {
     late MockOnboardingCubit cubit;
 
@@ -84,5 +94,32 @@ void main() {
       await tester.tap(find.byIcon(Icons.delete_outline));
       verify(() => cubit.removeAccount(0)).called(1);
     });
+
+    testWidgets(
+      'displays CC account with credit_card type label',
+      (tester) async {
+        when(() => cubit.state).thenReturn(
+          const OnboardingState(
+            currentStep: OnboardingStep.accounts,
+            accounts: [
+              OnboardingAccount(
+                name: 'Visa',
+                type: 'credit_card',
+                currency: 'USD',
+                creditLimitCents: 500000,
+              ),
+            ],
+          ),
+        );
+        await tester.pumpApp(
+          BlocProvider<OnboardingCubit>.value(
+            value: cubit,
+            child: const Scaffold(body: AccountsStep()),
+          ),
+        );
+        expect(find.text('Visa'), findsOneWidget);
+        expect(find.textContaining('Credit Card'), findsWidgets);
+      },
+    );
   });
 }

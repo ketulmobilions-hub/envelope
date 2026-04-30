@@ -27,6 +27,7 @@ final class OnboardingAccount extends Equatable {
     required this.currency,
     this.startingBalance = 0,
     this.isOnBudget = true,
+    this.creditLimitCents,
   });
 
   final String name;
@@ -34,9 +35,17 @@ final class OnboardingAccount extends Equatable {
   final String currency;
   final double startingBalance;
   final bool isOnBudget;
+  final int? creditLimitCents;
 
   @override
-  List<Object?> get props => [name, type, currency, startingBalance, isOnBudget];
+  List<Object?> get props => [
+        name,
+        type,
+        currency,
+        startingBalance,
+        isOnBudget,
+        creditLimitCents,
+      ];
 }
 
 /// A category group with its envelope names.
