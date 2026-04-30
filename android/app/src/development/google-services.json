@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "151696145550",
-    "project_id": "envelope-prod-47689",
-    "storage_bucket": "envelope-prod-47689.firebasestorage.app"
+    "project_number": "883784107706",
+    "project_id": "envelope-dev-bd291",
+    "storage_bucket": "envelope-dev-bd291.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:151696145550:android:69529d75e094ece4e21ddf",
+        "mobilesdk_app_id": "1:883784107706:android:422529d4431e1d54572483",
         "android_client_info": {
           "package_name": "com.envelope.ml.dev"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCdHDGwWtrrVkFiTHlVuejCRHwU1dXcpDc"
+          "current_key": "AIzaSyDNSNP9_0t8ogdWmiKeZTNBqjxlEH9Dm-c"
         }
       ],
       "services": {
