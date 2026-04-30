@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/budget/bloc/bloc.dart';
 import 'package:envelope/budget/view/allocation_template_page.dart';
 import 'package:envelope/budget/widgets/transfer_dialog.dart';
@@ -53,6 +54,17 @@ Future<void> showBudgetActionsMenu(BuildContext context) {
                       );
                     },
                   ),
+                  if (state.allocations.any((a) => a.allocatedAmount > 0))
+                    ListTile(
+                      leading: const Icon(Icons.bookmark_add_outlined),
+                      title: Text(l10n.budgetSaveAsTemplate),
+                      onTap: () {
+                        Navigator.of(sheetContext).pop();
+                        unawaited(
+                          _showSaveAsTemplateDialog(context, bloc, state),
+                        );
+                      },
+                    ),
                   if (state.allocations.length >= 2)
                     ListTile(
                       leading: const Icon(Icons.swap_horiz),
@@ -149,4 +161,108 @@ Future<void> _showApplyTemplateDialog(
       );
     },
   );
+}
+
+Future<void> _showSaveAsTemplateDialog(
+  BuildContext context,
+  BudgetBloc bloc,
+  BudgetState state,
+) {
+  final l10n = context.l10n;
+  final messenger = ScaffoldMessenger.of(context);
+  final formKey = GlobalKey<FormState>();
+  final nameController = TextEditingController();
+
+  return showDialog<void>(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: Text(l10n.budgetSaveAsTemplate),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: nameController,
+            autofocus: true,
+            decoration:
+                InputDecoration(labelText: l10n.budgetTemplateNameLabel),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return l10n.budgetTemplateNameRequired;
+              }
+              return null;
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(l10n.budgetCancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (!(formKey.currentState?.validate() ?? false)) return;
+              final items = _buildTemplateItemsFromAllocations(state);
+              if (items.isEmpty) {
+                Navigator.of(dialogContext).pop();
+                messenger.showSnackBar(
+                  SnackBar(content: Text(l10n.budgetTemplateNoItems)),
+                );
+                return;
+              }
+              bloc.add(
+                AllocationTemplateCreated(
+                  name: nameController.text.trim(),
+                  items: items,
+                ),
+              );
+              Navigator.of(dialogContext).pop();
+            },
+            child: Text(l10n.budgetSaveButton),
+          ),
+        ],
+      );
+    },
+  ).whenComplete(nameController.dispose);
+}
+
+/// Converts the period's current allocations into template items by computing
+/// each envelope's share as a percentage of the total allocated amount.
+///
+/// Allocations with zero amounts are preserved as 0% items so the saved
+/// template matches the user's full envelope plan, not just the funded subset.
+/// Rounding remainder is absorbed by the largest-amount item so percentages
+/// sum to 100 without producing a negative on a zero-amount item.
+List<AllocationTemplateItem> _buildTemplateItemsFromAllocations(
+  BudgetState state,
+) {
+  final allocations = state.allocations;
+  if (allocations.isEmpty) return const [];
+
+  final total = allocations.fold<int>(0, (sum, a) => sum + a.allocatedAmount);
+  if (total <= 0) return const [];
+
+  final percentages = allocations
+      .map((a) => a.allocatedAmount * 100 / total)
+      .toList();
+
+  var maxIdx = 0;
+  for (var i = 1; i < allocations.length; i++) {
+    if (allocations[i].allocatedAmount >
+        allocations[maxIdx].allocatedAmount) {
+      maxIdx = i;
+    }
+  }
+
+  final sum = percentages.fold<double>(0, (s, p) => s + p);
+  percentages[maxIdx] += 100 - sum;
+
+  return [
+    for (var i = 0; i < allocations.length; i++)
+      AllocationTemplateItem(
+        id: '',
+        templateId: '',
+        envelopeId: allocations[i].envelopeId,
+        percentage: percentages[i],
+      ),
+  ];
 }
