@@ -48,10 +48,15 @@ class EnvelopeRepository {
   }) async {
     _beginLocalWrite();
     try {
+      // Append at the end of the existing groups for deterministic dashboard
+      // ordering. Clients that reorder later overwrite via batchReorder.
+      final existing = await _localDatabase.envelopesDao
+          .getCategoryGroupsByBudgetId(budgetId);
       final dto = CategoryGroupDto(
         id: '',
         budgetId: budgetId,
         name: name,
+        sortOrder: existing.length,
         createdAt: DateTime.now(),
       );
 
@@ -252,6 +257,10 @@ class EnvelopeRepository {
   }) async {
     _beginLocalWrite();
     try {
+      // Append at the end of the group's envelopes for deterministic
+      // ordering. Clients that reorder later overwrite via batchReorder.
+      final existing = await _localDatabase.envelopesDao
+          .getEnvelopesByCategoryGroupId(categoryGroupId);
       final dto = EnvelopeDto(
         id: '',
         categoryGroupId: categoryGroupId,
@@ -259,6 +268,7 @@ class EnvelopeRepository {
         name: name,
         color: color,
         linkedAccountId: linkedAccountId,
+        sortOrder: existing.length,
         createdAt: DateTime.now(),
       );
 
