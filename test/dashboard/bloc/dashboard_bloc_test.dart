@@ -129,42 +129,56 @@ void main() {
     transactionRepository = _MockTransactionRepository();
 
     // Default stubs
-    when(() => budgetRepository.watchBudgetPeriods(any()))
-        .thenAnswer((_) => Stream.value([period]));
-    when(() => budgetRepository.calculateReadyToAssign(any()))
-        .thenAnswer((_) async => 50000);
-    when(() => budgetRepository.refreshBudgetPeriods(any()))
-        .thenAnswer((_) async {});
-    when(() => accountRepository.watchAccounts(any()))
-        .thenAnswer((_) => Stream.value(accounts));
-    when(() => accountRepository.refreshAccounts(any()))
-        .thenAnswer((_) async {});
-    when(() => envelopeRepository.watchEnvelopes(any()))
-        .thenAnswer((_) => Stream.value([envelope]));
-    when(() => envelopeRepository.watchCategoryGroups(any()))
-        .thenAnswer((_) => Stream.value([categoryGroup]));
-    when(() => envelopeRepository.watchAllocations(any()))
-        .thenAnswer((_) => Stream.value([allocation]));
-    when(() => envelopeRepository.refreshEnvelopes(any()))
-        .thenAnswer((_) async {});
-    when(() => envelopeRepository.refreshCategoryGroups(any()))
-        .thenAnswer((_) async {});
-    when(() => envelopeRepository.refreshAllocations(any()))
-        .thenAnswer((_) async {});
-    when(() => transactionRepository.watchTransactions(
-          budgetId: any(named: 'budgetId'),
-        )).thenAnswer((_) => Stream.value(transactions));
-    when(() => transactionRepository.refreshTransactions(any()))
-        .thenAnswer((_) async {});
+    when(
+      () => budgetRepository.watchBudgetPeriods(any()),
+    ).thenAnswer((_) => Stream.value([period]));
+    when(
+      () => budgetRepository.calculateReadyToAssign(any()),
+    ).thenAnswer((_) async => 50000);
+    when(
+      () => budgetRepository.refreshBudgetPeriods(any()),
+    ).thenAnswer((_) async {});
+    when(
+      () => accountRepository.watchAccounts(any()),
+    ).thenAnswer((_) => Stream.value(accounts));
+    when(
+      () => accountRepository.refreshAccounts(any()),
+    ).thenAnswer((_) async {});
+    when(
+      () => envelopeRepository.watchEnvelopes(any()),
+    ).thenAnswer((_) => Stream.value([envelope]));
+    when(
+      () => envelopeRepository.watchCategoryGroups(any()),
+    ).thenAnswer((_) => Stream.value([categoryGroup]));
+    when(
+      () => envelopeRepository.watchAllocations(any()),
+    ).thenAnswer((_) => Stream.value([allocation]));
+    when(
+      () => envelopeRepository.refreshEnvelopes(any()),
+    ).thenAnswer((_) async {});
+    when(
+      () => envelopeRepository.refreshCategoryGroups(any()),
+    ).thenAnswer((_) async {});
+    when(
+      () => envelopeRepository.refreshAllocations(any()),
+    ).thenAnswer((_) async {});
+    when(
+      () => transactionRepository.watchTransactions(
+        budgetId: any(named: 'budgetId'),
+      ),
+    ).thenAnswer((_) => Stream.value(transactions));
+    when(
+      () => transactionRepository.refreshTransactions(any()),
+    ).thenAnswer((_) async {});
   });
 
   DashboardBloc buildBloc() => DashboardBloc(
-        budgetRepository: budgetRepository,
-        accountRepository: accountRepository,
-        envelopeRepository: envelopeRepository,
-        transactionRepository: transactionRepository,
-        budgetId: budgetId,
-      );
+    budgetRepository: budgetRepository,
+    accountRepository: accountRepository,
+    envelopeRepository: envelopeRepository,
+    transactionRepository: transactionRepository,
+    budgetId: budgetId,
+  );
 
   group('DashboardBloc', () {
     test('initial state is correct', () {
@@ -261,8 +275,9 @@ void main() {
     test(
       'stream error emits error status then clears to loaded',
       () async {
-        when(() => accountRepository.watchAccounts(any()))
-            .thenAnswer((_) => Stream.error(Exception('fail')));
+        when(
+          () => accountRepository.watchAccounts(any()),
+        ).thenAnswer((_) => Stream.error(Exception('fail')));
         final bloc = buildBloc();
         final states = <DashboardState>[];
         final sub = bloc.stream.listen(states.add);
@@ -292,11 +307,9 @@ void main() {
     blocTest<DashboardBloc, DashboardState>(
       'calling DashboardStarted twice discards stale stream events',
       build: () {
-        final firstCallController =
-            StreamController<List<Account>>.broadcast();
+        final firstCallController = StreamController<List<Account>>.broadcast();
         var callCount = 0;
-        when(() => accountRepository.watchAccounts(any()))
-            .thenAnswer((_) {
+        when(() => accountRepository.watchAccounts(any())).thenAnswer((_) {
           callCount++;
           if (callCount == 1) {
             return firstCallController.stream;

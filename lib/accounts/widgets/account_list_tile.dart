@@ -43,7 +43,7 @@ class AccountListTile extends StatelessWidget {
         account.isOnBudget
             ? formatCents(account.currentBalance, symbol: symbol)
             : '${formatCents(account.currentBalance, symbol: symbol)}'
-                ' · ${l10n.accountsOffBudgetIndicator}',
+                  ' · ${l10n.accountsOffBudgetIndicator}',
         style: TextStyle(
           color: account.currentBalance < 0
               ? Theme.of(context).colorScheme.error

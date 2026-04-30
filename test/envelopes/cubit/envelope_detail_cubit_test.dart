@@ -7,7 +7,9 @@ import 'package:mocktail/mocktail.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 
 class MockEnvelopeRepository extends Mock implements EnvelopeRepository {}
+
 class MockTransactionRepository extends Mock implements TransactionRepository {}
+
 class MockBudgetRepository extends Mock implements BudgetRepository {}
 
 void main() {
@@ -37,15 +39,19 @@ void main() {
     envelopeRepository = MockEnvelopeRepository();
     transactionRepository = MockTransactionRepository();
     budgetRepository = MockBudgetRepository();
-    
-    when(() => transactionRepository.watchTransactions(
-          budgetId: any(named: 'budgetId'), 
-          envelopeId: any(named: 'envelopeId'),
-        )).thenAnswer((_) => const Stream.empty());
-    when(() => transactionRepository.refreshTransactions(any()))
-        .thenAnswer((_) async {});
-    when(() => budgetRepository.watchBudgetPeriods(any()))
-        .thenAnswer((_) => const Stream.empty());
+
+    when(
+      () => transactionRepository.watchTransactions(
+        budgetId: any(named: 'budgetId'),
+        envelopeId: any(named: 'envelopeId'),
+      ),
+    ).thenAnswer((_) => const Stream.empty());
+    when(
+      () => transactionRepository.refreshTransactions(any()),
+    ).thenAnswer((_) async {});
+    when(
+      () => budgetRepository.watchBudgetPeriods(any()),
+    ).thenAnswer((_) => const Stream.empty());
   });
 
   group('EnvelopeDetailCubit', () {
@@ -85,12 +91,13 @@ void main() {
       'refresh updates envelope from repository',
       build: () {
         final updated = testEnvelope.copyWith(name: 'Updated Rent');
-        when(() => envelopeRepository.getEnvelope('env-1'))
-            .thenAnswer((_) async => updated);
+        when(
+          () => envelopeRepository.getEnvelope('env-1'),
+        ).thenAnswer((_) async => updated);
         return EnvelopeDetailCubit(
           envelopeRepository: envelopeRepository,
-        transactionRepository: transactionRepository,
-        budgetRepository: budgetRepository,
+          transactionRepository: transactionRepository,
+          budgetRepository: budgetRepository,
           envelope: testEnvelope,
         );
       },
@@ -107,12 +114,13 @@ void main() {
     blocTest<EnvelopeDetailCubit, EnvelopeDetailState>(
       'refresh keeps current data on failure',
       build: () {
-        when(() => envelopeRepository.getEnvelope('env-1'))
-            .thenThrow(const EnvelopeException('Error'));
+        when(
+          () => envelopeRepository.getEnvelope('env-1'),
+        ).thenThrow(const EnvelopeException('Error'));
         return EnvelopeDetailCubit(
           envelopeRepository: envelopeRepository,
-        transactionRepository: transactionRepository,
-        budgetRepository: budgetRepository,
+          transactionRepository: transactionRepository,
+          budgetRepository: budgetRepository,
           envelope: testEnvelope,
         );
       },
@@ -121,8 +129,9 @@ void main() {
     );
 
     test('deleteEnvelope returns true on success', () async {
-      when(() => envelopeRepository.deleteEnvelope('env-1'))
-          .thenAnswer((_) async {});
+      when(
+        () => envelopeRepository.deleteEnvelope('env-1'),
+      ).thenAnswer((_) async {});
       final cubit = EnvelopeDetailCubit(
         envelopeRepository: envelopeRepository,
         transactionRepository: transactionRepository,
@@ -133,14 +142,14 @@ void main() {
       final result = await cubit.deleteEnvelope();
 
       expect(result, isTrue);
-      verify(() => envelopeRepository.deleteEnvelope('env-1'))
-          .called(1);
+      verify(() => envelopeRepository.deleteEnvelope('env-1')).called(1);
       addTearDown(cubit.close);
     });
 
     test('deleteEnvelope returns false on failure', () async {
-      when(() => envelopeRepository.deleteEnvelope('env-1'))
-          .thenThrow(const EnvelopeException('Error'));
+      when(
+        () => envelopeRepository.deleteEnvelope('env-1'),
+      ).thenThrow(const EnvelopeException('Error'));
       final cubit = EnvelopeDetailCubit(
         envelopeRepository: envelopeRepository,
         transactionRepository: transactionRepository,

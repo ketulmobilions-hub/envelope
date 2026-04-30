@@ -50,8 +50,7 @@ class TransactionFilterBar extends StatelessWidget {
             const SizedBox(width: 8),
             ActionChip(
               label: Text(l10n.transactionsClearFilters),
-              onPressed: () =>
-                  onFilterChanged(const TransactionsFilter()),
+              onPressed: () => onFilterChanged(const TransactionsFilter()),
             ),
           ],
         ],

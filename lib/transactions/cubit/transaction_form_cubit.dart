@@ -1,4 +1,3 @@
-
 import 'dart:async';
 
 import 'package:account_repository/account_repository.dart';
@@ -759,8 +758,9 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
 
       EnvelopeAllocation? ccPaymentAllocation;
       if (accountId != null && budgetPeriodId != null) {
-        final account =
-            state.accounts.where((a) => a.id == accountId).firstOrNull;
+        final account = state.accounts
+            .where((a) => a.id == accountId)
+            .firstOrNull;
         if (account != null && isCreditCard(account.type)) {
           try {
             final ccEnvelope = await _envelopeRepository
@@ -802,8 +802,9 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     required int expenseAmount,
   }) async {
     try {
-      final account =
-          state.accounts.where((a) => a.id == accountId).firstOrNull;
+      final account = state.accounts
+          .where((a) => a.id == accountId)
+          .firstOrNull;
       if (account == null || !isCreditCard(account.type)) return;
 
       final ccPaymentEnvelope = await _envelopeRepository

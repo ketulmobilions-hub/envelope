@@ -80,10 +80,10 @@ class AccountsView extends StatelessWidget {
               onRefresh: () {
                 final completer = Completer<void>();
                 context.read<AccountsBloc>().add(
-                      AccountsRefreshRequested(
-                        onComplete: completer.complete,
-                      ),
-                    );
+                  AccountsRefreshRequested(
+                    onComplete: completer.complete,
+                  ),
+                );
                 return completer.future;
               },
               child: _AccountsList(
@@ -144,8 +144,8 @@ class _EmptyState extends StatelessWidget {
           Text(
             l10n.accountsEmptySubtitle,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
+              color: Theme.of(context).colorScheme.outline,
+            ),
           ),
           const SizedBox(height: 24),
           FilledButton.icon(
@@ -197,8 +197,8 @@ class _AccountsList extends StatelessWidget {
             child: Text(
               l10n.accountsArchived,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
+                color: Theme.of(context).colorScheme.outline,
+              ),
             ),
           ),
           for (final account in archived)
@@ -226,19 +226,21 @@ class _AccountsList extends StatelessWidget {
               ),
             ),
             BlocProvider(
-              create: (_) => TransactionsBloc(
-                transactionRepository: context.read<TransactionRepository>(),
-                accountRepository: context.read<AccountRepository>(),
-                envelopeRepository: context.read<EnvelopeRepository>(),
-                budgetRepository: context.read<BudgetRepository>(),
-                budgetId: account.budgetId,
-              )
-                ..add(const TransactionsStarted())
-                ..add(
-                  TransactionsFilterChanged(
-                    TransactionsFilter(accountId: account.id),
-                  ),
-                ),
+              create: (_) =>
+                  TransactionsBloc(
+                      transactionRepository: context
+                          .read<TransactionRepository>(),
+                      accountRepository: context.read<AccountRepository>(),
+                      envelopeRepository: context.read<EnvelopeRepository>(),
+                      budgetRepository: context.read<BudgetRepository>(),
+                      budgetId: account.budgetId,
+                    )
+                    ..add(const TransactionsStarted())
+                    ..add(
+                      TransactionsFilterChanged(
+                        TransactionsFilter(accountId: account.id),
+                      ),
+                    ),
             ),
           ],
           child: const AccountDetailPage(),
@@ -249,7 +251,6 @@ class _AccountsList extends StatelessWidget {
       context.read<AccountsBloc>().add(const AccountsRefreshRequested());
     }
   }
-
 }
 
 class _TypeHeader extends StatelessWidget {
@@ -265,8 +266,8 @@ class _TypeHeader extends StatelessWidget {
       child: Text(
         localizedAccountType(type, l10n),
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-            ),
+          color: Theme.of(context).colorScheme.primary,
+        ),
       ),
     );
   }

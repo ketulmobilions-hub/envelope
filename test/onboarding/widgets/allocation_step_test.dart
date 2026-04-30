@@ -53,11 +53,8 @@ void main() {
       expect(find.text('Complete Setup'), findsOneWidget);
     });
 
-    testWidgets(
-        'complete button calls completeOnboarding',
-        (tester) async {
-      when(() => cubit.completeOnboarding())
-          .thenAnswer((_) async {});
+    testWidgets('complete button calls completeOnboarding', (tester) async {
+      when(() => cubit.completeOnboarding()).thenAnswer((_) async {});
       await tester.pumpApp(
         BlocProvider<OnboardingCubit>.value(
           value: cubit,

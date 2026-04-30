@@ -77,7 +77,8 @@ class _AllocationRowState extends State<AllocationRow> {
     final symbol = currencySymbol(context);
     final allocation = widget.allocation;
     final spent = allocation?.spentAmount ?? 0;
-    final available = widget.availableOverride ??
+    final available =
+        widget.availableOverride ??
         (allocation != null
             ? EnvelopeRepository.calculateRollover(allocation)
             : 0);
@@ -99,11 +100,13 @@ class _AllocationRowState extends State<AllocationRow> {
                   TextSpan(
                     children: [
                       TextSpan(
-                        text: '${l10n.budgetSpentLabel}: '
+                        text:
+                            '${l10n.budgetSpentLabel}: '
                             '${formatCents(spent, symbol: symbol)}  ',
                       ),
                       TextSpan(
-                        text: '${l10n.budgetAvailableLabel}: '
+                        text:
+                            '${l10n.budgetAvailableLabel}: '
                             '${formatCents(available, symbol: symbol)}',
                         style: available < 0
                             ? TextStyle(
@@ -115,8 +118,8 @@ class _AllocationRowState extends State<AllocationRow> {
                     ],
                   ),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
                 ),
               ],
             ),
@@ -126,8 +129,9 @@ class _AllocationRowState extends State<AllocationRow> {
             child: TextFormField(
               controller: _controller,
               focusNode: _focusNode,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
               ],
@@ -143,11 +147,11 @@ class _AllocationRowState extends State<AllocationRow> {
               onChanged: (value) {
                 final cents = parseCents(value) ?? 0;
                 context.read<BudgetBloc>().add(
-                      AllocationAmountChanged(
-                        envelopeId: widget.envelope.id,
-                        amount: cents,
-                      ),
-                    );
+                  AllocationAmountChanged(
+                    envelopeId: widget.envelope.id,
+                    amount: cents,
+                  ),
+                );
               },
             ),
           ),

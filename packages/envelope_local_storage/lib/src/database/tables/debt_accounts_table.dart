@@ -5,8 +5,7 @@ class DebtAccounts extends Table {
   RealColumn get interestRate => real().named('interest_rate')();
   IntColumn get minimumPayment => integer().named('minimum_payment')();
   IntColumn get originalBalance => integer().named('original_balance')();
-  TextColumn get payoffStrategy =>
-      text().named('payoff_strategy').nullable()();
+  TextColumn get payoffStrategy => text().named('payoff_strategy').nullable()();
   IntColumn get creditLimit => integer().named('credit_limit').nullable()();
 
   @override

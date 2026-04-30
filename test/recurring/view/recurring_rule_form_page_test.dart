@@ -39,10 +39,12 @@ void main() {
     accountRepository = MockAccountRepository();
     envelopeRepository = MockEnvelopeRepository();
 
-    when(() => accountRepository.watchAccounts('budget-1'))
-        .thenAnswer((_) => Stream.value(testAccounts));
-    when(() => envelopeRepository.watchEnvelopes('budget-1'))
-        .thenAnswer((_) => Stream.value([]));
+    when(
+      () => accountRepository.watchAccounts('budget-1'),
+    ).thenAnswer((_) => Stream.value(testAccounts));
+    when(
+      () => envelopeRepository.watchEnvelopes('budget-1'),
+    ).thenAnswer((_) => Stream.value([]));
   });
 
   group('RecurringRuleFormPage', () {
@@ -91,8 +93,9 @@ void main() {
       expect(find.text('50.00'), findsOneWidget);
     });
 
-    testWidgets('shows custom frequency fields when custom selected',
-        (tester) async {
+    testWidgets('shows custom frequency fields when custom selected', (
+      tester,
+    ) async {
       await tester.pumpApp(
         RecurringRuleFormPage(
           transactionRepository: transactionRepository,
@@ -151,24 +154,25 @@ void main() {
       expect(find.byType(SwitchListTile), findsOneWidget);
     });
 
-    testWidgets('calls createRecurringRule on valid submit',
-        (tester) async {
-      when(() => transactionRepository.createRecurringRule(
-            budgetId: any(named: 'budgetId'),
-            accountId: any(named: 'accountId'),
-            type: any(named: 'type'),
-            amount: any(named: 'amount'),
-            currency: any(named: 'currency'),
-            frequency: any(named: 'frequency'),
-            startDate: any(named: 'startDate'),
-            envelopeId: any(named: 'envelopeId'),
-            payee: any(named: 'payee'),
-            notes: any(named: 'notes'),
-            customInterval: any(named: 'customInterval'),
-            customUnit: any(named: 'customUnit'),
-            endDate: any(named: 'endDate'),
-            autoPost: any(named: 'autoPost'),
-          )).thenAnswer(
+    testWidgets('calls createRecurringRule on valid submit', (tester) async {
+      when(
+        () => transactionRepository.createRecurringRule(
+          budgetId: any(named: 'budgetId'),
+          accountId: any(named: 'accountId'),
+          type: any(named: 'type'),
+          amount: any(named: 'amount'),
+          currency: any(named: 'currency'),
+          frequency: any(named: 'frequency'),
+          startDate: any(named: 'startDate'),
+          envelopeId: any(named: 'envelopeId'),
+          payee: any(named: 'payee'),
+          notes: any(named: 'notes'),
+          customInterval: any(named: 'customInterval'),
+          customUnit: any(named: 'customUnit'),
+          endDate: any(named: 'endDate'),
+          autoPost: any(named: 'autoPost'),
+        ),
+      ).thenAnswer(
         (_) async => RecurringRule(
           id: 'new-rule',
           budgetId: 'budget-1',
@@ -213,22 +217,24 @@ void main() {
       await tester.tap(find.byType(FilledButton));
       await tester.pumpAndSettle();
 
-      verify(() => transactionRepository.createRecurringRule(
-            budgetId: 'budget-1',
-            accountId: 'acc-1',
-            type: any(named: 'type'),
-            amount: 5000,
-            currency: any(named: 'currency'),
-            frequency: any(named: 'frequency'),
-            startDate: any(named: 'startDate'),
-            envelopeId: any(named: 'envelopeId'),
-            payee: any(named: 'payee'),
-            notes: any(named: 'notes'),
-            customInterval: any(named: 'customInterval'),
-            customUnit: any(named: 'customUnit'),
-            endDate: any(named: 'endDate'),
-            autoPost: any(named: 'autoPost'),
-          )).called(1);
+      verify(
+        () => transactionRepository.createRecurringRule(
+          budgetId: 'budget-1',
+          accountId: 'acc-1',
+          type: any(named: 'type'),
+          amount: 5000,
+          currency: any(named: 'currency'),
+          frequency: any(named: 'frequency'),
+          startDate: any(named: 'startDate'),
+          envelopeId: any(named: 'envelopeId'),
+          payee: any(named: 'payee'),
+          notes: any(named: 'notes'),
+          customInterval: any(named: 'customInterval'),
+          customUnit: any(named: 'customUnit'),
+          endDate: any(named: 'endDate'),
+          autoPost: any(named: 'autoPost'),
+        ),
+      ).called(1);
     });
   });
 }

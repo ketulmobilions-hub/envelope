@@ -35,7 +35,9 @@ void main() {
       expect(find.text(r'$1500.00'), findsOneWidget);
     });
 
-    testWidgets('does not show warning when not over-allocated', (tester) async {
+    testWidgets('does not show warning when not over-allocated', (
+      tester,
+    ) async {
       await tester.pumpApp(
         buildSubject(BudgetState(readyToAssign: 5000)),
       );

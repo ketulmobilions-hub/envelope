@@ -77,10 +77,9 @@ class GoalDetailPage extends StatelessWidget {
                     children: [
                       Text(
                         l10n.goalsProgress,
-                        style:
-                            Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.outline,
-                                ),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       GoalProgressBar(progress: progress),
@@ -103,11 +102,10 @@ class GoalDetailPage extends StatelessWidget {
                         const SizedBox(height: 12),
                         Text(
                           '${l10n.goalsMonthlyNeeded}: ${formatCents(monthly, symbol: symbol)}',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color:
-                                        Theme.of(context).colorScheme.outline,
-                                  ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.outline,
+                              ),
                         ),
                       ],
                     ],
@@ -140,7 +138,10 @@ class GoalDetailPage extends StatelessWidget {
                         const Divider(),
                         _InfoRow(
                           label: l10n.goalsMonthlyContributionLabel,
-                          value: formatCents(goal.monthlyContribution!, symbol: symbol),
+                          value: formatCents(
+                            goal.monthlyContribution!,
+                            symbol: symbol,
+                          ),
                         ),
                       ],
                       if (goal.isCompleted) ...[
@@ -163,7 +164,8 @@ class GoalDetailPage extends StatelessWidget {
               const SizedBox(height: 16),
               // Add Contribution button.
               FilledButton.icon(
-                onPressed: state.status == GoalDetailStatus.submitting ||
+                onPressed:
+                    state.status == GoalDetailStatus.submitting ||
                         goal.isCompleted
                     ? null
                     : () => _showAddContribution(context),
@@ -254,10 +256,10 @@ class GoalDetailPage extends StatelessWidget {
           key: formKey,
           child: TextFormField(
             controller: controller,
-            decoration:
-                InputDecoration(labelText: l10n.goalsContributionAmountLabel),
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              labelText: l10n.goalsContributionAmountLabel,
+            ),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
             ],
@@ -328,8 +330,7 @@ class GoalDetailPage extends StatelessWidget {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor:
-                  Theme.of(dialogContext).colorScheme.error,
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
             ),
             onPressed: () => Navigator.of(dialogContext).pop(true),
             child: Text(l10n.goalsDelete),
@@ -357,8 +358,8 @@ class _AmountDetail extends StatelessWidget {
         Text(
           label,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Theme.of(context).colorScheme.outline,
-              ),
+            color: Theme.of(context).colorScheme.outline,
+          ),
         ),
         const SizedBox(height: 4),
         Text(
@@ -393,16 +394,16 @@ class _ContributionsCard extends StatelessWidget {
             Text(
               l10n.goalsContributionsTitle,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
+                color: Theme.of(context).colorScheme.outline,
+              ),
             ),
             if (contributions.isEmpty) ...[
               const SizedBox(height: 12),
               Text(
                 l10n.goalsNoContributions,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
+                  color: Theme.of(context).colorScheme.outline,
+                ),
               ),
             ] else
               for (final c in contributions) ...[
@@ -415,24 +416,20 @@ class _ContributionsCard extends StatelessWidget {
                         children: [
                           Text(
                             '+${formatCents(c.amountCents, symbol: symbol)}',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
+                            style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
-                                  color:
-                                      Theme.of(context).colorScheme.primary,
+                                  color: Theme.of(context).colorScheme.primary,
                                   fontWeight: FontWeight.w600,
                                 ),
                           ),
                           if (c.note != null && c.note!.isNotEmpty)
                             Text(
                               c.note!,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
+                              style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(
-                                    color:
-                                        Theme.of(context).colorScheme.outline,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline,
                                   ),
                             ),
                         ],
@@ -441,8 +438,8 @@ class _ContributionsCard extends StatelessWidget {
                     Text(
                       _formatDate(c.createdAt),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.outline,
-                          ),
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
                     ),
                     IconButton(
                       icon: Icon(
@@ -464,8 +461,18 @@ class _ContributionsCard extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
@@ -487,8 +494,8 @@ class _InfoRow extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
+              color: Theme.of(context).colorScheme.outline,
+            ),
           ),
           Text(value, style: Theme.of(context).textTheme.bodyMedium),
         ],

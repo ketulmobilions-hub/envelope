@@ -24,9 +24,7 @@ class EnvelopesStep extends StatelessWidget {
                 children: [
                   Text(
                     l10n.onboardingEnvelopesTitle,
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineSmall,
+                    style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 8),
                   Text(l10n.onboardingEnvelopesDescription),
@@ -36,8 +34,7 @@ class EnvelopesStep extends StatelessWidget {
             const SizedBox(height: 16),
             Expanded(
               child: ListView.builder(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: state.categoryGroups.length + 1,
                 itemBuilder: (context, index) {
                   if (index == state.categoryGroups.length) {
@@ -48,8 +45,7 @@ class EnvelopesStep extends StatelessWidget {
                       child: OutlinedButton.icon(
                         icon: const Icon(Icons.add),
                         label: Text(l10n.onboardingAddGroup),
-                        onPressed: () =>
-                            _showAddGroupDialog(context),
+                        onPressed: () => _showAddGroupDialog(context),
                       ),
                     );
                   }
@@ -71,40 +67,38 @@ class EnvelopesStep extends StatelessWidget {
     final controller = TextEditingController();
     final l10n = context.l10n;
 
-    unawaited(showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(l10n.onboardingAddGroup),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () =>
-                  Navigator.of(dialogContext).pop(),
-              child: Text(
-                MaterialLocalizations.of(dialogContext)
-                    .cancelButtonLabel,
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: Text(l10n.onboardingAddGroup),
+            content: TextField(
+              controller: controller,
+              autofocus: true,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: Text(
+                  MaterialLocalizations.of(dialogContext).cancelButtonLabel,
+                ),
               ),
-            ),
-            FilledButton(
-              onPressed: () {
-                final name = controller.text.trim();
-                if (name.isNotEmpty) {
-                  context
-                      .read<OnboardingCubit>()
-                      .addCategoryGroup(name);
-                }
-                Navigator.of(dialogContext).pop();
-              },
-              child: Text(l10n.onboardingAddGroup),
-            ),
-          ],
-        );
-      },
-    ));
+              FilledButton(
+                onPressed: () {
+                  final name = controller.text.trim();
+                  if (name.isNotEmpty) {
+                    context.read<OnboardingCubit>().addCategoryGroup(name);
+                  }
+                  Navigator.of(dialogContext).pop();
+                },
+                child: Text(l10n.onboardingAddGroup),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 }
 
@@ -144,9 +138,10 @@ class _CategoryGroupCard extends StatelessWidget {
               title: Text(entry.value),
               trailing: IconButton(
                 icon: const Icon(Icons.close, size: 18),
-                onPressed: () => context
-                    .read<OnboardingCubit>()
-                    .removeEnvelope(groupIndex, entry.key),
+                onPressed: () => context.read<OnboardingCubit>().removeEnvelope(
+                  groupIndex,
+                  entry.key,
+                ),
               ),
             );
           }),
@@ -170,39 +165,40 @@ class _CategoryGroupCard extends StatelessWidget {
     final controller = TextEditingController();
     final l10n = context.l10n;
 
-    unawaited(showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(l10n.onboardingAddEnvelope),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () =>
-                  Navigator.of(dialogContext).pop(),
-              child: Text(
-                MaterialLocalizations.of(dialogContext)
-                    .cancelButtonLabel,
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: Text(l10n.onboardingAddEnvelope),
+            content: TextField(
+              controller: controller,
+              autofocus: true,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: Text(
+                  MaterialLocalizations.of(dialogContext).cancelButtonLabel,
+                ),
               ),
-            ),
-            FilledButton(
-              onPressed: () {
-                final name = controller.text.trim();
-                if (name.isNotEmpty) {
-                  context
-                      .read<OnboardingCubit>()
-                      .addEnvelope(groupIndex, name);
-                }
-                Navigator.of(dialogContext).pop();
-              },
-              child: Text(l10n.onboardingAddEnvelope),
-            ),
-          ],
-        );
-      },
-    ));
+              FilledButton(
+                onPressed: () {
+                  final name = controller.text.trim();
+                  if (name.isNotEmpty) {
+                    context.read<OnboardingCubit>().addEnvelope(
+                      groupIndex,
+                      name,
+                    );
+                  }
+                  Navigator.of(dialogContext).pop();
+                },
+                child: Text(l10n.onboardingAddEnvelope),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 }

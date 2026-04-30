@@ -32,12 +32,12 @@ void main() {
     });
 
     OnboardingCubit buildCubit() => OnboardingCubit(
-          sharedPreferences: prefs,
-          envelopeRepository: envelopeRepository,
-          accountRepository: accountRepository,
-          budgetRepository: budgetRepository,
-          userId: testUserId,
-        );
+      sharedPreferences: prefs,
+      envelopeRepository: envelopeRepository,
+      accountRepository: accountRepository,
+      budgetRepository: budgetRepository,
+      userId: testUserId,
+    );
 
     test('initial state is correct', () {
       final cubit = buildCubit();
@@ -238,15 +238,17 @@ void main() {
         build: buildCubit,
         act: (cubit) => cubit.addCategoryGroup('Custom'),
         expect: () => [
-          isA<OnboardingState>().having(
-            (s) => s.categoryGroups.length,
-            'length',
-            defaultCategoryGroups.length + 1,
-          ).having(
-            (s) => s.categoryGroups.last.name,
-            'last group name',
-            'Custom',
-          ),
+          isA<OnboardingState>()
+              .having(
+                (s) => s.categoryGroups.length,
+                'length',
+                defaultCategoryGroups.length + 1,
+              )
+              .having(
+                (s) => s.categoryGroups.last.name,
+                'last group name',
+                'Custom',
+              ),
         ],
       );
 
@@ -434,8 +436,10 @@ void main() {
             id: 'period-1',
             budgetId: testBudgetId,
             startDate: DateTime(now.year, now.month),
-            endDate: DateTime(now.year, now.month + 1)
-                .subtract(const Duration(days: 1)),
+            endDate: DateTime(
+              now.year,
+              now.month + 1,
+            ).subtract(const Duration(days: 1)),
             createdAt: now,
           ),
         );
@@ -722,29 +726,29 @@ void main() {
 
       group('credit cards', () {
         Account ccAccount(String id, String name) => Account(
-              id: id,
-              budgetId: testBudgetId,
-              name: name,
-              type: 'credit_card',
-              currency: 'USD',
-              createdAt: now,
-              updatedAt: now,
-            );
+          id: id,
+          budgetId: testBudgetId,
+          name: name,
+          type: 'credit_card',
+          currency: 'USD',
+          createdAt: now,
+          updatedAt: now,
+        );
 
         CategoryGroup catGroup(String id, String name) => CategoryGroup(
-              id: id,
-              budgetId: testBudgetId,
-              name: name,
-              createdAt: now,
-            );
+          id: id,
+          budgetId: testBudgetId,
+          name: name,
+          createdAt: now,
+        );
 
         Envelope envelope(String id, String groupId, String name) => Envelope(
-              id: id,
-              categoryGroupId: groupId,
-              budgetId: testBudgetId,
-              name: name,
-              createdAt: now,
-            );
+          id: id,
+          categoryGroupId: groupId,
+          budgetId: testBudgetId,
+          name: name,
+          createdAt: now,
+        );
 
         void stubAccountCreate(Account account) {
           when(
@@ -780,8 +784,9 @@ void main() {
         }
 
         void stubWatchGroups(List<CategoryGroup> groups) {
-          when(() => envelopeRepository.watchCategoryGroups(any()))
-              .thenAnswer((_) => Stream.value(groups));
+          when(
+            () => envelopeRepository.watchCategoryGroups(any()),
+          ).thenAnswer((_) => Stream.value(groups));
         }
 
         blocTest<OnboardingCubit, OnboardingState>(

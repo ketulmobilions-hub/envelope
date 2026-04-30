@@ -21,16 +21,15 @@ final class EnvelopesState extends Equatable {
   /// Active (non-archived) category groups paired with their active envelopes,
   /// both sorted by sortOrder.
   List<(CategoryGroup, List<Envelope>)> get activeGroupsWithEnvelopes {
-    final activeGroups = categoryGroups
-        .where((g) => !g.isArchived)
-        .toList()
+    final activeGroups = categoryGroups.where((g) => !g.isArchived).toList()
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 
     return activeGroups.map((group) {
-      final groupEnvelopes = envelopes
-          .where((e) => e.categoryGroupId == group.id && !e.isArchived)
-          .toList()
-        ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+      final groupEnvelopes =
+          envelopes
+              .where((e) => e.categoryGroupId == group.id && !e.isArchived)
+              .toList()
+            ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
       return (group, groupEnvelopes);
     }).toList();
   }

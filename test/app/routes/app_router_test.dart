@@ -18,16 +18,14 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 
-class MockAuthBloc extends MockBloc<AuthEvent, AuthState>
-    implements AuthBloc {}
+class MockAuthBloc extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 
 class MockSyncBloc extends MockBloc<SyncEvent, SyncBlocState>
     implements SyncBloc {}
 
-class MockTransactionRepository extends Mock
-    implements TransactionRepository {}
+class MockTransactionRepository extends Mock implements TransactionRepository {}
 
 class MockAccountRepository extends Mock implements AccountRepository {}
 
@@ -57,31 +55,44 @@ void main() {
       budgetRepository = MockBudgetRepository();
       envelopeRepository = MockEnvelopeRepository();
       when(() => syncBloc.state).thenReturn(const SyncBlocState());
-      when(() => transactionRepository.watchRecurringRules(any()))
-          .thenAnswer((_) => Stream.value([]));
-      when(() => transactionRepository.watchBillReminders(any()))
-          .thenAnswer((_) => Stream.value([]));
-      when(() => transactionRepository.watchTransactions(
-            budgetId: any(named: 'budgetId'),
-          )).thenAnswer((_) => Stream.value([]));
-      when(() => transactionRepository.refreshTransactions(any()))
-          .thenAnswer((_) async {});
-      when(() => budgetRepository.watchBudgetPeriods(any()))
-          .thenAnswer((_) => Stream.value([]));
-      when(() => budgetRepository.refreshBudgetPeriods(any()))
-          .thenAnswer((_) async {});
-      when(() => accountRepository.watchAccounts(any()))
-          .thenAnswer((_) => Stream.value([]));
-      when(() => accountRepository.refreshAccounts(any()))
-          .thenAnswer((_) async {});
-      when(() => envelopeRepository.watchEnvelopes(any()))
-          .thenAnswer((_) => Stream.value([]));
-      when(() => envelopeRepository.watchCategoryGroups(any()))
-          .thenAnswer((_) => Stream.value([]));
-      when(() => envelopeRepository.refreshEnvelopes(any()))
-          .thenAnswer((_) async {});
-      when(() => envelopeRepository.refreshCategoryGroups(any()))
-          .thenAnswer((_) async {});
+      when(
+        () => transactionRepository.watchRecurringRules(any()),
+      ).thenAnswer((_) => Stream.value([]));
+      when(
+        () => transactionRepository.watchBillReminders(any()),
+      ).thenAnswer((_) => Stream.value([]));
+      when(
+        () => transactionRepository.watchTransactions(
+          budgetId: any(named: 'budgetId'),
+        ),
+      ).thenAnswer((_) => Stream.value([]));
+      when(
+        () => transactionRepository.refreshTransactions(any()),
+      ).thenAnswer((_) async {});
+      when(
+        () => budgetRepository.watchBudgetPeriods(any()),
+      ).thenAnswer((_) => Stream.value([]));
+      when(
+        () => budgetRepository.refreshBudgetPeriods(any()),
+      ).thenAnswer((_) async {});
+      when(
+        () => accountRepository.watchAccounts(any()),
+      ).thenAnswer((_) => Stream.value([]));
+      when(
+        () => accountRepository.refreshAccounts(any()),
+      ).thenAnswer((_) async {});
+      when(
+        () => envelopeRepository.watchEnvelopes(any()),
+      ).thenAnswer((_) => Stream.value([]));
+      when(
+        () => envelopeRepository.watchCategoryGroups(any()),
+      ).thenAnswer((_) => Stream.value([]));
+      when(
+        () => envelopeRepository.refreshEnvelopes(any()),
+      ).thenAnswer((_) async {});
+      when(
+        () => envelopeRepository.refreshCategoryGroups(any()),
+      ).thenAnswer((_) async {});
       SharedPreferences.setMockInitialValues(
         {'onboarding_complete': true},
       );
@@ -113,8 +124,7 @@ void main() {
           ],
           child: MaterialApp.router(
             routerConfig: router,
-            localizationsDelegates:
-                AppLocalizations.localizationsDelegates,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
           ),
         ),
@@ -124,8 +134,7 @@ void main() {
     testWidgets(
       'shows splash when auth status is unknown',
       (tester) async {
-        when(() => authBloc.state)
-            .thenReturn(const AuthState.unknown());
+        when(() => authBloc.state).thenReturn(const AuthState.unknown());
         router = createRouter(
           authBloc: authBloc,
           sharedPreferences: prefs,
@@ -139,8 +148,9 @@ void main() {
     testWidgets(
       'redirects to login when unauthenticated',
       (tester) async {
-        when(() => authBloc.state)
-            .thenReturn(const AuthState.unauthenticated());
+        when(
+          () => authBloc.state,
+        ).thenReturn(const AuthState.unauthenticated());
         router = createRouter(
           authBloc: authBloc,
           sharedPreferences: prefs,

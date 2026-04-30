@@ -12,6 +12,5 @@ abstract class TagDto with _$TagDto {
     required String name,
   }) = _TagDto;
 
-  factory TagDto.fromJson(Map<String, dynamic> json) =>
-      _$TagDtoFromJson(json);
+  factory TagDto.fromJson(Map<String, dynamic> json) => _$TagDtoFromJson(json);
 }

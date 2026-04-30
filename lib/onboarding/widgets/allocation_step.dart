@@ -48,14 +48,12 @@ class AllocationStep extends StatelessWidget {
                       ),
                       ...group.envelopes.asMap().entries.map(
                         (entry) {
-                          final key =
-                              '$groupIndex:${entry.value}';
+                          final key = '$groupIndex:${entry.value}';
                           return _AllocationField(
                             groupIndex: groupIndex,
                             envelopeName: entry.value,
                             currency: state.baseCurrency,
-                            value:
-                                state.allocations[key] ?? 0,
+                            value: state.allocations[key] ?? 0,
                           );
                         },
                       ),
@@ -115,9 +113,7 @@ class _AllocationFieldState extends State<_AllocationField> {
   void initState() {
     super.initState();
     _controller = TextEditingController(
-      text: widget.value > 0
-          ? widget.value.toStringAsFixed(0)
-          : '',
+      text: widget.value > 0 ? widget.value.toStringAsFixed(0) : '',
     );
   }
 
@@ -125,9 +121,7 @@ class _AllocationFieldState extends State<_AllocationField> {
   void didUpdateWidget(covariant _AllocationField oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.value != widget.value) {
-      final text = widget.value > 0
-          ? widget.value.toStringAsFixed(0)
-          : '';
+      final text = widget.value > 0 ? widget.value.toStringAsFixed(0) : '';
       if (_controller.text != text) {
         _controller.text = text;
       }
@@ -155,10 +149,10 @@ class _AllocationFieldState extends State<_AllocationField> {
         onChanged: (value) {
           final amount = double.tryParse(value) ?? 0;
           context.read<OnboardingCubit>().setAllocation(
-                widget.groupIndex,
-                widget.envelopeName,
-                amount,
-              );
+            widget.groupIndex,
+            widget.envelopeName,
+            amount,
+          );
         },
       ),
     );

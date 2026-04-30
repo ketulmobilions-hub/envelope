@@ -7,8 +7,7 @@ class MockAppDatabase extends Mock implements AppDatabase {}
 
 class MockSyncDao extends Mock implements SyncDao {}
 
-class FakeSyncMetadataCompanion extends Fake
-    implements SyncMetadataCompanion {}
+class FakeSyncMetadataCompanion extends Fake implements SyncMetadataCompanion {}
 
 class MockSyncDelegate extends Mock implements SyncDelegate {}
 
@@ -137,8 +136,7 @@ void main() {
           ]),
         );
 
-        final counts =
-            await syncRepository.watchPendingChangeCount().toList();
+        final counts = await syncRepository.watchPendingChangeCount().toList();
         expect(counts, equals([1, 2]));
       });
     });

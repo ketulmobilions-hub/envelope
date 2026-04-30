@@ -11,9 +11,9 @@ class EnvelopesBloc extends Bloc<EnvelopesEvent, EnvelopesState> {
   EnvelopesBloc({
     required EnvelopeRepository envelopeRepository,
     required String budgetId,
-  })  : _envelopeRepository = envelopeRepository,
-        _budgetId = budgetId,
-        super(const EnvelopesState()) {
+  }) : _envelopeRepository = envelopeRepository,
+       _budgetId = budgetId,
+       super(const EnvelopesState()) {
     on<EnvelopesStarted>(_onStarted);
     on<_CategoryGroupsUpdated>(_onCategoryGroupsUpdated);
     on<_EnvelopesUpdated>(_onEnvelopesUpdated);
@@ -161,8 +161,9 @@ class EnvelopesBloc extends Bloc<EnvelopesEvent, EnvelopesState> {
   ) async {
     try {
       if (event.categoryGroup.isArchived) {
-        await _envelopeRepository
-            .unarchiveCategoryGroup(event.categoryGroup.id);
+        await _envelopeRepository.unarchiveCategoryGroup(
+          event.categoryGroup.id,
+        );
       } else {
         await _envelopeRepository.archiveCategoryGroup(event.categoryGroup.id);
       }

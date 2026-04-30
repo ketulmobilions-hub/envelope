@@ -238,8 +238,9 @@ void main() {
   group('TransactionRepository', () {
     group('createTransaction', () {
       test('returns Transaction on success', () async {
-        when(() => transactionsApiClient.createTransaction(any()))
-            .thenAnswer((_) async => testTransactionDto);
+        when(
+          () => transactionsApiClient.createTransaction(any()),
+        ).thenAnswer((_) async => testTransactionDto);
         when(
           () => transactionsDao.insertTransaction(
             any(),
@@ -262,8 +263,9 @@ void main() {
       });
 
       test('throws TransactionException on API failure', () async {
-        when(() => transactionsApiClient.createTransaction(any()))
-            .thenThrow(const EnvelopeApiException('error'));
+        when(
+          () => transactionsApiClient.createTransaction(any()),
+        ).thenThrow(const EnvelopeApiException('error'));
 
         await expectLater(
           () => repository.createTransaction(
@@ -282,8 +284,9 @@ void main() {
 
     group('getTransaction', () {
       test('returns from local cache when available', () async {
-        when(() => transactionsDao.getTransaction('tx-1'))
-            .thenAnswer((_) async => testLocalTransaction);
+        when(
+          () => transactionsDao.getTransaction('tx-1'),
+        ).thenAnswer((_) async => testLocalTransaction);
 
         final result = await repository.getTransaction('tx-1');
 
@@ -292,10 +295,12 @@ void main() {
       });
 
       test('falls back to API when not in cache', () async {
-        when(() => transactionsDao.getTransaction('tx-1'))
-            .thenAnswer((_) async => null);
-        when(() => transactionsApiClient.getTransaction('tx-1'))
-            .thenAnswer((_) async => testTransactionDto);
+        when(
+          () => transactionsDao.getTransaction('tx-1'),
+        ).thenAnswer((_) async => null);
+        when(
+          () => transactionsApiClient.getTransaction('tx-1'),
+        ).thenAnswer((_) async => testTransactionDto);
         when(
           () => transactionsDao.insertTransaction(
             any(),
@@ -309,10 +314,12 @@ void main() {
       });
 
       test('throws TransactionException on API failure', () async {
-        when(() => transactionsDao.getTransaction('tx-1'))
-            .thenAnswer((_) async => null);
-        when(() => transactionsApiClient.getTransaction('tx-1'))
-            .thenThrow(const EnvelopeApiException('error'));
+        when(
+          () => transactionsDao.getTransaction('tx-1'),
+        ).thenAnswer((_) async => null);
+        when(
+          () => transactionsApiClient.getTransaction('tx-1'),
+        ).thenThrow(const EnvelopeApiException('error'));
 
         await expectLater(
           () => repository.getTransaction('tx-1'),
@@ -323,8 +330,9 @@ void main() {
 
     group('watchTransactions', () {
       test('returns stream filtered by accountId', () {
-        when(() => transactionsDao.watchTransactionsByBudgetId('budget-1'))
-            .thenAnswer(
+        when(
+          () => transactionsDao.watchTransactionsByBudgetId('budget-1'),
+        ).thenAnswer(
           (_) => Stream.value([testLocalTransaction]),
         );
 
@@ -337,8 +345,9 @@ void main() {
       });
 
       test('returns unfiltered stream when no filters', () {
-        when(() => transactionsDao.watchTransactionsByBudgetId('budget-1'))
-            .thenAnswer((_) => Stream.value([testLocalTransaction]));
+        when(
+          () => transactionsDao.watchTransactionsByBudgetId('budget-1'),
+        ).thenAnswer((_) => Stream.value([testLocalTransaction]));
 
         final stream = repository.watchTransactions(budgetId: 'budget-1');
 
@@ -348,8 +357,9 @@ void main() {
 
     group('updateTransaction', () {
       test('calls API and caches updated transaction', () async {
-        when(() => transactionsApiClient.updateTransaction(any()))
-            .thenAnswer((_) async => testTransactionDto);
+        when(
+          () => transactionsApiClient.updateTransaction(any()),
+        ).thenAnswer((_) async => testTransactionDto);
         when(
           () => transactionsDao.insertTransaction(
             any(),
@@ -369,8 +379,9 @@ void main() {
       });
 
       test('throws TransactionException on API failure', () async {
-        when(() => transactionsApiClient.updateTransaction(any()))
-            .thenThrow(const EnvelopeApiException('error'));
+        when(
+          () => transactionsApiClient.updateTransaction(any()),
+        ).thenThrow(const EnvelopeApiException('error'));
 
         await expectLater(
           () => repository.updateTransaction(testTransaction),
@@ -381,10 +392,12 @@ void main() {
 
     group('deleteTransaction', () {
       test('calls API and removes from local cache', () async {
-        when(() => transactionsApiClient.deleteTransaction('tx-1'))
-            .thenAnswer((_) async {});
-        when(() => transactionsDao.deleteTransaction('tx-1'))
-            .thenAnswer((_) async => 1);
+        when(
+          () => transactionsApiClient.deleteTransaction('tx-1'),
+        ).thenAnswer((_) async {});
+        when(
+          () => transactionsDao.deleteTransaction('tx-1'),
+        ).thenAnswer((_) async => 1);
 
         await repository.deleteTransaction('tx-1');
 
@@ -393,8 +406,9 @@ void main() {
       });
 
       test('throws TransactionException on API failure', () async {
-        when(() => transactionsApiClient.deleteTransaction('tx-1'))
-            .thenThrow(const EnvelopeApiException('error'));
+        when(
+          () => transactionsApiClient.deleteTransaction('tx-1'),
+        ).thenThrow(const EnvelopeApiException('error'));
 
         await expectLater(
           () => repository.deleteTransaction('tx-1'),
@@ -409,8 +423,9 @@ void main() {
 
     group('createRecurringRule', () {
       test('returns RecurringRule on success', () async {
-        when(() => recurringApiClient.createRecurringRule(any()))
-            .thenAnswer((_) async => testRecurringRuleDto);
+        when(
+          () => recurringApiClient.createRecurringRule(any()),
+        ).thenAnswer((_) async => testRecurringRuleDto);
         when(
           () => recurringDao.insertRecurringRule(
             any(),
@@ -432,8 +447,9 @@ void main() {
       });
 
       test('throws TransactionException on API failure', () async {
-        when(() => recurringApiClient.createRecurringRule(any()))
-            .thenThrow(const EnvelopeApiException('error'));
+        when(
+          () => recurringApiClient.createRecurringRule(any()),
+        ).thenThrow(const EnvelopeApiException('error'));
 
         await expectLater(
           () => repository.createRecurringRule(
@@ -452,8 +468,9 @@ void main() {
 
     group('watchRecurringRules', () {
       test('returns stream of recurring rules', () {
-        when(() => recurringDao.watchRecurringRulesByBudgetId('budget-1'))
-            .thenAnswer((_) => Stream.value([testLocalRecurringRule]));
+        when(
+          () => recurringDao.watchRecurringRulesByBudgetId('budget-1'),
+        ).thenAnswer((_) => Stream.value([testLocalRecurringRule]));
 
         final stream = repository.watchRecurringRules('budget-1');
 
@@ -463,24 +480,30 @@ void main() {
 
     group('deleteRecurringRule', () {
       test('calls API and removes from local cache', () async {
-        when(() => recurringApiClient.deleteRecurringRule('rule-1'))
-            .thenAnswer((_) async {});
-        when(() => recurringDao.deleteRecurringRule('rule-1'))
-            .thenAnswer((_) async => 1);
+        when(
+          () => recurringApiClient.deleteRecurringRule('rule-1'),
+        ).thenAnswer((_) async {});
+        when(
+          () => recurringDao.deleteRecurringRule('rule-1'),
+        ).thenAnswer((_) async => 1);
 
         await repository.deleteRecurringRule('rule-1');
 
-        verify(() => recurringApiClient.deleteRecurringRule('rule-1')).called(1);
+        verify(
+          () => recurringApiClient.deleteRecurringRule('rule-1'),
+        ).called(1);
         verify(() => recurringDao.deleteRecurringRule('rule-1')).called(1);
       });
     });
 
     group('pauseRecurringRule', () {
       test('pauses via local cache when available', () async {
-        when(() => recurringDao.getRecurringRule('rule-1'))
-            .thenAnswer((_) async => testLocalRecurringRule);
-        when(() => recurringApiClient.updateRecurringRule(any()))
-            .thenAnswer((_) async => testRecurringRuleDto.copyWith(isPaused: true));
+        when(
+          () => recurringDao.getRecurringRule('rule-1'),
+        ).thenAnswer((_) async => testLocalRecurringRule);
+        when(() => recurringApiClient.updateRecurringRule(any())).thenAnswer(
+          (_) async => testRecurringRuleDto.copyWith(isPaused: true),
+        );
         when(
           () => recurringDao.insertRecurringRule(
             any(),
@@ -490,9 +513,9 @@ void main() {
 
         await repository.pauseRecurringRule('rule-1');
 
-        final captured =
-            verify(() => recurringApiClient.updateRecurringRule(captureAny()))
-                .captured;
+        final captured = verify(
+          () => recurringApiClient.updateRecurringRule(captureAny()),
+        ).captured;
         final dto = captured.first as RecurringRuleDto;
         expect(dto.isPaused, isTrue);
       });
@@ -504,8 +527,9 @@ void main() {
 
     group('createBillReminder', () {
       test('returns BillReminder on success', () async {
-        when(() => recurringApiClient.createBillReminder(any()))
-            .thenAnswer((_) async => testBillReminderDto);
+        when(
+          () => recurringApiClient.createBillReminder(any()),
+        ).thenAnswer((_) async => testBillReminderDto);
         when(
           () => recurringDao.insertBillReminder(
             any(),
@@ -525,8 +549,9 @@ void main() {
       });
 
       test('throws TransactionException on API failure', () async {
-        when(() => recurringApiClient.createBillReminder(any()))
-            .thenThrow(const EnvelopeApiException('error'));
+        when(
+          () => recurringApiClient.createBillReminder(any()),
+        ).thenThrow(const EnvelopeApiException('error'));
 
         await expectLater(
           () => repository.createBillReminder(
@@ -543,8 +568,9 @@ void main() {
 
     group('watchBillReminders', () {
       test('returns stream of bill reminders', () {
-        when(() => recurringDao.watchBillRemindersByBudgetId('budget-1'))
-            .thenAnswer((_) => Stream.value([testLocalBillReminder]));
+        when(
+          () => recurringDao.watchBillRemindersByBudgetId('budget-1'),
+        ).thenAnswer((_) => Stream.value([testLocalBillReminder]));
 
         final stream = repository.watchBillReminders('budget-1');
 
@@ -554,10 +580,12 @@ void main() {
 
     group('deleteBillReminder', () {
       test('calls API and removes from local cache', () async {
-        when(() => recurringApiClient.deleteBillReminder('reminder-1'))
-            .thenAnswer((_) async {});
-        when(() => recurringDao.deleteBillReminder('reminder-1'))
-            .thenAnswer((_) async => 1);
+        when(
+          () => recurringApiClient.deleteBillReminder('reminder-1'),
+        ).thenAnswer((_) async {});
+        when(
+          () => recurringDao.deleteBillReminder('reminder-1'),
+        ).thenAnswer((_) async => 1);
 
         await repository.deleteBillReminder('reminder-1');
 
@@ -574,8 +602,9 @@ void main() {
 
     group('createTag', () {
       test('returns Tag on success', () async {
-        when(() => transactionsApiClient.createTag(any()))
-            .thenAnswer((_) async => testTagDto);
+        when(
+          () => transactionsApiClient.createTag(any()),
+        ).thenAnswer((_) async => testTagDto);
         when(
           () => transactionsDao.insertTag(any(), mode: any(named: 'mode')),
         ).thenAnswer((_) async => 1);
@@ -589,8 +618,9 @@ void main() {
       });
 
       test('throws TransactionException on API failure', () async {
-        when(() => transactionsApiClient.createTag(any()))
-            .thenThrow(const EnvelopeApiException('error'));
+        when(
+          () => transactionsApiClient.createTag(any()),
+        ).thenThrow(const EnvelopeApiException('error'));
 
         await expectLater(
           () => repository.createTag(budgetId: 'budget-1', name: 'Food'),
@@ -601,8 +631,9 @@ void main() {
 
     group('getTags', () {
       test('returns from local cache when available', () async {
-        when(() => transactionsDao.getTagsByBudgetId('budget-1'))
-            .thenAnswer((_) async => [testLocalTag]);
+        when(
+          () => transactionsDao.getTagsByBudgetId('budget-1'),
+        ).thenAnswer((_) async => [testLocalTag]);
 
         final result = await repository.getTags('budget-1');
 
@@ -611,10 +642,12 @@ void main() {
       });
 
       test('falls back to API when cache is empty', () async {
-        when(() => transactionsDao.getTagsByBudgetId('budget-1'))
-            .thenAnswer((_) async => []);
-        when(() => transactionsApiClient.getTags('budget-1'))
-            .thenAnswer((_) async => [testTagDto]);
+        when(
+          () => transactionsDao.getTagsByBudgetId('budget-1'),
+        ).thenAnswer((_) async => []);
+        when(
+          () => transactionsApiClient.getTags('budget-1'),
+        ).thenAnswer((_) async => [testTagDto]);
         when(
           () => transactionsDao.insertTag(any(), mode: any(named: 'mode')),
         ).thenAnswer((_) async => 1);

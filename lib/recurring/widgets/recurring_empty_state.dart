@@ -37,8 +37,8 @@ class RecurringEmptyState extends StatelessWidget {
           Text(
             subtitle,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
+              color: Theme.of(context).colorScheme.outline,
+            ),
             textAlign: TextAlign.center,
           ),
           if (actionLabel != null && onAction != null) ...[

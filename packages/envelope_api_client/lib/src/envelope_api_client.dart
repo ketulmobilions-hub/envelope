@@ -9,17 +9,17 @@ class EnvelopeApiClient {
   /// `Supabase.instance.client` to ensure platform-specific auth
   /// persistence is properly configured.
   EnvelopeApiClient({required SupabaseClient supabaseClient})
-      : auth = AuthApiClient(supabaseClient: supabaseClient),
-        users = UsersApiClient(supabaseClient: supabaseClient),
-        budgets = BudgetsApiClient(supabaseClient: supabaseClient),
-        accounts = AccountsApiClient(supabaseClient: supabaseClient),
-        envelopes = EnvelopesApiClient(supabaseClient: supabaseClient),
-        transactions = TransactionsApiClient(supabaseClient: supabaseClient),
-        recurring = RecurringApiClient(supabaseClient: supabaseClient),
-        goals = GoalsApiClient(supabaseClient: supabaseClient),
-        reports = ReportsApiClient(supabaseClient: supabaseClient),
-        sync = SyncApiClient(supabaseClient: supabaseClient),
-        notifications = NotificationsApiClient(supabaseClient: supabaseClient);
+    : auth = AuthApiClient(supabaseClient: supabaseClient),
+      users = UsersApiClient(supabaseClient: supabaseClient),
+      budgets = BudgetsApiClient(supabaseClient: supabaseClient),
+      accounts = AccountsApiClient(supabaseClient: supabaseClient),
+      envelopes = EnvelopesApiClient(supabaseClient: supabaseClient),
+      transactions = TransactionsApiClient(supabaseClient: supabaseClient),
+      recurring = RecurringApiClient(supabaseClient: supabaseClient),
+      goals = GoalsApiClient(supabaseClient: supabaseClient),
+      reports = ReportsApiClient(supabaseClient: supabaseClient),
+      sync = SyncApiClient(supabaseClient: supabaseClient),
+      notifications = NotificationsApiClient(supabaseClient: supabaseClient);
 
   /// API client for authentication operations.
   final AuthApiClient auth;

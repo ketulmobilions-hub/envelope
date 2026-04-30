@@ -37,8 +37,7 @@ void main() {
       );
     });
 
-    testWidgets('renders default category groups',
-        (tester) async {
+    testWidgets('renders default category groups', (tester) async {
       await tester.pumpApp(
         BlocProvider<OnboardingCubit>.value(
           value: cubit,
@@ -63,9 +62,7 @@ void main() {
       expect(find.text('Add Group'), findsOneWidget);
     });
 
-    testWidgets(
-        'delete button calls removeCategoryGroup',
-        (tester) async {
+    testWidgets('delete button calls removeCategoryGroup', (tester) async {
       when(() => cubit.state).thenReturn(
         const OnboardingState(
           currentStep: OnboardingStep.envelopes,
@@ -83,8 +80,7 @@ void main() {
           child: const Scaffold(body: EnvelopesStep()),
         ),
       );
-      await tester
-          .tap(find.byIcon(Icons.delete_outline).first);
+      await tester.tap(find.byIcon(Icons.delete_outline).first);
       verify(() => cubit.removeCategoryGroup(0)).called(1);
     });
   });

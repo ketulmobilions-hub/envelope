@@ -53,14 +53,18 @@ void main() {
     blocTest<EnvelopesBloc, EnvelopesState>(
       'emits [loading, loaded] when EnvelopesStarted is added',
       build: () {
-        when(() => envelopeRepository.watchCategoryGroups('budget-1'))
-            .thenAnswer((_) => Stream.value(testGroups));
-        when(() => envelopeRepository.watchEnvelopes('budget-1'))
-            .thenAnswer((_) => Stream.value(testEnvelopes));
-        when(() => envelopeRepository.refreshCategoryGroups('budget-1'))
-            .thenAnswer((_) async {});
-        when(() => envelopeRepository.refreshEnvelopes('budget-1'))
-            .thenAnswer((_) async {});
+        when(
+          () => envelopeRepository.watchCategoryGroups('budget-1'),
+        ).thenAnswer((_) => Stream.value(testGroups));
+        when(
+          () => envelopeRepository.watchEnvelopes('budget-1'),
+        ).thenAnswer((_) => Stream.value(testEnvelopes));
+        when(
+          () => envelopeRepository.refreshCategoryGroups('budget-1'),
+        ).thenAnswer((_) async {});
+        when(
+          () => envelopeRepository.refreshEnvelopes('budget-1'),
+        ).thenAnswer((_) async {});
         return EnvelopesBloc(
           envelopeRepository: envelopeRepository,
           budgetId: 'budget-1',
@@ -99,14 +103,18 @@ void main() {
     blocTest<EnvelopesBloc, EnvelopesState>(
       'still loads from local stream when refresh fails',
       build: () {
-        when(() => envelopeRepository.watchCategoryGroups('budget-1'))
-            .thenAnswer((_) => Stream.value(testGroups));
-        when(() => envelopeRepository.watchEnvelopes('budget-1'))
-            .thenAnswer((_) => Stream.value(testEnvelopes));
-        when(() => envelopeRepository.refreshCategoryGroups('budget-1'))
-            .thenThrow(const EnvelopeException('Network error'));
-        when(() => envelopeRepository.refreshEnvelopes('budget-1'))
-            .thenThrow(const EnvelopeException('Network error'));
+        when(
+          () => envelopeRepository.watchCategoryGroups('budget-1'),
+        ).thenAnswer((_) => Stream.value(testGroups));
+        when(
+          () => envelopeRepository.watchEnvelopes('budget-1'),
+        ).thenAnswer((_) => Stream.value(testEnvelopes));
+        when(
+          () => envelopeRepository.refreshCategoryGroups('budget-1'),
+        ).thenThrow(const EnvelopeException('Network error'));
+        when(
+          () => envelopeRepository.refreshEnvelopes('budget-1'),
+        ).thenThrow(const EnvelopeException('Network error'));
         return EnvelopesBloc(
           envelopeRepository: envelopeRepository,
           budgetId: 'budget-1',
@@ -115,10 +123,16 @@ void main() {
       act: (bloc) => bloc.add(const EnvelopesStarted()),
       expect: () => [
         const EnvelopesState(status: EnvelopesStatus.loading),
-        isA<EnvelopesState>()
-            .having((s) => s.categoryGroups, 'categoryGroups', isNotEmpty),
-        isA<EnvelopesState>()
-            .having((s) => s.status, 'status', EnvelopesStatus.loaded),
+        isA<EnvelopesState>().having(
+          (s) => s.categoryGroups,
+          'categoryGroups',
+          isNotEmpty,
+        ),
+        isA<EnvelopesState>().having(
+          (s) => s.status,
+          'status',
+          EnvelopesStatus.loaded,
+        ),
       ],
     );
 
@@ -126,15 +140,15 @@ void main() {
       'archives category group when CategoryGroupArchiveToggled is added '
       'with non-archived group',
       build: () {
-        when(() => envelopeRepository.archiveCategoryGroup('group-1'))
-            .thenAnswer((_) async {});
+        when(
+          () => envelopeRepository.archiveCategoryGroup('group-1'),
+        ).thenAnswer((_) async {});
         return EnvelopesBloc(
           envelopeRepository: envelopeRepository,
           budgetId: 'budget-1',
         );
       },
-      act: (bloc) =>
-          bloc.add(CategoryGroupArchiveToggled(testGroups.first)),
+      act: (bloc) => bloc.add(CategoryGroupArchiveToggled(testGroups.first)),
       verify: (_) {
         verify(
           () => envelopeRepository.archiveCategoryGroup('group-1'),
@@ -146,8 +160,9 @@ void main() {
       'unarchives category group when CategoryGroupArchiveToggled is added '
       'with archived group',
       build: () {
-        when(() => envelopeRepository.unarchiveCategoryGroup('group-1'))
-            .thenAnswer((_) async {});
+        when(
+          () => envelopeRepository.unarchiveCategoryGroup('group-1'),
+        ).thenAnswer((_) async {});
         return EnvelopesBloc(
           envelopeRepository: envelopeRepository,
           budgetId: 'budget-1',
@@ -168,15 +183,15 @@ void main() {
     blocTest<EnvelopesBloc, EnvelopesState>(
       'emits error then loaded when category group archive fails',
       build: () {
-        when(() => envelopeRepository.archiveCategoryGroup('group-1'))
-            .thenThrow(const EnvelopeException('Failed'));
+        when(
+          () => envelopeRepository.archiveCategoryGroup('group-1'),
+        ).thenThrow(const EnvelopeException('Failed'));
         return EnvelopesBloc(
           envelopeRepository: envelopeRepository,
           budgetId: 'budget-1',
         );
       },
-      act: (bloc) =>
-          bloc.add(CategoryGroupArchiveToggled(testGroups.first)),
+      act: (bloc) => bloc.add(CategoryGroupArchiveToggled(testGroups.first)),
       expect: () => [
         const EnvelopesState(
           status: EnvelopesStatus.error,
@@ -189,8 +204,9 @@ void main() {
     blocTest<EnvelopesBloc, EnvelopesState>(
       'deletes category group when CategoryGroupDeleted is added',
       build: () {
-        when(() => envelopeRepository.deleteCategoryGroup('group-1'))
-            .thenAnswer((_) async {});
+        when(
+          () => envelopeRepository.deleteCategoryGroup('group-1'),
+        ).thenAnswer((_) async {});
         return EnvelopesBloc(
           envelopeRepository: envelopeRepository,
           budgetId: 'budget-1',
@@ -207,8 +223,9 @@ void main() {
     blocTest<EnvelopesBloc, EnvelopesState>(
       'emits error then loaded when category group delete fails',
       build: () {
-        when(() => envelopeRepository.deleteCategoryGroup('group-1'))
-            .thenThrow(const EnvelopeException('Failed'));
+        when(
+          () => envelopeRepository.deleteCategoryGroup('group-1'),
+        ).thenThrow(const EnvelopeException('Failed'));
         return EnvelopesBloc(
           envelopeRepository: envelopeRepository,
           budgetId: 'budget-1',
@@ -228,8 +245,9 @@ void main() {
       'archives envelope when EnvelopeArchiveToggled is added '
       'with non-archived envelope',
       build: () {
-        when(() => envelopeRepository.archiveEnvelope('env-1'))
-            .thenAnswer((_) async {});
+        when(
+          () => envelopeRepository.archiveEnvelope('env-1'),
+        ).thenAnswer((_) async {});
         return EnvelopesBloc(
           envelopeRepository: envelopeRepository,
           budgetId: 'budget-1',
@@ -247,8 +265,9 @@ void main() {
       'unarchives envelope when EnvelopeArchiveToggled is added '
       'with archived envelope',
       build: () {
-        when(() => envelopeRepository.unarchiveEnvelope('env-1'))
-            .thenAnswer((_) async {});
+        when(
+          () => envelopeRepository.unarchiveEnvelope('env-1'),
+        ).thenAnswer((_) async {});
         return EnvelopesBloc(
           envelopeRepository: envelopeRepository,
           budgetId: 'budget-1',
@@ -269,8 +288,9 @@ void main() {
     blocTest<EnvelopesBloc, EnvelopesState>(
       'emits error then loaded when envelope archive fails',
       build: () {
-        when(() => envelopeRepository.archiveEnvelope('env-1'))
-            .thenThrow(const EnvelopeException('Failed'));
+        when(
+          () => envelopeRepository.archiveEnvelope('env-1'),
+        ).thenThrow(const EnvelopeException('Failed'));
         return EnvelopesBloc(
           envelopeRepository: envelopeRepository,
           budgetId: 'budget-1',
@@ -299,8 +319,7 @@ void main() {
           budgetId: 'budget-1',
         );
       },
-      act: (bloc) =>
-          bloc.add(const EnvelopesReordered(['env-2', 'env-1'])),
+      act: (bloc) => bloc.add(const EnvelopesReordered(['env-2', 'env-1'])),
       verify: (_) {
         verify(
           () => envelopeRepository.reorderEnvelopes(
@@ -321,8 +340,7 @@ void main() {
           budgetId: 'budget-1',
         );
       },
-      act: (bloc) =>
-          bloc.add(const EnvelopesReordered(['env-2', 'env-1'])),
+      act: (bloc) => bloc.add(const EnvelopesReordered(['env-2', 'env-1'])),
       expect: () => [
         const EnvelopesState(
           status: EnvelopesStatus.error,
@@ -335,8 +353,9 @@ void main() {
     blocTest<EnvelopesBloc, EnvelopesState>(
       'deletes envelope when EnvelopeDeleted is added',
       build: () {
-        when(() => envelopeRepository.deleteEnvelope('env-1'))
-            .thenAnswer((_) async {});
+        when(
+          () => envelopeRepository.deleteEnvelope('env-1'),
+        ).thenAnswer((_) async {});
         return EnvelopesBloc(
           envelopeRepository: envelopeRepository,
           budgetId: 'budget-1',
@@ -353,8 +372,9 @@ void main() {
     blocTest<EnvelopesBloc, EnvelopesState>(
       'emits error then loaded when envelope delete fails',
       build: () {
-        when(() => envelopeRepository.deleteEnvelope('env-1'))
-            .thenThrow(const EnvelopeException('Failed'));
+        when(
+          () => envelopeRepository.deleteEnvelope('env-1'),
+        ).thenThrow(const EnvelopeException('Failed'));
         return EnvelopesBloc(
           envelopeRepository: envelopeRepository,
           budgetId: 'budget-1',
@@ -419,10 +439,12 @@ void main() {
     blocTest<EnvelopesBloc, EnvelopesState>(
       'refreshes data when EnvelopesRefreshRequested is added',
       build: () {
-        when(() => envelopeRepository.refreshCategoryGroups('budget-1'))
-            .thenAnswer((_) async {});
-        when(() => envelopeRepository.refreshEnvelopes('budget-1'))
-            .thenAnswer((_) async {});
+        when(
+          () => envelopeRepository.refreshCategoryGroups('budget-1'),
+        ).thenAnswer((_) async {});
+        when(
+          () => envelopeRepository.refreshEnvelopes('budget-1'),
+        ).thenAnswer((_) async {});
         return EnvelopesBloc(
           envelopeRepository: envelopeRepository,
           budgetId: 'budget-1',
@@ -455,37 +477,39 @@ void main() {
       expect(active[1].$2, isEmpty);
     });
 
-    test('activeGroupsWithEnvelopes excludes archived groups and envelopes',
-        () {
-      final state = EnvelopesState(
-        status: EnvelopesStatus.loaded,
-        categoryGroups: [
-          ...testGroups,
-          CategoryGroup(
-            id: 'group-archived',
-            budgetId: 'budget-1',
-            name: 'Archived Group',
-            createdAt: now,
-            isArchived: true,
-          ),
-        ],
-        envelopes: [
-          ...testEnvelopes,
-          Envelope(
-            id: 'env-archived',
-            categoryGroupId: 'group-1',
-            budgetId: 'budget-1',
-            name: 'Archived Env',
-            createdAt: now,
-            isArchived: true,
-          ),
-        ],
-      );
+    test(
+      'activeGroupsWithEnvelopes excludes archived groups and envelopes',
+      () {
+        final state = EnvelopesState(
+          status: EnvelopesStatus.loaded,
+          categoryGroups: [
+            ...testGroups,
+            CategoryGroup(
+              id: 'group-archived',
+              budgetId: 'budget-1',
+              name: 'Archived Group',
+              createdAt: now,
+              isArchived: true,
+            ),
+          ],
+          envelopes: [
+            ...testEnvelopes,
+            Envelope(
+              id: 'env-archived',
+              categoryGroupId: 'group-1',
+              budgetId: 'budget-1',
+              name: 'Archived Env',
+              createdAt: now,
+              isArchived: true,
+            ),
+          ],
+        );
 
-      final active = state.activeGroupsWithEnvelopes;
-      expect(active.length, equals(2));
-      expect(active.first.$2.length, equals(2)); // archived env excluded
-    });
+        final active = state.activeGroupsWithEnvelopes;
+        expect(active.length, equals(2));
+        expect(active.first.$2.length, equals(2)); // archived env excluded
+      },
+    );
 
     test('archivedGroups returns only archived category groups', () {
       final state = EnvelopesState(

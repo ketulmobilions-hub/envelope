@@ -147,12 +147,13 @@ class _AppShellState extends State<AppShell>
           ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, 1),
-                end: Offset.zero,
-              ).animate(
-                CurvedAnimation(parent: animation, curve: Curves.easeInOut),
-              ),
+              position:
+                  Tween<Offset>(
+                    begin: const Offset(0, 1),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(parent: animation, curve: Curves.easeInOut),
+                  ),
               child: child,
             );
           },
@@ -241,8 +242,7 @@ class _AppShellState extends State<AppShell>
               return Scaffold(
                 body: animatedChild,
                 bottomNavigationBar: NavigationBar(
-                  labelBehavior:
-                      NavigationDestinationLabelBehavior.alwaysHide,
+                  labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
                   selectedIndex: selectedIndex,
                   onDestinationSelected: (index) =>
                       _onDestinationSelected(context, index),
@@ -383,15 +383,12 @@ Future<String?> _getCurrentPeriodId(
   String budgetId,
 ) async {
   try {
-    final periods =
-        await budgetRepository.watchBudgetPeriods(budgetId).first;
+    final periods = await budgetRepository.watchBudgetPeriods(budgetId).first;
     if (periods.isEmpty) return null;
     final now = DateTime.now();
     final current = periods.firstWhere(
       (p) =>
-          !p.isClosed &&
-          !p.startDate.isAfter(now) &&
-          !p.endDate.isBefore(now),
+          !p.isClosed && !p.startDate.isAfter(now) && !p.endDate.isBefore(now),
       orElse: () =>
           periods.where((p) => !p.isClosed).lastOrNull ?? periods.last,
     );

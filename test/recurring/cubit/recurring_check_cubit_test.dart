@@ -26,8 +26,9 @@ void main() {
     blocTest<RecurringCheckCubit, RecurringCheckState>(
       'auto-posts eligible rules and advances nextOccurrence',
       setUp: () {
-        when(() => transactionRepository.watchRecurringRules('budget-1'))
-            .thenAnswer(
+        when(
+          () => transactionRepository.watchRecurringRules('budget-1'),
+        ).thenAnswer(
           (_) => Stream.value([
             RecurringRule(
               id: 'rule-1',
@@ -45,21 +46,24 @@ void main() {
             ),
           ]),
         );
-        when(() => transactionRepository.watchBillReminders('budget-1'))
-            .thenAnswer((_) => Stream.value([]));
-        when(() => transactionRepository.createTransaction(
-              budgetId: any(named: 'budgetId'),
-              accountId: any(named: 'accountId'),
-              type: any(named: 'type'),
-              amount: any(named: 'amount'),
-              currency: any(named: 'currency'),
-              date: any(named: 'date'),
-              createdBy: any(named: 'createdBy'),
-              envelopeId: any(named: 'envelopeId'),
-              payee: any(named: 'payee'),
-              notes: any(named: 'notes'),
-              recurringRuleId: any(named: 'recurringRuleId'),
-            )).thenAnswer(
+        when(
+          () => transactionRepository.watchBillReminders('budget-1'),
+        ).thenAnswer((_) => Stream.value([]));
+        when(
+          () => transactionRepository.createTransaction(
+            budgetId: any(named: 'budgetId'),
+            accountId: any(named: 'accountId'),
+            type: any(named: 'type'),
+            amount: any(named: 'amount'),
+            currency: any(named: 'currency'),
+            date: any(named: 'date'),
+            createdBy: any(named: 'createdBy'),
+            envelopeId: any(named: 'envelopeId'),
+            payee: any(named: 'payee'),
+            notes: any(named: 'notes'),
+            recurringRuleId: any(named: 'recurringRuleId'),
+          ),
+        ).thenAnswer(
           (_) async => Transaction(
             id: 'txn-1',
             budgetId: 'budget-1',
@@ -73,8 +77,9 @@ void main() {
             updatedAt: now,
           ),
         );
-        when(() => transactionRepository.updateRecurringRule(any()))
-            .thenAnswer((_) async {});
+        when(
+          () => transactionRepository.updateRecurringRule(any()),
+        ).thenAnswer((_) async {});
       },
       build: () => RecurringCheckCubit(
         transactionRepository: transactionRepository,
@@ -87,29 +92,33 @@ void main() {
         const RecurringCheckState(),
       ],
       verify: (_) {
-        verify(() => transactionRepository.createTransaction(
-              budgetId: 'budget-1',
-              accountId: 'acc-1',
-              type: 'expense',
-              amount: 5000,
-              currency: 'USD',
-              date: any(named: 'date'),
-              createdBy: 'user-1',
-              envelopeId: null,
-              payee: 'Netflix',
-              notes: null,
-              recurringRuleId: 'rule-1',
-            )).called(1);
-        verify(() => transactionRepository.updateRecurringRule(any()))
-            .called(1);
+        verify(
+          () => transactionRepository.createTransaction(
+            budgetId: 'budget-1',
+            accountId: 'acc-1',
+            type: 'expense',
+            amount: 5000,
+            currency: 'USD',
+            date: any(named: 'date'),
+            createdBy: 'user-1',
+            envelopeId: null,
+            payee: 'Netflix',
+            notes: null,
+            recurringRuleId: 'rule-1',
+          ),
+        ).called(1);
+        verify(
+          () => transactionRepository.updateRecurringRule(any()),
+        ).called(1);
       },
     );
 
     blocTest<RecurringCheckCubit, RecurringCheckState>(
       'collects pending manual rules',
       setUp: () {
-        when(() => transactionRepository.watchRecurringRules('budget-1'))
-            .thenAnswer(
+        when(
+          () => transactionRepository.watchRecurringRules('budget-1'),
+        ).thenAnswer(
           (_) => Stream.value([
             RecurringRule(
               id: 'rule-2',
@@ -126,8 +135,9 @@ void main() {
             ),
           ]),
         );
-        when(() => transactionRepository.watchBillReminders('budget-1'))
-            .thenAnswer((_) => Stream.value([]));
+        when(
+          () => transactionRepository.watchBillReminders('budget-1'),
+        ).thenAnswer((_) => Stream.value([]));
       },
       build: () => RecurringCheckCubit(
         transactionRepository: transactionRepository,
@@ -146,8 +156,9 @@ void main() {
     blocTest<RecurringCheckCubit, RecurringCheckState>(
       'skips paused rules',
       setUp: () {
-        when(() => transactionRepository.watchRecurringRules('budget-1'))
-            .thenAnswer(
+        when(
+          () => transactionRepository.watchRecurringRules('budget-1'),
+        ).thenAnswer(
           (_) => Stream.value([
             RecurringRule(
               id: 'rule-3',
@@ -164,8 +175,9 @@ void main() {
             ),
           ]),
         );
-        when(() => transactionRepository.watchBillReminders('budget-1'))
-            .thenAnswer((_) => Stream.value([]));
+        when(
+          () => transactionRepository.watchBillReminders('budget-1'),
+        ).thenAnswer((_) => Stream.value([]));
       },
       build: () => RecurringCheckCubit(
         transactionRepository: transactionRepository,
@@ -187,10 +199,12 @@ void main() {
         final today = DateTime.now();
         final dueDayInWindow = today.day + 2 > 28 ? 1 : today.day + 2;
 
-        when(() => transactionRepository.watchRecurringRules('budget-1'))
-            .thenAnswer((_) => Stream.value([]));
-        when(() => transactionRepository.watchBillReminders('budget-1'))
-            .thenAnswer(
+        when(
+          () => transactionRepository.watchRecurringRules('budget-1'),
+        ).thenAnswer((_) => Stream.value([]));
+        when(
+          () => transactionRepository.watchBillReminders('budget-1'),
+        ).thenAnswer(
           (_) => Stream.value([
             BillReminder(
               id: 'bill-1',
@@ -222,8 +236,9 @@ void main() {
     blocTest<RecurringCheckCubit, RecurringCheckState>(
       'does not advance nextOccurrence when createTransaction fails',
       setUp: () {
-        when(() => transactionRepository.watchRecurringRules('budget-1'))
-            .thenAnswer(
+        when(
+          () => transactionRepository.watchRecurringRules('budget-1'),
+        ).thenAnswer(
           (_) => Stream.value([
             RecurringRule(
               id: 'rule-fail',
@@ -240,21 +255,24 @@ void main() {
             ),
           ]),
         );
-        when(() => transactionRepository.watchBillReminders('budget-1'))
-            .thenAnswer((_) => Stream.value([]));
-        when(() => transactionRepository.createTransaction(
-              budgetId: any(named: 'budgetId'),
-              accountId: any(named: 'accountId'),
-              type: any(named: 'type'),
-              amount: any(named: 'amount'),
-              currency: any(named: 'currency'),
-              date: any(named: 'date'),
-              createdBy: any(named: 'createdBy'),
-              envelopeId: any(named: 'envelopeId'),
-              payee: any(named: 'payee'),
-              notes: any(named: 'notes'),
-              recurringRuleId: any(named: 'recurringRuleId'),
-            )).thenThrow(const TransactionException('fail'));
+        when(
+          () => transactionRepository.watchBillReminders('budget-1'),
+        ).thenAnswer((_) => Stream.value([]));
+        when(
+          () => transactionRepository.createTransaction(
+            budgetId: any(named: 'budgetId'),
+            accountId: any(named: 'accountId'),
+            type: any(named: 'type'),
+            amount: any(named: 'amount'),
+            currency: any(named: 'currency'),
+            date: any(named: 'date'),
+            createdBy: any(named: 'createdBy'),
+            envelopeId: any(named: 'envelopeId'),
+            payee: any(named: 'payee'),
+            notes: any(named: 'notes'),
+            recurringRuleId: any(named: 'recurringRuleId'),
+          ),
+        ).thenThrow(const TransactionException('fail'));
       },
       build: () => RecurringCheckCubit(
         transactionRepository: transactionRepository,
@@ -278,8 +296,9 @@ void main() {
       setUp: () {
         // Jan 31 + 1 month should be Feb 28 (non-leap year).
         final jan31 = DateTime(2025, 1, 31);
-        when(() => transactionRepository.watchRecurringRules('budget-1'))
-            .thenAnswer(
+        when(
+          () => transactionRepository.watchRecurringRules('budget-1'),
+        ).thenAnswer(
           (_) => Stream.value([
             RecurringRule(
               id: 'rule-month',
@@ -296,21 +315,24 @@ void main() {
             ),
           ]),
         );
-        when(() => transactionRepository.watchBillReminders('budget-1'))
-            .thenAnswer((_) => Stream.value([]));
-        when(() => transactionRepository.createTransaction(
-              budgetId: any(named: 'budgetId'),
-              accountId: any(named: 'accountId'),
-              type: any(named: 'type'),
-              amount: any(named: 'amount'),
-              currency: any(named: 'currency'),
-              date: any(named: 'date'),
-              createdBy: any(named: 'createdBy'),
-              envelopeId: any(named: 'envelopeId'),
-              payee: any(named: 'payee'),
-              notes: any(named: 'notes'),
-              recurringRuleId: any(named: 'recurringRuleId'),
-            )).thenAnswer(
+        when(
+          () => transactionRepository.watchBillReminders('budget-1'),
+        ).thenAnswer((_) => Stream.value([]));
+        when(
+          () => transactionRepository.createTransaction(
+            budgetId: any(named: 'budgetId'),
+            accountId: any(named: 'accountId'),
+            type: any(named: 'type'),
+            amount: any(named: 'amount'),
+            currency: any(named: 'currency'),
+            date: any(named: 'date'),
+            createdBy: any(named: 'createdBy'),
+            envelopeId: any(named: 'envelopeId'),
+            payee: any(named: 'payee'),
+            notes: any(named: 'notes'),
+            recurringRuleId: any(named: 'recurringRuleId'),
+          ),
+        ).thenAnswer(
           (_) async => Transaction(
             id: 'txn-m',
             budgetId: 'budget-1',
@@ -324,8 +346,9 @@ void main() {
             updatedAt: jan31,
           ),
         );
-        when(() => transactionRepository.updateRecurringRule(any()))
-            .thenAnswer((_) async {});
+        when(
+          () => transactionRepository.updateRecurringRule(any()),
+        ).thenAnswer((_) async {});
       },
       build: () => RecurringCheckCubit(
         transactionRepository: transactionRepository,
@@ -349,8 +372,9 @@ void main() {
       setUp: () {
         // 2024 is a leap year; Jan 30 + 1 month = Feb 29.
         final jan30 = DateTime(2024, 1, 30);
-        when(() => transactionRepository.watchRecurringRules('budget-1'))
-            .thenAnswer(
+        when(
+          () => transactionRepository.watchRecurringRules('budget-1'),
+        ).thenAnswer(
           (_) => Stream.value([
             RecurringRule(
               id: 'rule-leap',
@@ -367,21 +391,24 @@ void main() {
             ),
           ]),
         );
-        when(() => transactionRepository.watchBillReminders('budget-1'))
-            .thenAnswer((_) => Stream.value([]));
-        when(() => transactionRepository.createTransaction(
-              budgetId: any(named: 'budgetId'),
-              accountId: any(named: 'accountId'),
-              type: any(named: 'type'),
-              amount: any(named: 'amount'),
-              currency: any(named: 'currency'),
-              date: any(named: 'date'),
-              createdBy: any(named: 'createdBy'),
-              envelopeId: any(named: 'envelopeId'),
-              payee: any(named: 'payee'),
-              notes: any(named: 'notes'),
-              recurringRuleId: any(named: 'recurringRuleId'),
-            )).thenAnswer(
+        when(
+          () => transactionRepository.watchBillReminders('budget-1'),
+        ).thenAnswer((_) => Stream.value([]));
+        when(
+          () => transactionRepository.createTransaction(
+            budgetId: any(named: 'budgetId'),
+            accountId: any(named: 'accountId'),
+            type: any(named: 'type'),
+            amount: any(named: 'amount'),
+            currency: any(named: 'currency'),
+            date: any(named: 'date'),
+            createdBy: any(named: 'createdBy'),
+            envelopeId: any(named: 'envelopeId'),
+            payee: any(named: 'payee'),
+            notes: any(named: 'notes'),
+            recurringRuleId: any(named: 'recurringRuleId'),
+          ),
+        ).thenAnswer(
           (_) async => Transaction(
             id: 'txn-l',
             budgetId: 'budget-1',
@@ -395,8 +422,9 @@ void main() {
             updatedAt: jan30,
           ),
         );
-        when(() => transactionRepository.updateRecurringRule(any()))
-            .thenAnswer((_) async {});
+        when(
+          () => transactionRepository.updateRecurringRule(any()),
+        ).thenAnswer((_) async {});
       },
       build: () => RecurringCheckCubit(
         transactionRepository: transactionRepository,
@@ -420,10 +448,12 @@ void main() {
       setUp: () {
         // Bill with dueDay=31 in a month with 30 days should still match.
         final today = DateTime.now();
-        when(() => transactionRepository.watchRecurringRules('budget-1'))
-            .thenAnswer((_) => Stream.value([]));
-        when(() => transactionRepository.watchBillReminders('budget-1'))
-            .thenAnswer(
+        when(
+          () => transactionRepository.watchRecurringRules('budget-1'),
+        ).thenAnswer((_) => Stream.value([]));
+        when(
+          () => transactionRepository.watchBillReminders('budget-1'),
+        ).thenAnswer(
           (_) => Stream.value([
             BillReminder(
               id: 'bill-clamp',
@@ -459,8 +489,9 @@ void main() {
     blocTest<RecurringCheckCubit, RecurringCheckState>(
       'handles check failure gracefully',
       setUp: () {
-        when(() => transactionRepository.watchRecurringRules('budget-1'))
-            .thenAnswer(
+        when(
+          () => transactionRepository.watchRecurringRules('budget-1'),
+        ).thenAnswer(
           (_) => Stream.error(Exception('fail')),
         );
       },

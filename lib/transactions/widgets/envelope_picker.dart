@@ -160,27 +160,29 @@ class _EnvelopePickerSheet extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     // Build group → envelopes map in sortOrder.
-    final visibleGroups = (hideCCPaymentsGroup
-            ? categoryGroups
-                .where((g) => g.name != l10n.ccPaymentsCategoryGroupName)
-                .toList()
-            : categoryGroups.toList())
-      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    final visibleGroups =
+        (hideCCPaymentsGroup
+              ? categoryGroups
+                    .where((g) => g.name != l10n.ccPaymentsCategoryGroupName)
+                    .toList()
+              : categoryGroups.toList())
+          ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
     final groupedEnvelopes = <CategoryGroup, List<Envelope>>{};
     for (final group in visibleGroups) {
-      groupedEnvelopes[group] = envelopes
-          .where((e) => e.categoryGroupId == group.id && !e.isArchived)
-          .toList()
-        ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+      groupedEnvelopes[group] =
+          envelopes
+              .where((e) => e.categoryGroupId == group.id && !e.isArchived)
+              .toList()
+            ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
     }
 
     // Guard: envelopes that don't match any known group.
     final knownGroupIds = visibleGroups.map((g) => g.id).toSet();
     final hiddenGroupIds = hideCCPaymentsGroup
         ? categoryGroups
-            .where((g) => g.name == l10n.ccPaymentsCategoryGroupName)
-            .map((g) => g.id)
-            .toSet()
+              .where((g) => g.name == l10n.ccPaymentsCategoryGroupName)
+              .map((g) => g.id)
+              .toSet()
         : const <String>{};
     final ungrouped = envelopes
         .where(
@@ -368,8 +370,7 @@ class _GroupSection extends StatelessWidget {
         // Add envelope to this group.
         if (groupId != null)
           InkWell(
-            onTap: () =>
-                Navigator.of(context).pop(_NewEnvelopeResult(groupId)),
+            onTap: () => Navigator.of(context).pop(_NewEnvelopeResult(groupId)),
             child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 20,

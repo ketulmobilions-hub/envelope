@@ -79,8 +79,7 @@ class _CCPayBottomSheetState extends State<_CCPayBottomSheet> {
   void initState() {
     super.initState();
     if (widget.ccDebtCents > 0) {
-      _amountController.text =
-          (widget.ccDebtCents / 100).toStringAsFixed(2);
+      _amountController.text = (widget.ccDebtCents / 100).toStringAsFixed(2);
     }
   }
 
@@ -216,8 +215,7 @@ class _CCPayBottomSheetState extends State<_CCPayBottomSheet> {
                       ),
                     )
                     .toList(),
-                validator: (v) =>
-                    v == null ? l10n.ccPayFromRequired : null,
+                validator: (v) => v == null ? l10n.ccPayFromRequired : null,
                 onChanged: (_) {},
               ),
               const SizedBox(height: 12),
@@ -228,8 +226,9 @@ class _CCPayBottomSheetState extends State<_CCPayBottomSheet> {
                   prefixText: symbol,
                   border: const OutlineInputBorder(),
                 ),
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(
                     RegExp(r'^\d*\.?\d{0,2}'),

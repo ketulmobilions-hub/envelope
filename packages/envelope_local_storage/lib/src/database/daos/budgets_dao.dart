@@ -5,8 +5,7 @@ import 'package:envelope_local_storage/src/database/tables/tables.dart';
 part 'budgets_dao.g.dart';
 
 @DriftAccessor(tables: [Budgets, BudgetMembers, BudgetPeriods])
-class BudgetsDao extends DatabaseAccessor<AppDatabase>
-    with _$BudgetsDaoMixin {
+class BudgetsDao extends DatabaseAccessor<AppDatabase> with _$BudgetsDaoMixin {
   BudgetsDao(super.attachedDatabase);
 
   // Budgets CRUD
@@ -29,8 +28,7 @@ class BudgetsDao extends DatabaseAccessor<AppDatabase>
   Future<int> insertBudget(
     BudgetsCompanion budget, {
     InsertMode mode = InsertMode.insert,
-  }) =>
-      into(budgets).insert(budget, mode: mode);
+  }) => into(budgets).insert(budget, mode: mode);
 
   Future<void> batchInsertBudgets(
     List<BudgetsCompanion> entries, {
@@ -54,15 +52,14 @@ class BudgetsDao extends DatabaseAccessor<AppDatabase>
   Future<List<BudgetMember>> getMembersByBudgetId(String budgetId) =>
       (select(budgetMembers)..where((t) => t.budgetId.equals(budgetId))).get();
 
-  Stream<List<BudgetMember>> watchMembersByBudgetId(String budgetId) =>
-      (select(budgetMembers)..where((t) => t.budgetId.equals(budgetId)))
-          .watch();
+  Stream<List<BudgetMember>> watchMembersByBudgetId(String budgetId) => (select(
+    budgetMembers,
+  )..where((t) => t.budgetId.equals(budgetId))).watch();
 
   Future<int> insertBudgetMember(
     BudgetMembersCompanion member, {
     InsertMode mode = InsertMode.insert,
-  }) =>
-      into(budgetMembers).insert(member, mode: mode);
+  }) => into(budgetMembers).insert(member, mode: mode);
 
   Future<void> batchInsertBudgetMembers(
     List<BudgetMembersCompanion> entries, {
@@ -83,19 +80,17 @@ class BudgetsDao extends DatabaseAccessor<AppDatabase>
   Future<List<BudgetPeriod>> getPeriodsByBudgetId(String budgetId) =>
       (select(budgetPeriods)..where((t) => t.budgetId.equals(budgetId))).get();
 
-  Stream<List<BudgetPeriod>> watchPeriodsByBudgetId(String budgetId) =>
-      (select(budgetPeriods)..where((t) => t.budgetId.equals(budgetId)))
-          .watch();
+  Stream<List<BudgetPeriod>> watchPeriodsByBudgetId(String budgetId) => (select(
+    budgetPeriods,
+  )..where((t) => t.budgetId.equals(budgetId))).watch();
 
   Future<BudgetPeriod?> getBudgetPeriod(String id) =>
-      (select(budgetPeriods)..where((t) => t.id.equals(id)))
-          .getSingleOrNull();
+      (select(budgetPeriods)..where((t) => t.id.equals(id))).getSingleOrNull();
 
   Future<int> insertBudgetPeriod(
     BudgetPeriodsCompanion period, {
     InsertMode mode = InsertMode.insert,
-  }) =>
-      into(budgetPeriods).insert(period, mode: mode);
+  }) => into(budgetPeriods).insert(period, mode: mode);
 
   Future<void> batchInsertBudgetPeriods(
     List<BudgetPeriodsCompanion> entries, {

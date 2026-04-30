@@ -131,9 +131,7 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
           Positioned.fill(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: _isEditing
-                  ? () => _focusNode.unfocus()
-                  : widget.onTap,
+              onTap: _isEditing ? () => _focusNode.unfocus() : widget.onTap,
             ),
           ),
           Padding(
@@ -154,48 +152,48 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                        Text(
-                          widget.name.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: textColor,
-                            letterSpacing: 0.8,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const Spacer(),
-                        if (widget.primaryLabel != null) ...[
                           Text(
-                            widget.primaryLabel!,
+                            widget.name.toUpperCase(),
                             style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
                               color: textColor,
+                              letterSpacing: 0.8,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          if (widget.limitLabel != null)
+                          const Spacer(),
+                          if (widget.primaryLabel != null) ...[
                             Text(
-                              widget.limitLabel!,
+                              widget.primaryLabel!,
                               style: TextStyle(
-                                fontSize: 10,
-                                color: textColor.withValues(alpha: 0.7),
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: textColor,
                               ),
                             ),
-                        ] else
-                          Text(
-                            formatCents(
-                              widget.availableCents,
-                              symbol: symbol,
+                            if (widget.limitLabel != null)
+                              Text(
+                                widget.limitLabel!,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: textColor.withValues(alpha: 0.7),
+                                ),
+                              ),
+                          ] else
+                            Text(
+                              formatCents(
+                                widget.availableCents,
+                                symbol: symbol,
+                              ),
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: textColor,
+                              ),
                             ),
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: textColor,
-                            ),
-                          ),
-                      ],
+                        ],
                       ),
                     ),
                   ),
@@ -274,8 +272,8 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
                               cursorWidth: 1.5,
                               keyboardType:
                                   const TextInputType.numberWithOptions(
-                                decimal: true,
-                              ),
+                                    decimal: true,
+                                  ),
                               textInputAction: TextInputAction.done,
                               inputFormatters: [
                                 FilteringTextInputFormatter.allow(
@@ -292,8 +290,7 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
                                 border: InputBorder.none,
                                 enabledBorder: UnderlineInputBorder(
                                   borderSide: BorderSide(
-                                    color:
-                                        Colors.white.withValues(alpha: 0.6),
+                                    color: Colors.white.withValues(alpha: 0.6),
                                   ),
                                 ),
                                 focusedBorder: const UnderlineInputBorder(
@@ -301,8 +298,9 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
                                     color: Colors.white,
                                   ),
                                 ),
-                                contentPadding:
-                                    const EdgeInsets.only(bottom: 4),
+                                contentPadding: const EdgeInsets.only(
+                                  bottom: 4,
+                                ),
                                 isDense: true,
                               ),
                               onSubmitted: (_) => _submitEditing(),
@@ -347,30 +345,30 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
     if (widget.heroTag != null) {
       card = Hero(
         tag: widget.heroTag!,
-        flightShuttleBuilder: (
-          _,
-          animation,
-          direction,
-          fromContext,
-          toContext,
-        ) {
-          final curvedAnim = CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeInOut,
-          );
-          return AnimatedBuilder(
-            animation: curvedAnim,
-            builder: (context, _) {
-              final t = curvedAnim.value;
-              final radius =
-                  BorderRadius.circular(12 * (1 - t));
-              return ClipRRect(
-                borderRadius: radius,
-                child: Container(color: fillColor),
+        flightShuttleBuilder:
+            (
+              _,
+              animation,
+              direction,
+              fromContext,
+              toContext,
+            ) {
+              final curvedAnim = CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeInOut,
+              );
+              return AnimatedBuilder(
+                animation: curvedAnim,
+                builder: (context, _) {
+                  final t = curvedAnim.value;
+                  final radius = BorderRadius.circular(12 * (1 - t));
+                  return ClipRRect(
+                    borderRadius: radius,
+                    child: Container(color: fillColor),
+                  );
+                },
               );
             },
-          );
-        },
         child: Material(
           type: MaterialType.transparency,
           child: card,
@@ -379,9 +377,7 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
     }
 
     return Semantics(
-      label: widget.onAllocate != null
-          ? 'Tap allocated amount to edit'
-          : null,
+      label: widget.onAllocate != null ? 'Tap allocated amount to edit' : null,
       child: _isEditing
           ? TapRegion(
               onTapOutside: (_) {

@@ -69,31 +69,44 @@ void main() {
     );
 
     // Repository stubs for DashboardBloc and RecurringCheckCubit
-    when(() => budgetRepository.watchBudgetPeriods(any()))
-        .thenAnswer((_) => Stream.value([]));
-    when(() => budgetRepository.refreshBudgetPeriods(any()))
-        .thenAnswer((_) async {});
-    when(() => accountRepository.watchAccounts(any()))
-        .thenAnswer((_) => Stream.value([]));
-    when(() => accountRepository.refreshAccounts(any()))
-        .thenAnswer((_) async {});
-    when(() => envelopeRepository.watchEnvelopes(any()))
-        .thenAnswer((_) => Stream.value([]));
-    when(() => envelopeRepository.watchCategoryGroups(any()))
-        .thenAnswer((_) => Stream.value([]));
-    when(() => envelopeRepository.refreshEnvelopes(any()))
-        .thenAnswer((_) async {});
-    when(() => envelopeRepository.refreshCategoryGroups(any()))
-        .thenAnswer((_) async {});
-    when(() => transactionRepository.watchTransactions(
-          budgetId: any(named: 'budgetId'),
-        )).thenAnswer((_) => Stream.value([]));
-    when(() => transactionRepository.refreshTransactions(any()))
-        .thenAnswer((_) async {});
-    when(() => transactionRepository.watchRecurringRules(any()))
-        .thenAnswer((_) => Stream.value([]));
-    when(() => transactionRepository.watchBillReminders(any()))
-        .thenAnswer((_) => Stream.value([]));
+    when(
+      () => budgetRepository.watchBudgetPeriods(any()),
+    ).thenAnswer((_) => Stream.value([]));
+    when(
+      () => budgetRepository.refreshBudgetPeriods(any()),
+    ).thenAnswer((_) async {});
+    when(
+      () => accountRepository.watchAccounts(any()),
+    ).thenAnswer((_) => Stream.value([]));
+    when(
+      () => accountRepository.refreshAccounts(any()),
+    ).thenAnswer((_) async {});
+    when(
+      () => envelopeRepository.watchEnvelopes(any()),
+    ).thenAnswer((_) => Stream.value([]));
+    when(
+      () => envelopeRepository.watchCategoryGroups(any()),
+    ).thenAnswer((_) => Stream.value([]));
+    when(
+      () => envelopeRepository.refreshEnvelopes(any()),
+    ).thenAnswer((_) async {});
+    when(
+      () => envelopeRepository.refreshCategoryGroups(any()),
+    ).thenAnswer((_) async {});
+    when(
+      () => transactionRepository.watchTransactions(
+        budgetId: any(named: 'budgetId'),
+      ),
+    ).thenAnswer((_) => Stream.value([]));
+    when(
+      () => transactionRepository.refreshTransactions(any()),
+    ).thenAnswer((_) async {});
+    when(
+      () => transactionRepository.watchRecurringRules(any()),
+    ).thenAnswer((_) => Stream.value([]));
+    when(
+      () => transactionRepository.watchBillReminders(any()),
+    ).thenAnswer((_) => Stream.value([]));
   });
 
   Widget buildSubject() {
@@ -133,22 +146,26 @@ void main() {
     testWidgets(
       'shows dashboard cards after streams emit',
       (tester) async {
-        when(() => budgetRepository.watchBudgetPeriods(any()))
-            .thenAnswer((_) => Stream.value([
-                  BudgetPeriod(
-                    id: 'p-1',
-                    budgetId: 'user-1',
-                    startDate: DateTime(2024),
-                    endDate: DateTime(2024, 12, 31),
-                    createdAt: now,
-                  ),
-                ]));
-        when(() => budgetRepository.calculateReadyToAssign(any()))
-            .thenAnswer((_) async => 50000);
-        when(() => envelopeRepository.watchAllocations(any()))
-            .thenAnswer((_) => Stream.value([]));
-        when(() => envelopeRepository.refreshAllocations(any()))
-            .thenAnswer((_) async {});
+        when(() => budgetRepository.watchBudgetPeriods(any())).thenAnswer(
+          (_) => Stream.value([
+            BudgetPeriod(
+              id: 'p-1',
+              budgetId: 'user-1',
+              startDate: DateTime(2024),
+              endDate: DateTime(2024, 12, 31),
+              createdAt: now,
+            ),
+          ]),
+        );
+        when(
+          () => budgetRepository.calculateReadyToAssign(any()),
+        ).thenAnswer((_) async => 50000);
+        when(
+          () => envelopeRepository.watchAllocations(any()),
+        ).thenAnswer((_) => Stream.value([]));
+        when(
+          () => envelopeRepository.refreshAllocations(any()),
+        ).thenAnswer((_) async {});
 
         await tester.pumpApp(buildSubject());
         await tester.pumpAndSettle();
@@ -176,17 +193,23 @@ void main() {
       'shows loading indicator initially',
       (tester) async {
         // Use streams that never emit to keep bloc in loading state
-        when(() => budgetRepository.watchBudgetPeriods(any()))
-            .thenAnswer((_) => const Stream.empty());
-        when(() => accountRepository.watchAccounts(any()))
-            .thenAnswer((_) => const Stream.empty());
-        when(() => envelopeRepository.watchEnvelopes(any()))
-            .thenAnswer((_) => const Stream.empty());
-        when(() => envelopeRepository.watchCategoryGroups(any()))
-            .thenAnswer((_) => const Stream.empty());
-        when(() => transactionRepository.watchTransactions(
-              budgetId: any(named: 'budgetId'),
-            )).thenAnswer((_) => const Stream.empty());
+        when(
+          () => budgetRepository.watchBudgetPeriods(any()),
+        ).thenAnswer((_) => const Stream.empty());
+        when(
+          () => accountRepository.watchAccounts(any()),
+        ).thenAnswer((_) => const Stream.empty());
+        when(
+          () => envelopeRepository.watchEnvelopes(any()),
+        ).thenAnswer((_) => const Stream.empty());
+        when(
+          () => envelopeRepository.watchCategoryGroups(any()),
+        ).thenAnswer((_) => const Stream.empty());
+        when(
+          () => transactionRepository.watchTransactions(
+            budgetId: any(named: 'budgetId'),
+          ),
+        ).thenAnswer((_) => const Stream.empty());
 
         await tester.pumpApp(buildSubject());
         await tester.pump();

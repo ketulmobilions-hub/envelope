@@ -29,10 +29,8 @@ void main() {
           ),
         ).thenAnswer((_) async {});
       },
-      build: () =>
-          ForgotPasswordCubit(authRepository: authRepository),
-      act: (cubit) =>
-          cubit.sendPasswordResetEmail(email: 'test@test.com'),
+      build: () => ForgotPasswordCubit(authRepository: authRepository),
+      act: (cubit) => cubit.sendPasswordResetEmail(email: 'test@test.com'),
       expect: () => [
         const ForgotPasswordState(
           status: ForgotPasswordStatus.submitting,
@@ -54,10 +52,8 @@ void main() {
           const PasswordResetException('Rate limit exceeded'),
         );
       },
-      build: () =>
-          ForgotPasswordCubit(authRepository: authRepository),
-      act: (cubit) =>
-          cubit.sendPasswordResetEmail(email: 'test@test.com'),
+      build: () => ForgotPasswordCubit(authRepository: authRepository),
+      act: (cubit) => cubit.sendPasswordResetEmail(email: 'test@test.com'),
       expect: () => [
         const ForgotPasswordState(
           status: ForgotPasswordStatus.submitting,

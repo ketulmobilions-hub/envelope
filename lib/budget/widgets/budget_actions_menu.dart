@@ -34,7 +34,9 @@ Future<void> showBudgetActionsMenu(BuildContext context) {
                       title: Text(l10n.budgetApplyTemplate),
                       onTap: () {
                         Navigator.of(sheetContext).pop();
-                        unawaited(_showApplyTemplateDialog(context, bloc, state));
+                        unawaited(
+                          _showApplyTemplateDialog(context, bloc, state),
+                        );
                       },
                     ),
                   ListTile(
@@ -121,8 +123,9 @@ Future<void> _showApplyTemplateDialog(
               children: [
                 DropdownButtonFormField<String>(
                   initialValue: selectedTemplateId,
-                  decoration:
-                      InputDecoration(labelText: l10n.budgetTemplateNameLabel),
+                  decoration: InputDecoration(
+                    labelText: l10n.budgetTemplateNameLabel,
+                  ),
                   items: state.templates
                       .map(
                         (t) => DropdownMenuItem(
@@ -146,12 +149,11 @@ Future<void> _showApplyTemplateDialog(
                 onPressed: () {
                   Navigator.of(dialogContext).pop();
                   bloc.add(
-                        AllocationTemplateApplied(
-                          templateId: selectedTemplateId,
-                          totalAmount:
-                              state.selectedPeriod?.totalIncome ?? 0,
-                        ),
-                      );
+                    AllocationTemplateApplied(
+                      templateId: selectedTemplateId,
+                      totalAmount: state.selectedPeriod?.totalIncome ?? 0,
+                    ),
+                  );
                 },
                 child: Text(l10n.budgetApplyTemplate),
               ),
@@ -278,8 +280,7 @@ List<AllocationTemplateItem> _buildTemplateItemsFromAllocations(
 
   var maxIdx = 0;
   for (var i = 1; i < allocations.length; i++) {
-    if (allocations[i].allocatedAmount >
-        allocations[maxIdx].allocatedAmount) {
+    if (allocations[i].allocatedAmount > allocations[maxIdx].allocatedAmount) {
       maxIdx = i;
     }
   }

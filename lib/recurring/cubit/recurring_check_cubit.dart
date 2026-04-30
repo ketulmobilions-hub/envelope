@@ -47,10 +47,10 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
     required TransactionRepository transactionRepository,
     required String budgetId,
     required String userId,
-  })  : _transactionRepository = transactionRepository,
-        _budgetId = budgetId,
-        _userId = userId,
-        super(const RecurringCheckState());
+  }) : _transactionRepository = transactionRepository,
+       _budgetId = budgetId,
+       _userId = userId,
+       super(const RecurringCheckState());
 
   final TransactionRepository _transactionRepository;
   final String _budgetId;
@@ -64,10 +64,12 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
     emit(state.copyWith(isChecking: true));
 
     try {
-      final rules =
-          await _transactionRepository.watchRecurringRules(_budgetId).first;
-      final bills =
-          await _transactionRepository.watchBillReminders(_budgetId).first;
+      final rules = await _transactionRepository
+          .watchRecurringRules(_budgetId)
+          .first;
+      final bills = await _transactionRepository
+          .watchBillReminders(_budgetId)
+          .first;
       final effectiveNow = now ?? DateTime.now();
 
       final pendingRules = <RecurringRule>[];
@@ -149,7 +151,8 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
     );
 
     // Within the reminder window for this month.
-    final inWindow = !effectiveNow.isBefore(reminderStart) &&
+    final inWindow =
+        !effectiveNow.isBefore(reminderStart) &&
         !effectiveNow.isAfter(currentMonthDue);
     if (inWindow) {
       return true;
@@ -158,8 +161,9 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
     // Check next month if we're past due day this month.
     if (effectiveNow.isAfter(currentMonthDue)) {
       final nextMonth = effectiveNow.month + 1;
-      final nextYear =
-          nextMonth > 12 ? effectiveNow.year + 1 : effectiveNow.year;
+      final nextYear = nextMonth > 12
+          ? effectiveNow.year + 1
+          : effectiveNow.year;
       final normalizedMonth = nextMonth > 12 ? 1 : nextMonth;
       final nextMonthDue = DateTime(
         nextYear,

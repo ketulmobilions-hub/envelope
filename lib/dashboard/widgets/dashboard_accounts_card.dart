@@ -22,8 +22,10 @@ class DashboardAccountsCard extends StatelessWidget {
     final l10n = context.l10n;
     final theme = Theme.of(context);
     final symbol = currencySymbol(context);
-    final activeAccounts =
-        accounts.where((a) => !a.isArchived).take(3).toList();
+    final activeAccounts = accounts
+        .where((a) => !a.isArchived)
+        .take(3)
+        .toList();
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

@@ -39,8 +39,8 @@ class CreditCardFloatWarning extends StatelessWidget {
                 child: Text(
                   context.l10n.ccFloatWarning,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                 ),
               ),
             ],
@@ -56,9 +56,10 @@ class CreditCardFloatWarning extends StatelessWidget {
     final envelopeRepo = context.read<EnvelopeRepository>();
     final budgetRepo = context.read<BudgetRepository>();
     try {
-
-      final ccPaymentEnvelope =
-          await envelopeRepo.getEnvelopeByLinkedAccountId(accountId, budgetId);
+      final ccPaymentEnvelope = await envelopeRepo.getEnvelopeByLinkedAccountId(
+        accountId,
+        budgetId,
+      );
       if (ccPaymentEnvelope == null) return false;
 
       // Find the current budget period.
@@ -74,11 +75,10 @@ class CreditCardFloatWarning extends StatelessWidget {
             periods.where((p) => !p.isClosed).lastOrNull ?? periods.last,
       );
 
-      final alloc =
-          await envelopeRepo.getEnvelopeAllocationByEnvelopeAndPeriod(
-            envelopeId: ccPaymentEnvelope.id,
-            budgetPeriodId: current.id,
-          );
+      final alloc = await envelopeRepo.getEnvelopeAllocationByEnvelopeAndPeriod(
+        envelopeId: ccPaymentEnvelope.id,
+        budgetPeriodId: current.id,
+      );
 
       final reserved = alloc != null
           ? EnvelopeRepository.calculateRollover(alloc)

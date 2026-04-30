@@ -24,9 +24,9 @@ class PeriodSelector extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.chevron_left),
                 onPressed: state.hasPreviousPeriod
-                    ? () => context
-                        .read<BudgetBloc>()
-                        .add(const BudgetPreviousPeriodRequested())
+                    ? () => context.read<BudgetBloc>().add(
+                        const BudgetPreviousPeriodRequested(),
+                      )
                     : null,
               ),
               Text(
@@ -38,9 +38,9 @@ class PeriodSelector extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.chevron_right),
                 onPressed: state.hasNextPeriod
-                    ? () => context
-                        .read<BudgetBloc>()
-                        .add(const BudgetNextPeriodRequested())
+                    ? () => context.read<BudgetBloc>().add(
+                        const BudgetNextPeriodRequested(),
+                      )
                     : null,
               ),
             ],
@@ -52,8 +52,18 @@ class PeriodSelector extends StatelessWidget {
 
   static String _formatPeriod(BudgetPeriod period) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final start = period.startDate;
     final end = period.endDate;

@@ -43,10 +43,12 @@ void main() {
     blocTest<AccountsBloc, AccountsState>(
       'emits [loading, loaded] when AccountsStarted is added',
       build: () {
-        when(() => accountRepository.watchAccounts('budget-1'))
-            .thenAnswer((_) => Stream.value(testAccounts));
-        when(() => accountRepository.refreshAccounts('budget-1'))
-            .thenAnswer((_) async {});
+        when(
+          () => accountRepository.watchAccounts('budget-1'),
+        ).thenAnswer((_) => Stream.value(testAccounts));
+        when(
+          () => accountRepository.refreshAccounts('budget-1'),
+        ).thenAnswer((_) async {});
         return AccountsBloc(
           accountRepository: accountRepository,
           budgetId: 'budget-1',
@@ -69,10 +71,12 @@ void main() {
     blocTest<AccountsBloc, AccountsState>(
       'still loads from local stream when refresh fails',
       build: () {
-        when(() => accountRepository.watchAccounts('budget-1'))
-            .thenAnswer((_) => Stream.value(testAccounts));
-        when(() => accountRepository.refreshAccounts('budget-1'))
-            .thenThrow(const AccountException('Network error'));
+        when(
+          () => accountRepository.watchAccounts('budget-1'),
+        ).thenAnswer((_) => Stream.value(testAccounts));
+        when(
+          () => accountRepository.refreshAccounts('budget-1'),
+        ).thenThrow(const AccountException('Network error'));
         return AccountsBloc(
           accountRepository: accountRepository,
           budgetId: 'budget-1',
@@ -92,8 +96,9 @@ void main() {
       'archives account when AccountArchiveToggled is added '
       'with non-archived account',
       build: () {
-        when(() => accountRepository.archiveAccount('acc-1'))
-            .thenAnswer((_) async {});
+        when(
+          () => accountRepository.archiveAccount('acc-1'),
+        ).thenAnswer((_) async {});
         return AccountsBloc(
           accountRepository: accountRepository,
           budgetId: 'budget-1',
@@ -109,8 +114,9 @@ void main() {
       'unarchives account when AccountArchiveToggled is added '
       'with archived account',
       build: () {
-        when(() => accountRepository.unarchiveAccount('acc-1'))
-            .thenAnswer((_) async {});
+        when(
+          () => accountRepository.unarchiveAccount('acc-1'),
+        ).thenAnswer((_) async {});
         return AccountsBloc(
           accountRepository: accountRepository,
           budgetId: 'budget-1',
@@ -129,8 +135,9 @@ void main() {
     blocTest<AccountsBloc, AccountsState>(
       'emits error then loaded when archive fails',
       build: () {
-        when(() => accountRepository.archiveAccount('acc-1'))
-            .thenThrow(const AccountException('Failed'));
+        when(
+          () => accountRepository.archiveAccount('acc-1'),
+        ).thenThrow(const AccountException('Failed'));
         return AccountsBloc(
           accountRepository: accountRepository,
           budgetId: 'budget-1',
@@ -149,8 +156,9 @@ void main() {
     blocTest<AccountsBloc, AccountsState>(
       'emits error then loaded when delete fails',
       build: () {
-        when(() => accountRepository.deleteAccount('acc-1'))
-            .thenThrow(const AccountException('Failed'));
+        when(
+          () => accountRepository.deleteAccount('acc-1'),
+        ).thenThrow(const AccountException('Failed'));
         return AccountsBloc(
           accountRepository: accountRepository,
           budgetId: 'budget-1',
@@ -169,8 +177,9 @@ void main() {
     blocTest<AccountsBloc, AccountsState>(
       'deletes account when AccountDeleted is added',
       build: () {
-        when(() => accountRepository.deleteAccount('acc-1'))
-            .thenAnswer((_) async {});
+        when(
+          () => accountRepository.deleteAccount('acc-1'),
+        ).thenAnswer((_) async {});
         return AccountsBloc(
           accountRepository: accountRepository,
           budgetId: 'budget-1',
@@ -185,8 +194,9 @@ void main() {
     blocTest<AccountsBloc, AccountsState>(
       'refreshes accounts when AccountsRefreshRequested is added',
       build: () {
-        when(() => accountRepository.refreshAccounts('budget-1'))
-            .thenAnswer((_) async {});
+        when(
+          () => accountRepository.refreshAccounts('budget-1'),
+        ).thenAnswer((_) async {});
         return AccountsBloc(
           accountRepository: accountRepository,
           budgetId: 'budget-1',

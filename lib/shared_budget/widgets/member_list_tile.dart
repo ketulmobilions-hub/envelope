@@ -33,9 +33,7 @@ class MemberListTile extends StatelessWidget {
     return ListTile(
       leading: CircleAvatar(
         child: Text(
-          displayName.isNotEmpty
-              ? displayName[0].toUpperCase()
-              : '?',
+          displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
         ),
       ),
       title: Text(displayName),

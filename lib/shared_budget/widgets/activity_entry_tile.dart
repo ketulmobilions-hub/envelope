@@ -20,8 +20,8 @@ class ActivityEntryTile extends StatelessWidget {
           ? Text(
               entry.details!,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
+                color: Theme.of(context).colorScheme.outline,
+              ),
             )
           : null,
     );
@@ -42,18 +42,14 @@ class ActivityEntryTile extends StatelessWidget {
     AppLocalizations l10n,
   ) {
     return switch (entry.action) {
-      'invite_member' =>
-        l10n.activityLogInvitedUser(entry.userId),
-      'update_role' =>
-        l10n.activityLogUpdatedRole(entry.userId),
-      'remove_member' =>
-        l10n.activityLogRemovedUser(entry.userId),
-      'accept_invitation' =>
-        l10n.activityLogAcceptedInvitation(entry.userId),
+      'invite_member' => l10n.activityLogInvitedUser(entry.userId),
+      'update_role' => l10n.activityLogUpdatedRole(entry.userId),
+      'remove_member' => l10n.activityLogRemovedUser(entry.userId),
+      'accept_invitation' => l10n.activityLogAcceptedInvitation(entry.userId),
       _ => l10n.activityLogActionByUser(
-          entry.action,
-          entry.userId,
-        ),
+        entry.action,
+        entry.userId,
+      ),
     };
   }
 

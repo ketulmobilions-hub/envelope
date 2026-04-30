@@ -191,8 +191,7 @@ class _BillReminderFormPageState extends State<BillReminderFormPage> {
                 AppOptionPicker<String>(
                   options: _frequencies,
                   value: _selectedFrequency,
-                  onChanged: (f) =>
-                      setState(() => _selectedFrequency = f),
+                  onChanged: (f) => setState(() => _selectedFrequency = f),
                   labelText: l10n.recurringFrequencyLabel,
                   icon: Icons.repeat,
                   itemLabel: (f) => localizedFrequency(f, l10n),
@@ -258,8 +257,8 @@ class _BillReminderFormPageState extends State<BillReminderFormPage> {
     setState(() => _isSubmitting = true);
 
     try {
-      final amountCents =
-          ((double.tryParse(_amountController.text) ?? 0) * 100).round();
+      final amountCents = ((double.tryParse(_amountController.text) ?? 0) * 100)
+          .round();
       final dueDay = int.tryParse(_dueDayController.text) ?? 1;
       final reminderDays = int.tryParse(_reminderDaysController.text) ?? 3;
 
@@ -294,5 +293,4 @@ class _BillReminderFormPageState extends State<BillReminderFormPage> {
       if (mounted) setState(() => _isSubmitting = false);
     }
   }
-
 }

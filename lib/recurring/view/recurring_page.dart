@@ -191,7 +191,8 @@ class _RecurringRulesTab extends StatelessWidget {
         itemCount: state.recurringRules.length,
         itemBuilder: (context, index) {
           final rule = state.recurringRules[index];
-          final isPending = !rule.isPaused &&
+          final isPending =
+              !rule.isPaused &&
               !rule.autoPost &&
               !rule.nextOccurrence.isAfter(DateTime.now());
           return RecurringRuleListTile(
@@ -199,12 +200,11 @@ class _RecurringRulesTab extends StatelessWidget {
             isPending: isPending,
             onTap: () => _openEditRule(context, rule),
             onDelete: () => _onDeleteRule(context, rule),
-            onPost: () => context
-                .read<RecurringBloc>()
-                .add(RecurringRulePosted(rule.id)),
-            onPauseToggle: () => context
-                .read<RecurringBloc>()
-                .add(RecurringRulePauseToggled(rule.id)),
+            onPost: () =>
+                context.read<RecurringBloc>().add(RecurringRulePosted(rule.id)),
+            onPauseToggle: () => context.read<RecurringBloc>().add(
+              RecurringRulePauseToggled(rule.id),
+            ),
           );
         },
       ),
@@ -452,8 +452,7 @@ class _SimpleBillPaymentForm extends StatefulWidget {
   final BillReminder reminder;
 
   @override
-  State<_SimpleBillPaymentForm> createState() =>
-      _SimpleBillPaymentFormState();
+  State<_SimpleBillPaymentForm> createState() => _SimpleBillPaymentFormState();
 }
 
 class _SimpleBillPaymentFormState extends State<_SimpleBillPaymentForm> {
@@ -481,8 +480,7 @@ class _SimpleBillPaymentFormState extends State<_SimpleBillPaymentForm> {
       if (mounted) {
         setState(() {
           _accounts = accounts;
-          _selectedAccountId =
-              accounts.isNotEmpty ? accounts.first.id : null;
+          _selectedAccountId = accounts.isNotEmpty ? accounts.first.id : null;
           _isLoadingAccounts = false;
         });
       }
@@ -521,8 +519,7 @@ class _SimpleBillPaymentFormState extends State<_SimpleBillPaymentForm> {
                   value: _accounts
                       .where((a) => a.id == _selectedAccountId)
                       .firstOrNull,
-                  onChanged: (a) =>
-                      setState(() => _selectedAccountId = a.id),
+                  onChanged: (a) => setState(() => _selectedAccountId = a.id),
                   labelText: l10n.transactionsAccountLabel,
                   icon: Icons.account_balance_outlined,
                   itemLabel: (a) => a.name,

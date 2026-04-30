@@ -61,16 +61,15 @@ class _NetWorthReportPageState extends State<NetWorthReportPage> {
                   const SizedBox(height: 24),
                   // Latest snapshot summary
                   _LatestSnapshotCard(
-                    snapshot: ([...state.netWorthSnapshots]
-                          ..sort(
-                            (a, b) => b.date.compareTo(a.date),
-                          ))
-                        .first,
+                    snapshot:
+                        ([...state.netWorthSnapshots]..sort(
+                              (a, b) => b.date.compareTo(a.date),
+                            ))
+                            .first,
                   ),
                   const SizedBox(height: 16),
                 ],
-                if (!hasData && !isLoading)
-                  const ReportEmptyState(),
+                if (!hasData && !isLoading) const ReportEmptyState(),
                 // Record snapshot button — always shown once loaded so users
                 // can record their first snapshot from the empty state.
                 if (!isLoading &&
@@ -163,14 +162,14 @@ class _LatestSnapshotCard extends StatelessWidget {
                   Text(
                     l10n.reportsAssets,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.secondaryText,
-                        ),
+                      color: AppColors.secondaryText,
+                    ),
                   ),
                   Text(
                     formatCents(snapshot.assets, symbol: symbol),
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: AppColors.income,
-                        ),
+                      color: AppColors.income,
+                    ),
                   ),
                 ],
               ),
@@ -181,14 +180,14 @@ class _LatestSnapshotCard extends StatelessWidget {
                   Text(
                     l10n.reportsLiabilities,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.secondaryText,
-                        ),
+                      color: AppColors.secondaryText,
+                    ),
                   ),
                   Text(
                     formatCents(snapshot.liabilities, symbol: symbol),
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: AppColors.expense,
-                        ),
+                      color: AppColors.expense,
+                    ),
                   ),
                 ],
               ),
@@ -199,15 +198,15 @@ class _LatestSnapshotCard extends StatelessWidget {
                   Text(
                     l10n.reportsNetWorth,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.secondaryText,
-                        ),
+                      color: AppColors.secondaryText,
+                    ),
                   ),
                   Text(
                     formatCents(snapshot.netWorth, symbol: symbol),
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),

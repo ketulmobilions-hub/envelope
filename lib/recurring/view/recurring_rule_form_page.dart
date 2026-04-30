@@ -167,8 +167,7 @@ class _RecurringRuleFormPageState extends State<RecurringRuleFormPage> {
                     value: _accounts
                         .where((a) => a.id == _selectedAccountId)
                         .firstOrNull,
-                    onChanged: (a) =>
-                        setState(() => _selectedAccountId = a.id),
+                    onChanged: (a) => setState(() => _selectedAccountId = a.id),
                     labelText: l10n.transactionsAccountLabel,
                     icon: Icons.account_balance_outlined,
                     itemLabel: (a) => a.name,
@@ -247,8 +246,7 @@ class _RecurringRuleFormPageState extends State<RecurringRuleFormPage> {
                 AppOptionPicker<String>(
                   options: _frequencies,
                   value: _selectedFrequency,
-                  onChanged: (f) =>
-                      setState(() => _selectedFrequency = f),
+                  onChanged: (f) => setState(() => _selectedFrequency = f),
                   labelText: l10n.recurringFrequencyLabel,
                   icon: Icons.repeat,
                   itemLabel: (f) => localizedFrequency(f, l10n),
@@ -273,8 +271,7 @@ class _RecurringRuleFormPageState extends State<RecurringRuleFormPage> {
                             if (_selectedFrequency == 'custom') {
                               final n = int.tryParse(value ?? '');
                               if (n == null || n <= 0) {
-                                return l10n
-                                    .recurringCustomIntervalRequired;
+                                return l10n.recurringCustomIntervalRequired;
                               }
                             }
                             return null;
@@ -321,9 +318,7 @@ class _RecurringRuleFormPageState extends State<RecurringRuleFormPage> {
                   leading: const Icon(Icons.event),
                   title: Text(l10n.recurringEndDateLabel),
                   subtitle: Text(
-                    _endDate != null
-                        ? formatTransactionDate(_endDate!)
-                        : '—',
+                    _endDate != null ? formatTransactionDate(_endDate!) : '—',
                   ),
                   onTap: _pickEndDate,
                   trailing: _endDate != null

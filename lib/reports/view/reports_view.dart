@@ -46,8 +46,8 @@ class ReportsView extends StatelessWidget {
                 Text(
                   l10n.reportsSubtitle,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 _ReportsGrid(budgetId: budgetId),

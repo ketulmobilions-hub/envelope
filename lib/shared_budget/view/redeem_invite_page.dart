@@ -30,9 +30,9 @@ class _RedeemInvitePageState extends State<RedeemInvitePage> {
     });
 
     try {
-      final result = await context
-          .read<SharingRepository>()
-          .redeemInvite(widget.inviteId);
+      final result = await context.read<SharingRepository>().redeemInvite(
+        widget.inviteId,
+      );
       setState(() {
         _loading = false;
         _success = true;

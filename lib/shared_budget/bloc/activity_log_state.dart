@@ -49,9 +49,7 @@ final class ActivityLogState extends Equatable {
     return ActivityLogState(
       status: status ?? this.status,
       entries: entries ?? this.entries,
-      error: error == _sentinel
-          ? this.error
-          : error as ActivityLogError?,
+      error: error == _sentinel ? this.error : error as ActivityLogError?,
       filterByUserId: filterByUserId == _sentinel
           ? this.filterByUserId
           : filterByUserId as String?,
@@ -64,6 +62,11 @@ final class ActivityLogState extends Equatable {
   static const Object _sentinel = Object();
 
   @override
-  List<Object?> get props =>
-      [status, entries, error, filterByUserId, filterByAction];
+  List<Object?> get props => [
+    status,
+    entries,
+    error,
+    filterByUserId,
+    filterByAction,
+  ];
 }

@@ -23,8 +23,7 @@ class MockAccountRepository extends Mock implements AccountRepository {}
 
 class MockBudgetRepository extends Mock implements BudgetRepository {}
 
-class MockAuthBloc extends MockBloc<AuthEvent, AuthState>
-    implements AuthBloc {}
+class MockAuthBloc extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
 
 void main() {
   group('OnboardingPage', () {
@@ -74,8 +73,7 @@ void main() {
           child: BlocProvider<AuthBloc>.value(
             value: authBloc,
             child: MaterialApp(
-              localizationsDelegates:
-                  AppLocalizations.localizationsDelegates,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
               home: const OnboardingPage(),
             ),
@@ -97,24 +95,21 @@ void main() {
       return BlocProvider<OnboardingCubit>.value(
         value: cubit,
         child: MaterialApp(
-          localizationsDelegates:
-              AppLocalizations.localizationsDelegates,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: const OnboardingView(),
         ),
       );
     }
 
-    testWidgets('renders WelcomeStep on welcome step',
-        (tester) async {
+    testWidgets('renders WelcomeStep on welcome step', (tester) async {
       when(() => cubit.state).thenReturn(const OnboardingState());
       await tester.pumpWidget(buildSubject());
       await tester.pumpAndSettle();
       expect(find.byType(WelcomeStep), findsOneWidget);
     });
 
-    testWidgets('renders CurrencyStep on currency step',
-        (tester) async {
+    testWidgets('renders CurrencyStep on currency step', (tester) async {
       when(() => cubit.state).thenReturn(
         const OnboardingState(
           currentStep: OnboardingStep.currency,
@@ -125,8 +120,7 @@ void main() {
       expect(find.byType(CurrencyStep), findsOneWidget);
     });
 
-    testWidgets('renders AccountsStep on accounts step',
-        (tester) async {
+    testWidgets('renders AccountsStep on accounts step', (tester) async {
       when(() => cubit.state).thenReturn(
         const OnboardingState(
           currentStep: OnboardingStep.accounts,
@@ -137,8 +131,7 @@ void main() {
       expect(find.byType(AccountsStep), findsOneWidget);
     });
 
-    testWidgets('renders EnvelopesStep on envelopes step',
-        (tester) async {
+    testWidgets('renders EnvelopesStep on envelopes step', (tester) async {
       when(() => cubit.state).thenReturn(
         const OnboardingState(
           currentStep: OnboardingStep.envelopes,
@@ -149,8 +142,7 @@ void main() {
       expect(find.byType(EnvelopesStep), findsOneWidget);
     });
 
-    testWidgets('renders AllocationStep on allocation step',
-        (tester) async {
+    testWidgets('renders AllocationStep on allocation step', (tester) async {
       when(() => cubit.state).thenReturn(
         const OnboardingState(
           currentStep: OnboardingStep.allocation,
@@ -161,9 +153,9 @@ void main() {
       expect(find.byType(AllocationStep), findsOneWidget);
     });
 
-    testWidgets(
-        'shows progress indicator on non-welcome steps',
-        (tester) async {
+    testWidgets('shows progress indicator on non-welcome steps', (
+      tester,
+    ) async {
       when(() => cubit.state).thenReturn(
         const OnboardingState(
           currentStep: OnboardingStep.currency,
@@ -177,9 +169,7 @@ void main() {
       );
     });
 
-    testWidgets(
-        'hides progress indicator on welcome step',
-        (tester) async {
+    testWidgets('hides progress indicator on welcome step', (tester) async {
       when(() => cubit.state).thenReturn(const OnboardingState());
       await tester.pumpWidget(buildSubject());
       await tester.pumpAndSettle();
@@ -213,8 +203,7 @@ void main() {
       verify(() => cubit.nextStep()).called(1);
     });
 
-    testWidgets('shows snackbar on failure with error',
-        (tester) async {
+    testWidgets('shows snackbar on failure with error', (tester) async {
       when(() => cubit.state).thenReturn(const OnboardingState());
       whenListen(
         cubit,

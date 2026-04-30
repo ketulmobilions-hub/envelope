@@ -71,5 +71,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'white-board-3.firebasestorage.app',
     iosBundleId: 'com.envelope.ml',
   );
-
 }

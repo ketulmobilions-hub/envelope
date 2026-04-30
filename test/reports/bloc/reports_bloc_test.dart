@@ -91,10 +91,10 @@ void main() {
   });
 
   ReportsBloc buildBloc() => ReportsBloc(
-        reportRepository: reportRepository,
-        budgetRepository: budgetRepository,
-        budgetId: budgetId,
-      );
+    reportRepository: reportRepository,
+    budgetRepository: budgetRepository,
+    budgetId: budgetId,
+  );
 
   group('ReportsBloc', () {
     test('initial state is correct', () {
@@ -110,18 +110,25 @@ void main() {
       blocTest<ReportsBloc, ReportsState>(
         'subscribes to budget periods and emits loaded',
         setUp: () {
-          when(() => budgetRepository.watchBudgetPeriods(budgetId))
-              .thenAnswer((_) => Stream.value([testPeriod]));
+          when(
+            () => budgetRepository.watchBudgetPeriods(budgetId),
+          ).thenAnswer((_) => Stream.value([testPeriod]));
         },
         build: buildBloc,
         act: (bloc) => bloc.add(const ReportsStarted()),
         wait: const Duration(milliseconds: 50),
         expect: () => [
           // Loading + default dates set
-          isA<ReportsState>()
-              .having((s) => s.status, 'status', ReportsStatus.loading),
-          isA<ReportsState>()
-              .having((s) => s.startDate, 'startDate', isNotNull),
+          isA<ReportsState>().having(
+            (s) => s.status,
+            'status',
+            ReportsStatus.loading,
+          ),
+          isA<ReportsState>().having(
+            (s) => s.startDate,
+            'startDate',
+            isNotNull,
+          ),
           // Periods arrive via stream
           isA<ReportsState>()
               .having((s) => s.status, 'status', ReportsStatus.loaded)
@@ -136,17 +143,24 @@ void main() {
       blocTest<ReportsBloc, ReportsState>(
         'handles empty periods on stream error',
         setUp: () {
-          when(() => budgetRepository.watchBudgetPeriods(budgetId))
-              .thenAnswer((_) => Stream.error(Exception('fail')));
+          when(
+            () => budgetRepository.watchBudgetPeriods(budgetId),
+          ).thenAnswer((_) => Stream.error(Exception('fail')));
         },
         build: buildBloc,
         act: (bloc) => bloc.add(const ReportsStarted()),
         wait: const Duration(milliseconds: 50),
         expect: () => [
-          isA<ReportsState>()
-              .having((s) => s.status, 'status', ReportsStatus.loading),
-          isA<ReportsState>()
-              .having((s) => s.startDate, 'startDate', isNotNull),
+          isA<ReportsState>().having(
+            (s) => s.status,
+            'status',
+            ReportsStatus.loading,
+          ),
+          isA<ReportsState>().having(
+            (s) => s.startDate,
+            'startDate',
+            isNotNull,
+          ),
           // Error fallback sends empty periods
           isA<ReportsState>()
               .having((s) => s.status, 'status', ReportsStatus.loaded)
@@ -175,8 +189,11 @@ void main() {
           ),
         ),
         expect: () => [
-          isA<ReportsState>()
-              .having((s) => s.status, 'status', ReportsStatus.loading),
+          isA<ReportsState>().having(
+            (s) => s.status,
+            'status',
+            ReportsStatus.loading,
+          ),
           isA<ReportsState>()
               .having((s) => s.status, 'status', ReportsStatus.loaded)
               .having(
@@ -202,8 +219,11 @@ void main() {
         build: buildBloc,
         act: (bloc) => bloc.add(const TrendReportRequested(months: 6)),
         expect: () => [
-          isA<ReportsState>()
-              .having((s) => s.status, 'status', ReportsStatus.loading),
+          isA<ReportsState>().having(
+            (s) => s.status,
+            'status',
+            ReportsStatus.loading,
+          ),
           isA<ReportsState>()
               .having((s) => s.status, 'status', ReportsStatus.loaded)
               .having(
@@ -230,8 +250,11 @@ void main() {
           const BudgetVsActualReportRequested(periodId: 'period-1'),
         ),
         expect: () => [
-          isA<ReportsState>()
-              .having((s) => s.status, 'status', ReportsStatus.loading),
+          isA<ReportsState>().having(
+            (s) => s.status,
+            'status',
+            ReportsStatus.loading,
+          ),
           isA<ReportsState>()
               .having((s) => s.status, 'status', ReportsStatus.loaded)
               .having(
@@ -247,14 +270,18 @@ void main() {
       blocTest<ReportsBloc, ReportsState>(
         'loads net worth history',
         setUp: () {
-          when(() => reportRepository.getNetWorthHistory(budgetId))
-              .thenAnswer((_) async => testNetWorthSnapshots);
+          when(
+            () => reportRepository.getNetWorthHistory(budgetId),
+          ).thenAnswer((_) async => testNetWorthSnapshots);
         },
         build: buildBloc,
         act: (bloc) => bloc.add(const NetWorthReportRequested()),
         expect: () => [
-          isA<ReportsState>()
-              .having((s) => s.status, 'status', ReportsStatus.loading),
+          isA<ReportsState>().having(
+            (s) => s.status,
+            'status',
+            ReportsStatus.loading,
+          ),
           isA<ReportsState>()
               .having((s) => s.status, 'status', ReportsStatus.loaded)
               .having(
@@ -275,14 +302,18 @@ void main() {
               budgetId: budgetId,
             ),
           ).thenAnswer((_) async {});
-          when(() => reportRepository.getNetWorthHistory(budgetId))
-              .thenAnswer((_) async => testNetWorthSnapshots);
+          when(
+            () => reportRepository.getNetWorthHistory(budgetId),
+          ).thenAnswer((_) async => testNetWorthSnapshots);
         },
         build: buildBloc,
         act: (bloc) => bloc.add(const NetWorthSnapshotRequested()),
         expect: () => [
-          isA<ReportsState>()
-              .having((s) => s.status, 'status', ReportsStatus.loading),
+          isA<ReportsState>().having(
+            (s) => s.status,
+            'status',
+            ReportsStatus.loading,
+          ),
           isA<ReportsState>()
               .having((s) => s.status, 'status', ReportsStatus.loaded)
               .having(

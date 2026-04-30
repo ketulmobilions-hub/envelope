@@ -24,8 +24,7 @@ class MockBudgetRepository extends Mock implements BudgetRepository {}
 
 class MockEnvelopeRepository extends Mock implements EnvelopeRepository {}
 
-class MockTransactionRepository extends Mock
-    implements TransactionRepository {}
+class MockTransactionRepository extends Mock implements TransactionRepository {}
 
 class MockGoalRepository extends Mock implements GoalRepository {}
 

@@ -34,14 +34,14 @@ final class OverspendData extends Equatable {
 
   @override
   List<Object?> get props => [
-        envelopeName,
-        deficitCents,
-        overspentAllocation,
-        allocations,
-        envelopes,
-        readyToAssign,
-        ccPaymentAllocation,
-      ];
+    envelopeName,
+    deficitCents,
+    overspentAllocation,
+    allocations,
+    envelopes,
+    readyToAssign,
+    ccPaymentAllocation,
+  ];
 }
 
 final class TransactionFormState extends Equatable {
@@ -122,8 +122,8 @@ final class TransactionFormState extends Equatable {
       recurringFrequency: recurringFrequency ?? this.recurringFrequency,
       recurringCustomInterval:
           recurringCustomInterval == _customIntervalSentinel
-              ? this.recurringCustomInterval
-              : recurringCustomInterval as int?,
+          ? this.recurringCustomInterval
+          : recurringCustomInterval as int?,
       recurringCustomUnit: recurringCustomUnit ?? this.recurringCustomUnit,
       recurringEndDate: recurringEndDate == _endDateSentinel
           ? this.recurringEndDate
@@ -134,21 +134,21 @@ final class TransactionFormState extends Equatable {
 
   @override
   List<Object?> get props => [
-        status,
-        accounts,
-        envelopes,
-        categoryGroups,
-        tags,
-        selectedTagIds,
-        initialSplits,
-        errorMessage,
-        tagError,
-        overspendData,
-        isRecurring,
-        recurringFrequency,
-        recurringCustomInterval,
-        recurringCustomUnit,
-        recurringEndDate,
-        recurringAutoPost,
-      ];
+    status,
+    accounts,
+    envelopes,
+    categoryGroups,
+    tags,
+    selectedTagIds,
+    initialSplits,
+    errorMessage,
+    tagError,
+    overspendData,
+    isRecurring,
+    recurringFrequency,
+    recurringCustomInterval,
+    recurringCustomUnit,
+    recurringEndDate,
+    recurringAutoPost,
+  ];
 }

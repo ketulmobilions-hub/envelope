@@ -28,8 +28,7 @@ class EnvelopeDetailCubit extends Cubit<EnvelopeDetailState> {
         .watchTransactions(
           budgetId: envelope.budgetId,
           accountId: envelope.linkedAccountId,
-          envelopeId:
-              envelope.linkedAccountId == null ? envelope.id : null,
+          envelopeId: envelope.linkedAccountId == null ? envelope.id : null,
         )
         .listen((txns) {
           if (_initialTransactionsLoaded && _currentPeriodId != null) {
@@ -42,36 +41,36 @@ class EnvelopeDetailCubit extends Cubit<EnvelopeDetailState> {
     _periodsSubscription = _budgetRepository
         .watchBudgetPeriods(envelope.budgetId)
         .listen((periods) {
-      final sortedPeriods = [...periods]
-        ..sort((a, b) => a.startDate.compareTo(b.startDate));
+          final sortedPeriods = [...periods]
+            ..sort((a, b) => a.startDate.compareTo(b.startDate));
 
-      BudgetPeriod? selected;
-      if (sortedPeriods.isNotEmpty) {
-        final now = DateTime.now();
-        selected = sortedPeriods.firstWhere(
-          (p) =>
-              !p.isClosed &&
-              !p.startDate.isAfter(now) &&
-              !p.endDate.isBefore(now),
-          orElse: () =>
-              sortedPeriods.where((p) => !p.isClosed).lastOrNull ??
-              sortedPeriods.last,
-        );
-      }
+          BudgetPeriod? selected;
+          if (sortedPeriods.isNotEmpty) {
+            final now = DateTime.now();
+            selected = sortedPeriods.firstWhere(
+              (p) =>
+                  !p.isClosed &&
+                  !p.startDate.isAfter(now) &&
+                  !p.endDate.isBefore(now),
+              orElse: () =>
+                  sortedPeriods.where((p) => !p.isClosed).lastOrNull ??
+                  sortedPeriods.last,
+            );
+          }
 
-      if (selected != null && _currentPeriodId != selected.id) {
-        _currentPeriodId = selected.id;
-        _allocationsSubscription?.cancel();
-        _allocationsSubscription = _envelopeRepository
-            .watchAllocations(selected.id)
-            .listen((allocations) {
-          final alloc = allocations
-              .where((a) => a.envelopeId == envelope.id)
-              .firstOrNull;
-          emit(state.copyWith(allocation: alloc));
+          if (selected != null && _currentPeriodId != selected.id) {
+            _currentPeriodId = selected.id;
+            _allocationsSubscription?.cancel();
+            _allocationsSubscription = _envelopeRepository
+                .watchAllocations(selected.id)
+                .listen((allocations) {
+                  final alloc = allocations
+                      .where((a) => a.envelopeId == envelope.id)
+                      .firstOrNull;
+                  emit(state.copyWith(allocation: alloc));
+                });
+          }
         });
-      }
-    });
     unawaited(_refreshTransactions());
   }
 

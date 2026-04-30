@@ -91,8 +91,8 @@ class RecurringRuleListTile extends StatelessWidget {
             Text(
               formatCents(rule.amount, symbol: symbol),
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: typeColor,
-                  ),
+                color: typeColor,
+              ),
             ),
             if (isPending && onPost != null) ...[
               const SizedBox(width: 4),
@@ -128,5 +128,4 @@ class RecurringRuleListTile extends StatelessWidget {
       ),
     );
   }
-
 }

@@ -40,15 +40,15 @@ class _CategoryTile extends StatelessWidget {
       title: Text(
         category.categoryGroupName,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+          fontWeight: FontWeight.w600,
+        ),
       ),
       trailing: Text(
         formatCents(category.amount, symbol: symbol),
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.expense,
-              fontWeight: FontWeight.w600,
-            ),
+          color: AppColors.expense,
+          fontWeight: FontWeight.w600,
+        ),
       ),
       children: [
         for (final envelope in category.envelopes)
@@ -58,8 +58,8 @@ class _CategoryTile extends StatelessWidget {
             trailing: Text(
               formatCents(envelope.amount, symbol: symbol),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.secondaryText,
-                  ),
+                color: AppColors.secondaryText,
+              ),
             ),
           ),
       ],

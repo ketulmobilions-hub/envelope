@@ -32,8 +32,8 @@ class AllocationTemplatePage extends StatelessWidget {
               child: Text(
                 l10n.budgetTemplatesEmpty,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
+                  color: Theme.of(context).colorScheme.outline,
+                ),
               ),
             );
           }
@@ -113,9 +113,7 @@ class AllocationTemplatePage extends StatelessWidget {
       ),
     );
     if (confirmed == true && context.mounted) {
-      context
-          .read<BudgetBloc>()
-          .add(AllocationTemplateDeleted(template.id));
+      context.read<BudgetBloc>().add(AllocationTemplateDeleted(template.id));
     }
   }
 }
@@ -141,14 +139,15 @@ class _TemplateFormPageState extends State<_TemplateFormPage> {
   @override
   void initState() {
     super.initState();
-    _nameController =
-        TextEditingController(text: widget.existing?.name ?? '');
-    _items = widget.existing?.items
+    _nameController = TextEditingController(text: widget.existing?.name ?? '');
+    _items =
+        widget.existing?.items
             .map(
               (item) => _TemplateItemRow(
                 envelopeId: item.envelopeId,
-                percentageController:
-                    TextEditingController(text: item.percentage.toString()),
+                percentageController: TextEditingController(
+                  text: item.percentage.toString(),
+                ),
               ),
             )
             .toList() ??
@@ -188,8 +187,9 @@ class _TemplateFormPageState extends State<_TemplateFormPage> {
       body: BlocBuilder<BudgetBloc, BudgetState>(
         buildWhen: (prev, curr) => prev.envelopes != curr.envelopes,
         builder: (context, state) {
-          final activeEnvelopes =
-              state.envelopes.where((e) => !e.isArchived).toList();
+          final activeEnvelopes = state.envelopes
+              .where((e) => !e.isArchived)
+              .toList();
 
           return Form(
             key: _formKey,
@@ -198,8 +198,9 @@ class _TemplateFormPageState extends State<_TemplateFormPage> {
               children: [
                 TextFormField(
                   controller: _nameController,
-                  decoration:
-                      InputDecoration(labelText: l10n.budgetTemplateNameLabel),
+                  decoration: InputDecoration(
+                    labelText: l10n.budgetTemplateNameLabel,
+                  ),
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) {
                       return l10n.budgetTemplateNameRequired;
@@ -265,8 +266,8 @@ class _TemplateFormPageState extends State<_TemplateFormPage> {
                             onChanged: (v) {
                               if (v != null) {
                                 setState(
-                                  () => _items[idx] =
-                                      _items[idx].withEnvelopeId(v),
+                                  () => _items[idx] = _items[idx]
+                                      .withEnvelopeId(v),
                                 );
                               }
                             },
@@ -317,8 +318,8 @@ class _TemplateFormPageState extends State<_TemplateFormPage> {
                     child: Text(
                       l10n.budgetTemplateNoItems,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.outline,
-                          ),
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
                     ),
                   ),
               ],
@@ -335,8 +336,7 @@ class _TemplateFormPageState extends State<_TemplateFormPage> {
 
     final total = _items.fold<double>(
       0,
-      (sum, row) =>
-          sum + (double.tryParse(row.percentageController.text) ?? 0),
+      (sum, row) => sum + (double.tryParse(row.percentageController.text) ?? 0),
     );
     if ((total - 100).abs() > 0.01) {
       showAppSnackBar(
@@ -361,20 +361,20 @@ class _TemplateFormPageState extends State<_TemplateFormPage> {
 
     if (widget.existing != null) {
       context.read<BudgetBloc>().add(
-            AllocationTemplateUpdated(
-              widget.existing!.copyWith(
-                name: _nameController.text.trim(),
-                items: items,
-              ),
-            ),
-          );
+        AllocationTemplateUpdated(
+          widget.existing!.copyWith(
+            name: _nameController.text.trim(),
+            items: items,
+          ),
+        ),
+      );
     } else {
       context.read<BudgetBloc>().add(
-            AllocationTemplateCreated(
-              name: _nameController.text.trim(),
-              items: items,
-            ),
-          );
+        AllocationTemplateCreated(
+          name: _nameController.text.trim(),
+          items: items,
+        ),
+      );
     }
     Navigator.of(context).pop();
   }
@@ -392,7 +392,7 @@ class _TemplateItemRow {
   final TextEditingController percentageController;
 
   _TemplateItemRow withEnvelopeId(String id) => _TemplateItemRow(
-        envelopeId: id,
-        percentageController: percentageController,
-      );
+    envelopeId: id,
+    percentageController: percentageController,
+  );
 }

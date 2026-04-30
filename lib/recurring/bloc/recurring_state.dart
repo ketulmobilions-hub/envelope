@@ -34,7 +34,8 @@ final class RecurringState extends Equatable {
 
   /// Recurring rules sorted by next occurrence (soonest first).
   List<RecurringRule> get upcomingRules {
-    final active = activeRules..sort(
+    final active = activeRules
+      ..sort(
         (a, b) => a.nextOccurrence.compareTo(b.nextOccurrence),
       );
     return active;

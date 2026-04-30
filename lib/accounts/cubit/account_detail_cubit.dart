@@ -9,8 +9,8 @@ class AccountDetailCubit extends Cubit<AccountDetailState> {
   AccountDetailCubit({
     required AccountRepository accountRepository,
     required Account account,
-  })  : _accountRepository = accountRepository,
-        super(AccountDetailState(account: account)) {
+  }) : _accountRepository = accountRepository,
+       super(AccountDetailState(account: account)) {
     if (isCreditCard(account.type)) _loadDebtAccount();
   }
 
@@ -28,8 +28,7 @@ class AccountDetailCubit extends Cubit<AccountDetailState> {
   /// Refreshes the account data from the repository.
   Future<void> refresh() async {
     try {
-      final updated =
-          await _accountRepository.getAccount(state.account.id);
+      final updated = await _accountRepository.getAccount(state.account.id);
       emit(state.copyWith(account: updated));
       if (isCreditCard(updated.type)) await _loadDebtAccount();
     } on AccountException {
@@ -45,8 +44,7 @@ class AccountDetailCubit extends Cubit<AccountDetailState> {
         state.account.id,
         balanceCents,
       );
-      final refreshed =
-          await _accountRepository.getAccount(state.account.id);
+      final refreshed = await _accountRepository.getAccount(state.account.id);
       emit(
         state.copyWith(
           status: AccountDetailStatus.reconciled,

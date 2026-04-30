@@ -109,8 +109,7 @@ class _TransferFormPageState extends State<TransferFormPage> {
                           value: accounts
                               .where((a) => a.id == _toAccountId)
                               .firstOrNull,
-                          onChanged: (a) =>
-                              setState(() => _toAccountId = a.id),
+                          onChanged: (a) => setState(() => _toAccountId = a.id),
                           labelText: l10n.transactionsTransferTo,
                           icon: Icons.login_outlined,
                           itemLabel: (a) => a.name,
@@ -156,10 +155,10 @@ class _TransferFormPageState extends State<TransferFormPage> {
 
                       // Submit
                       BlocBuilder<TransferFormCubit, TransferFormState>(
-                        buildWhen: (prev, curr) =>
-                            prev.status != curr.status,
+                        buildWhen: (prev, curr) => prev.status != curr.status,
                         builder: (context, submitState) {
-                          final isSubmitting = submitState.status ==
+                          final isSubmitting =
+                              submitState.status ==
                               TransferFormStatus.submitting;
                           return FilledButton(
                             onPressed: isSubmitting ? null : _submit,

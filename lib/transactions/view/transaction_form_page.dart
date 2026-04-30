@@ -150,9 +150,8 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
               _splitsInitialized = true;
             }
 
-            final showRecurringToggle = !_isEditing &&
-                _selectedType != 'transfer' &&
-                !_isSplitMode;
+            final showRecurringToggle =
+                !_isEditing && _selectedType != 'transfer' && !_isSplitMode;
 
             return Column(
               children: [
@@ -166,197 +165,203 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                      // Type selector — pill chips.
-                      Row(
-                        children: [
-                          _TypeChip(
-                            label: l10n.transactionsTypeExpense,
-                            isSelected: _selectedType == 'expense',
-                            onTap: () =>
-                                setState(() => _selectedType = 'expense'),
-                          ),
-                          const SizedBox(width: 8),
-                          _TypeChip(
-                            label: l10n.transactionsTypeIncome,
-                            isSelected: _selectedType == 'income',
-                            onTap: () => setState(() {
-                              _selectedType = 'income';
-                              _selectedEnvelopeId = null;
-                              _isSplitMode = false;
-                            }),
-                          ),
-                          const SizedBox(width: 8),
-                          _TypeChip(
-                            label: l10n.transactionsTypeTransfer,
-                            isSelected: _selectedType == 'transfer',
-                            onTap: () async {
-                              if (_isRecurring) {
-                                setState(() => _isRecurring = false);
-                                context
-                                    .read<TransactionFormCubit>()
-                                    .toggleRecurring(value: false);
-                              }
-                              await _navigateToTransfer();
-                            },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Horizontal date picker.
-                      HorizontalDatePicker(
-                        selectedDate: _selectedDate,
-                        onDateSelected: (date) =>
-                            setState(() => _selectedDate = date),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Account picker
-                      if (accounts.isNotEmpty)
-                        AppOptionPicker<Account>(
-                          options: accounts,
-                          value: accounts
-                              .where((a) => a.id == _selectedAccountId)
-                              .firstOrNull,
-                          onChanged: (a) =>
-                              setState(() => _selectedAccountId = a.id),
-                          labelText: l10n.transactionsAccountLabel,
-                          icon: Icons.account_balance_outlined,
-                          itemLabel: (a) => a.name,
-                        ),
-                      const SizedBox(height: 16),
-
-                      // Envelope picker — hidden for split/income/transfer.
-                      if (!_isSplitMode &&
-                          _selectedType != 'income' &&
-                          _selectedType != 'transfer')
-                        EnvelopePicker(
-                          value: envelopes
-                              .where((e) => e.id == _selectedEnvelopeId)
-                              .firstOrNull,
-                          onChanged: (e) =>
-                              setState(() => _selectedEnvelopeId = e.id),
-                          hideCCPaymentsGroup: true,
-                        ),
-                      if (!_isSplitMode) const SizedBox(height: 16),
-
-                      // Amount — large centered serif display.
-                      TextFormField(
-                        controller: _amountController,
-                        decoration: InputDecoration(
-                          hintText: '${symbol}0.00',
-                          hintStyle: Theme.of(context).textTheme.displaySmall
-                              ?.copyWith(
-                                color: Theme.of(context).colorScheme.outline,
-                              ),
-                          border: InputBorder.none,
-                        ),
-                        style: Theme.of(context).textTheme.displaySmall
-                            ?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                        textAlign: TextAlign.center,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                            RegExp(r'^\-?\d*\.?\d{0,2}'),
-                          ),
-                        ],
-                        textInputAction: TextInputAction.next,
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return l10n.transactionsAmountRequired;
-                          }
-                          final cents = parseCents(value);
-                          if (cents == null || cents <= 0) {
-                            return l10n.transactionsAmountRequired;
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Payee
-                      TextFormField(
-                        controller: _payeeController,
-                        decoration: InputDecoration(
-                          labelText: l10n.transactionsPayeeLabel,
-                          prefixIcon: const Icon(Icons.person_outline),
-                        ),
-                        textInputAction: TextInputAction.next,
-                        textCapitalization: TextCapitalization.words,
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Notes
-                      TextFormField(
-                        controller: _notesController,
-                        decoration: InputDecoration(
-                          labelText: l10n.transactionsNotesLabel,
-                          prefixIcon: const Icon(Icons.notes_outlined),
-                        ),
-                        textInputAction: TextInputAction.done,
-                        maxLines: 2,
-                      ),
-                      const SizedBox(height: 16),
-
-                      const SizedBox(height: 16),
-
-                      // Tags
-                      TagPicker(
-                        availableTags: state.tags,
-                        selectedTagIds: _selectedTagIds,
-                        onChanged: (tagIds) =>
-                            setState(() => _selectedTagIds = tagIds),
-                        onCreateTag: _createTag,
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Make Recurring toggle
-                      if (showRecurringToggle)
-                        SwitchListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text(l10n.recurringMakeRecurringLabel),
-                          value: _isRecurring,
-                          onChanged: (value) {
-                            setState(() => _isRecurring = value);
-                            context
-                                .read<TransactionFormCubit>()
-                                .toggleRecurring(value: value);
-                          },
-                        ),
-
-                      // Recurring settings section (animated expand/collapse)
-                      AnimatedSize(
-                        duration: const Duration(milliseconds: 200),
-                        curve: Curves.easeInOut,
-                        child: showRecurringToggle && _isRecurring
-                            ? BlocBuilder<TransactionFormCubit,
-                                TransactionFormState>(
-                                buildWhen: (prev, curr) =>
-                                    prev.recurringFrequency !=
-                                        curr.recurringFrequency ||
-                                    prev.recurringCustomInterval !=
-                                        curr.recurringCustomInterval ||
-                                    prev.recurringCustomUnit !=
-                                        curr.recurringCustomUnit ||
-                                    prev.recurringEndDate !=
-                                        curr.recurringEndDate ||
-                                    prev.recurringAutoPost !=
-                                        curr.recurringAutoPost,
-                                builder: (context, recurringState) =>
-                                    _RecurringSection(
-                                  state: recurringState,
-                                  selectedDate: _selectedDate,
-                                  isRecurring: _isRecurring,
+                            // Type selector — pill chips.
+                            Row(
+                              children: [
+                                _TypeChip(
+                                  label: l10n.transactionsTypeExpense,
+                                  isSelected: _selectedType == 'expense',
+                                  onTap: () =>
+                                      setState(() => _selectedType = 'expense'),
                                 ),
-                              )
-                            : const SizedBox.shrink(),
-                      ),
+                                const SizedBox(width: 8),
+                                _TypeChip(
+                                  label: l10n.transactionsTypeIncome,
+                                  isSelected: _selectedType == 'income',
+                                  onTap: () => setState(() {
+                                    _selectedType = 'income';
+                                    _selectedEnvelopeId = null;
+                                    _isSplitMode = false;
+                                  }),
+                                ),
+                                const SizedBox(width: 8),
+                                _TypeChip(
+                                  label: l10n.transactionsTypeTransfer,
+                                  isSelected: _selectedType == 'transfer',
+                                  onTap: () async {
+                                    if (_isRecurring) {
+                                      setState(() => _isRecurring = false);
+                                      context
+                                          .read<TransactionFormCubit>()
+                                          .toggleRecurring(value: false);
+                                    }
+                                    await _navigateToTransfer();
+                                  },
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
 
+                            // Horizontal date picker.
+                            HorizontalDatePicker(
+                              selectedDate: _selectedDate,
+                              onDateSelected: (date) =>
+                                  setState(() => _selectedDate = date),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Account picker
+                            if (accounts.isNotEmpty)
+                              AppOptionPicker<Account>(
+                                options: accounts,
+                                value: accounts
+                                    .where((a) => a.id == _selectedAccountId)
+                                    .firstOrNull,
+                                onChanged: (a) =>
+                                    setState(() => _selectedAccountId = a.id),
+                                labelText: l10n.transactionsAccountLabel,
+                                icon: Icons.account_balance_outlined,
+                                itemLabel: (a) => a.name,
+                              ),
+                            const SizedBox(height: 16),
+
+                            // Envelope picker — hidden for split/income/transfer.
+                            if (!_isSplitMode &&
+                                _selectedType != 'income' &&
+                                _selectedType != 'transfer')
+                              EnvelopePicker(
+                                value: envelopes
+                                    .where((e) => e.id == _selectedEnvelopeId)
+                                    .firstOrNull,
+                                onChanged: (e) =>
+                                    setState(() => _selectedEnvelopeId = e.id),
+                                hideCCPaymentsGroup: true,
+                              ),
+                            if (!_isSplitMode) const SizedBox(height: 16),
+
+                            // Amount — large centered serif display.
+                            TextFormField(
+                              controller: _amountController,
+                              decoration: InputDecoration(
+                                hintText: '${symbol}0.00',
+                                hintStyle: Theme.of(context)
+                                    .textTheme
+                                    .displaySmall
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.outline,
+                                    ),
+                                border: InputBorder.none,
+                              ),
+                              style: Theme.of(context).textTheme.displaySmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                              textAlign: TextAlign.center,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'^\-?\d*\.?\d{0,2}'),
+                                ),
+                              ],
+                              textInputAction: TextInputAction.next,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return l10n.transactionsAmountRequired;
+                                }
+                                final cents = parseCents(value);
+                                if (cents == null || cents <= 0) {
+                                  return l10n.transactionsAmountRequired;
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Payee
+                            TextFormField(
+                              controller: _payeeController,
+                              decoration: InputDecoration(
+                                labelText: l10n.transactionsPayeeLabel,
+                                prefixIcon: const Icon(Icons.person_outline),
+                              ),
+                              textInputAction: TextInputAction.next,
+                              textCapitalization: TextCapitalization.words,
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Notes
+                            TextFormField(
+                              controller: _notesController,
+                              decoration: InputDecoration(
+                                labelText: l10n.transactionsNotesLabel,
+                                prefixIcon: const Icon(Icons.notes_outlined),
+                              ),
+                              textInputAction: TextInputAction.done,
+                              maxLines: 2,
+                            ),
+                            const SizedBox(height: 16),
+
+                            const SizedBox(height: 16),
+
+                            // Tags
+                            TagPicker(
+                              availableTags: state.tags,
+                              selectedTagIds: _selectedTagIds,
+                              onChanged: (tagIds) =>
+                                  setState(() => _selectedTagIds = tagIds),
+                              onCreateTag: _createTag,
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            // Make Recurring toggle
+                            if (showRecurringToggle)
+                              SwitchListTile(
+                                contentPadding: EdgeInsets.zero,
+                                title: Text(l10n.recurringMakeRecurringLabel),
+                                value: _isRecurring,
+                                onChanged: (value) {
+                                  setState(() => _isRecurring = value);
+                                  context
+                                      .read<TransactionFormCubit>()
+                                      .toggleRecurring(value: value);
+                                },
+                              ),
+
+                            // Recurring settings section (animated expand/collapse)
+                            AnimatedSize(
+                              duration: const Duration(milliseconds: 200),
+                              curve: Curves.easeInOut,
+                              child: showRecurringToggle && _isRecurring
+                                  ? BlocBuilder<
+                                      TransactionFormCubit,
+                                      TransactionFormState
+                                    >(
+                                      buildWhen: (prev, curr) =>
+                                          prev.recurringFrequency !=
+                                              curr.recurringFrequency ||
+                                          prev.recurringCustomInterval !=
+                                              curr.recurringCustomInterval ||
+                                          prev.recurringCustomUnit !=
+                                              curr.recurringCustomUnit ||
+                                          prev.recurringEndDate !=
+                                              curr.recurringEndDate ||
+                                          prev.recurringAutoPost !=
+                                              curr.recurringAutoPost,
+                                      builder: (context, recurringState) =>
+                                          _RecurringSection(
+                                            state: recurringState,
+                                            selectedDate: _selectedDate,
+                                            isRecurring: _isRecurring,
+                                          ),
+                                    )
+                                  : const SizedBox.shrink(),
+                            ),
                           ],
                         ),
                       ),
@@ -368,31 +373,30 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                   padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
                   child: SizedBox(
                     width: double.infinity,
-                    child: BlocBuilder<TransactionFormCubit,
-                        TransactionFormState>(
-                      buildWhen: (prev, curr) =>
-                          prev.status != curr.status,
-                      builder: (context, submitState) {
-                        final isSubmitting =
-                            submitState.status ==
-                            TransactionFormStatus.submitting;
-                        return FilledButton(
-                          onPressed: isSubmitting ? null : _submit,
-                          child: isSubmitting
-                              ? const SizedBox.square(
-                                  dimension: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : Text(
-                                  _isEditing
-                                      ? l10n.transactionsSaveButton
-                                      : l10n.transactionsCreateButton,
-                                ),
-                        );
-                      },
-                    ),
+                    child:
+                        BlocBuilder<TransactionFormCubit, TransactionFormState>(
+                          buildWhen: (prev, curr) => prev.status != curr.status,
+                          builder: (context, submitState) {
+                            final isSubmitting =
+                                submitState.status ==
+                                TransactionFormStatus.submitting;
+                            return FilledButton(
+                              onPressed: isSubmitting ? null : _submit,
+                              child: isSubmitting
+                                  ? const SizedBox.square(
+                                      dimension: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Text(
+                                      _isEditing
+                                          ? l10n.transactionsSaveButton
+                                          : l10n.transactionsCreateButton,
+                                    ),
+                            );
+                          },
+                        ),
                   ),
                 ),
               ],
@@ -547,9 +551,8 @@ class _RecurringSection extends StatelessWidget {
           AppOptionPicker<String>(
             options: _kFrequencies,
             value: state.recurringFrequency,
-            onChanged: (f) => context
-                .read<TransactionFormCubit>()
-                .setRecurringFrequency(f),
+            onChanged: (f) =>
+                context.read<TransactionFormCubit>().setRecurringFrequency(f),
             labelText: l10n.recurringFrequencyLabel,
             icon: Icons.repeat,
             itemLabel: (f) => _localizedFrequency(f, l10n),
@@ -677,9 +680,9 @@ class _RecurringCustomIntervalRowState
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             textInputAction: TextInputAction.next,
             onChanged: (value) {
-              context
-                  .read<TransactionFormCubit>()
-                  .setRecurringCustomInterval(int.tryParse(value));
+              context.read<TransactionFormCubit>().setRecurringCustomInterval(
+                int.tryParse(value),
+              );
             },
             validator: (value) {
               if (!widget.isRecurring) return null;
@@ -716,9 +719,9 @@ class _RecurringCustomIntervalRowState
             ],
             onChanged: (value) {
               if (value != null) {
-                context
-                    .read<TransactionFormCubit>()
-                    .setRecurringCustomUnit(value);
+                context.read<TransactionFormCubit>().setRecurringCustomUnit(
+                  value,
+                );
               }
             },
           ),

@@ -130,18 +130,18 @@ class TimelineTransactionTile extends StatelessWidget {
                             Text(
                               splitEnvelopeNames != null
                                   ? (transaction.payee?.isNotEmpty == true
-                                      ? transaction.payee!
-                                      : localizedTransactionType(
-                                          transaction.type,
-                                          l10n,
-                                        ))
+                                        ? transaction.payee!
+                                        : localizedTransactionType(
+                                            transaction.type,
+                                            l10n,
+                                          ))
                                   : (envelopeName ??
-                                      (transaction.payee?.isNotEmpty == true
-                                          ? transaction.payee!
-                                          : localizedTransactionType(
-                                              transaction.type,
-                                              l10n,
-                                            ))),
+                                        (transaction.payee?.isNotEmpty == true
+                                            ? transaction.payee!
+                                            : localizedTransactionType(
+                                                transaction.type,
+                                                l10n,
+                                              ))),
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 fontWeight: FontWeight.w500,
                               ),

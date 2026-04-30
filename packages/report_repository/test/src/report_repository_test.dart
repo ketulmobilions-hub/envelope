@@ -1,6 +1,5 @@
 import 'package:envelope_api_client/envelope_api_client.dart';
-import 'package:envelope_local_storage/envelope_local_storage.dart'
-    as storage;
+import 'package:envelope_local_storage/envelope_local_storage.dart' as storage;
 import 'package:mocktail/mocktail.dart';
 import 'package:report_repository/report_repository.dart';
 import 'package:test/test.dart';
@@ -9,36 +8,27 @@ import 'package:test/test.dart';
 // Mocks
 // -----------------------------------------------------------------
 
-class MockEnvelopeApiClient extends Mock
-    implements EnvelopeApiClient {}
+class MockEnvelopeApiClient extends Mock implements EnvelopeApiClient {}
 
-class MockReportsApiClient extends Mock
-    implements ReportsApiClient {}
+class MockReportsApiClient extends Mock implements ReportsApiClient {}
 
-class MockAppDatabase extends Mock
-    implements storage.AppDatabase {}
+class MockAppDatabase extends Mock implements storage.AppDatabase {}
 
-class MockTransactionsDao extends Mock
-    implements storage.TransactionsDao {}
+class MockTransactionsDao extends Mock implements storage.TransactionsDao {}
 
-class MockEnvelopesDao extends Mock
-    implements storage.EnvelopesDao {}
+class MockEnvelopesDao extends Mock implements storage.EnvelopesDao {}
 
-class MockAccountsDao extends Mock
-    implements storage.AccountsDao {}
+class MockAccountsDao extends Mock implements storage.AccountsDao {}
 
-class MockBudgetsDao extends Mock
-    implements storage.BudgetsDao {}
+class MockBudgetsDao extends Mock implements storage.BudgetsDao {}
 
-class MockReportsDao extends Mock
-    implements storage.ReportsDao {}
+class MockReportsDao extends Mock implements storage.ReportsDao {}
 
 // -----------------------------------------------------------------
 // Fakes
 // -----------------------------------------------------------------
 
-class FakeNetWorthSnapshotDto extends Fake
-    implements NetWorthSnapshotDto {}
+class FakeNetWorthSnapshotDto extends Fake implements NetWorthSnapshotDto {}
 
 class FakeNetWorthSnapshotsCompanion extends Fake
     implements storage.NetWorthSnapshotsCompanion {}
@@ -117,23 +107,22 @@ void main() {
     required DateTime date,
     String? envelopeId,
     String? transferPairId,
-  }) =>
-      storage.Transaction(
-        id: id,
-        budgetId: 'budget-1',
-        accountId: 'account-1',
-        envelopeId: envelopeId,
-        type: type,
-        amount: amount,
-        currency: 'USD',
-        exchangeRate: 1,
-        date: date,
-        isReconciled: false,
-        transferPairId: transferPairId,
-        createdBy: 'user-1',
-        createdAt: now,
-        updatedAt: now,
-      );
+  }) => storage.Transaction(
+    id: id,
+    budgetId: 'budget-1',
+    accountId: 'account-1',
+    envelopeId: envelopeId,
+    type: type,
+    amount: amount,
+    currency: 'USD',
+    exchangeRate: 1,
+    date: date,
+    isReconciled: false,
+    transferPairId: transferPairId,
+    createdBy: 'user-1',
+    createdAt: now,
+    updatedAt: now,
+  );
 
   // ---------------------------------------------------------------
   // Setup
@@ -156,18 +145,12 @@ void main() {
     budgetsDao = MockBudgetsDao();
     reportsDao = MockReportsDao();
 
-    when(() => apiClient.reports)
-        .thenReturn(reportsApiClient);
-    when(() => localDatabase.transactionsDao)
-        .thenReturn(transactionsDao);
-    when(() => localDatabase.envelopesDao)
-        .thenReturn(envelopesDao);
-    when(() => localDatabase.accountsDao)
-        .thenReturn(accountsDao);
-    when(() => localDatabase.budgetsDao)
-        .thenReturn(budgetsDao);
-    when(() => localDatabase.reportsDao)
-        .thenReturn(reportsDao);
+    when(() => apiClient.reports).thenReturn(reportsApiClient);
+    when(() => localDatabase.transactionsDao).thenReturn(transactionsDao);
+    when(() => localDatabase.envelopesDao).thenReturn(envelopesDao);
+    when(() => localDatabase.accountsDao).thenReturn(accountsDao);
+    when(() => localDatabase.budgetsDao).thenReturn(budgetsDao);
+    when(() => localDatabase.reportsDao).thenReturn(reportsDao);
 
     repository = ReportRepository(
       apiClient: apiClient,
@@ -183,8 +166,7 @@ void main() {
   group('getSpendingReport', () {
     void stubEnvelopesAndGroups() {
       when(
-        () => envelopesDao
-            .getEnvelopesByBudgetId('budget-1'),
+        () => envelopesDao.getEnvelopesByBudgetId('budget-1'),
       ).thenAnswer(
         (_) async => [
           testEnvelope1,
@@ -193,8 +175,7 @@ void main() {
         ],
       );
       when(
-        () => envelopesDao
-            .getCategoryGroupsByBudgetId('budget-1'),
+        () => envelopesDao.getCategoryGroupsByBudgetId('budget-1'),
       ).thenAnswer(
         (_) async => [
           testCategoryGroup1,
@@ -203,8 +184,7 @@ void main() {
       );
     }
 
-    test('aggregates expenses by envelope and category',
-        () async {
+    test('aggregates expenses by envelope and category', () async {
       final transactions = [
         makeTransaction(
           id: 'tx-1',
@@ -236,8 +216,7 @@ void main() {
       ];
 
       when(
-        () => transactionsDao
-            .getTransactionsByBudgetId('budget-1'),
+        () => transactionsDao.getTransactionsByBudgetId('budget-1'),
       ).thenAnswer((_) async => transactions);
 
       stubEnvelopesAndGroups();
@@ -280,13 +259,11 @@ void main() {
       ];
 
       when(
-        () => transactionsDao
-            .getTransactionsByBudgetId('budget-1'),
+        () => transactionsDao.getTransactionsByBudgetId('budget-1'),
       ).thenAnswer((_) async => transactions);
 
       when(
-        () => transactionsDao
-            .getSplitsByTransactionId('tx-split'),
+        () => transactionsDao.getSplitsByTransactionId('tx-split'),
       ).thenAnswer(
         (_) async => [
           const storage.TransactionSplit(
@@ -340,8 +317,7 @@ void main() {
       ];
 
       when(
-        () => transactionsDao
-            .getTransactionsByBudgetId('budget-1'),
+        () => transactionsDao.getTransactionsByBudgetId('budget-1'),
       ).thenAnswer((_) async => transactions);
 
       stubEnvelopesAndGroups();
@@ -375,8 +351,7 @@ void main() {
       ];
 
       when(
-        () => transactionsDao
-            .getTransactionsByBudgetId('budget-1'),
+        () => transactionsDao.getTransactionsByBudgetId('budget-1'),
       ).thenAnswer((_) async => transactions);
 
       stubEnvelopesAndGroups();
@@ -390,11 +365,9 @@ void main() {
       expect(report.totalSpent, 5000);
     });
 
-    test('returns empty report when no transactions',
-        () async {
+    test('returns empty report when no transactions', () async {
       when(
-        () => transactionsDao
-            .getTransactionsByBudgetId('budget-1'),
+        () => transactionsDao.getTransactionsByBudgetId('budget-1'),
       ).thenAnswer((_) async => []);
 
       stubEnvelopesAndGroups();
@@ -412,8 +385,7 @@ void main() {
 
     test('throws ReportException on failure', () async {
       when(
-        () => transactionsDao
-            .getTransactionsByBudgetId('budget-1'),
+        () => transactionsDao.getTransactionsByBudgetId('budget-1'),
       ).thenThrow(Exception('db error'));
 
       await expectLater(
@@ -464,8 +436,7 @@ void main() {
       ];
 
       when(
-        () => transactionsDao
-            .getTransactionsByBudgetId('budget-1'),
+        () => transactionsDao.getTransactionsByBudgetId('budget-1'),
       ).thenAnswer((_) async => transactions);
 
       final report = await repository.getTrendReport(
@@ -477,8 +448,7 @@ void main() {
 
       // May 2024 bucket (index 1: Apr, May, Jun)
       final may = report.dataPoints.firstWhere(
-        (p) =>
-            p.date.year == 2024 && p.date.month == 5,
+        (p) => p.date.year == 2024 && p.date.month == 5,
       );
       expect(may.income, 300000);
       expect(may.spending, 150000);
@@ -486,8 +456,7 @@ void main() {
 
       // June 2024 bucket
       final june = report.dataPoints.firstWhere(
-        (p) =>
-            p.date.year == 2024 && p.date.month == 6,
+        (p) => p.date.year == 2024 && p.date.month == 6,
       );
       expect(june.income, 300000);
       expect(june.spending, 200000);
@@ -507,8 +476,7 @@ void main() {
       ];
 
       when(
-        () => transactionsDao
-            .getTransactionsByBudgetId('budget-1'),
+        () => transactionsDao.getTransactionsByBudgetId('budget-1'),
       ).thenAnswer((_) async => transactions);
 
       final report = await repository.getTrendReport(
@@ -542,8 +510,7 @@ void main() {
       ];
 
       when(
-        () => transactionsDao
-            .getTransactionsByBudgetId('budget-1'),
+        () => transactionsDao.getTransactionsByBudgetId('budget-1'),
       ).thenAnswer((_) async => transactions);
 
       final report = await repository.getTrendReport(
@@ -551,15 +518,16 @@ void main() {
         months: 3,
       );
 
-      final totalSpending = report.dataPoints
-          .fold(0, (sum, p) => sum + p.spending);
+      final totalSpending = report.dataPoints.fold(
+        0,
+        (sum, p) => sum + p.spending,
+      );
       expect(totalSpending, 1000);
     });
 
     test('throws ReportException on failure', () async {
       when(
-        () => transactionsDao
-            .getTransactionsByBudgetId('budget-1'),
+        () => transactionsDao.getTransactionsByBudgetId('budget-1'),
       ).thenThrow(Exception('db error'));
 
       await expectLater(
@@ -594,8 +562,7 @@ void main() {
       );
 
       when(
-        () => envelopesDao
-            .getAllocationsByPeriodId('period-1'),
+        () => envelopesDao.getAllocationsByPeriodId('period-1'),
       ).thenAnswer(
         (_) async => [
           storage.EnvelopeAllocation(
@@ -620,8 +587,7 @@ void main() {
       );
 
       when(
-        () => envelopesDao
-            .getEnvelopesByBudgetId('budget-1'),
+        () => envelopesDao.getEnvelopesByBudgetId('budget-1'),
       ).thenAnswer(
         (_) async => [
           testEnvelope1,
@@ -630,8 +596,7 @@ void main() {
         ],
       );
       when(
-        () => envelopesDao
-            .getCategoryGroupsByBudgetId('budget-1'),
+        () => envelopesDao.getCategoryGroupsByBudgetId('budget-1'),
       ).thenAnswer(
         (_) async => [
           testCategoryGroup1,
@@ -639,8 +604,7 @@ void main() {
         ],
       );
 
-      final report =
-          await repository.getBudgetVsActualReport(
+      final report = await repository.getBudgetVsActualReport(
         budgetPeriodId: 'period-1',
       );
 
@@ -706,11 +670,9 @@ void main() {
   // ---------------------------------------------------------------
 
   group('getNetWorthHistory', () {
-    test('returns remote data and caches locally',
-        () async {
+    test('returns remote data and caches locally', () async {
       when(
-        () => reportsApiClient
-            .getNetWorthSnapshotsByBudget('budget-1'),
+        () => reportsApiClient.getNetWorthSnapshotsByBudget('budget-1'),
       ).thenAnswer(
         (_) async => [
           NetWorthSnapshotDto(
@@ -726,33 +688,26 @@ void main() {
       );
 
       when(
-        () => reportsDao
-            .insertNetWorthSnapshot(any()),
+        () => reportsDao.insertNetWorthSnapshot(any()),
       ).thenAnswer((_) async => 1);
 
-      final result =
-          await repository.getNetWorthHistory('budget-1');
+      final result = await repository.getNetWorthHistory('budget-1');
 
       expect(result, hasLength(1));
       expect(result.first.netWorth, 400000);
       expect(result.first.assets, 500000);
       verify(
-        () => reportsDao
-            .insertNetWorthSnapshot(any()),
+        () => reportsDao.insertNetWorthSnapshot(any()),
       ).called(1);
     });
 
-    test(
-        'falls back to local when API returns empty',
-        () async {
+    test('falls back to local when API returns empty', () async {
       when(
-        () => reportsApiClient
-            .getNetWorthSnapshotsByBudget('budget-1'),
+        () => reportsApiClient.getNetWorthSnapshotsByBudget('budget-1'),
       ).thenAnswer((_) async => []);
 
       when(
-        () => reportsDao
-            .getNetWorthSnapshotsByBudgetId('budget-1'),
+        () => reportsDao.getNetWorthSnapshotsByBudgetId('budget-1'),
       ).thenAnswer(
         (_) async => [
           storage.NetWorthSnapshot(
@@ -767,26 +722,21 @@ void main() {
         ],
       );
 
-      final result =
-          await repository.getNetWorthHistory('budget-1');
+      final result = await repository.getNetWorthHistory('budget-1');
 
       expect(result, hasLength(1));
       expect(result.first.netWorth, 400000);
     });
 
-    test(
-        'falls back to local cache on network error',
-        () async {
+    test('falls back to local cache on network error', () async {
       when(
-        () => reportsApiClient
-            .getNetWorthSnapshotsByBudget('budget-1'),
+        () => reportsApiClient.getNetWorthSnapshotsByBudget('budget-1'),
       ).thenThrow(
         const EnvelopeApiException('network error'),
       );
 
       when(
-        () => reportsDao
-            .getNetWorthSnapshotsByBudgetId('budget-1'),
+        () => reportsDao.getNetWorthSnapshotsByBudgetId('budget-1'),
       ).thenAnswer(
         (_) async => [
           storage.NetWorthSnapshot(
@@ -801,24 +751,19 @@ void main() {
         ],
       );
 
-      final result =
-          await repository.getNetWorthHistory('budget-1');
+      final result = await repository.getNetWorthHistory('budget-1');
 
       expect(result, hasLength(1));
       expect(result.first.netWorth, 400000);
     });
 
-    test(
-        'throws ReportException when both API and local fail',
-        () async {
+    test('throws ReportException when both API and local fail', () async {
       when(
-        () => reportsApiClient
-            .getNetWorthSnapshotsByBudget('budget-1'),
+        () => reportsApiClient.getNetWorthSnapshotsByBudget('budget-1'),
       ).thenThrow(Exception('network error'));
 
       when(
-        () => reportsDao
-            .getNetWorthSnapshotsByBudgetId('budget-1'),
+        () => reportsDao.getNetWorthSnapshotsByBudgetId('budget-1'),
       ).thenThrow(Exception('db error'));
 
       await expectLater(
@@ -835,8 +780,7 @@ void main() {
   group('recordNetWorthSnapshot', () {
     test('calculates and records snapshot', () async {
       when(
-        () => accountsDao
-            .getAccountsByBudgetId('budget-1'),
+        () => accountsDao.getAccountsByBudgetId('budget-1'),
       ).thenAnswer(
         (_) async => [
           storage.Account(
@@ -897,17 +841,14 @@ void main() {
 
       late NetWorthSnapshotDto capturedDto;
       when(
-        () => reportsApiClient
-            .createNetWorthSnapshot(any()),
+        () => reportsApiClient.createNetWorthSnapshot(any()),
       ).thenAnswer((invocation) async {
         return capturedDto =
-            invocation.positionalArguments[0]
-                as NetWorthSnapshotDto;
+            invocation.positionalArguments[0] as NetWorthSnapshotDto;
       });
 
       when(
-        () => reportsDao
-            .insertNetWorthSnapshot(any()),
+        () => reportsDao.insertNetWorthSnapshot(any()),
       ).thenAnswer((_) async => 1);
 
       await repository.recordNetWorthSnapshot(
@@ -924,15 +865,13 @@ void main() {
       expect(capturedDto.id, 'pending');
 
       verify(
-        () => reportsDao
-            .insertNetWorthSnapshot(any()),
+        () => reportsDao.insertNetWorthSnapshot(any()),
       ).called(1);
     });
 
     test('throws ReportException on failure', () async {
       when(
-        () => accountsDao
-            .getAccountsByBudgetId('budget-1'),
+        () => accountsDao.getAccountsByBudgetId('budget-1'),
       ).thenThrow(Exception('db error'));
 
       await expectLater(
@@ -949,8 +888,7 @@ void main() {
   // ---------------------------------------------------------------
 
   group('exportSpendingReportCsv', () {
-    test('produces correct CSV with formatted amounts',
-        () {
+    test('produces correct CSV with formatted amounts', () {
       final report = SpendingReport(
         startDate: DateTime(2024, 6),
         endDate: DateTime(2024, 6, 30),
@@ -995,8 +933,7 @@ void main() {
   });
 
   group('exportBudgetVsActualCsv', () {
-    test('produces correct CSV with formatted amounts',
-        () {
+    test('produces correct CSV with formatted amounts', () {
       final report = BudgetVsActualReport(
         budgetPeriodId: 'period-1',
         startDate: DateTime(2024, 6),
@@ -1031,8 +968,7 @@ void main() {
   });
 
   group('exportTrendReportCsv', () {
-    test('produces correct CSV with formatted amounts',
-        () {
+    test('produces correct CSV with formatted amounts', () {
       final report = TrendReport(
         dataPoints: [
           TrendDataPoint(
@@ -1092,8 +1028,7 @@ void main() {
         ],
       );
 
-      final bytes =
-          await repository.exportSpendingReportPdf(
+      final bytes = await repository.exportSpendingReportPdf(
         report,
       );
 
@@ -1125,8 +1060,7 @@ void main() {
         ],
       );
 
-      final bytes =
-          await repository.exportBudgetVsActualPdf(
+      final bytes = await repository.exportBudgetVsActualPdf(
         report,
       );
 
@@ -1151,8 +1085,7 @@ void main() {
         ],
       );
 
-      final bytes =
-          await repository.exportTrendReportPdf(
+      final bytes = await repository.exportTrendReportPdf(
         report,
       );
 

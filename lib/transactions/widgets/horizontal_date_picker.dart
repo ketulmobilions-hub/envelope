@@ -97,8 +97,9 @@ class _HorizontalDatePickerState extends State<HorizontalDatePicker> {
                       '${date.day}',
                       style: TextStyle(
                         fontSize: 14,
-                        fontWeight:
-                            isSelected ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                         color: isSelected
                             ? colorScheme.surface
                             : colorScheme.onSurface,

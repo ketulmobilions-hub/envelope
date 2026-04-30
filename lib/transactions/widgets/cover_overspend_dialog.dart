@@ -111,8 +111,9 @@ class _CoverOverspendDialogState extends State<_CoverOverspendDialog> {
           return EnvelopeRepository.calculateRollover(a) > 0;
         })
         .map((a) {
-          final env =
-              widget.envelopes.where((e) => e.id == a.envelopeId).firstOrNull;
+          final env = widget.envelopes
+              .where((e) => e.id == a.envelopeId)
+              .firstOrNull;
           return env != null ? _EnvelopeSource(env, a) : null;
         })
         .whereType<_EnvelopeSource>()
@@ -176,18 +177,17 @@ class _CoverOverspendDialogState extends State<_CoverOverspendDialog> {
                   value: source,
                   child: switch (source) {
                     _ReadyToAssignSource() => Text(
-                        l10n.overspendCoverReadyToAssign(
-                          formatCents(widget.readyToAssign, symbol: symbol),
-                        ),
+                      l10n.overspendCoverReadyToAssign(
+                        formatCents(widget.readyToAssign, symbol: symbol),
                       ),
-                    _EnvelopeSource(:final envelope, :final allocation) =>
-                      Text(
-                        '${envelope.name} '
-                        '(${formatCents(
-                          EnvelopeRepository.calculateRollover(allocation),
-                          symbol: symbol,
-                        )})',
-                      ),
+                    ),
+                    _EnvelopeSource(:final envelope, :final allocation) => Text(
+                      '${envelope.name} '
+                      '(${formatCents(
+                        EnvelopeRepository.calculateRollover(allocation),
+                        symbol: symbol,
+                      )})',
+                    ),
                   },
                 );
               }).toList(),

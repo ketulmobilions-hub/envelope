@@ -21,8 +21,9 @@ void main() {
     transactionRepository = MockTransactionRepository();
     envelopeRepository = MockEnvelopeRepository();
 
-    when(() => envelopeRepository.watchEnvelopes('budget-1'))
-        .thenAnswer((_) => Stream.value([]));
+    when(
+      () => envelopeRepository.watchEnvelopes('budget-1'),
+    ).thenAnswer((_) => Stream.value([]));
   });
 
   group('BillReminderFormPage', () {
@@ -108,15 +109,17 @@ void main() {
     });
 
     testWidgets('submits form and pops on success', (tester) async {
-      when(() => transactionRepository.createBillReminder(
-            budgetId: any(named: 'budgetId'),
-            name: any(named: 'name'),
-            estimatedAmount: any(named: 'estimatedAmount'),
-            dueDay: any(named: 'dueDay'),
-            frequency: any(named: 'frequency'),
-            envelopeId: any(named: 'envelopeId'),
-            reminderDaysBefore: any(named: 'reminderDaysBefore'),
-          )).thenAnswer(
+      when(
+        () => transactionRepository.createBillReminder(
+          budgetId: any(named: 'budgetId'),
+          name: any(named: 'name'),
+          estimatedAmount: any(named: 'estimatedAmount'),
+          dueDay: any(named: 'dueDay'),
+          frequency: any(named: 'frequency'),
+          envelopeId: any(named: 'envelopeId'),
+          reminderDaysBefore: any(named: 'reminderDaysBefore'),
+        ),
+      ).thenAnswer(
         (_) async => BillReminder(
           id: 'new-bill',
           budgetId: 'budget-1',
@@ -156,15 +159,17 @@ void main() {
       await tester.tap(find.text('Create'));
       await tester.pumpAndSettle();
 
-      verify(() => transactionRepository.createBillReminder(
-            budgetId: 'budget-1',
-            name: 'Internet',
-            estimatedAmount: 5000,
-            dueDay: 1,
-            frequency: 'monthly',
-            envelopeId: any(named: 'envelopeId'),
-            reminderDaysBefore: any(named: 'reminderDaysBefore'),
-          )).called(1);
+      verify(
+        () => transactionRepository.createBillReminder(
+          budgetId: 'budget-1',
+          name: 'Internet',
+          estimatedAmount: 5000,
+          dueDay: 1,
+          frequency: 'monthly',
+          envelopeId: any(named: 'envelopeId'),
+          reminderDaysBefore: any(named: 'reminderDaysBefore'),
+        ),
+      ).called(1);
     });
   });
 }
