@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:account_repository/account_repository.dart';
 import 'package:bloc/bloc.dart';
+import 'package:budget_repository/budget_repository.dart';
+import 'package:envelope/accounts/widgets/account_helpers.dart';
+import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
 
 part 'accounts_event.dart';
@@ -10,8 +13,12 @@ part 'accounts_state.dart';
 class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   AccountsBloc({
     required AccountRepository accountRepository,
+    required BudgetRepository budgetRepository,
     required String budgetId,
+    EnvelopeRepository? envelopeRepository,
   }) : _accountRepository = accountRepository,
+       _budgetRepository = budgetRepository,
+       _envelopeRepository = envelopeRepository,
        _budgetId = budgetId,
        super(const AccountsState()) {
     on<AccountsStarted>(_onStarted);
@@ -23,6 +30,8 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   }
 
   final AccountRepository _accountRepository;
+  final BudgetRepository _budgetRepository;
+  final EnvelopeRepository? _envelopeRepository;
   final String _budgetId;
   StreamSubscription<List<Account>>? _accountsSubscription;
 
@@ -47,6 +56,55 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
       await _accountRepository.refreshAccounts(_budgetId);
     } on AccountException {
       // Local watch will still show cached data.
+    }
+
+    // Retroactively create CC Payment envelopes for any CC accounts that
+    // were added before this feature was introduced.
+    unawaited(_migrateCCPaymentEnvelopes());
+  }
+
+  Future<void> _migrateCCPaymentEnvelopes() async {
+    final repo = _envelopeRepository;
+    if (repo == null) return;
+    try {
+      final accounts = await _accountRepository.watchAccounts(_budgetId).first;
+      for (final account in accounts) {
+        if (!isCreditCard(account.type)) continue;
+        final existing = await repo.getEnvelopeByLinkedAccountId(
+          account.id,
+          _budgetId,
+        );
+        if (existing != null) continue;
+
+        final group = await _findOrCreateCCPaymentsGroup(repo);
+        await repo.createEnvelope(
+          categoryGroupId: group.id,
+          budgetId: _budgetId,
+          name: '${account.name} Payment',
+          linkedAccountId: account.id,
+        );
+      }
+    } on Exception {
+      // Best-effort migration; silently ignore errors.
+    }
+  }
+
+  Future<CategoryGroup> _findOrCreateCCPaymentsGroup(
+    EnvelopeRepository repo,
+  ) async {
+    const groupName = 'Credit Card Payments';
+    final groups = await repo.watchCategoryGroups(_budgetId).first;
+    final existing = groups.where((g) => g.name == groupName).firstOrNull;
+    if (existing != null) return existing;
+    try {
+      return await repo.createCategoryGroup(
+        budgetId: _budgetId,
+        name: groupName,
+      );
+    } on Exception {
+      // Another operation may have created it concurrently — re-fetch.
+      final retry = await repo.watchCategoryGroups(_budgetId).first;
+      return retry.firstWhere((g) => g.name == groupName);
     }
   }
 
@@ -93,10 +151,23 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     Emitter<AccountsState> emit,
   ) async {
     try {
-      if (event.account.isArchived) {
-        await _accountRepository.unarchiveAccount(event.account.id);
+      final account = event.account;
+      if (account.isArchived) {
+        await _accountRepository.unarchiveAccount(account.id);
+        if (account.isOnBudget && account.startingBalance != 0) {
+          await _budgetRepository.addIncomeToCurrentPeriod(
+            budgetId: _budgetId,
+            amount: account.startingBalance,
+          );
+        }
       } else {
-        await _accountRepository.archiveAccount(event.account.id);
+        await _accountRepository.archiveAccount(account.id);
+        if (account.isOnBudget && account.startingBalance != 0) {
+          await _budgetRepository.addIncomeToCurrentPeriod(
+            budgetId: _budgetId,
+            amount: -account.startingBalance,
+          );
+        }
       }
     } on AccountException {
       emit(
@@ -114,7 +185,30 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
     Emitter<AccountsState> emit,
   ) async {
     try {
+      final account = state.accounts.firstWhere(
+        (a) => a.id == event.accountId,
+      );
       await _accountRepository.deleteAccount(event.accountId);
+      if (account.isOnBudget && account.startingBalance != 0) {
+        await _budgetRepository.addIncomeToCurrentPeriod(
+          budgetId: _budgetId,
+          amount: -account.startingBalance,
+        );
+      }
+      final repo = _envelopeRepository;
+      if (repo != null && isCreditCard(account.type)) {
+        try {
+          final envelope = await repo.getEnvelopeByLinkedAccountId(
+            event.accountId,
+            _budgetId,
+          );
+          if (envelope != null) {
+            await repo.deleteEnvelope(envelope.id);
+          }
+        } on Exception {
+          // Silently ignore — account deletion already succeeded.
+        }
+      }
     } on AccountException {
       emit(
         state.copyWith(

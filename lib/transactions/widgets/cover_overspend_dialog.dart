@@ -1,6 +1,7 @@
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -38,6 +39,7 @@ Future<bool?> showCoverOverspendDialog(
   required String overspentEnvelopeName,
   required int deficitCents,
   int readyToAssign = 0,
+  EnvelopeAllocation? ccPaymentAllocation,
 }) {
   return showDialog<bool>(
     context: context,
@@ -50,6 +52,7 @@ Future<bool?> showCoverOverspendDialog(
       overspentEnvelopeName: overspentEnvelopeName,
       deficitCents: deficitCents,
       readyToAssign: readyToAssign,
+      ccPaymentAllocation: ccPaymentAllocation,
     ),
   );
 }
@@ -68,6 +71,7 @@ class _CoverOverspendDialog extends StatefulWidget {
     required this.overspentEnvelopeName,
     required this.deficitCents,
     required this.readyToAssign,
+    this.ccPaymentAllocation,
   });
 
   final BudgetRepository budgetRepository;
@@ -78,6 +82,7 @@ class _CoverOverspendDialog extends StatefulWidget {
   final String overspentEnvelopeName;
   final int deficitCents;
   final int readyToAssign;
+  final EnvelopeAllocation? ccPaymentAllocation;
 
   @override
   State<_CoverOverspendDialog> createState() => _CoverOverspendDialogState();
@@ -106,8 +111,9 @@ class _CoverOverspendDialogState extends State<_CoverOverspendDialog> {
           return EnvelopeRepository.calculateRollover(a) > 0;
         })
         .map((a) {
-          final env =
-              widget.envelopes.where((e) => e.id == a.envelopeId).firstOrNull;
+          final env = widget.envelopes
+              .where((e) => e.id == a.envelopeId)
+              .firstOrNull;
           return env != null ? _EnvelopeSource(env, a) : null;
         })
         .whereType<_EnvelopeSource>()
@@ -128,6 +134,7 @@ class _CoverOverspendDialogState extends State<_CoverOverspendDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
 
     if (_sources.isEmpty) {
       return AlertDialog(
@@ -170,17 +177,17 @@ class _CoverOverspendDialogState extends State<_CoverOverspendDialog> {
                   value: source,
                   child: switch (source) {
                     _ReadyToAssignSource() => Text(
-                        l10n.overspendCoverReadyToAssign(
-                          formatCents(widget.readyToAssign),
-                        ),
+                      l10n.overspendCoverReadyToAssign(
+                        formatCents(widget.readyToAssign, symbol: symbol),
                       ),
-                    _EnvelopeSource(:final envelope, :final allocation) =>
-                      Text(
-                        '${envelope.name} '
-                        '(${formatCents(
-                          EnvelopeRepository.calculateRollover(allocation),
-                        )})',
-                      ),
+                    ),
+                    _EnvelopeSource(:final envelope, :final allocation) => Text(
+                      '${envelope.name} '
+                      '(${formatCents(
+                        EnvelopeRepository.calculateRollover(allocation),
+                        symbol: symbol,
+                      )})',
+                    ),
                   },
                 );
               }).toList(),
@@ -195,7 +202,7 @@ class _CoverOverspendDialogState extends State<_CoverOverspendDialog> {
               controller: _amountController,
               decoration: InputDecoration(
                 labelText: l10n.overspendCoverAmountLabel,
-                prefixText: r'$',
+                prefixText: symbol,
               ),
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
@@ -270,6 +277,16 @@ class _CoverOverspendDialogState extends State<_CoverOverspendDialog> {
         await widget.budgetRepository.transferBetweenEnvelopes(
           fromAllocationId: source.allocation.id,
           toAllocationId: widget.overspentAllocation.id,
+          amount: amount,
+        );
+      }
+
+      // If this was a CC-caused overspend, also fund the CC Payment envelope
+      // by the same amount so it reflects the full CC liability.
+      final ccAlloc = widget.ccPaymentAllocation;
+      if (ccAlloc != null && amount > 0) {
+        await widget.budgetRepository.increaseEnvelopeAllocation(
+          allocationId: ccAlloc.id,
           amount: amount,
         );
       }

@@ -22,9 +22,9 @@ class BudgetRepository {
     required EnvelopeApiClient apiClient,
     required storage.AppDatabase localDatabase,
     SupabaseClient? supabaseClient,
-  })  : _apiClient = apiClient,
-        _localDatabase = localDatabase,
-        _supabaseClient = supabaseClient;
+  }) : _apiClient = apiClient,
+       _localDatabase = localDatabase,
+       _supabaseClient = supabaseClient;
 
   final EnvelopeApiClient _apiClient;
   final storage.AppDatabase _localDatabase;
@@ -164,8 +164,7 @@ class BudgetRepository {
   /// Fetches budgets from the API and syncs to local storage.
   Future<void> refreshBudgets(String ownerId) async {
     try {
-      final remote =
-          await _apiClient.budgets.getBudgetsByOwner(ownerId);
+      final remote = await _apiClient.budgets.getBudgetsByOwner(ownerId);
       final companions = remote.map(_toBudgetCompanion).toList();
       await _localDatabase.budgetsDao.batchInsertBudgets(
         companions,
@@ -212,6 +211,7 @@ class BudgetRepository {
   ///
   /// Sends the update to the API and syncs locally.
   Future<void> updateBudgetPeriod(BudgetPeriod period) async {
+    _beginLocalWrite();
     try {
       final dto = BudgetPeriodDto(
         id: period.id,
@@ -225,7 +225,9 @@ class BudgetRepository {
       );
       final updated = await _apiClient.budgets.updateBudgetPeriod(dto);
       await _cacheBudgetPeriod(updated);
+      _endLocalWrite();
     } on EnvelopeApiException catch (e) {
+      _endLocalWrite();
       throw BudgetException(
         'Failed to update budget period',
         error: e,
@@ -242,8 +244,9 @@ class BudgetRepository {
     required int amount,
   }) async {
     try {
-      final periods = await _localDatabase.budgetsDao
-          .getPeriodsByBudgetId(budgetId);
+      final periods = await _localDatabase.budgetsDao.getPeriodsByBudgetId(
+        budgetId,
+      );
       if (periods.isEmpty) return;
 
       final current = periods.reduce(
@@ -262,6 +265,39 @@ class BudgetRepository {
         'Failed to add income to current period',
         error: e,
       );
+    }
+  }
+
+  /// Decrements `totalIncome` on the budget period that contains [date].
+  Future<void> removeIncomeFromPeriod({
+    required String budgetId,
+    required DateTime date,
+    required int amount,
+  }) async {
+    try {
+      final periods = await _localDatabase.budgetsDao.getPeriodsByBudgetId(
+        budgetId,
+      );
+      storage.BudgetPeriod? period;
+      for (final p in periods) {
+        if (!p.startDate.isAfter(date) && !p.endDate.isBefore(date)) {
+          period = p;
+          break;
+        }
+      }
+      if (period == null) return;
+
+      final updatedPeriod = _mapBudgetPeriodFromLocal(period).copyWith(
+        totalIncome: (period.totalIncome - amount).clamp(
+          0,
+          double.maxFinite.toInt(),
+        ),
+      );
+      await updateBudgetPeriod(updatedPeriod);
+    } on BudgetException {
+      rethrow;
+    } on Exception catch (e) {
+      throw BudgetException('Failed to remove income from period', error: e);
     }
   }
 
@@ -298,10 +334,8 @@ class BudgetRepository {
   /// Fetches budget periods from the API and syncs to local storage.
   Future<void> refreshBudgetPeriods(String budgetId) async {
     try {
-      final remote =
-          await _apiClient.budgets.getBudgetPeriods(budgetId);
-      final companions =
-          remote.map(_toBudgetPeriodCompanion).toList();
+      final remote = await _apiClient.budgets.getBudgetPeriods(budgetId);
+      final companions = remote.map(_toBudgetPeriodCompanion).toList();
       await _localDatabase.budgetsDao.batchInsertBudgetPeriods(
         companions,
         mode: InsertMode.insertOrReplace,
@@ -319,8 +353,9 @@ class BudgetRepository {
   Future<BudgetPeriod> autoCreateNextPeriod(String budgetId) async {
     try {
       final budget = await getBudget(budgetId);
-      final periods =
-          await _localDatabase.budgetsDao.getPeriodsByBudgetId(budgetId);
+      final periods = await _localDatabase.budgetsDao.getPeriodsByBudgetId(
+        budgetId,
+      );
 
       DateTime startDate;
       DateTime endDate;
@@ -346,8 +381,10 @@ class BudgetRepository {
         startDate = periods.first.endDate.add(const Duration(days: 1));
       }
 
-      endDate = _addPeriod(startDate, budget.periodType)
-          .subtract(const Duration(days: 1));
+      endDate = _addPeriod(
+        startDate,
+        budget.periodType,
+      ).subtract(const Duration(days: 1));
 
       return createBudgetPeriod(
         budgetId: budgetId,
@@ -373,8 +410,9 @@ class BudgetRepository {
   /// Formula: totalIncome - sum(allocatedAmounts) + sum(rolloverAmounts)
   Future<int> calculateReadyToAssign(String budgetPeriodId) async {
     try {
-      final period = await _localDatabase.budgetsDao
-          .getBudgetPeriod(budgetPeriodId);
+      final period = await _localDatabase.budgetsDao.getBudgetPeriod(
+        budgetPeriodId,
+      );
       if (period == null) {
         throw BudgetException(
           'Budget period not found: $budgetPeriodId',
@@ -426,8 +464,9 @@ class BudgetRepository {
           createdAt: DateTime.now(),
         );
 
-        final created = await _apiClient.envelopes
-            .createEnvelopeAllocation(dto);
+        final created = await _apiClient.envelopes.createEnvelopeAllocation(
+          dto,
+        );
         await _cacheAllocation(created);
       }
     } on EnvelopeApiException catch (e) {
@@ -461,10 +500,12 @@ class BudgetRepository {
 
     try {
       // Fetch the specific allocations directly via API.
-      final fromDto = await _apiClient.envelopes
-          .getEnvelopeAllocation(fromAllocationId);
-      final toDto = await _apiClient.envelopes
-          .getEnvelopeAllocation(toAllocationId);
+      final fromDto = await _apiClient.envelopes.getEnvelopeAllocation(
+        fromAllocationId,
+      );
+      final toDto = await _apiClient.envelopes.getEnvelopeAllocation(
+        toAllocationId,
+      );
 
       if (amount > fromDto.allocatedAmount) {
         throw BudgetException(
@@ -480,18 +521,19 @@ class BudgetRepository {
         allocatedAmount: toDto.allocatedAmount + amount,
       );
 
-      final resultFrom = await _apiClient.envelopes
-          .updateEnvelopeAllocation(updatedFrom);
+      final resultFrom = await _apiClient.envelopes.updateEnvelopeAllocation(
+        updatedFrom,
+      );
 
       // If the second update fails, revert the first.
       EnvelopeAllocationDto resultTo;
       try {
-        resultTo = await _apiClient.envelopes
-            .updateEnvelopeAllocation(updatedTo);
+        resultTo = await _apiClient.envelopes.updateEnvelopeAllocation(
+          updatedTo,
+        );
       } on EnvelopeApiException {
         // Revert the first update.
-        await _apiClient.envelopes
-            .updateEnvelopeAllocation(fromDto);
+        await _apiClient.envelopes.updateEnvelopeAllocation(fromDto);
         rethrow;
       }
 
@@ -502,6 +544,34 @@ class BudgetRepository {
     } on EnvelopeApiException catch (e) {
       throw BudgetException(
         'Failed to transfer between envelopes',
+        error: e,
+      );
+    }
+  }
+
+  /// Increases a single allocation's allocatedAmount by [amount].
+  /// Used for CC payment envelope funding — does NOT reduce any source allocation.
+  Future<void> increaseEnvelopeAllocation({
+    required String allocationId,
+    required int amount,
+  }) async {
+    if (amount <= 0) {
+      throw const BudgetException('Amount must be positive');
+    }
+    try {
+      final dto = await _apiClient.envelopes.getEnvelopeAllocation(
+        allocationId,
+      );
+      final updated = dto.copyWith(
+        allocatedAmount: dto.allocatedAmount + amount,
+      );
+      final result = await _apiClient.envelopes.updateEnvelopeAllocation(
+        updated,
+      );
+      await _cacheAllocation(result);
+    } on EnvelopeApiException catch (e) {
+      throw BudgetException(
+        'Failed to update envelope allocation',
         error: e,
       );
     }
@@ -537,8 +607,9 @@ class BudgetRepository {
           envelopeId: item.envelopeId,
           percentage: item.percentage,
         );
-        final created = await _apiClient.envelopes
-            .createAllocationTemplateItem(itemDto);
+        final created = await _apiClient.envelopes.createAllocationTemplateItem(
+          itemDto,
+        );
         await _cacheTemplateItem(created);
         createdItems.add(created);
       }
@@ -633,19 +704,19 @@ class BudgetRepository {
   ) async {
     try {
       final dto = _mapTemplateToDto(template);
-      final updated = await _apiClient.envelopes
-          .updateAllocationTemplate(dto);
+      final updated = await _apiClient.envelopes.updateAllocationTemplate(dto);
       await _cacheTemplate(updated);
 
       // Replace items: remote-first — delete old from API, then local.
-      final oldItems = await _apiClient.envelopes
-          .getAllocationTemplateItems(template.id);
+      final oldItems = await _apiClient.envelopes.getAllocationTemplateItems(
+        template.id,
+      );
       for (final item in oldItems) {
-        await _apiClient.envelopes
-            .deleteAllocationTemplateItem(item.id);
+        await _apiClient.envelopes.deleteAllocationTemplateItem(item.id);
       }
-      await _localDatabase.envelopesDao
-          .deleteTemplateItemsByTemplateId(template.id);
+      await _localDatabase.envelopesDao.deleteTemplateItemsByTemplateId(
+        template.id,
+      );
 
       for (final item in template.items) {
         final itemDto = AllocationTemplateItemDto(
@@ -654,8 +725,9 @@ class BudgetRepository {
           envelopeId: item.envelopeId,
           percentage: item.percentage,
         );
-        final created = await _apiClient.envelopes
-            .createAllocationTemplateItem(itemDto);
+        final created = await _apiClient.envelopes.createAllocationTemplateItem(
+          itemDto,
+        );
         await _cacheTemplateItem(created);
       }
     } on EnvelopeApiException catch (e) {
@@ -672,11 +744,9 @@ class BudgetRepository {
   Future<void> deleteAllocationTemplate(String id) async {
     try {
       // Delete items first from API.
-      final items = await _apiClient.envelopes
-          .getAllocationTemplateItems(id);
+      final items = await _apiClient.envelopes.getAllocationTemplateItems(id);
       for (final item in items) {
-        await _apiClient.envelopes
-            .deleteAllocationTemplateItem(item.id);
+        await _apiClient.envelopes.deleteAllocationTemplateItem(item.id);
       }
       await _apiClient.envelopes.deleteAllocationTemplate(id);
     } on EnvelopeApiException catch (e) {
@@ -686,8 +756,7 @@ class BudgetRepository {
       );
     }
     try {
-      await _localDatabase.envelopesDao
-          .deleteTemplateItemsByTemplateId(id);
+      await _localDatabase.envelopesDao.deleteTemplateItemsByTemplateId(id);
       await _localDatabase.envelopesDao.deleteTemplate(id);
     } on Exception {
       // Stale local entries will be cleaned up on next refresh.
@@ -709,14 +778,17 @@ class BudgetRepository {
     required int totalAmount,
   }) async {
     try {
-      final items = await _apiClient.envelopes
-          .getAllocationTemplateItems(templateId);
+      final items = await _apiClient.envelopes.getAllocationTemplateItems(
+        templateId,
+      );
 
       if (items.isEmpty) return;
 
       // Validate percentages sum to 100.
-      final percentageSum =
-          items.fold<double>(0, (sum, i) => sum + i.percentage);
+      final percentageSum = items.fold<double>(
+        0,
+        (sum, i) => sum + i.percentage,
+      );
       if ((percentageSum - 100).abs() > 0.01) {
         throw BudgetException(
           'Template item percentages sum to $percentageSum, '
@@ -727,8 +799,7 @@ class BudgetRepository {
       // Check for existing allocations in the target period.
       final existing = await _localDatabase.envelopesDao
           .getAllocationsByPeriodId(budgetPeriodId);
-      final existingEnvelopeIds =
-          existing.map((a) => a.envelopeId).toSet();
+      final existingEnvelopeIds = existing.map((a) => a.envelopeId).toSet();
       final conflicting = items
           .where((i) => existingEnvelopeIds.contains(i.envelopeId))
           .toList();
@@ -761,8 +832,9 @@ class BudgetRepository {
           allocatedAmount: amounts[i],
           createdAt: DateTime.now(),
         );
-        final created = await _apiClient.envelopes
-            .createEnvelopeAllocation(dto);
+        final created = await _apiClient.envelopes.createEnvelopeAllocation(
+          dto,
+        );
         await _cacheAllocation(created);
       }
     } on BudgetException {
@@ -781,18 +853,19 @@ class BudgetRepository {
       final remoteTemplates = await _apiClient.envelopes
           .getAllocationTemplatesByBudget(budgetId);
 
-      final templateCompanions =
-          remoteTemplates.map(_toTemplateCompanion).toList();
+      final templateCompanions = remoteTemplates
+          .map(_toTemplateCompanion)
+          .toList();
       await _localDatabase.envelopesDao.batchInsertTemplates(
         templateCompanions,
         mode: InsertMode.insertOrReplace,
       );
 
       for (final t in remoteTemplates) {
-        final items = await _apiClient.envelopes
-            .getAllocationTemplateItems(t.id);
-        final itemCompanions =
-            items.map(_toTemplateItemCompanion).toList();
+        final items = await _apiClient.envelopes.getAllocationTemplateItems(
+          t.id,
+        );
+        final itemCompanions = items.map(_toTemplateItemCompanion).toList();
         await _localDatabase.envelopesDao.batchInsertTemplateItems(
           itemCompanions,
           mode: InsertMode.insertOrReplace,
@@ -1167,8 +1240,9 @@ class BudgetRepository {
     );
   }
 
-  static storage.AllocationTemplateItemsCompanion
-      _toTemplateItemCompanion(AllocationTemplateItemDto dto) {
+  static storage.AllocationTemplateItemsCompanion _toTemplateItemCompanion(
+    AllocationTemplateItemDto dto,
+  ) {
     return storage.AllocationTemplateItemsCompanion.insert(
       id: dto.id,
       templateId: dto.templateId,

@@ -1,4 +1,9 @@
+import 'package:account_repository/account_repository.dart';
+import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/onboarding/data/currencies.dart';
+import 'package:envelope/shared/widgets/app_option_picker.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/transactions/cubit/cubit.dart';
 import 'package:envelope/transactions/widgets/transaction_helpers.dart';
 import 'package:flutter/material.dart';
@@ -38,6 +43,14 @@ class _TransferFormPageState extends State<TransferFormPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final baseCurrency =
+        context.read<AuthBloc>().state.user?.baseCurrency ?? 'USD';
+    final currencySymbol = supportedCurrencies
+        .firstWhere(
+          (c) => c.code == baseCurrency,
+          orElse: () => supportedCurrencies.first,
+        )
+        .symbol;
 
     return BlocListener<TransferFormCubit, TransferFormState>(
       listener: (context, state) {
@@ -45,11 +58,10 @@ class _TransferFormPageState extends State<TransferFormPage> {
           Navigator.of(context).pop(true);
         } else if (state.status == TransferFormStatus.failure &&
             state.errorMessage != null) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(content: Text(state.errorMessage!)),
-            );
+          showAppSnackBar(
+            context,
+            SnackBar(content: Text(state.errorMessage!)),
+          );
         }
       },
       child: Scaffold(
@@ -77,54 +89,30 @@ class _TransferFormPageState extends State<TransferFormPage> {
                     children: [
                       // From account
                       if (accounts.isNotEmpty)
-                        DropdownButtonFormField<String>(
-                          initialValue: _fromAccountId,
-                          decoration: InputDecoration(
-                            labelText: l10n.transactionsTransferFrom,
-                            prefixIcon: const Icon(Icons.logout_outlined),
-                          ),
-                          items: accounts.map((a) {
-                            return DropdownMenuItem(
-                              value: a.id,
-                              child: Text(a.name),
-                            );
-                          }).toList(),
-                          onChanged: (value) =>
-                              setState(() => _fromAccountId = value),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return l10n.transactionsAccountRequired;
-                            }
-                            return null;
-                          },
+                        AppOptionPicker<Account>(
+                          options: accounts,
+                          value: accounts
+                              .where((a) => a.id == _fromAccountId)
+                              .firstOrNull,
+                          onChanged: (a) =>
+                              setState(() => _fromAccountId = a.id),
+                          labelText: l10n.transactionsTransferFrom,
+                          icon: Icons.logout_outlined,
+                          itemLabel: (a) => a.name,
                         ),
                       const SizedBox(height: 16),
 
                       // To account
                       if (accounts.isNotEmpty)
-                        DropdownButtonFormField<String>(
-                          initialValue: _toAccountId,
-                          decoration: InputDecoration(
-                            labelText: l10n.transactionsTransferTo,
-                            prefixIcon: const Icon(Icons.login_outlined),
-                          ),
-                          items: accounts.map((a) {
-                            return DropdownMenuItem(
-                              value: a.id,
-                              child: Text(a.name),
-                            );
-                          }).toList(),
-                          onChanged: (value) =>
-                              setState(() => _toAccountId = value),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return l10n.transactionsAccountRequired;
-                            }
-                            if (value == _fromAccountId) {
-                              return l10n.transactionsTransferSameAccount;
-                            }
-                            return null;
-                          },
+                        AppOptionPicker<Account>(
+                          options: accounts,
+                          value: accounts
+                              .where((a) => a.id == _toAccountId)
+                              .firstOrNull,
+                          onChanged: (a) => setState(() => _toAccountId = a.id),
+                          labelText: l10n.transactionsTransferTo,
+                          icon: Icons.login_outlined,
+                          itemLabel: (a) => a.name,
                         ),
                       const SizedBox(height: 16),
 
@@ -133,7 +121,7 @@ class _TransferFormPageState extends State<TransferFormPage> {
                         controller: _amountController,
                         decoration: InputDecoration(
                           labelText: l10n.transactionsAmountLabel,
-                          prefixIcon: const Icon(Icons.attach_money),
+                          prefixText: currencySymbol,
                         ),
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
@@ -167,10 +155,10 @@ class _TransferFormPageState extends State<TransferFormPage> {
 
                       // Submit
                       BlocBuilder<TransferFormCubit, TransferFormState>(
-                        buildWhen: (prev, curr) =>
-                            prev.status != curr.status,
+                        buildWhen: (prev, curr) => prev.status != curr.status,
                         builder: (context, submitState) {
-                          final isSubmitting = submitState.status ==
+                          final isSubmitting =
+                              submitState.status ==
                               TransferFormStatus.submitting;
                           return FilledButton(
                             onPressed: isSubmitting ? null : _submit,

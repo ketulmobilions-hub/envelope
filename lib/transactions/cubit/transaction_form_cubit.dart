@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:account_repository/account_repository.dart';
 import 'package:bloc/bloc.dart';
 import 'package:budget_repository/budget_repository.dart';
+import 'package:envelope/accounts/widgets/account_helpers.dart';
 import 'package:envelope/transactions/widgets/split_rows.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
@@ -19,11 +22,11 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     required this.userId,
     this.budgetPeriodId,
     this.transaction,
-  })  : _transactionRepository = transactionRepository,
-        _accountRepository = accountRepository,
-        _envelopeRepository = envelopeRepository,
-        _budgetRepository = budgetRepository,
-        super(const TransactionFormState()) {
+  }) : _transactionRepository = transactionRepository,
+       _accountRepository = accountRepository,
+       _envelopeRepository = envelopeRepository,
+       _budgetRepository = budgetRepository,
+       super(const TransactionFormState()) {
     _loadData();
   }
 
@@ -40,28 +43,33 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
 
   Future<void> _loadData() async {
     try {
-      final accounts = await _accountRepository
-          .watchAccounts(budgetId)
-          .first;
+      final accounts = await _accountRepository.watchAccounts(budgetId).first;
       final envelopes = await _envelopeRepository
           .watchEnvelopes(budgetId)
+          .first;
+      final categoryGroups = await _envelopeRepository
+          .watchCategoryGroups(budgetId)
           .first;
       final tags = await _transactionRepository.getTags(budgetId);
 
       var selectedTagIds = <String>[];
       var initialSplits = <SplitEntry>[];
       if (isEditing) {
-        selectedTagIds = await _transactionRepository
-            .getTagIdsForTransaction(transaction!.id);
+        selectedTagIds = await _transactionRepository.getTagIdsForTransaction(
+          transaction!.id,
+        );
 
-        final splits = await _transactionRepository
-            .getTransactionSplits(transaction!.id);
-        
+        final splits = await _transactionRepository.getTransactionSplits(
+          transaction!.id,
+        );
+
         initialSplits = splits
-            .map((s) => SplitEntry(
-                  envelopeId: s.envelopeId,
-                  amountText: (s.amount / 100).toStringAsFixed(2),
-                ))
+            .map(
+              (s) => SplitEntry(
+                envelopeId: s.envelopeId,
+                amountText: (s.amount / 100).toStringAsFixed(2),
+              ),
+            )
             .toList();
       }
 
@@ -71,6 +79,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
           status: TransactionFormStatus.loaded,
           accounts: accounts,
           envelopes: envelopes,
+          categoryGroups: categoryGroups,
           tags: tags,
           selectedTagIds: selectedTagIds,
           initialSplits: initialSplits,
@@ -104,6 +113,23 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
       if (isClosed) return;
       emit(state.copyWith(tagError: 'Failed to create tag.'));
       emit(state.copyWith());
+    }
+  }
+
+  Future<void> reloadEnvelopes() async {
+    try {
+      final envelopes = await _envelopeRepository
+          .watchEnvelopes(budgetId)
+          .first;
+      final categoryGroups = await _envelopeRepository
+          .watchCategoryGroups(budgetId)
+          .first;
+      if (isClosed) return;
+      emit(
+        state.copyWith(envelopes: envelopes, categoryGroups: categoryGroups),
+      );
+    } on Exception {
+      // Best-effort — stale data remains usable.
     }
   }
 
@@ -169,8 +195,9 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         await _saveTags(transactionId, selectedTagIds);
 
         // Income delta for edits.
-        final oldIncome =
-            transaction!.type == 'income' ? transaction!.amount : 0;
+        final oldIncome = transaction!.type == 'income'
+            ? transaction!.amount
+            : 0;
         final newIncome = type == 'income' ? amountCents : 0;
         final incomeDelta = newIncome - oldIncome;
         if (incomeDelta != 0) {
@@ -202,6 +229,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
           envelopeId: envelopeId,
           isSplitMode: isSplitMode,
           splits: splits,
+          accountId: accountId,
         );
 
         if (isClosed) return;
@@ -227,18 +255,55 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
 
         if (!isFutureDate) {
           // Today or past: post the transaction immediately.
-          final created = await _transactionRepository.createTransaction(
-            budgetId: budgetId,
-            accountId: accountId,
-            type: type,
-            amount: amountCents,
-            currency: 'USD',
-            date: date,
-            createdBy: userId,
-            envelopeId: isSplitMode ? null : envelopeId,
-            payee: payee,
-            notes: notes,
-          );
+
+          // Ensure allocation rows exist before the transaction so the DB
+          // spent-amount trigger has a row to update (even for $0-allocated envelopes).
+          if (type == 'expense' && budgetPeriodId != null) {
+            if (!isSplitMode && envelopeId != null) {
+              try {
+                await _envelopeRepository.ensureAllocation(
+                  envelopeId: envelopeId,
+                  budgetPeriodId: budgetPeriodId!,
+                );
+              } on EnvelopeException {
+                // Best-effort.
+              }
+            } else if (isSplitMode) {
+              for (final split in splits) {
+                if (split.envelopeId != null) {
+                  try {
+                    await _envelopeRepository.ensureAllocation(
+                      envelopeId: split.envelopeId!,
+                      budgetPeriodId: budgetPeriodId!,
+                    );
+                  } on EnvelopeException {
+                    // Best-effort.
+                  }
+                }
+              }
+            }
+          }
+
+          _envelopeRepository.beginExternalWrite();
+          _accountRepository.beginExternalWrite();
+          late Transaction created;
+          try {
+            created = await _transactionRepository.createTransaction(
+              budgetId: budgetId,
+              accountId: accountId,
+              type: type,
+              amount: amountCents,
+              currency: 'USD',
+              date: date,
+              createdBy: userId,
+              envelopeId: isSplitMode ? null : envelopeId,
+              payee: payee,
+              notes: notes,
+            );
+          } finally {
+            _envelopeRepository.endExternalWrite();
+            _accountRepository.endExternalWrite();
+          }
           final transactionId = created.id;
 
           if (isSplitMode) {
@@ -271,6 +336,15 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
             // Best-effort.
           }
 
+          if (type == 'expense' && budgetPeriodId != null) {
+            await _transferToCCPaymentEnvelope(
+              accountId: accountId,
+              envelopeId: isSplitMode ? null : envelopeId,
+              splits: isSplitMode ? splits : [],
+              expenseAmount: amountCents,
+            );
+          }
+
           // Rule starts from the next occurrence so it doesn't banner today.
           await _createRecurringRuleFromForm(
             type: type,
@@ -288,6 +362,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
             envelopeId: envelopeId,
             isSplitMode: isSplitMode,
             splits: splits,
+            accountId: accountId,
           );
 
           if (isClosed) return;
@@ -321,18 +396,55 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         }
       } else {
         // ── Create one-off transaction ─────────────────────────────────────
-        final created = await _transactionRepository.createTransaction(
-          budgetId: budgetId,
-          accountId: accountId,
-          type: type,
-          amount: amountCents,
-          currency: 'USD',
-          date: date,
-          createdBy: userId,
-          envelopeId: isSplitMode ? null : envelopeId,
-          payee: payee,
-          notes: notes,
-        );
+
+        // Ensure allocation rows exist before the transaction so the DB
+        // spent-amount trigger has a row to update (even for $0-allocated envelopes).
+        if (type == 'expense' && budgetPeriodId != null) {
+          if (!isSplitMode && envelopeId != null) {
+            try {
+              await _envelopeRepository.ensureAllocation(
+                envelopeId: envelopeId,
+                budgetPeriodId: budgetPeriodId!,
+              );
+            } on EnvelopeException {
+              // Best-effort.
+            }
+          } else if (isSplitMode) {
+            for (final split in splits) {
+              if (split.envelopeId != null) {
+                try {
+                  await _envelopeRepository.ensureAllocation(
+                    envelopeId: split.envelopeId!,
+                    budgetPeriodId: budgetPeriodId!,
+                  );
+                } on EnvelopeException {
+                  // Best-effort.
+                }
+              }
+            }
+          }
+        }
+
+        _envelopeRepository.beginExternalWrite();
+        _accountRepository.beginExternalWrite();
+        late Transaction created;
+        try {
+          created = await _transactionRepository.createTransaction(
+            budgetId: budgetId,
+            accountId: accountId,
+            type: type,
+            amount: amountCents,
+            currency: 'USD',
+            date: date,
+            createdBy: userId,
+            envelopeId: isSplitMode ? null : envelopeId,
+            payee: payee,
+            notes: notes,
+          );
+        } finally {
+          _envelopeRepository.endExternalWrite();
+          _accountRepository.endExternalWrite();
+        }
         final transactionId = created.id;
 
         if (isSplitMode) {
@@ -352,6 +464,33 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
           }
         }
 
+        if (type == 'expense') {
+          if (!isSplitMode && envelopeId != null) {
+            unawaited(
+              _envelopeRepository.incrementLocalSpentAmount(
+                envelopeId: envelopeId,
+                budgetId: budgetId,
+                date: date,
+                amount: amountCents,
+              ),
+            );
+          } else if (isSplitMode) {
+            for (final split in splits) {
+              final splitEnvId = split.envelopeId;
+              if (splitEnvId != null && split.amountCents > 0) {
+                unawaited(
+                  _envelopeRepository.incrementLocalSpentAmount(
+                    envelopeId: splitEnvId,
+                    budgetId: budgetId,
+                    date: date,
+                    amount: split.amountCents,
+                  ),
+                );
+              }
+            }
+          }
+        }
+
         if (budgetPeriodId != null) {
           try {
             await _envelopeRepository.refreshAllocations(budgetPeriodId!);
@@ -365,11 +504,21 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
           // Best-effort.
         }
 
+        if (type == 'expense' && budgetPeriodId != null) {
+          await _transferToCCPaymentEnvelope(
+            accountId: accountId,
+            envelopeId: isSplitMode ? null : envelopeId,
+            splits: isSplitMode ? splits : [],
+            expenseAmount: amountCents,
+          );
+        }
+
         final overspendData = await _checkOverspend(
           type: type,
           envelopeId: envelopeId,
           isSplitMode: isSplitMode,
           splits: splits,
+          accountId: accountId,
         );
 
         if (isClosed) return;
@@ -459,10 +608,10 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
       'monthly' => _addMonths(from, 1),
       'yearly' => _addMonths(from, 12),
       'custom' => _addCustomInterval(
-          from,
-          customInterval ?? 1,
-          customUnit ?? 'days',
-        ),
+        from,
+        customInterval ?? 1,
+        customUnit ?? 'days',
+      ),
       _ => from.add(const Duration(days: 30)),
     };
   }
@@ -479,12 +628,11 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     DateTime date,
     int interval,
     String unit,
-  ) =>
-      switch (unit) {
-        'weeks' => date.add(Duration(days: interval * 7)),
-        'months' => _addMonths(date, interval),
-        _ => date.add(Duration(days: interval)),
-      };
+  ) => switch (unit) {
+    'weeks' => date.add(Duration(days: interval * 7)),
+    'months' => _addMonths(date, interval),
+    _ => date.add(Duration(days: interval)),
+  };
 
   Future<void> _saveSplits(
     String transactionId,
@@ -527,9 +675,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     final existing = await _transactionRepository.getTagIdsForTransaction(
       transactionId,
     );
-    final toAdd = selectedTagIds
-        .where((id) => !existing.contains(id))
-        .toList();
+    final toAdd = selectedTagIds.where((id) => !existing.contains(id)).toList();
     final toRemove = existing
         .where((id) => !selectedTagIds.contains(id))
         .toList();
@@ -553,6 +699,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     required String? envelopeId,
     required bool isSplitMode,
     required List<SplitEntry> splits,
+    String? accountId,
   }) async {
     final periodId = budgetPeriodId;
     if (periodId == null) return null;
@@ -580,8 +727,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         final alloc = allocations
             .where((a) => a.envelopeId == envId)
             .firstOrNull;
-        if (alloc != null &&
-            EnvelopeRepository.calculateRollover(alloc) < 0) {
+        if (alloc != null && EnvelopeRepository.calculateRollover(alloc) < 0) {
           overspent = alloc;
           break;
         }
@@ -589,7 +735,8 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
       if (overspent == null) return null;
 
       final available = EnvelopeRepository.calculateRollover(overspent);
-      final envelopeName = state.envelopes
+      final envelopeName =
+          state.envelopes
               .where((e) => e.id == overspent!.envelopeId)
               .firstOrNull
               ?.name ??
@@ -609,6 +756,28 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         // Fallback to 0 if unavailable.
       }
 
+      EnvelopeAllocation? ccPaymentAllocation;
+      if (accountId != null && budgetPeriodId != null) {
+        final account = state.accounts
+            .where((a) => a.id == accountId)
+            .firstOrNull;
+        if (account != null && isCreditCard(account.type)) {
+          try {
+            final ccEnvelope = await _envelopeRepository
+                .getEnvelopeByLinkedAccountId(accountId, budgetId);
+            if (ccEnvelope != null) {
+              ccPaymentAllocation = await _envelopeRepository
+                  .getEnvelopeAllocationByEnvelopeAndPeriod(
+                    envelopeId: ccEnvelope.id,
+                    budgetPeriodId: budgetPeriodId!,
+                  );
+            }
+          } on Exception {
+            // Best-effort; omit CC Payment funding if lookup fails.
+          }
+        }
+      }
+
       return OverspendData(
         envelopeName: envelopeName,
         deficitCents: available,
@@ -616,9 +785,38 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         allocations: allocations,
         envelopes: envelopes,
         readyToAssign: readyToAssign,
+        ccPaymentAllocation: ccPaymentAllocation,
       );
     } on Exception {
       return null;
+    }
+  }
+
+  // Ensures the CC Payment envelope has an allocation row for the current
+  // period so it appears in the budget page. No allocation amounts are changed —
+  // CC Payment available is derived from transaction history (YNAB approach).
+  Future<void> _transferToCCPaymentEnvelope({
+    required String accountId,
+    required String? envelopeId,
+    required List<SplitEntry> splits,
+    required int expenseAmount,
+  }) async {
+    try {
+      final account = state.accounts
+          .where((a) => a.id == accountId)
+          .firstOrNull;
+      if (account == null || !isCreditCard(account.type)) return;
+
+      final ccPaymentEnvelope = await _envelopeRepository
+          .getEnvelopeByLinkedAccountId(accountId, budgetId);
+      if (ccPaymentEnvelope == null || budgetPeriodId == null) return;
+
+      await _envelopeRepository.ensureAllocation(
+        envelopeId: ccPaymentEnvelope.id,
+        budgetPeriodId: budgetPeriodId!,
+      );
+    } on Exception {
+      // Best-effort; does not block transaction recording.
     }
   }
 }

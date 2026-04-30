@@ -25,11 +25,17 @@ const double _wideBreakpoint = 900;
 /// - Wide (>=900px): side [NavigationRail] (tablet/web/desktop)
 ///
 /// Tabs: Home, Transactions, Add Transaction, Accounts, Goals.
-class AppShell extends StatelessWidget {
+class AppShell extends StatefulWidget {
   const AppShell({required this.child, super.key});
 
   final Widget child;
 
+  @override
+  State<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends State<AppShell>
+    with SingleTickerProviderStateMixin {
   /// Tab index 2 is the "add transaction" action, not a route.
   static const int _addTransactionIndex = 2;
 
@@ -40,6 +46,46 @@ class AppShell extends StatelessWidget {
     '/accounts',
     '/goals',
   ];
+
+  late final AnimationController _controller;
+  late final CurvedAnimation _curvedAnimation;
+  late final Tween<Offset> _slideTween;
+  late final Animation<Offset> _slideAnimation;
+
+  bool _shouldAnimate = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+      value: 1,
+    );
+    _curvedAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    );
+    _slideTween = Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero);
+    _slideAnimation = _slideTween.animate(_curvedAnimation);
+  }
+
+  @override
+  void dispose() {
+    _curvedAnimation.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(AppShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_shouldAnimate && oldWidget.child != widget.child) {
+      _shouldAnimate = false;
+      _controller.reset();
+      unawaited(_controller.forward());
+    }
+  }
 
   int _selectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
@@ -57,9 +103,13 @@ class AppShell extends StatelessWidget {
     }
     final route = _tabs[index];
     if (route == null) return;
-    
+
     ScaffoldMessenger.of(context).clearSnackBars();
-    
+
+    final isForward = index > _selectedIndex(context);
+    _slideTween.begin = isForward ? const Offset(1, 0) : const Offset(-1, 0);
+    _shouldAnimate = true;
+
     final budgetId =
         context.read<SharedPreferences>().getString(activeBudgetIdKey) ?? '';
     context.go('$route?budgetId=$budgetId');
@@ -82,8 +132,8 @@ class AppShell extends StatelessWidget {
 
     unawaited(
       Navigator.of(context).push<bool>(
-        MaterialPageRoute(
-          builder: (_) => BlocProvider(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => BlocProvider(
             create: (_) => TransactionFormCubit(
               transactionRepository: context.read<TransactionRepository>(),
               accountRepository: context.read<AccountRepository>(),
@@ -95,6 +145,18 @@ class AppShell extends StatelessWidget {
             ),
             child: const TransactionFormPage(),
           ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return SlideTransition(
+              position:
+                  Tween<Offset>(
+                    begin: const Offset(0, 1),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(parent: animation, curve: Curves.easeInOut),
+                  ),
+              child: child,
+            );
+          },
         ),
       ),
     );
@@ -104,6 +166,13 @@ class AppShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final selectedIndex = _selectedIndex(context);
+
+    final animatedChild = ClipRect(
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: widget.child,
+      ),
+    );
 
     return Shortcuts(
       shortcuts: <ShortcutActivator, Intent>{
@@ -136,7 +205,7 @@ class AppShell extends StatelessWidget {
         actions: <Type, Action<Intent>>{
           _AddTransactionIntent: CallbackAction<_AddTransactionIntent>(
             onInvoke: (_) {
-              _openAddTransaction(context);
+              unawaited(_openAddTransaction(context));
               return null;
             },
           ),
@@ -166,15 +235,14 @@ class AppShell extends StatelessWidget {
                       _onDestinationSelected(context, i),
                   onAddTransaction: () => _openAddTransaction(context),
                   l10n: l10n,
-                  child: child,
+                  child: animatedChild,
                 );
               }
 
               return Scaffold(
-                body: child,
+                body: animatedChild,
                 bottomNavigationBar: NavigationBar(
-                  labelBehavior:
-                      NavigationDestinationLabelBehavior.alwaysHide,
+                  labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
                   selectedIndex: selectedIndex,
                   onDestinationSelected: (index) =>
                       _onDestinationSelected(context, index),
@@ -315,15 +383,12 @@ Future<String?> _getCurrentPeriodId(
   String budgetId,
 ) async {
   try {
-    final periods =
-        await budgetRepository.watchBudgetPeriods(budgetId).first;
+    final periods = await budgetRepository.watchBudgetPeriods(budgetId).first;
     if (periods.isEmpty) return null;
     final now = DateTime.now();
     final current = periods.firstWhere(
       (p) =>
-          !p.isClosed &&
-          !p.startDate.isAfter(now) &&
-          !p.endDate.isBefore(now),
+          !p.isClosed && !p.startDate.isAfter(now) && !p.endDate.isBefore(now),
       orElse: () =>
           periods.where((p) => !p.isClosed).lastOrNull ?? periods.last,
     );

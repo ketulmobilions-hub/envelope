@@ -10,8 +10,7 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
   TransactionsDao(super.attachedDatabase);
 
   // Transactions CRUD
-  Future<List<Transaction>> getAllTransactions() =>
-      select(transactions).get();
+  Future<List<Transaction>> getAllTransactions() => select(transactions).get();
 
   Stream<List<Transaction>> watchAllTransactions() =>
       select(transactions).watch();
@@ -26,22 +25,20 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
       (select(transactions)..where((t) => t.budgetId.equals(budgetId))).get();
 
   Stream<List<Transaction>> watchTransactionsByBudgetId(String budgetId) =>
-      (select(transactions)..where((t) => t.budgetId.equals(budgetId)))
-          .watch();
+      (select(transactions)..where((t) => t.budgetId.equals(budgetId))).watch();
 
   Future<List<Transaction>> getTransactionsByAccountId(String accountId) =>
-      (select(transactions)..where((t) => t.accountId.equals(accountId)))
-          .get();
+      (select(transactions)..where((t) => t.accountId.equals(accountId))).get();
 
   Future<List<Transaction>> getTransactionsByEnvelopeId(String envelopeId) =>
-      (select(transactions)..where((t) => t.envelopeId.equals(envelopeId)))
-          .get();
+      (select(
+        transactions,
+      )..where((t) => t.envelopeId.equals(envelopeId))).get();
 
   Future<int> insertTransaction(
     TransactionsCompanion transaction, {
     InsertMode mode = InsertMode.insert,
-  }) =>
-      into(transactions).insert(transaction, mode: mode);
+  }) => into(transactions).insert(transaction, mode: mode);
 
   Future<bool> updateTransaction(TransactionsCompanion transaction) =>
       update(transactions).replace(transaction);
@@ -52,23 +49,20 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
   // Transaction Splits CRUD
   Future<List<TransactionSplit>> getSplitsByTransactionId(
     String transactionId,
-  ) =>
-      (select(transactionSplits)
-            ..where((t) => t.transactionId.equals(transactionId)))
-          .get();
+  ) => (select(
+    transactionSplits,
+  )..where((t) => t.transactionId.equals(transactionId))).get();
 
   Stream<List<TransactionSplit>> watchSplitsByTransactionId(
     String transactionId,
-  ) =>
-      (select(transactionSplits)
-            ..where((t) => t.transactionId.equals(transactionId)))
-          .watch();
+  ) => (select(
+    transactionSplits,
+  )..where((t) => t.transactionId.equals(transactionId))).watch();
 
   Future<int> insertTransactionSplit(
     TransactionSplitsCompanion split, {
     InsertMode mode = InsertMode.insert,
-  }) =>
-      into(transactionSplits).insert(split, mode: mode);
+  }) => into(transactionSplits).insert(split, mode: mode);
 
   Future<bool> updateTransactionSplit(TransactionSplitsCompanion split) =>
       update(transactionSplits).replace(split);
@@ -76,10 +70,9 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
   Future<int> deleteTransactionSplit(String id) =>
       (delete(transactionSplits)..where((t) => t.id.equals(id))).go();
 
-  Future<int> deleteSplitsByTransactionId(String transactionId) =>
-      (delete(transactionSplits)
-            ..where((t) => t.transactionId.equals(transactionId)))
-          .go();
+  Future<int> deleteSplitsByTransactionId(String transactionId) => (delete(
+    transactionSplits,
+  )..where((t) => t.transactionId.equals(transactionId))).go();
 
   /// Watches a map of transactionId → envelopeIds for all split transactions
   /// belonging to [budgetId].
@@ -89,8 +82,7 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
         transactionSplits,
         transactionSplits.transactionId.equalsExp(transactions.id),
       ),
-    ])
-      ..where(transactions.budgetId.equals(budgetId));
+    ])..where(transactions.budgetId.equals(budgetId));
     return query.watch().map((rows) {
       final result = <String, List<String>>{};
       for (final row in rows) {
@@ -114,8 +106,7 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
   Future<int> insertTag(
     TagsCompanion tag, {
     InsertMode mode = InsertMode.insert,
-  }) =>
-      into(tags).insert(tag, mode: mode);
+  }) => into(tags).insert(tag, mode: mode);
 
   Future<bool> updateTag(TagsCompanion tag) => update(tags).replace(tag);
 
@@ -125,10 +116,9 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
   // Transaction Tags CRUD
   Future<List<TransactionTag>> getTagsByTransactionId(
     String transactionId,
-  ) =>
-      (select(transactionTags)
-            ..where((t) => t.transactionId.equals(transactionId)))
-          .get();
+  ) => (select(
+    transactionTags,
+  )..where((t) => t.transactionId.equals(transactionId))).get();
 
   Future<List<TransactionTag>> getTransactionsByTagId(String tagId) =>
       (select(transactionTags)..where((t) => t.tagId.equals(tagId))).get();
@@ -136,23 +126,19 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
   Future<int> insertTransactionTag(
     TransactionTagsCompanion transactionTag, {
     InsertMode mode = InsertMode.insert,
-  }) =>
-      into(transactionTags).insert(transactionTag, mode: mode);
+  }) => into(transactionTags).insert(transactionTag, mode: mode);
 
   Future<int> deleteTransactionTag({
     required String transactionId,
     required String tagId,
   }) =>
-      (delete(transactionTags)
-            ..where(
-              (t) =>
-                  t.transactionId.equals(transactionId) &
-                  t.tagId.equals(tagId),
-            ))
+      (delete(transactionTags)..where(
+            (t) =>
+                t.transactionId.equals(transactionId) & t.tagId.equals(tagId),
+          ))
           .go();
 
-  Future<int> deleteTagsByTransactionId(String transactionId) =>
-      (delete(transactionTags)
-            ..where((t) => t.transactionId.equals(transactionId)))
-          .go();
+  Future<int> deleteTagsByTransactionId(String transactionId) => (delete(
+    transactionTags,
+  )..where((t) => t.transactionId.equals(transactionId))).go();
 }

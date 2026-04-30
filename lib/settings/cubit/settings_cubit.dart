@@ -16,10 +16,10 @@ class SettingsCubit extends Cubit<SettingsState> {
     required AuthRepository authRepository,
     required EnvelopeApiClient apiClient,
     required AppDatabase localDatabase,
-  })  : _authRepository = authRepository,
-        _apiClient = apiClient,
-        _localDatabase = localDatabase,
-        super(const SettingsState());
+  }) : _authRepository = authRepository,
+       _apiClient = apiClient,
+       _localDatabase = localDatabase,
+       super(const SettingsState());
 
   final AuthRepository _authRepository;
   final EnvelopeApiClient _apiClient;
@@ -119,14 +119,16 @@ class SettingsCubit extends Cubit<SettingsState> {
     try {
       await _authRepository.deleteAccount();
       await _localDatabase.clearAllTables();
-      emit(state.copyWith(status: SettingsStatus.success));
+      if (!isClosed) emit(state.copyWith(status: SettingsStatus.success));
     } on Exception {
-      emit(
-        state.copyWith(
-          status: SettingsStatus.error,
-          errorMessage: SettingsMessage.deleteAccountFailed,
-        ),
-      );
+      if (!isClosed) {
+        emit(
+          state.copyWith(
+            status: SettingsStatus.error,
+            errorMessage: SettingsMessage.deleteAccountFailed,
+          ),
+        );
+      }
     }
   }
 

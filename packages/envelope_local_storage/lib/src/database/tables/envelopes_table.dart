@@ -10,6 +10,8 @@ class Envelopes extends Table {
   BoolColumn get isArchived =>
       boolean().named('is_archived').withDefault(const Constant(false))();
   TextColumn get color => text().nullable()();
+  TextColumn get linkedAccountId =>
+      text().named('linked_account_id').nullable()();
   DateTimeColumn get createdAt => dateTime().named('created_at')();
   DateTimeColumn get deletedAt => dateTime().named('deleted_at').nullable()();
 

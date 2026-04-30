@@ -248,6 +248,7 @@ class EnvelopeRepository {
     required String budgetId,
     required String name,
     String? color,
+    String? linkedAccountId,
   }) async {
     _beginLocalWrite();
     try {
@@ -257,6 +258,7 @@ class EnvelopeRepository {
         budgetId: budgetId,
         name: name,
         color: color,
+        linkedAccountId: linkedAccountId,
         createdAt: DateTime.now(),
       );
 
@@ -270,6 +272,28 @@ class EnvelopeRepository {
         'Failed to create envelope',
         error: e,
       );
+    }
+  }
+
+  /// Returns the CC Payment envelope linked to [accountId], or null if none exists.
+  Future<Envelope?> getEnvelopeByLinkedAccountId(
+    String accountId,
+    String budgetId,
+  ) async {
+    try {
+      final local = await _localDatabase.envelopesDao
+          .getEnvelopeByLinkedAccountId(accountId, budgetId);
+      if (local != null) return _mapEnvelopeFromLocal(local);
+
+      // Fallback: search remote envelopes for the budget and find the match.
+      final remote = await _apiClient.envelopes.getEnvelopesByBudget(budgetId);
+      final match = remote.where((e) => e.linkedAccountId == accountId);
+      if (match.isEmpty) return null;
+      final dto = match.first;
+      await _cacheEnvelope(dto);
+      return _mapEnvelopeFromDto(dto);
+    } on Exception {
+      return null;
     }
   }
 
@@ -527,6 +551,35 @@ class EnvelopeRepository {
     }
   }
 
+  /// Ensures a \$0 allocation record exists for [envelopeId] in [budgetPeriodId].
+  ///
+  /// No-op if one already exists. Called before creating expense transactions
+  /// so the DB spent-amount trigger has a row to update.
+  Future<void> ensureAllocation({
+    required String envelopeId,
+    required String budgetPeriodId,
+  }) async {
+    final existing = await _localDatabase.envelopesDao
+        .getAllocationByEnvelopeAndPeriod(envelopeId, budgetPeriodId);
+    if (existing != null) return;
+    await allocate(
+      envelopeId: envelopeId,
+      budgetPeriodId: budgetPeriodId,
+      amount: 0,
+    );
+  }
+
+  /// Gets the allocation for [envelopeId] in [budgetPeriodId], or null.
+  Future<EnvelopeAllocation?> getEnvelopeAllocationByEnvelopeAndPeriod({
+    required String envelopeId,
+    required String budgetPeriodId,
+  }) async {
+    final local = await _localDatabase.envelopesDao
+        .getAllocationByEnvelopeAndPeriod(envelopeId, budgetPeriodId);
+    if (local != null) return _mapAllocationFromLocal(local);
+    return null;
+  }
+
   /// Watches all allocations for a [budgetPeriodId].
   ///
   /// Returns a reactive stream from local storage.
@@ -601,8 +654,9 @@ class EnvelopeRepository {
   }) async {
     try {
       // Find the budget period that contains this date (local DB only).
-      final periods = await _localDatabase.budgetsDao
-          .getPeriodsByBudgetId(budgetId);
+      final periods = await _localDatabase.budgetsDao.getPeriodsByBudgetId(
+        budgetId,
+      );
       storage.BudgetPeriod? period;
       for (final p in periods) {
         if (!p.startDate.isAfter(date) && !p.endDate.isBefore(date)) {
@@ -613,8 +667,9 @@ class EnvelopeRepository {
       if (period == null) return;
 
       // Find the local allocation for this envelope in that period.
-      final allocs = await _localDatabase.envelopesDao
-          .getAllocationsByPeriodId(period.id);
+      final allocs = await _localDatabase.envelopesDao.getAllocationsByPeriodId(
+        period.id,
+      );
       storage.EnvelopeAllocation? alloc;
       for (final a in allocs) {
         if (a.envelopeId == envelopeId) {
@@ -641,6 +696,91 @@ class EnvelopeRepository {
       // Best-effort — the async refreshAllocations call will correct any
       // discrepancy on the next round-trip.
     }
+  }
+
+  /// Immediately increments `spentAmount` in local SQLite for the allocation
+  /// matching [envelopeId] + the budget period that contains [date] in
+  /// [budgetId]. No API call is made — this is an optimistic update to give
+  /// instant UI feedback after an expense transaction is created.
+  Future<void> incrementLocalSpentAmount({
+    required String envelopeId,
+    required String budgetId,
+    required DateTime date,
+    required int amount,
+  }) async {
+    try {
+      final periods = await _localDatabase.budgetsDao.getPeriodsByBudgetId(
+        budgetId,
+      );
+      storage.BudgetPeriod? period;
+      for (final p in periods) {
+        if (!p.startDate.isAfter(date) && !p.endDate.isBefore(date)) {
+          period = p;
+          break;
+        }
+      }
+      if (period == null) return;
+
+      final allocs = await _localDatabase.envelopesDao.getAllocationsByPeriodId(
+        period.id,
+      );
+      storage.EnvelopeAllocation? alloc;
+      for (final a in allocs) {
+        if (a.envelopeId == envelopeId) {
+          alloc = a;
+          break;
+        }
+      }
+      if (alloc == null) return;
+
+      await _localDatabase.envelopesDao.updateAllocation(
+        storage.EnvelopeAllocationsCompanion(
+          id: Value(alloc.id),
+          envelopeId: Value(alloc.envelopeId),
+          budgetPeriodId: Value(alloc.budgetPeriodId),
+          allocatedAmount: Value(alloc.allocatedAmount),
+          spentAmount: Value(alloc.spentAmount + amount),
+          rolloverAmount: Value(alloc.rolloverAmount),
+          createdAt: Value(alloc.createdAt),
+        ),
+      );
+    } on Exception {
+      // Best-effort — refreshAllocations will correct any discrepancy.
+    }
+  }
+
+  /// Computes the available balance for a CC Payment envelope using
+  /// transaction history instead of allocated_amount manipulation.
+  ///
+  /// Formula: allocated + CC charges in period - CC payments in period + rollover
+  Future<int> calculateCCPaymentAvailable({
+    required EnvelopeAllocation? allocation,
+    required String ccAccountId,
+    required DateTime periodStart,
+    required DateTime periodEnd,
+  }) async {
+    final allocated = allocation?.allocatedAmount ?? 0;
+    final rollover = allocation?.rolloverAmount ?? 0;
+
+    final txns = await _localDatabase.transactionsDao
+        .getTransactionsByAccountId(ccAccountId);
+
+    final inPeriod = txns.where(
+      (t) =>
+          t.deletedAt == null &&
+          !t.date.isBefore(periodStart) &&
+          !t.date.isAfter(periodEnd),
+    );
+
+    final charges = inPeriod
+        .where((t) => t.type == 'expense')
+        .fold(0, (sum, t) => sum + t.amount);
+
+    final payments = inPeriod
+        .where((t) => t.type == 'transfer' && t.amount > 0)
+        .fold(0, (sum, t) => sum + t.amount);
+
+    return allocated + charges - payments + rollover;
   }
 
   /// Fetches allocations from the API and syncs to local storage.
@@ -704,7 +844,12 @@ class EnvelopeRepository {
                 case PostgresChangeEvent.update:
                   if (newRecord.isNotEmpty) {
                     final dto = EnvelopeDto.fromJson(newRecord);
-                    await _cacheEnvelope(dto);
+                    // Soft-deleted envelopes must be removed locally, not cached.
+                    if (newRecord['deleted_at'] != null) {
+                      await _localDatabase.envelopesDao.deleteEnvelope(dto.id);
+                    } else {
+                      await _cacheEnvelope(dto);
+                    }
                     if (_localWriteCount == 0) {
                       _remoteChangeController.add(null);
                     }
@@ -845,6 +990,10 @@ class EnvelopeRepository {
     return channel;
   }
 
+  void beginExternalWrite() => _beginLocalWrite();
+
+  void endExternalWrite() => _endLocalWrite();
+
   void _beginLocalWrite() => _localWriteCount++;
 
   void _endLocalWrite() {
@@ -913,6 +1062,7 @@ class EnvelopeRepository {
       sortOrder: dto.sortOrder,
       isArchived: dto.isArchived,
       color: dto.color,
+      linkedAccountId: dto.linkedAccountId,
       createdAt: dto.createdAt,
     );
   }
@@ -926,6 +1076,7 @@ class EnvelopeRepository {
       sortOrder: row.sortOrder,
       isArchived: row.isArchived,
       color: row.color,
+      linkedAccountId: row.linkedAccountId,
       createdAt: row.createdAt,
     );
   }
@@ -939,6 +1090,7 @@ class EnvelopeRepository {
       sortOrder: envelope.sortOrder,
       isArchived: envelope.isArchived,
       color: envelope.color,
+      linkedAccountId: envelope.linkedAccountId,
       createdAt: envelope.createdAt,
     );
   }
@@ -1021,6 +1173,7 @@ class EnvelopeRepository {
       sortOrder: Value(dto.sortOrder),
       isArchived: Value(dto.isArchived),
       color: Value(dto.color),
+      linkedAccountId: Value(dto.linkedAccountId),
       createdAt: dto.createdAt,
     );
   }

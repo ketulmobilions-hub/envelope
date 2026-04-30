@@ -17,6 +17,5 @@ abstract class Budget with _$Budget {
     @Default(false) bool isArchived,
   }) = _Budget;
 
-  factory Budget.fromJson(Map<String, dynamic> json) =>
-      _$BudgetFromJson(json);
+  factory Budget.fromJson(Map<String, dynamic> json) => _$BudgetFromJson(json);
 }

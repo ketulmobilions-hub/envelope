@@ -2,6 +2,9 @@ import 'package:account_repository/account_repository.dart';
 import 'package:envelope/accounts/cubit/cubit.dart';
 import 'package:envelope/accounts/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
+import 'package:envelope/shared/widgets/app_option_picker.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -25,6 +28,7 @@ class _AccountFormPageState extends State<AccountFormPage> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _balanceController;
+  late final TextEditingController _creditLimitController;
   late String _selectedType;
   late String _selectedCurrency;
   late bool _isOnBudget;
@@ -49,37 +53,48 @@ class _AccountFormPageState extends State<AccountFormPage> {
           ? (widget.account!.startingBalance.abs() / 100).toStringAsFixed(2)
           : '',
     );
+    _creditLimitController = TextEditingController();
     _selectedType = widget.account?.type ?? _accountTypes.first;
     _selectedCurrency = widget.account?.currency ?? 'USD';
-    _isOnBudget = widget.account?.isOnBudget ??
-        defaultIsOnBudget(_selectedType);
+    _isOnBudget =
+        widget.account?.isOnBudget ?? defaultIsOnBudget(_selectedType);
+
+    if (_isEditing && isCreditCard(_selectedType)) {
+      context.read<AccountFormCubit>().loadExistingCreditLimit();
+    }
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _balanceController.dispose();
+    _creditLimitController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
 
     return BlocListener<AccountFormCubit, AccountFormState>(
       listener: (context, state) {
         if (state.status == AccountFormStatus.success) {
           Navigator.of(context).pop(true);
         } else if (state.status == AccountFormStatus.failure) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: Text(
-                  state.errorMessage ?? l10n.accountsErrorUpdateFailed,
-                ),
+          showAppSnackBar(
+            context,
+            SnackBar(
+              content: Text(
+                state.errorMessage ?? l10n.accountsErrorUpdateFailed,
               ),
-            );
+            ),
+          );
+        }
+        if (state.existingCreditLimitCents != null &&
+            _creditLimitController.text.isEmpty) {
+          _creditLimitController.text = (state.existingCreditLimitCents! / 100)
+              .toStringAsFixed(2);
         }
       },
       child: Scaffold(
@@ -113,28 +128,18 @@ class _AccountFormPageState extends State<AccountFormPage> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedType,
-                    decoration: InputDecoration(
-                      labelText: l10n.accountsTypeLabel,
-                      prefixIcon: const Icon(Icons.category_outlined),
-                    ),
-                    items: _accountTypes.map((type) {
-                      return DropdownMenuItem(
-                        value: type,
-                        child: Text(_typeDisplayName(type, l10n)),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          _selectedType = value;
-                          if (!_isEditing) {
-                            _isOnBudget = defaultIsOnBudget(value);
-                          }
-                        });
+                  AppOptionPicker<String>(
+                    options: _accountTypes,
+                    value: _selectedType,
+                    onChanged: (type) => setState(() {
+                      _selectedType = type;
+                      if (!_isEditing) {
+                        _isOnBudget = defaultIsOnBudget(type);
                       }
-                    },
+                    }),
+                    labelText: l10n.accountsTypeLabel,
+                    icon: Icons.category_outlined,
+                    itemLabel: (type) => _typeDisplayName(type, l10n),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -143,10 +148,11 @@ class _AccountFormPageState extends State<AccountFormPage> {
                       labelText: isCreditCard(_selectedType)
                           ? l10n.accountsAmountOwedLabel
                           : l10n.accountsStartingBalanceLabel,
-                      prefixIcon: const Icon(Icons.attach_money),
+                      prefixText: symbol,
                     ),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(
                         isCreditCard(_selectedType)
@@ -155,7 +161,41 @@ class _AccountFormPageState extends State<AccountFormPage> {
                       ),
                     ],
                     textInputAction: TextInputAction.done,
+                    validator: (value) {
+                      final parsed = double.tryParse(value?.trim() ?? '');
+                      if (parsed != null && parsed.abs() > maxDollarAmount) {
+                        return l10n.accountsBalanceTooLarge;
+                      }
+                      return null;
+                    },
                   ),
+                  if (isCreditCard(_selectedType)) ...[
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _creditLimitController,
+                      decoration: InputDecoration(
+                        labelText: l10n.accountsCreditLimitLabel,
+                        prefixText: symbol,
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'^\d*\.?\d{0,2}'),
+                        ),
+                      ],
+                      textInputAction: TextInputAction.done,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) return null;
+                        final parsed = double.tryParse(value.trim());
+                        if (parsed != null && parsed > maxDollarAmount) {
+                          return l10n.accountsBalanceTooLarge;
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   SwitchListTile(
                     title: Text(l10n.accountsOnBudgetLabel),
@@ -203,12 +243,19 @@ class _AccountFormPageState extends State<AccountFormPage> {
       balanceCents = -balanceCents;
     }
 
+    int? creditLimitCents;
+    if (isCreditCard(_selectedType) &&
+        _creditLimitController.text.trim().isNotEmpty) {
+      creditLimitCents = parseCents(_creditLimitController.text);
+    }
+
     context.read<AccountFormCubit>().submit(
       name: _nameController.text.trim(),
       type: _selectedType,
       balanceCents: balanceCents,
       currency: _selectedCurrency,
       isOnBudget: _isOnBudget,
+      creditLimitCents: creditLimitCents,
     );
   }
 

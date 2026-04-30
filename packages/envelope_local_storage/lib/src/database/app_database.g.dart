@@ -3287,6 +3287,17 @@ class $EnvelopesTable extends Envelopes
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _linkedAccountIdMeta = const VerificationMeta(
+    'linkedAccountId',
+  );
+  @override
+  late final GeneratedColumn<String> linkedAccountId = GeneratedColumn<String>(
+    'linked_account_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -3318,6 +3329,7 @@ class $EnvelopesTable extends Envelopes
     sortOrder,
     isArchived,
     color,
+    linkedAccountId,
     createdAt,
     deletedAt,
   ];
@@ -3383,6 +3395,15 @@ class $EnvelopesTable extends Envelopes
         color.isAcceptableOrUnknown(data['color']!, _colorMeta),
       );
     }
+    if (data.containsKey('linked_account_id')) {
+      context.handle(
+        _linkedAccountIdMeta,
+        linkedAccountId.isAcceptableOrUnknown(
+          data['linked_account_id']!,
+          _linkedAccountIdMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -3434,6 +3455,10 @@ class $EnvelopesTable extends Envelopes
         DriftSqlType.string,
         data['${effectivePrefix}color'],
       ),
+      linkedAccountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}linked_account_id'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -3459,6 +3484,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
   final int sortOrder;
   final bool isArchived;
   final String? color;
+  final String? linkedAccountId;
   final DateTime createdAt;
   final DateTime? deletedAt;
   const Envelope({
@@ -3469,6 +3495,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
     required this.sortOrder,
     required this.isArchived,
     this.color,
+    this.linkedAccountId,
     required this.createdAt,
     this.deletedAt,
   });
@@ -3483,6 +3510,9 @@ class Envelope extends DataClass implements Insertable<Envelope> {
     map['is_archived'] = Variable<bool>(isArchived);
     if (!nullToAbsent || color != null) {
       map['color'] = Variable<String>(color);
+    }
+    if (!nullToAbsent || linkedAccountId != null) {
+      map['linked_account_id'] = Variable<String>(linkedAccountId);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
     if (!nullToAbsent || deletedAt != null) {
@@ -3502,6 +3532,9 @@ class Envelope extends DataClass implements Insertable<Envelope> {
       color: color == null && nullToAbsent
           ? const Value.absent()
           : Value(color),
+      linkedAccountId: linkedAccountId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(linkedAccountId),
       createdAt: Value(createdAt),
       deletedAt: deletedAt == null && nullToAbsent
           ? const Value.absent()
@@ -3522,6 +3555,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
       isArchived: serializer.fromJson<bool>(json['isArchived']),
       color: serializer.fromJson<String?>(json['color']),
+      linkedAccountId: serializer.fromJson<String?>(json['linkedAccountId']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
     );
@@ -3537,6 +3571,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
       'sortOrder': serializer.toJson<int>(sortOrder),
       'isArchived': serializer.toJson<bool>(isArchived),
       'color': serializer.toJson<String?>(color),
+      'linkedAccountId': serializer.toJson<String?>(linkedAccountId),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
     };
@@ -3550,6 +3585,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
     int? sortOrder,
     bool? isArchived,
     Value<String?> color = const Value.absent(),
+    Value<String?> linkedAccountId = const Value.absent(),
     DateTime? createdAt,
     Value<DateTime?> deletedAt = const Value.absent(),
   }) => Envelope(
@@ -3560,6 +3596,9 @@ class Envelope extends DataClass implements Insertable<Envelope> {
     sortOrder: sortOrder ?? this.sortOrder,
     isArchived: isArchived ?? this.isArchived,
     color: color.present ? color.value : this.color,
+    linkedAccountId: linkedAccountId.present
+        ? linkedAccountId.value
+        : this.linkedAccountId,
     createdAt: createdAt ?? this.createdAt,
     deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
   );
@@ -3576,6 +3615,9 @@ class Envelope extends DataClass implements Insertable<Envelope> {
           ? data.isArchived.value
           : this.isArchived,
       color: data.color.present ? data.color.value : this.color,
+      linkedAccountId: data.linkedAccountId.present
+          ? data.linkedAccountId.value
+          : this.linkedAccountId,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
     );
@@ -3591,6 +3633,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
           ..write('sortOrder: $sortOrder, ')
           ..write('isArchived: $isArchived, ')
           ..write('color: $color, ')
+          ..write('linkedAccountId: $linkedAccountId, ')
           ..write('createdAt: $createdAt, ')
           ..write('deletedAt: $deletedAt')
           ..write(')'))
@@ -3606,6 +3649,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
     sortOrder,
     isArchived,
     color,
+    linkedAccountId,
     createdAt,
     deletedAt,
   );
@@ -3620,6 +3664,7 @@ class Envelope extends DataClass implements Insertable<Envelope> {
           other.sortOrder == this.sortOrder &&
           other.isArchived == this.isArchived &&
           other.color == this.color &&
+          other.linkedAccountId == this.linkedAccountId &&
           other.createdAt == this.createdAt &&
           other.deletedAt == this.deletedAt);
 }
@@ -3632,6 +3677,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
   final Value<int> sortOrder;
   final Value<bool> isArchived;
   final Value<String?> color;
+  final Value<String?> linkedAccountId;
   final Value<DateTime> createdAt;
   final Value<DateTime?> deletedAt;
   final Value<int> rowid;
@@ -3643,6 +3689,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
     this.sortOrder = const Value.absent(),
     this.isArchived = const Value.absent(),
     this.color = const Value.absent(),
+    this.linkedAccountId = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -3655,6 +3702,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
     this.sortOrder = const Value.absent(),
     this.isArchived = const Value.absent(),
     this.color = const Value.absent(),
+    this.linkedAccountId = const Value.absent(),
     required DateTime createdAt,
     this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -3671,6 +3719,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
     Expression<int>? sortOrder,
     Expression<bool>? isArchived,
     Expression<String>? color,
+    Expression<String>? linkedAccountId,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? deletedAt,
     Expression<int>? rowid,
@@ -3683,6 +3732,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
       if (sortOrder != null) 'sort_order': sortOrder,
       if (isArchived != null) 'is_archived': isArchived,
       if (color != null) 'color': color,
+      if (linkedAccountId != null) 'linked_account_id': linkedAccountId,
       if (createdAt != null) 'created_at': createdAt,
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (rowid != null) 'rowid': rowid,
@@ -3697,6 +3747,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
     Value<int>? sortOrder,
     Value<bool>? isArchived,
     Value<String?>? color,
+    Value<String?>? linkedAccountId,
     Value<DateTime>? createdAt,
     Value<DateTime?>? deletedAt,
     Value<int>? rowid,
@@ -3709,6 +3760,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
       sortOrder: sortOrder ?? this.sortOrder,
       isArchived: isArchived ?? this.isArchived,
       color: color ?? this.color,
+      linkedAccountId: linkedAccountId ?? this.linkedAccountId,
       createdAt: createdAt ?? this.createdAt,
       deletedAt: deletedAt ?? this.deletedAt,
       rowid: rowid ?? this.rowid,
@@ -3739,6 +3791,9 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
     if (color.present) {
       map['color'] = Variable<String>(color.value);
     }
+    if (linkedAccountId.present) {
+      map['linked_account_id'] = Variable<String>(linkedAccountId.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -3761,6 +3816,7 @@ class EnvelopesCompanion extends UpdateCompanion<Envelope> {
           ..write('sortOrder: $sortOrder, ')
           ..write('isArchived: $isArchived, ')
           ..write('color: $color, ')
+          ..write('linkedAccountId: $linkedAccountId, ')
           ..write('createdAt: $createdAt, ')
           ..write('deletedAt: $deletedAt, ')
           ..write('rowid: $rowid')
@@ -9466,6 +9522,17 @@ class $DebtAccountsTable extends DebtAccounts
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _creditLimitMeta = const VerificationMeta(
+    'creditLimit',
+  );
+  @override
+  late final GeneratedColumn<int> creditLimit = GeneratedColumn<int>(
+    'credit_limit',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     accountId,
@@ -9473,6 +9540,7 @@ class $DebtAccountsTable extends DebtAccounts
     minimumPayment,
     originalBalance,
     payoffStrategy,
+    creditLimit,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -9536,6 +9604,15 @@ class $DebtAccountsTable extends DebtAccounts
         ),
       );
     }
+    if (data.containsKey('credit_limit')) {
+      context.handle(
+        _creditLimitMeta,
+        creditLimit.isAcceptableOrUnknown(
+          data['credit_limit']!,
+          _creditLimitMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -9565,6 +9642,10 @@ class $DebtAccountsTable extends DebtAccounts
         DriftSqlType.string,
         data['${effectivePrefix}payoff_strategy'],
       ),
+      creditLimit: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}credit_limit'],
+      ),
     );
   }
 
@@ -9580,12 +9661,14 @@ class DebtAccount extends DataClass implements Insertable<DebtAccount> {
   final int minimumPayment;
   final int originalBalance;
   final String? payoffStrategy;
+  final int? creditLimit;
   const DebtAccount({
     required this.accountId,
     required this.interestRate,
     required this.minimumPayment,
     required this.originalBalance,
     this.payoffStrategy,
+    this.creditLimit,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -9596,6 +9679,9 @@ class DebtAccount extends DataClass implements Insertable<DebtAccount> {
     map['original_balance'] = Variable<int>(originalBalance);
     if (!nullToAbsent || payoffStrategy != null) {
       map['payoff_strategy'] = Variable<String>(payoffStrategy);
+    }
+    if (!nullToAbsent || creditLimit != null) {
+      map['credit_limit'] = Variable<int>(creditLimit);
     }
     return map;
   }
@@ -9609,6 +9695,9 @@ class DebtAccount extends DataClass implements Insertable<DebtAccount> {
       payoffStrategy: payoffStrategy == null && nullToAbsent
           ? const Value.absent()
           : Value(payoffStrategy),
+      creditLimit: creditLimit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(creditLimit),
     );
   }
 
@@ -9623,6 +9712,7 @@ class DebtAccount extends DataClass implements Insertable<DebtAccount> {
       minimumPayment: serializer.fromJson<int>(json['minimumPayment']),
       originalBalance: serializer.fromJson<int>(json['originalBalance']),
       payoffStrategy: serializer.fromJson<String?>(json['payoffStrategy']),
+      creditLimit: serializer.fromJson<int?>(json['creditLimit']),
     );
   }
   @override
@@ -9634,6 +9724,7 @@ class DebtAccount extends DataClass implements Insertable<DebtAccount> {
       'minimumPayment': serializer.toJson<int>(minimumPayment),
       'originalBalance': serializer.toJson<int>(originalBalance),
       'payoffStrategy': serializer.toJson<String?>(payoffStrategy),
+      'creditLimit': serializer.toJson<int?>(creditLimit),
     };
   }
 
@@ -9643,6 +9734,7 @@ class DebtAccount extends DataClass implements Insertable<DebtAccount> {
     int? minimumPayment,
     int? originalBalance,
     Value<String?> payoffStrategy = const Value.absent(),
+    Value<int?> creditLimit = const Value.absent(),
   }) => DebtAccount(
     accountId: accountId ?? this.accountId,
     interestRate: interestRate ?? this.interestRate,
@@ -9651,6 +9743,7 @@ class DebtAccount extends DataClass implements Insertable<DebtAccount> {
     payoffStrategy: payoffStrategy.present
         ? payoffStrategy.value
         : this.payoffStrategy,
+    creditLimit: creditLimit.present ? creditLimit.value : this.creditLimit,
   );
   DebtAccount copyWithCompanion(DebtAccountsCompanion data) {
     return DebtAccount(
@@ -9667,6 +9760,9 @@ class DebtAccount extends DataClass implements Insertable<DebtAccount> {
       payoffStrategy: data.payoffStrategy.present
           ? data.payoffStrategy.value
           : this.payoffStrategy,
+      creditLimit: data.creditLimit.present
+          ? data.creditLimit.value
+          : this.creditLimit,
     );
   }
 
@@ -9677,7 +9773,8 @@ class DebtAccount extends DataClass implements Insertable<DebtAccount> {
           ..write('interestRate: $interestRate, ')
           ..write('minimumPayment: $minimumPayment, ')
           ..write('originalBalance: $originalBalance, ')
-          ..write('payoffStrategy: $payoffStrategy')
+          ..write('payoffStrategy: $payoffStrategy, ')
+          ..write('creditLimit: $creditLimit')
           ..write(')'))
         .toString();
   }
@@ -9689,6 +9786,7 @@ class DebtAccount extends DataClass implements Insertable<DebtAccount> {
     minimumPayment,
     originalBalance,
     payoffStrategy,
+    creditLimit,
   );
   @override
   bool operator ==(Object other) =>
@@ -9698,7 +9796,8 @@ class DebtAccount extends DataClass implements Insertable<DebtAccount> {
           other.interestRate == this.interestRate &&
           other.minimumPayment == this.minimumPayment &&
           other.originalBalance == this.originalBalance &&
-          other.payoffStrategy == this.payoffStrategy);
+          other.payoffStrategy == this.payoffStrategy &&
+          other.creditLimit == this.creditLimit);
 }
 
 class DebtAccountsCompanion extends UpdateCompanion<DebtAccount> {
@@ -9707,6 +9806,7 @@ class DebtAccountsCompanion extends UpdateCompanion<DebtAccount> {
   final Value<int> minimumPayment;
   final Value<int> originalBalance;
   final Value<String?> payoffStrategy;
+  final Value<int?> creditLimit;
   final Value<int> rowid;
   const DebtAccountsCompanion({
     this.accountId = const Value.absent(),
@@ -9714,6 +9814,7 @@ class DebtAccountsCompanion extends UpdateCompanion<DebtAccount> {
     this.minimumPayment = const Value.absent(),
     this.originalBalance = const Value.absent(),
     this.payoffStrategy = const Value.absent(),
+    this.creditLimit = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DebtAccountsCompanion.insert({
@@ -9722,6 +9823,7 @@ class DebtAccountsCompanion extends UpdateCompanion<DebtAccount> {
     required int minimumPayment,
     required int originalBalance,
     this.payoffStrategy = const Value.absent(),
+    this.creditLimit = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : accountId = Value(accountId),
        interestRate = Value(interestRate),
@@ -9733,6 +9835,7 @@ class DebtAccountsCompanion extends UpdateCompanion<DebtAccount> {
     Expression<int>? minimumPayment,
     Expression<int>? originalBalance,
     Expression<String>? payoffStrategy,
+    Expression<int>? creditLimit,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -9741,6 +9844,7 @@ class DebtAccountsCompanion extends UpdateCompanion<DebtAccount> {
       if (minimumPayment != null) 'minimum_payment': minimumPayment,
       if (originalBalance != null) 'original_balance': originalBalance,
       if (payoffStrategy != null) 'payoff_strategy': payoffStrategy,
+      if (creditLimit != null) 'credit_limit': creditLimit,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -9751,6 +9855,7 @@ class DebtAccountsCompanion extends UpdateCompanion<DebtAccount> {
     Value<int>? minimumPayment,
     Value<int>? originalBalance,
     Value<String?>? payoffStrategy,
+    Value<int?>? creditLimit,
     Value<int>? rowid,
   }) {
     return DebtAccountsCompanion(
@@ -9759,6 +9864,7 @@ class DebtAccountsCompanion extends UpdateCompanion<DebtAccount> {
       minimumPayment: minimumPayment ?? this.minimumPayment,
       originalBalance: originalBalance ?? this.originalBalance,
       payoffStrategy: payoffStrategy ?? this.payoffStrategy,
+      creditLimit: creditLimit ?? this.creditLimit,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -9781,6 +9887,9 @@ class DebtAccountsCompanion extends UpdateCompanion<DebtAccount> {
     if (payoffStrategy.present) {
       map['payoff_strategy'] = Variable<String>(payoffStrategy.value);
     }
+    if (creditLimit.present) {
+      map['credit_limit'] = Variable<int>(creditLimit.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -9795,6 +9904,7 @@ class DebtAccountsCompanion extends UpdateCompanion<DebtAccount> {
           ..write('minimumPayment: $minimumPayment, ')
           ..write('originalBalance: $originalBalance, ')
           ..write('payoffStrategy: $payoffStrategy, ')
+          ..write('creditLimit: $creditLimit, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -10387,6 +10497,20 @@ class $NotificationPreferencesTable extends NotificationPreferences
     ),
     defaultValue: const Constant(true),
   );
+  static const VerificationMeta _emailBillRemindersMeta =
+      const VerificationMeta('emailBillReminders');
+  @override
+  late final GeneratedColumn<bool> emailBillReminders = GeneratedColumn<bool>(
+    'email_bill_reminders',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("email_bill_reminders" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
   static const VerificationMeta _dailyLoggingReminderMeta =
       const VerificationMeta('dailyLoggingReminder');
   @override
@@ -10452,6 +10576,7 @@ class $NotificationPreferencesTable extends NotificationPreferences
     emailEnabled,
     overspendAlerts,
     billReminders,
+    emailBillReminders,
     dailyLoggingReminder,
     recurringTransactionAlerts,
     sharedBudgetActivity,
@@ -10510,6 +10635,15 @@ class $NotificationPreferencesTable extends NotificationPreferences
         billReminders.isAcceptableOrUnknown(
           data['bill_reminders']!,
           _billRemindersMeta,
+        ),
+      );
+    }
+    if (data.containsKey('email_bill_reminders')) {
+      context.handle(
+        _emailBillRemindersMeta,
+        emailBillReminders.isAcceptableOrUnknown(
+          data['email_bill_reminders']!,
+          _emailBillRemindersMeta,
         ),
       );
     }
@@ -10578,6 +10712,10 @@ class $NotificationPreferencesTable extends NotificationPreferences
         DriftSqlType.bool,
         data['${effectivePrefix}bill_reminders'],
       )!,
+      emailBillReminders: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}email_bill_reminders'],
+      )!,
       dailyLoggingReminder: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}daily_logging_reminder'],
@@ -10610,6 +10748,7 @@ class NotificationPreference extends DataClass
   final bool emailEnabled;
   final bool overspendAlerts;
   final bool billReminders;
+  final bool emailBillReminders;
   final bool dailyLoggingReminder;
   final bool recurringTransactionAlerts;
   final bool sharedBudgetActivity;
@@ -10620,6 +10759,7 @@ class NotificationPreference extends DataClass
     required this.emailEnabled,
     required this.overspendAlerts,
     required this.billReminders,
+    required this.emailBillReminders,
     required this.dailyLoggingReminder,
     required this.recurringTransactionAlerts,
     required this.sharedBudgetActivity,
@@ -10633,6 +10773,7 @@ class NotificationPreference extends DataClass
     map['email_enabled'] = Variable<bool>(emailEnabled);
     map['overspend_alerts'] = Variable<bool>(overspendAlerts);
     map['bill_reminders'] = Variable<bool>(billReminders);
+    map['email_bill_reminders'] = Variable<bool>(emailBillReminders);
     map['daily_logging_reminder'] = Variable<bool>(dailyLoggingReminder);
     map['recurring_transaction_alerts'] = Variable<bool>(
       recurringTransactionAlerts,
@@ -10649,6 +10790,7 @@ class NotificationPreference extends DataClass
       emailEnabled: Value(emailEnabled),
       overspendAlerts: Value(overspendAlerts),
       billReminders: Value(billReminders),
+      emailBillReminders: Value(emailBillReminders),
       dailyLoggingReminder: Value(dailyLoggingReminder),
       recurringTransactionAlerts: Value(recurringTransactionAlerts),
       sharedBudgetActivity: Value(sharedBudgetActivity),
@@ -10667,6 +10809,7 @@ class NotificationPreference extends DataClass
       emailEnabled: serializer.fromJson<bool>(json['emailEnabled']),
       overspendAlerts: serializer.fromJson<bool>(json['overspendAlerts']),
       billReminders: serializer.fromJson<bool>(json['billReminders']),
+      emailBillReminders: serializer.fromJson<bool>(json['emailBillReminders']),
       dailyLoggingReminder: serializer.fromJson<bool>(
         json['dailyLoggingReminder'],
       ),
@@ -10688,6 +10831,7 @@ class NotificationPreference extends DataClass
       'emailEnabled': serializer.toJson<bool>(emailEnabled),
       'overspendAlerts': serializer.toJson<bool>(overspendAlerts),
       'billReminders': serializer.toJson<bool>(billReminders),
+      'emailBillReminders': serializer.toJson<bool>(emailBillReminders),
       'dailyLoggingReminder': serializer.toJson<bool>(dailyLoggingReminder),
       'recurringTransactionAlerts': serializer.toJson<bool>(
         recurringTransactionAlerts,
@@ -10703,6 +10847,7 @@ class NotificationPreference extends DataClass
     bool? emailEnabled,
     bool? overspendAlerts,
     bool? billReminders,
+    bool? emailBillReminders,
     bool? dailyLoggingReminder,
     bool? recurringTransactionAlerts,
     bool? sharedBudgetActivity,
@@ -10713,6 +10858,7 @@ class NotificationPreference extends DataClass
     emailEnabled: emailEnabled ?? this.emailEnabled,
     overspendAlerts: overspendAlerts ?? this.overspendAlerts,
     billReminders: billReminders ?? this.billReminders,
+    emailBillReminders: emailBillReminders ?? this.emailBillReminders,
     dailyLoggingReminder: dailyLoggingReminder ?? this.dailyLoggingReminder,
     recurringTransactionAlerts:
         recurringTransactionAlerts ?? this.recurringTransactionAlerts,
@@ -10736,6 +10882,9 @@ class NotificationPreference extends DataClass
       billReminders: data.billReminders.present
           ? data.billReminders.value
           : this.billReminders,
+      emailBillReminders: data.emailBillReminders.present
+          ? data.emailBillReminders.value
+          : this.emailBillReminders,
       dailyLoggingReminder: data.dailyLoggingReminder.present
           ? data.dailyLoggingReminder.value
           : this.dailyLoggingReminder,
@@ -10759,6 +10908,7 @@ class NotificationPreference extends DataClass
           ..write('emailEnabled: $emailEnabled, ')
           ..write('overspendAlerts: $overspendAlerts, ')
           ..write('billReminders: $billReminders, ')
+          ..write('emailBillReminders: $emailBillReminders, ')
           ..write('dailyLoggingReminder: $dailyLoggingReminder, ')
           ..write('recurringTransactionAlerts: $recurringTransactionAlerts, ')
           ..write('sharedBudgetActivity: $sharedBudgetActivity, ')
@@ -10774,6 +10924,7 @@ class NotificationPreference extends DataClass
     emailEnabled,
     overspendAlerts,
     billReminders,
+    emailBillReminders,
     dailyLoggingReminder,
     recurringTransactionAlerts,
     sharedBudgetActivity,
@@ -10788,6 +10939,7 @@ class NotificationPreference extends DataClass
           other.emailEnabled == this.emailEnabled &&
           other.overspendAlerts == this.overspendAlerts &&
           other.billReminders == this.billReminders &&
+          other.emailBillReminders == this.emailBillReminders &&
           other.dailyLoggingReminder == this.dailyLoggingReminder &&
           other.recurringTransactionAlerts == this.recurringTransactionAlerts &&
           other.sharedBudgetActivity == this.sharedBudgetActivity &&
@@ -10801,6 +10953,7 @@ class NotificationPreferencesCompanion
   final Value<bool> emailEnabled;
   final Value<bool> overspendAlerts;
   final Value<bool> billReminders;
+  final Value<bool> emailBillReminders;
   final Value<bool> dailyLoggingReminder;
   final Value<bool> recurringTransactionAlerts;
   final Value<bool> sharedBudgetActivity;
@@ -10812,6 +10965,7 @@ class NotificationPreferencesCompanion
     this.emailEnabled = const Value.absent(),
     this.overspendAlerts = const Value.absent(),
     this.billReminders = const Value.absent(),
+    this.emailBillReminders = const Value.absent(),
     this.dailyLoggingReminder = const Value.absent(),
     this.recurringTransactionAlerts = const Value.absent(),
     this.sharedBudgetActivity = const Value.absent(),
@@ -10824,6 +10978,7 @@ class NotificationPreferencesCompanion
     this.emailEnabled = const Value.absent(),
     this.overspendAlerts = const Value.absent(),
     this.billReminders = const Value.absent(),
+    this.emailBillReminders = const Value.absent(),
     this.dailyLoggingReminder = const Value.absent(),
     this.recurringTransactionAlerts = const Value.absent(),
     this.sharedBudgetActivity = const Value.absent(),
@@ -10836,6 +10991,7 @@ class NotificationPreferencesCompanion
     Expression<bool>? emailEnabled,
     Expression<bool>? overspendAlerts,
     Expression<bool>? billReminders,
+    Expression<bool>? emailBillReminders,
     Expression<bool>? dailyLoggingReminder,
     Expression<bool>? recurringTransactionAlerts,
     Expression<bool>? sharedBudgetActivity,
@@ -10848,6 +11004,8 @@ class NotificationPreferencesCompanion
       if (emailEnabled != null) 'email_enabled': emailEnabled,
       if (overspendAlerts != null) 'overspend_alerts': overspendAlerts,
       if (billReminders != null) 'bill_reminders': billReminders,
+      if (emailBillReminders != null)
+        'email_bill_reminders': emailBillReminders,
       if (dailyLoggingReminder != null)
         'daily_logging_reminder': dailyLoggingReminder,
       if (recurringTransactionAlerts != null)
@@ -10865,6 +11023,7 @@ class NotificationPreferencesCompanion
     Value<bool>? emailEnabled,
     Value<bool>? overspendAlerts,
     Value<bool>? billReminders,
+    Value<bool>? emailBillReminders,
     Value<bool>? dailyLoggingReminder,
     Value<bool>? recurringTransactionAlerts,
     Value<bool>? sharedBudgetActivity,
@@ -10877,6 +11036,7 @@ class NotificationPreferencesCompanion
       emailEnabled: emailEnabled ?? this.emailEnabled,
       overspendAlerts: overspendAlerts ?? this.overspendAlerts,
       billReminders: billReminders ?? this.billReminders,
+      emailBillReminders: emailBillReminders ?? this.emailBillReminders,
       dailyLoggingReminder: dailyLoggingReminder ?? this.dailyLoggingReminder,
       recurringTransactionAlerts:
           recurringTransactionAlerts ?? this.recurringTransactionAlerts,
@@ -10903,6 +11063,9 @@ class NotificationPreferencesCompanion
     }
     if (billReminders.present) {
       map['bill_reminders'] = Variable<bool>(billReminders.value);
+    }
+    if (emailBillReminders.present) {
+      map['email_bill_reminders'] = Variable<bool>(emailBillReminders.value);
     }
     if (dailyLoggingReminder.present) {
       map['daily_logging_reminder'] = Variable<bool>(
@@ -10936,6 +11099,7 @@ class NotificationPreferencesCompanion
           ..write('emailEnabled: $emailEnabled, ')
           ..write('overspendAlerts: $overspendAlerts, ')
           ..write('billReminders: $billReminders, ')
+          ..write('emailBillReminders: $emailBillReminders, ')
           ..write('dailyLoggingReminder: $dailyLoggingReminder, ')
           ..write('recurringTransactionAlerts: $recurringTransactionAlerts, ')
           ..write('sharedBudgetActivity: $sharedBudgetActivity, ')
@@ -13970,6 +14134,7 @@ typedef $$EnvelopesTableCreateCompanionBuilder =
       Value<int> sortOrder,
       Value<bool> isArchived,
       Value<String?> color,
+      Value<String?> linkedAccountId,
       required DateTime createdAt,
       Value<DateTime?> deletedAt,
       Value<int> rowid,
@@ -13983,6 +14148,7 @@ typedef $$EnvelopesTableUpdateCompanionBuilder =
       Value<int> sortOrder,
       Value<bool> isArchived,
       Value<String?> color,
+      Value<String?> linkedAccountId,
       Value<DateTime> createdAt,
       Value<DateTime?> deletedAt,
       Value<int> rowid,
@@ -14029,6 +14195,11 @@ class $$EnvelopesTableFilterComposer
 
   ColumnFilters<String> get color => $composableBuilder(
     column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get linkedAccountId => $composableBuilder(
+    column: $table.linkedAccountId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -14087,6 +14258,11 @@ class $$EnvelopesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get linkedAccountId => $composableBuilder(
+    column: $table.linkedAccountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -14132,6 +14308,11 @@ class $$EnvelopesTableAnnotationComposer
   GeneratedColumn<String> get color =>
       $composableBuilder(column: $table.color, builder: (column) => column);
 
+  GeneratedColumn<String> get linkedAccountId => $composableBuilder(
+    column: $table.linkedAccountId,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -14174,6 +14355,7 @@ class $$EnvelopesTableTableManager
                 Value<int> sortOrder = const Value.absent(),
                 Value<bool> isArchived = const Value.absent(),
                 Value<String?> color = const Value.absent(),
+                Value<String?> linkedAccountId = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -14185,6 +14367,7 @@ class $$EnvelopesTableTableManager
                 sortOrder: sortOrder,
                 isArchived: isArchived,
                 color: color,
+                linkedAccountId: linkedAccountId,
                 createdAt: createdAt,
                 deletedAt: deletedAt,
                 rowid: rowid,
@@ -14198,6 +14381,7 @@ class $$EnvelopesTableTableManager
                 Value<int> sortOrder = const Value.absent(),
                 Value<bool> isArchived = const Value.absent(),
                 Value<String?> color = const Value.absent(),
+                Value<String?> linkedAccountId = const Value.absent(),
                 required DateTime createdAt,
                 Value<DateTime?> deletedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -14209,6 +14393,7 @@ class $$EnvelopesTableTableManager
                 sortOrder: sortOrder,
                 isArchived: isArchived,
                 color: color,
+                linkedAccountId: linkedAccountId,
                 createdAt: createdAt,
                 deletedAt: deletedAt,
                 rowid: rowid,
@@ -17180,6 +17365,7 @@ typedef $$DebtAccountsTableCreateCompanionBuilder =
       required int minimumPayment,
       required int originalBalance,
       Value<String?> payoffStrategy,
+      Value<int?> creditLimit,
       Value<int> rowid,
     });
 typedef $$DebtAccountsTableUpdateCompanionBuilder =
@@ -17189,6 +17375,7 @@ typedef $$DebtAccountsTableUpdateCompanionBuilder =
       Value<int> minimumPayment,
       Value<int> originalBalance,
       Value<String?> payoffStrategy,
+      Value<int?> creditLimit,
       Value<int> rowid,
     });
 
@@ -17223,6 +17410,11 @@ class $$DebtAccountsTableFilterComposer
 
   ColumnFilters<String> get payoffStrategy => $composableBuilder(
     column: $table.payoffStrategy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get creditLimit => $composableBuilder(
+    column: $table.creditLimit,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -17260,6 +17452,11 @@ class $$DebtAccountsTableOrderingComposer
     column: $table.payoffStrategy,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get creditLimit => $composableBuilder(
+    column: $table.creditLimit,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$DebtAccountsTableAnnotationComposer
@@ -17291,6 +17488,11 @@ class $$DebtAccountsTableAnnotationComposer
 
   GeneratedColumn<String> get payoffStrategy => $composableBuilder(
     column: $table.payoffStrategy,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get creditLimit => $composableBuilder(
+    column: $table.creditLimit,
     builder: (column) => column,
   );
 }
@@ -17331,6 +17533,7 @@ class $$DebtAccountsTableTableManager
                 Value<int> minimumPayment = const Value.absent(),
                 Value<int> originalBalance = const Value.absent(),
                 Value<String?> payoffStrategy = const Value.absent(),
+                Value<int?> creditLimit = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DebtAccountsCompanion(
                 accountId: accountId,
@@ -17338,6 +17541,7 @@ class $$DebtAccountsTableTableManager
                 minimumPayment: minimumPayment,
                 originalBalance: originalBalance,
                 payoffStrategy: payoffStrategy,
+                creditLimit: creditLimit,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -17347,6 +17551,7 @@ class $$DebtAccountsTableTableManager
                 required int minimumPayment,
                 required int originalBalance,
                 Value<String?> payoffStrategy = const Value.absent(),
+                Value<int?> creditLimit = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DebtAccountsCompanion.insert(
                 accountId: accountId,
@@ -17354,6 +17559,7 @@ class $$DebtAccountsTableTableManager
                 minimumPayment: minimumPayment,
                 originalBalance: originalBalance,
                 payoffStrategy: payoffStrategy,
+                creditLimit: creditLimit,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -17647,6 +17853,7 @@ typedef $$NotificationPreferencesTableCreateCompanionBuilder =
       Value<bool> emailEnabled,
       Value<bool> overspendAlerts,
       Value<bool> billReminders,
+      Value<bool> emailBillReminders,
       Value<bool> dailyLoggingReminder,
       Value<bool> recurringTransactionAlerts,
       Value<bool> sharedBudgetActivity,
@@ -17660,6 +17867,7 @@ typedef $$NotificationPreferencesTableUpdateCompanionBuilder =
       Value<bool> emailEnabled,
       Value<bool> overspendAlerts,
       Value<bool> billReminders,
+      Value<bool> emailBillReminders,
       Value<bool> dailyLoggingReminder,
       Value<bool> recurringTransactionAlerts,
       Value<bool> sharedBudgetActivity,
@@ -17698,6 +17906,11 @@ class $$NotificationPreferencesTableFilterComposer
 
   ColumnFilters<bool> get billReminders => $composableBuilder(
     column: $table.billReminders,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get emailBillReminders => $composableBuilder(
+    column: $table.emailBillReminders,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -17756,6 +17969,11 @@ class $$NotificationPreferencesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get emailBillReminders => $composableBuilder(
+    column: $table.emailBillReminders,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get dailyLoggingReminder => $composableBuilder(
     column: $table.dailyLoggingReminder,
     builder: (column) => ColumnOrderings(column),
@@ -17806,6 +18024,11 @@ class $$NotificationPreferencesTableAnnotationComposer
 
   GeneratedColumn<bool> get billReminders => $composableBuilder(
     column: $table.billReminders,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get emailBillReminders => $composableBuilder(
+    column: $table.emailBillReminders,
     builder: (column) => column,
   );
 
@@ -17881,6 +18104,7 @@ class $$NotificationPreferencesTableTableManager
                 Value<bool> emailEnabled = const Value.absent(),
                 Value<bool> overspendAlerts = const Value.absent(),
                 Value<bool> billReminders = const Value.absent(),
+                Value<bool> emailBillReminders = const Value.absent(),
                 Value<bool> dailyLoggingReminder = const Value.absent(),
                 Value<bool> recurringTransactionAlerts = const Value.absent(),
                 Value<bool> sharedBudgetActivity = const Value.absent(),
@@ -17892,6 +18116,7 @@ class $$NotificationPreferencesTableTableManager
                 emailEnabled: emailEnabled,
                 overspendAlerts: overspendAlerts,
                 billReminders: billReminders,
+                emailBillReminders: emailBillReminders,
                 dailyLoggingReminder: dailyLoggingReminder,
                 recurringTransactionAlerts: recurringTransactionAlerts,
                 sharedBudgetActivity: sharedBudgetActivity,
@@ -17905,6 +18130,7 @@ class $$NotificationPreferencesTableTableManager
                 Value<bool> emailEnabled = const Value.absent(),
                 Value<bool> overspendAlerts = const Value.absent(),
                 Value<bool> billReminders = const Value.absent(),
+                Value<bool> emailBillReminders = const Value.absent(),
                 Value<bool> dailyLoggingReminder = const Value.absent(),
                 Value<bool> recurringTransactionAlerts = const Value.absent(),
                 Value<bool> sharedBudgetActivity = const Value.absent(),
@@ -17916,6 +18142,7 @@ class $$NotificationPreferencesTableTableManager
                 emailEnabled: emailEnabled,
                 overspendAlerts: overspendAlerts,
                 billReminders: billReminders,
+                emailBillReminders: emailBillReminders,
                 dailyLoggingReminder: dailyLoggingReminder,
                 recurringTransactionAlerts: recurringTransactionAlerts,
                 sharedBudgetActivity: sharedBudgetActivity,

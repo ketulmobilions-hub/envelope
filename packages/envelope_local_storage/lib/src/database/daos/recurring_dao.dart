@@ -14,16 +14,15 @@ class RecurringDao extends DatabaseAccessor<AppDatabase>
       select(recurringRules).get();
 
   Future<List<RecurringRule>> getRecurringRulesByBudgetId(String budgetId) =>
-      (select(recurringRules)..where((t) => t.budgetId.equals(budgetId)))
-          .get();
+      (select(recurringRules)..where((t) => t.budgetId.equals(budgetId))).get();
 
   Stream<List<RecurringRule>> watchRecurringRulesByBudgetId(String budgetId) =>
-      (select(recurringRules)..where((t) => t.budgetId.equals(budgetId)))
-          .watch();
+      (select(
+        recurringRules,
+      )..where((t) => t.budgetId.equals(budgetId))).watch();
 
   Future<RecurringRule?> getRecurringRule(String id) =>
-      (select(recurringRules)..where((t) => t.id.equals(id)))
-          .getSingleOrNull();
+      (select(recurringRules)..where((t) => t.id.equals(id))).getSingleOrNull();
 
   Stream<RecurringRule> watchRecurringRule(String id) =>
       (select(recurringRules)..where((t) => t.id.equals(id))).watchSingle();
@@ -31,8 +30,7 @@ class RecurringDao extends DatabaseAccessor<AppDatabase>
   Future<int> insertRecurringRule(
     RecurringRulesCompanion rule, {
     InsertMode mode = InsertMode.insert,
-  }) =>
-      into(recurringRules).insert(rule, mode: mode);
+  }) => into(recurringRules).insert(rule, mode: mode);
 
   Future<bool> updateRecurringRule(RecurringRulesCompanion rule) =>
       update(recurringRules).replace(rule);
@@ -48,18 +46,17 @@ class RecurringDao extends DatabaseAccessor<AppDatabase>
       (select(billReminders)..where((t) => t.budgetId.equals(budgetId))).get();
 
   Stream<List<BillReminder>> watchBillRemindersByBudgetId(String budgetId) =>
-      (select(billReminders)..where((t) => t.budgetId.equals(budgetId)))
-          .watch();
+      (select(
+        billReminders,
+      )..where((t) => t.budgetId.equals(budgetId))).watch();
 
   Future<BillReminder?> getBillReminder(String id) =>
-      (select(billReminders)..where((t) => t.id.equals(id)))
-          .getSingleOrNull();
+      (select(billReminders)..where((t) => t.id.equals(id))).getSingleOrNull();
 
   Future<int> insertBillReminder(
     BillRemindersCompanion reminder, {
     InsertMode mode = InsertMode.insert,
-  }) =>
-      into(billReminders).insert(reminder, mode: mode);
+  }) => into(billReminders).insert(reminder, mode: mode);
 
   Future<bool> updateBillReminder(BillRemindersCompanion reminder) =>
       update(billReminders).replace(reminder);

@@ -61,9 +61,7 @@ class _EnvelopesViewState extends State<EnvelopesView> {
           EnvelopesError.deleteFailed => l10n.envelopesErrorDeleteFailed,
           EnvelopesError.reorderFailed => l10n.envelopesErrorReorderFailed,
         };
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(message)));
+        showAppSnackBar(context, SnackBar(content: Text(message)));
       },
       child: Scaffold(
         appBar: AppBar(

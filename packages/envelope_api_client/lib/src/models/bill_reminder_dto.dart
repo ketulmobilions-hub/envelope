@@ -14,9 +14,7 @@ abstract class BillReminderDto with _$BillReminderDto {
     @JsonKey(name: 'due_day') required int dueDay,
     required String frequency,
     @JsonKey(name: 'created_at') required DateTime createdAt,
-    @JsonKey(name: 'reminder_days_before')
-    @Default(3)
-    int reminderDaysBefore,
+    @JsonKey(name: 'reminder_days_before') @Default(3) int reminderDaysBefore,
     @JsonKey(name: 'envelope_id') String? envelopeId,
   }) = _BillReminderDto;
 

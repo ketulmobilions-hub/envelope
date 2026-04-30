@@ -25,8 +25,7 @@ class GoalsDao extends DatabaseAccessor<AppDatabase> with _$GoalsDaoMixin {
   Future<int> insertGoal(
     GoalsCompanion goal, {
     InsertMode mode = InsertMode.insert,
-  }) =>
-      into(goals).insert(goal, mode: mode);
+  }) => into(goals).insert(goal, mode: mode);
 
   Future<void> batchInsertGoals(
     List<GoalsCompanion> entries, {
@@ -55,8 +54,7 @@ class GoalsDao extends DatabaseAccessor<AppDatabase> with _$GoalsDaoMixin {
   Future<int> insertContribution(
     GoalContributionsCompanion contribution, {
     InsertMode mode = InsertMode.insert,
-  }) =>
-      into(goalContributions).insert(contribution, mode: mode);
+  }) => into(goalContributions).insert(contribution, mode: mode);
 
   Future<int> deleteContribution(String id) =>
       (delete(goalContributions)..where((t) => t.id.equals(id))).go();

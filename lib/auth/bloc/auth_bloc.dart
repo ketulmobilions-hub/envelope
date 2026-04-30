@@ -9,8 +9,8 @@ part 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc({required AuthRepository authRepository})
-      : _authRepository = authRepository,
-        super(const AuthState.unknown()) {
+    : _authRepository = authRepository,
+      super(const AuthState.unknown()) {
     on<AuthUserChanged>(_onUserChanged);
     on<AuthSignOutRequested>(_onSignOutRequested);
 

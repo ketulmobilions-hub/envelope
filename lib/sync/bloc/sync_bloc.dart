@@ -12,9 +12,9 @@ class SyncBloc extends Bloc<SyncEvent, SyncBlocState> {
   SyncBloc({
     required SyncRepository syncRepository,
     Connectivity? connectivity,
-  })  : _syncRepository = syncRepository,
-        _connectivity = connectivity ?? Connectivity(),
-        super(const SyncBlocState()) {
+  }) : _syncRepository = syncRepository,
+       _connectivity = connectivity ?? Connectivity(),
+       super(const SyncBlocState()) {
     on<SyncStarted>(_onStarted);
     on<SyncRequested>(_onRequested);
     on<_SyncStatusChanged>(_onSyncStatusChanged);
@@ -80,7 +80,19 @@ class SyncBloc extends Bloc<SyncEvent, SyncBlocState> {
     SyncRequested event,
     Emitter<SyncBlocState> emit,
   ) async {
-    await _syncRepository.syncNow();
+    emit(
+      state.copyWith(
+        syncStatus: state.syncStatus.copyWith(state: SyncState.syncing),
+      ),
+    );
+    // Run the sync but hold the spinner for at least 800 ms. Without this
+    // minimum, Device B's syncNow() completes in < 16 ms (nothing to push,
+    // Realtime already cached the data), so the syncing→synced state changes
+    // both land before Flutter paints a frame — the spinner is never visible.
+    await Future.wait([
+      _syncRepository.syncNow(),
+      Future<void>.delayed(const Duration(milliseconds: 800)),
+    ]);
   }
 
   @override

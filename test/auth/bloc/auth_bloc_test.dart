@@ -24,8 +24,7 @@ void main() {
     setUp(() {
       authRepository = MockAuthRepository();
       userController = StreamController<User>();
-      when(() => authRepository.user)
-          .thenAnswer((_) => userController.stream);
+      when(() => authRepository.user).thenAnswer((_) => userController.stream);
     });
 
     tearDown(() async {

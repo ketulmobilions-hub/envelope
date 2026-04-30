@@ -1,79 +1,26 @@
 {
   "project_info": {
-    "project_number": "767046810526",
-    "project_id": "white-board-3",
-    "storage_bucket": "white-board-3.firebasestorage.app"
+    "project_number": "151696145550",
+    "project_id": "envelope-prod-47689",
+    "storage_bucket": "envelope-prod-47689.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:767046810526:android:804ccc37f74d7c6e7b748f",
+        "mobilesdk_app_id": "1:151696145550:android:69529d75e094ece4e21ddf",
         "android_client_info": {
-          "package_name": "com.envelope.ml"
+          "package_name": "com.envelope.ml.dev"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "767046810526-5rmr4ulbj24qdc52fllojlcino8ciesa.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyB16GwJg6lKafy_rONOLezg4KTeEGSHFNo"
+          "current_key": "AIzaSyCdHDGwWtrrVkFiTHlVuejCRHwU1dXcpDc"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "767046810526-5rmr4ulbj24qdc52fllojlcino8ciesa.apps.googleusercontent.com",
-              "client_type": 3
-            },
-            {
-              "client_id": "767046810526-m1d4fjburv7gi8u900i104omfdcd7b80.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.envelope.ml"
-              }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:767046810526:android:2592c1a6578b751f7b748f",
-        "android_client_info": {
-          "package_name": "com.example.white_board"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "767046810526-5rmr4ulbj24qdc52fllojlcino8ciesa.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyB16GwJg6lKafy_rONOLezg4KTeEGSHFNo"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "767046810526-5rmr4ulbj24qdc52fllojlcino8ciesa.apps.googleusercontent.com",
-              "client_type": 3
-            },
-            {
-              "client_id": "767046810526-m1d4fjburv7gi8u900i104omfdcd7b80.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.envelope.ml"
-              }
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }

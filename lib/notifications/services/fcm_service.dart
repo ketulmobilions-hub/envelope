@@ -8,7 +8,7 @@ import 'package:notification_repository/notification_repository.dart';
 /// and foreground message handling.
 class FcmService {
   FcmService({FirebaseMessaging? messaging})
-      : _messaging = messaging ?? FirebaseMessaging.instance;
+    : _messaging = messaging ?? FirebaseMessaging.instance;
 
   final FirebaseMessaging _messaging;
 
@@ -72,8 +72,9 @@ class FcmService {
       }
 
       // Listen for token refresh.
-      _tokenRefreshSubscription =
-          _messaging.onTokenRefresh.listen((newToken) async {
+      _tokenRefreshSubscription = _messaging.onTokenRefresh.listen((
+        newToken,
+      ) async {
         _currentToken = newToken;
         try {
           await repository.registerPushToken(
@@ -87,8 +88,7 @@ class FcmService {
       });
 
       // Foreground message handler (log for now).
-      _foregroundSubscription =
-          FirebaseMessaging.onMessage.listen((message) {
+      _foregroundSubscription = FirebaseMessaging.onMessage.listen((message) {
         log('FCM: foreground message received: ${message.messageId}');
       });
     } finally {

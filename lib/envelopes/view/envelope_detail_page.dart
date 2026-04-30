@@ -1,9 +1,14 @@
 import 'dart:async';
 
+import 'package:account_repository/account_repository.dart';
+import 'package:envelope/auth/auth.dart';
 import 'package:envelope/envelopes/cubit/cubit.dart';
 import 'package:envelope/envelopes/view/envelope_form_page.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/theme/app_colors.dart';
+import 'package:envelope/transactions/widgets/cc_pay_bottom_sheet.dart';
 import 'package:envelope/transactions/widgets/transaction_helpers.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
@@ -24,10 +29,19 @@ class EnvelopeDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<EnvelopeDetailCubit, EnvelopeDetailState>(
       builder: (context, state) {
+        final l10n = context.l10n;
         final envelopeColor =
             AppColors.fromHex(state.envelope.color) ?? AppColors.primary;
         return Scaffold(
           backgroundColor: envelopeColor,
+          floatingActionButton: state.envelope.linkedAccountId != null
+              ? FloatingActionButton.extended(
+                  onPressed: () => _payCC(context, state),
+                  label: Text(l10n.ccPayButton),
+                  backgroundColor: AppColors.onPrimary,
+                  foregroundColor: envelopeColor,
+                )
+              : null,
           body: CustomScrollView(
             slivers: [
               _EnvelopeAppBar(
@@ -42,6 +56,35 @@ class EnvelopeDetailPage extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Future<void> _payCC(
+    BuildContext context,
+    EnvelopeDetailState state,
+  ) async {
+    final linkedId = state.envelope.linkedAccountId!;
+    final budgetId = state.envelope.budgetId;
+    final userId = context.read<AuthBloc>().state.user?.id ?? '';
+    final budgetPeriodId = state.allocation?.budgetPeriodId;
+    final accounts = await context
+        .read<AccountRepository>()
+        .watchAccounts(budgetId)
+        .first;
+    if (!context.mounted) return;
+    final ccAccount = accounts.where((a) => a.id == linkedId).firstOrNull;
+    final ccDebtCents = ccAccount != null
+        ? (-ccAccount.currentBalance).clamp(0, maxCentsAmount)
+        : 0;
+    await showCCPayBottomSheet(
+      context,
+      ccAccountId: linkedId,
+      ccAccountName: ccAccount?.name ?? '',
+      ccDebtCents: ccDebtCents,
+      accounts: accounts,
+      budgetId: budgetId,
+      userId: userId,
+      budgetPeriodId: budgetPeriodId,
     );
   }
 
@@ -101,7 +144,8 @@ class EnvelopeDetailPage extends StatelessWidget {
       final success = await cubit.deleteEnvelope();
       if (context.mounted) {
         if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          showAppSnackBar(
+            context,
             SnackBar(
               content: Text(
                 l10n.envelopesDetailDeleteSuccess,
@@ -110,7 +154,8 @@ class EnvelopeDetailPage extends StatelessWidget {
           );
           Navigator.of(context).pop();
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
+          showAppSnackBar(
+            context,
             SnackBar(
               content: Text(
                 l10n.envelopesDetailDeleteError,
@@ -210,11 +255,12 @@ class _EnvelopeAppBarState extends State<_EnvelopeAppBar>
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
     final state = widget.state;
     final envelope = state.envelope;
 
     return SliverAppBar(
-      expandedHeight: 200,
+      expandedHeight: 210,
       pinned: true,
       backgroundColor: widget.envelopeColor,
       iconTheme: const IconThemeData(color: AppColors.onPrimary),
@@ -266,7 +312,7 @@ class _EnvelopeAppBarState extends State<_EnvelopeAppBar>
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    formatCents(state.available),
+                    formatCents(state.available, symbol: symbol),
                     style: GoogleFonts.playfairDisplay(
                       color: AppColors.onPrimary,
                       fontSize: 36,
@@ -517,6 +563,7 @@ class _HeaderDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final symbol = currencySymbol(context);
     return Column(
       children: [
         Text(
@@ -529,7 +576,7 @@ class _HeaderDetail extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          formatCents(amount),
+          formatCents(amount, symbol: symbol),
           style: const TextStyle(
             color: AppColors.onPrimary,
             fontWeight: FontWeight.w600,
@@ -558,6 +605,7 @@ class _TransactionRow extends StatelessWidget {
     final iconColor = AppColors.onPrimary.withValues(alpha: 0.7);
     final prefix = transaction.type == 'income' ? '+' : '';
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
@@ -588,7 +636,7 @@ class _TransactionRow extends StatelessWidget {
             )
           : null,
       trailing: Text(
-        '$prefix${formatCents(transaction.amount)}',
+        '$prefix${formatCents(transaction.amount, symbol: symbol)}',
         style: TextStyle(
           color: typeColor,
           fontWeight: FontWeight.w600,

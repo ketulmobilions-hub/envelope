@@ -6,8 +6,8 @@ part 'forgot_password_state.dart';
 
 class ForgotPasswordCubit extends Cubit<ForgotPasswordState> {
   ForgotPasswordCubit({required AuthRepository authRepository})
-      : _authRepository = authRepository,
-        super(const ForgotPasswordState());
+    : _authRepository = authRepository,
+      super(const ForgotPasswordState());
 
   final AuthRepository _authRepository;
 

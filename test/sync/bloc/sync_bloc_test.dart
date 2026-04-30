@@ -24,14 +24,17 @@ void main() {
     connectivityController =
         StreamController<List<ConnectivityResult>>.broadcast();
 
-    when(() => syncRepository.syncStatus)
-        .thenAnswer((_) => syncStatusController.stream);
+    when(
+      () => syncRepository.syncStatus,
+    ).thenAnswer((_) => syncStatusController.stream);
     when(() => syncRepository.syncNow()).thenAnswer((_) async {});
     when(() => syncRepository.dispose()).thenAnswer((_) async {});
-    when(() => connectivity.onConnectivityChanged)
-        .thenAnswer((_) => connectivityController.stream);
-    when(() => connectivity.checkConnectivity())
-        .thenAnswer((_) async => [ConnectivityResult.wifi]);
+    when(
+      () => connectivity.onConnectivityChanged,
+    ).thenAnswer((_) => connectivityController.stream);
+    when(
+      () => connectivity.checkConnectivity(),
+    ).thenAnswer((_) async => [ConnectivityResult.wifi]);
   });
 
   tearDown(() async {
@@ -109,8 +112,9 @@ void main() {
     blocTest<SyncBloc, SyncBlocState>(
       'triggers syncNow on offline to online transition',
       build: () {
-        when(() => connectivity.checkConnectivity())
-            .thenAnswer((_) async => [ConnectivityResult.none]);
+        when(
+          () => connectivity.checkConnectivity(),
+        ).thenAnswer((_) async => [ConnectivityResult.none]);
         return SyncBloc(
           syncRepository: syncRepository,
           connectivity: connectivity,
@@ -166,8 +170,9 @@ void main() {
     blocTest<SyncBloc, SyncBlocState>(
       'sets isOnline to false when initial check returns none',
       build: () {
-        when(() => connectivity.checkConnectivity())
-            .thenAnswer((_) async => [ConnectivityResult.none]);
+        when(
+          () => connectivity.checkConnectivity(),
+        ).thenAnswer((_) async => [ConnectivityResult.none]);
         return SyncBloc(
           syncRepository: syncRepository,
           connectivity: connectivity,
@@ -182,8 +187,9 @@ void main() {
     blocTest<SyncBloc, SyncBlocState>(
       'defaults to online when checkConnectivity throws',
       build: () {
-        when(() => connectivity.checkConnectivity())
-            .thenThrow(Exception('Platform not supported'));
+        when(
+          () => connectivity.checkConnectivity(),
+        ).thenThrow(Exception('Platform not supported'));
         return SyncBloc(
           syncRepository: syncRepository,
           connectivity: connectivity,
@@ -198,10 +204,12 @@ void main() {
     blocTest<SyncBloc, SyncBlocState>(
       'handles syncNow failure on offline to online transition',
       build: () {
-        when(() => connectivity.checkConnectivity())
-            .thenAnswer((_) async => [ConnectivityResult.none]);
-        when(() => syncRepository.syncNow())
-            .thenAnswer((_) async => throw Exception('Sync failed'));
+        when(
+          () => connectivity.checkConnectivity(),
+        ).thenAnswer((_) async => [ConnectivityResult.none]);
+        when(
+          () => syncRepository.syncNow(),
+        ).thenAnswer((_) async => throw Exception('Sync failed'));
         return SyncBloc(
           syncRepository: syncRepository,
           connectivity: connectivity,

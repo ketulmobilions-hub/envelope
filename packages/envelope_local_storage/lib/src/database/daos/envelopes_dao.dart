@@ -22,22 +22,20 @@ class EnvelopesDao extends DatabaseAccessor<AppDatabase>
       select(categoryGroups).get();
 
   Future<CategoryGroup?> getCategoryGroup(String id) =>
-      (select(categoryGroups)..where((t) => t.id.equals(id)))
-          .getSingleOrNull();
+      (select(categoryGroups)..where((t) => t.id.equals(id))).getSingleOrNull();
 
   Future<List<CategoryGroup>> getCategoryGroupsByBudgetId(String budgetId) =>
-      (select(categoryGroups)..where((t) => t.budgetId.equals(budgetId)))
-          .get();
+      (select(categoryGroups)..where((t) => t.budgetId.equals(budgetId))).get();
 
   Stream<List<CategoryGroup>> watchCategoryGroupsByBudgetId(String budgetId) =>
-      (select(categoryGroups)..where((t) => t.budgetId.equals(budgetId)))
-          .watch();
+      (select(
+        categoryGroups,
+      )..where((t) => t.budgetId.equals(budgetId))).watch();
 
   Future<int> insertCategoryGroup(
     CategoryGroupsCompanion group, {
     InsertMode mode = InsertMode.insert,
-  }) =>
-      into(categoryGroups).insert(group, mode: mode);
+  }) => into(categoryGroups).insert(group, mode: mode);
 
   Future<void> batchInsertCategoryGroups(
     List<CategoryGroupsCompanion> entries, {
@@ -61,30 +59,42 @@ class EnvelopesDao extends DatabaseAccessor<AppDatabase>
       (select(envelopes)..where((t) => t.budgetId.equals(budgetId))).get();
 
   Stream<List<Envelope>> watchEnvelopesByBudgetId(String budgetId) =>
-      (select(envelopes)..where((t) => t.budgetId.equals(budgetId))).watch();
+      (select(envelopes)..where(
+            (t) => t.budgetId.equals(budgetId) & t.deletedAt.isNull(),
+          ))
+          .watch();
 
   Future<List<Envelope>> getEnvelopesByCategoryGroupId(
     String categoryGroupId,
-  ) =>
-      (select(envelopes)
-            ..where((t) => t.categoryGroupId.equals(categoryGroupId)))
-          .get();
+  ) => (select(
+    envelopes,
+  )..where((t) => t.categoryGroupId.equals(categoryGroupId))).get();
 
   Stream<List<Envelope>> watchEnvelopesByCategoryGroupId(
     String categoryGroupId,
-  ) =>
-      (select(envelopes)
-            ..where((t) => t.categoryGroupId.equals(categoryGroupId)))
-          .watch();
+  ) => (select(
+    envelopes,
+  )..where((t) => t.categoryGroupId.equals(categoryGroupId))).watch();
 
   Future<Envelope?> getEnvelope(String id) =>
       (select(envelopes)..where((t) => t.id.equals(id))).getSingleOrNull();
 
+  Future<Envelope?> getEnvelopeByLinkedAccountId(
+    String accountId,
+    String budgetId,
+  ) =>
+      (select(envelopes)..where(
+            (t) =>
+                t.linkedAccountId.equals(accountId) &
+                t.budgetId.equals(budgetId) &
+                t.deletedAt.isNull(),
+          ))
+          .getSingleOrNull();
+
   Future<int> insertEnvelope(
     EnvelopesCompanion envelope, {
     InsertMode mode = InsertMode.insert,
-  }) =>
-      into(envelopes).insert(envelope, mode: mode);
+  }) => into(envelopes).insert(envelope, mode: mode);
 
   Future<void> batchInsertEnvelopes(
     List<EnvelopesCompanion> entries, {
@@ -104,30 +114,37 @@ class EnvelopesDao extends DatabaseAccessor<AppDatabase>
   // Envelope Allocations CRUD
   Future<List<EnvelopeAllocation>> getAllocationsByEnvelopeId(
     String envelopeId,
-  ) =>
-      (select(envelopeAllocations)
-            ..where((t) => t.envelopeId.equals(envelopeId)))
-          .get();
+  ) => (select(
+    envelopeAllocations,
+  )..where((t) => t.envelopeId.equals(envelopeId))).get();
 
   Future<List<EnvelopeAllocation>> getAllocationsByPeriodId(
     String budgetPeriodId,
+  ) => (select(
+    envelopeAllocations,
+  )..where((t) => t.budgetPeriodId.equals(budgetPeriodId))).get();
+
+  Future<EnvelopeAllocation?> getAllocationByEnvelopeAndPeriod(
+    String envelopeId,
+    String budgetPeriodId,
   ) =>
-      (select(envelopeAllocations)
-            ..where((t) => t.budgetPeriodId.equals(budgetPeriodId)))
-          .get();
+      (select(envelopeAllocations)..where(
+            (t) =>
+                t.envelopeId.equals(envelopeId) &
+                t.budgetPeriodId.equals(budgetPeriodId),
+          ))
+          .getSingleOrNull();
 
   Stream<List<EnvelopeAllocation>> watchAllocationsByPeriodId(
     String budgetPeriodId,
-  ) =>
-      (select(envelopeAllocations)
-            ..where((t) => t.budgetPeriodId.equals(budgetPeriodId)))
-          .watch();
+  ) => (select(
+    envelopeAllocations,
+  )..where((t) => t.budgetPeriodId.equals(budgetPeriodId))).watch();
 
   Future<int> insertAllocation(
     EnvelopeAllocationsCompanion allocation, {
     InsertMode mode = InsertMode.insert,
-  }) =>
-      into(envelopeAllocations).insert(allocation, mode: mode);
+  }) => into(envelopeAllocations).insert(allocation, mode: mode);
 
   Future<void> batchInsertAllocations(
     List<EnvelopeAllocationsCompanion> entries, {
@@ -146,20 +163,31 @@ class EnvelopesDao extends DatabaseAccessor<AppDatabase>
 
   // Allocation Templates CRUD
   Future<List<AllocationTemplate>> getTemplatesByBudgetId(String budgetId) =>
-      (select(allocationTemplates)
-            ..where((t) => t.budgetId.equals(budgetId)))
-          .get();
+      (select(
+        allocationTemplates,
+      )..where((t) => t.budgetId.equals(budgetId))).get();
 
-  Stream<List<AllocationTemplate>> watchTemplatesByBudgetId(String budgetId) =>
-      (select(allocationTemplates)
-            ..where((t) => t.budgetId.equals(budgetId)))
-          .watch();
+  Stream<List<AllocationTemplate>> watchTemplatesByBudgetId(
+    String budgetId,
+  ) async* {
+    final query = select(allocationTemplates)
+      ..where((t) => t.budgetId.equals(budgetId));
+    yield await query.get();
+    final updates = attachedDatabase.tableUpdates(
+      TableUpdateQuery.onAllTables({
+        allocationTemplates,
+        allocationTemplateItems,
+      }),
+    );
+    await for (final _ in updates) {
+      yield await query.get();
+    }
+  }
 
   Future<int> insertTemplate(
     AllocationTemplatesCompanion template, {
     InsertMode mode = InsertMode.insert,
-  }) =>
-      into(allocationTemplates).insert(template, mode: mode);
+  }) => into(allocationTemplates).insert(template, mode: mode);
 
   Future<void> batchInsertTemplates(
     List<AllocationTemplatesCompanion> entries, {
@@ -179,16 +207,14 @@ class EnvelopesDao extends DatabaseAccessor<AppDatabase>
   // Allocation Template Items CRUD
   Future<List<AllocationTemplateItem>> getTemplateItemsByTemplateId(
     String templateId,
-  ) =>
-      (select(allocationTemplateItems)
-            ..where((t) => t.templateId.equals(templateId)))
-          .get();
+  ) => (select(
+    allocationTemplateItems,
+  )..where((t) => t.templateId.equals(templateId))).get();
 
   Future<int> insertTemplateItem(
     AllocationTemplateItemsCompanion item, {
     InsertMode mode = InsertMode.insert,
-  }) =>
-      into(allocationTemplateItems).insert(item, mode: mode);
+  }) => into(allocationTemplateItems).insert(item, mode: mode);
 
   Future<void> batchInsertTemplateItems(
     List<AllocationTemplateItemsCompanion> entries, {
@@ -205,8 +231,7 @@ class EnvelopesDao extends DatabaseAccessor<AppDatabase>
   Future<int> deleteTemplateItem(String id) =>
       (delete(allocationTemplateItems)..where((t) => t.id.equals(id))).go();
 
-  Future<int> deleteTemplateItemsByTemplateId(String templateId) =>
-      (delete(allocationTemplateItems)
-            ..where((t) => t.templateId.equals(templateId)))
-          .go();
+  Future<int> deleteTemplateItemsByTemplateId(String templateId) => (delete(
+    allocationTemplateItems,
+  )..where((t) => t.templateId.equals(templateId))).go();
 }

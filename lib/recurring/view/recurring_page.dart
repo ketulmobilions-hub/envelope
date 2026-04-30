@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:account_repository/account_repository.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/recurring/bloc/bloc.dart';
 import 'package:envelope/recurring/view/bill_reminder_form_page.dart';
 import 'package:envelope/recurring/view/recurring_rule_form_page.dart';
 import 'package:envelope/recurring/widgets/widgets.dart';
+import 'package:envelope/shared/widgets/app_option_picker.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
@@ -16,9 +18,14 @@ import 'package:transaction_repository/transaction_repository.dart';
 /// Page that provides [RecurringBloc] and displays recurring rules and
 /// bill reminders in a tabbed layout.
 class RecurringPage extends StatelessWidget {
-  const RecurringPage({required this.budgetId, super.key});
+  const RecurringPage({
+    required this.budgetId,
+    this.initialTab = 0,
+    super.key,
+  });
 
   final String budgetId;
+  final int initialTab;
 
   @override
   Widget build(BuildContext context) {
@@ -29,22 +36,29 @@ class RecurringPage extends StatelessWidget {
         budgetId: budgetId,
         userId: userId,
       )..add(const RecurringStarted()),
-      child: RecurringView(budgetId: budgetId),
+      child: RecurringView(budgetId: budgetId, initialTab: initialTab),
     );
   }
 }
 
 class RecurringView extends StatelessWidget {
-  const RecurringView({required this.budgetId, super.key});
+  const RecurringView({
+    required this.budgetId,
+    this.initialTab = 0,
+    super.key,
+  });
 
   final String budgetId;
+  final int initialTab;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final userId = context.read<AuthBloc>().state.user?.id ?? '';
 
     return DefaultTabController(
       length: 2,
+      initialIndex: initialTab,
       child: BlocListener<RecurringBloc, RecurringState>(
         listenWhen: (prev, curr) =>
             curr.status == RecurringStatus.error && curr.error != null,
@@ -56,9 +70,7 @@ class RecurringView extends StatelessWidget {
             RecurringError.pauseFailed => l10n.recurringErrorPauseFailed,
             RecurringError.postFailed => l10n.recurringErrorPostFailed,
           };
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(SnackBar(content: Text(message)));
+          showAppSnackBar(context, SnackBar(content: Text(message)));
         },
         child: Scaffold(
           appBar: AppBar(
@@ -70,9 +82,11 @@ class RecurringView extends StatelessWidget {
               ],
             ),
           ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () => _onFabPressed(context),
-            child: const Icon(Icons.add),
+          floatingActionButton: Builder(
+            builder: (innerContext) => FloatingActionButton(
+              onPressed: () => _onFabPressed(innerContext),
+              child: const Icon(Icons.add),
+            ),
           ),
           body: BlocBuilder<RecurringBloc, RecurringState>(
             builder: (context, state) {
@@ -90,6 +104,7 @@ class RecurringView extends StatelessWidget {
                   _BillRemindersTab(
                     state: state,
                     budgetId: budgetId,
+                    userId: userId,
                   ),
                 ],
               );
@@ -176,7 +191,8 @@ class _RecurringRulesTab extends StatelessWidget {
         itemCount: state.recurringRules.length,
         itemBuilder: (context, index) {
           final rule = state.recurringRules[index];
-          final isPending = !rule.isPaused &&
+          final isPending =
+              !rule.isPaused &&
               !rule.autoPost &&
               !rule.nextOccurrence.isAfter(DateTime.now());
           return RecurringRuleListTile(
@@ -184,12 +200,11 @@ class _RecurringRulesTab extends StatelessWidget {
             isPending: isPending,
             onTap: () => _openEditRule(context, rule),
             onDelete: () => _onDeleteRule(context, rule),
-            onPost: () => context
-                .read<RecurringBloc>()
-                .add(RecurringRulePosted(rule.id)),
-            onPauseToggle: () => context
-                .read<RecurringBloc>()
-                .add(RecurringRulePauseToggled(rule.id)),
+            onPost: () =>
+                context.read<RecurringBloc>().add(RecurringRulePosted(rule.id)),
+            onPauseToggle: () => context.read<RecurringBloc>().add(
+              RecurringRulePauseToggled(rule.id),
+            ),
           );
         },
       ),
@@ -274,10 +289,15 @@ class _RecurringRulesTab extends StatelessWidget {
 }
 
 class _BillRemindersTab extends StatelessWidget {
-  const _BillRemindersTab({required this.state, required this.budgetId});
+  const _BillRemindersTab({
+    required this.state,
+    required this.budgetId,
+    required this.userId,
+  });
 
   final RecurringState state;
   final String budgetId;
+  final String userId;
 
   @override
   Widget build(BuildContext context) {
@@ -395,8 +415,6 @@ class _BillRemindersTab extends StatelessWidget {
     BuildContext context,
     BillReminder reminder,
   ) async {
-    final userId = context.read<AuthBloc>().state.user?.id;
-    if (userId == null || userId.isEmpty) return;
     await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
         builder: (_) => _SimpleBillPaymentForm(
@@ -409,6 +427,9 @@ class _BillRemindersTab extends StatelessWidget {
         ),
       ),
     );
+    if (context.mounted) {
+      context.read<RecurringBloc>().add(const RecurringRefreshRequested());
+    }
   }
 }
 
@@ -431,8 +452,7 @@ class _SimpleBillPaymentForm extends StatefulWidget {
   final BillReminder reminder;
 
   @override
-  State<_SimpleBillPaymentForm> createState() =>
-      _SimpleBillPaymentFormState();
+  State<_SimpleBillPaymentForm> createState() => _SimpleBillPaymentFormState();
 }
 
 class _SimpleBillPaymentFormState extends State<_SimpleBillPaymentForm> {
@@ -440,6 +460,7 @@ class _SimpleBillPaymentFormState extends State<_SimpleBillPaymentForm> {
   late final TextEditingController _amountController;
   String? _selectedAccountId;
   bool _isSubmitting = false;
+  bool _isLoadingAccounts = true;
   List<Account> _accounts = [];
 
   @override
@@ -459,12 +480,12 @@ class _SimpleBillPaymentFormState extends State<_SimpleBillPaymentForm> {
       if (mounted) {
         setState(() {
           _accounts = accounts;
-          _selectedAccountId =
-              accounts.isNotEmpty ? accounts.first.id : null;
+          _selectedAccountId = accounts.isNotEmpty ? accounts.first.id : null;
+          _isLoadingAccounts = false;
         });
       }
     } on Exception {
-      // Keep current state.
+      if (mounted) setState(() => _isLoadingAccounts = false);
     }
   }
 
@@ -477,6 +498,7 @@ class _SimpleBillPaymentFormState extends State<_SimpleBillPaymentForm> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -489,35 +511,25 @@ class _SimpleBillPaymentFormState extends State<_SimpleBillPaymentForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (_accounts.isNotEmpty)
-                DropdownButtonFormField<String>(
-                  key: ValueKey('account_$_selectedAccountId'),
-                  initialValue: _selectedAccountId,
-                  decoration: InputDecoration(
-                    labelText: l10n.transactionsAccountLabel,
-                    prefixIcon: const Icon(Icons.account_balance_outlined),
-                  ),
-                  items: _accounts.map((account) {
-                    return DropdownMenuItem(
-                      value: account.id,
-                      child: Text(account.name),
-                    );
-                  }).toList(),
-                  onChanged: (value) =>
-                      setState(() => _selectedAccountId = value),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return l10n.transactionsAccountRequired;
-                    }
-                    return null;
-                  },
+              if (_isLoadingAccounts)
+                const Center(child: CircularProgressIndicator())
+              else if (_accounts.isNotEmpty)
+                AppOptionPicker<Account>(
+                  options: _accounts,
+                  value: _accounts
+                      .where((a) => a.id == _selectedAccountId)
+                      .firstOrNull,
+                  onChanged: (a) => setState(() => _selectedAccountId = a.id),
+                  labelText: l10n.transactionsAccountLabel,
+                  icon: Icons.account_balance_outlined,
+                  itemLabel: (a) => a.name,
                 ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _amountController,
                 decoration: InputDecoration(
                   labelText: l10n.transactionsAmountLabel,
-                  prefixIcon: const Icon(Icons.attach_money),
+                  prefixText: symbol,
                 ),
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
@@ -531,7 +543,7 @@ class _SimpleBillPaymentFormState extends State<_SimpleBillPaymentForm> {
               ),
               const SizedBox(height: 32),
               FilledButton(
-                onPressed: _isSubmitting ? null : _submit,
+                onPressed: _isSubmitting || _isLoadingAccounts ? null : _submit,
                 child: _isSubmitting
                     ? const SizedBox.square(
                         dimension: 20,
@@ -575,9 +587,7 @@ class _SimpleBillPaymentFormState extends State<_SimpleBillPaymentForm> {
       if (mounted) Navigator.of(context).pop(true);
     } on TransactionException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(e.message)));
+        showAppSnackBar(context, SnackBar(content: Text(e.message)));
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);

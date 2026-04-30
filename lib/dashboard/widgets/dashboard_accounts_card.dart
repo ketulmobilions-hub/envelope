@@ -1,6 +1,7 @@
 import 'package:account_repository/account_repository.dart';
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:flutter/material.dart';
 
 /// Displays total balance and top accounts on the dashboard.
@@ -20,8 +21,11 @@ class DashboardAccountsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
-    final activeAccounts =
-        accounts.where((a) => !a.isArchived).take(3).toList();
+    final symbol = currencySymbol(context);
+    final activeAccounts = accounts
+        .where((a) => !a.isArchived)
+        .take(3)
+        .toList();
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -53,7 +57,7 @@ class DashboardAccountsCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                formatCents(totalBalance),
+                formatCents(totalBalance, symbol: symbol),
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: totalBalance < 0 ? theme.colorScheme.error : null,
@@ -75,7 +79,7 @@ class DashboardAccountsCard extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          formatCents(account.currentBalance),
+                          formatCents(account.currentBalance, symbol: symbol),
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w500,
                             color: account.currentBalance < 0

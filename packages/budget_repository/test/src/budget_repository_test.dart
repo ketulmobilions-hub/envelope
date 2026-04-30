@@ -1,8 +1,7 @@
 import 'package:budget_repository/budget_repository.dart';
 import 'package:drift/drift.dart' show InsertMode;
 import 'package:envelope_api_client/envelope_api_client.dart';
-import 'package:envelope_local_storage/envelope_local_storage.dart'
-    as storage;
+import 'package:envelope_local_storage/envelope_local_storage.dart' as storage;
 import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
 
@@ -22,17 +21,14 @@ class FakeBudgetDto extends Fake implements BudgetDto {}
 
 class FakeBudgetPeriodDto extends Fake implements BudgetPeriodDto {}
 
-class FakeAllocationTemplateDto extends Fake
-    implements AllocationTemplateDto {}
+class FakeAllocationTemplateDto extends Fake implements AllocationTemplateDto {}
 
 class FakeAllocationTemplateItemDto extends Fake
     implements AllocationTemplateItemDto {}
 
-class FakeEnvelopeAllocationDto extends Fake
-    implements EnvelopeAllocationDto {}
+class FakeEnvelopeAllocationDto extends Fake implements EnvelopeAllocationDto {}
 
-class FakeBudgetsCompanion extends Fake
-    implements storage.BudgetsCompanion {}
+class FakeBudgetsCompanion extends Fake implements storage.BudgetsCompanion {}
 
 class FakeBudgetPeriodsCompanion extends Fake
     implements storage.BudgetPeriodsCompanion {}
@@ -107,8 +103,6 @@ void main() {
     isClosed: false,
     createdAt: now,
   );
-
-
 
   final testLocalAllocation = storage.EnvelopeAllocation(
     id: 'alloc-1',
@@ -198,8 +192,9 @@ void main() {
     // -----------------------------------------------------------------
     group('createBudget', () {
       test('creates via API, caches, and returns model', () async {
-        when(() => budgetsApiClient.createBudget(any()))
-            .thenAnswer((_) async => testBudgetDto);
+        when(
+          () => budgetsApiClient.createBudget(any()),
+        ).thenAnswer((_) async => testBudgetDto);
         when(
           () => budgetsDao.insertBudget(
             any(),
@@ -225,8 +220,9 @@ void main() {
       });
 
       test('throws BudgetException on API failure', () async {
-        when(() => budgetsApiClient.createBudget(any()))
-            .thenThrow(const EnvelopeApiException('API error'));
+        when(
+          () => budgetsApiClient.createBudget(any()),
+        ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
           () => repository.createBudget(
@@ -241,8 +237,9 @@ void main() {
 
     group('getBudget', () {
       test('returns from local storage when available', () async {
-        when(() => budgetsDao.getBudget('budget-1'))
-            .thenAnswer((_) async => testLocalBudget);
+        when(
+          () => budgetsDao.getBudget('budget-1'),
+        ).thenAnswer((_) async => testLocalBudget);
 
         final result = await repository.getBudget('budget-1');
 
@@ -251,10 +248,12 @@ void main() {
       });
 
       test('falls back to API when not in local storage', () async {
-        when(() => budgetsDao.getBudget('budget-1'))
-            .thenAnswer((_) async => null);
-        when(() => budgetsApiClient.getBudget('budget-1'))
-            .thenAnswer((_) async => testBudgetDto);
+        when(
+          () => budgetsDao.getBudget('budget-1'),
+        ).thenAnswer((_) async => null);
+        when(
+          () => budgetsApiClient.getBudget('budget-1'),
+        ).thenAnswer((_) async => testBudgetDto);
         when(
           () => budgetsDao.insertBudget(
             any(),
@@ -269,10 +268,12 @@ void main() {
       });
 
       test('throws BudgetException on API failure', () async {
-        when(() => budgetsDao.getBudget('budget-1'))
-            .thenAnswer((_) async => null);
-        when(() => budgetsApiClient.getBudget('budget-1'))
-            .thenThrow(const EnvelopeApiException('API error'));
+        when(
+          () => budgetsDao.getBudget('budget-1'),
+        ).thenAnswer((_) async => null);
+        when(
+          () => budgetsApiClient.getBudget('budget-1'),
+        ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
           () => repository.getBudget('budget-1'),
@@ -283,8 +284,7 @@ void main() {
 
     group('watchBudgets', () {
       test('streams budgets filtered by ownerId', () {
-        when(() => budgetsDao.watchBudgetsByOwnerId('owner-1'))
-            .thenAnswer(
+        when(() => budgetsDao.watchBudgetsByOwnerId('owner-1')).thenAnswer(
           (_) => Stream.value([testLocalBudget]),
         );
 
@@ -303,8 +303,9 @@ void main() {
 
     group('updateBudget', () {
       test('updates via API and caches locally', () async {
-        when(() => budgetsApiClient.updateBudget(any()))
-            .thenAnswer((_) async => testBudgetDto);
+        when(
+          () => budgetsApiClient.updateBudget(any()),
+        ).thenAnswer((_) async => testBudgetDto);
         when(
           () => budgetsDao.insertBudget(
             any(),
@@ -324,8 +325,9 @@ void main() {
       });
 
       test('throws BudgetException on API failure', () async {
-        when(() => budgetsApiClient.updateBudget(any()))
-            .thenThrow(const EnvelopeApiException('API error'));
+        when(
+          () => budgetsApiClient.updateBudget(any()),
+        ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
           () => repository.updateBudget(testBudget),
@@ -336,21 +338,23 @@ void main() {
 
     group('deleteBudget', () {
       test('deletes from API and cleans up local cache', () async {
-        when(() => budgetsApiClient.deleteBudget('budget-1'))
-            .thenAnswer((_) async {});
-        when(() => budgetsDao.deleteBudget('budget-1'))
-            .thenAnswer((_) async => 1);
+        when(
+          () => budgetsApiClient.deleteBudget('budget-1'),
+        ).thenAnswer((_) async {});
+        when(
+          () => budgetsDao.deleteBudget('budget-1'),
+        ).thenAnswer((_) async => 1);
 
         await repository.deleteBudget('budget-1');
 
-        verify(() => budgetsApiClient.deleteBudget('budget-1'))
-            .called(1);
+        verify(() => budgetsApiClient.deleteBudget('budget-1')).called(1);
         verify(() => budgetsDao.deleteBudget('budget-1')).called(1);
       });
 
       test('throws BudgetException on API failure', () async {
-        when(() => budgetsApiClient.deleteBudget('budget-1'))
-            .thenThrow(const EnvelopeApiException('API error'));
+        when(
+          () => budgetsApiClient.deleteBudget('budget-1'),
+        ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
           () => repository.deleteBudget('budget-1'),
@@ -359,24 +363,27 @@ void main() {
       });
 
       test('succeeds even when local cleanup fails', () async {
-        when(() => budgetsApiClient.deleteBudget('budget-1'))
-            .thenAnswer((_) async {});
-        when(() => budgetsDao.deleteBudget('budget-1'))
-            .thenThrow(Exception('local error'));
+        when(
+          () => budgetsApiClient.deleteBudget('budget-1'),
+        ).thenAnswer((_) async {});
+        when(
+          () => budgetsDao.deleteBudget('budget-1'),
+        ).thenThrow(Exception('local error'));
 
         await repository.deleteBudget('budget-1');
 
-        verify(() => budgetsApiClient.deleteBudget('budget-1'))
-            .called(1);
+        verify(() => budgetsApiClient.deleteBudget('budget-1')).called(1);
       });
     });
 
     group('archiveBudget', () {
       test('sets isArchived to true and updatedAt', () async {
-        when(() => budgetsDao.getBudget('budget-1'))
-            .thenAnswer((_) async => testLocalBudget);
-        when(() => budgetsApiClient.updateBudget(any()))
-            .thenAnswer((inv) async {
+        when(
+          () => budgetsDao.getBudget('budget-1'),
+        ).thenAnswer((_) async => testLocalBudget);
+        when(() => budgetsApiClient.updateBudget(any())).thenAnswer((
+          inv,
+        ) async {
           return inv.positionalArguments.first as BudgetDto;
         });
         when(
@@ -388,19 +395,23 @@ void main() {
 
         await repository.archiveBudget('budget-1');
 
-        final captured = verify(
-          () => budgetsApiClient.updateBudget(captureAny()),
-        ).captured.single as BudgetDto;
+        final captured =
+            verify(
+                  () => budgetsApiClient.updateBudget(captureAny()),
+                ).captured.single
+                as BudgetDto;
         expect(captured.isArchived, isTrue);
         // updatedAt should be newer than original.
         expect(captured.updatedAt.isAfter(now), isTrue);
       });
 
       test('throws BudgetException on API failure', () async {
-        when(() => budgetsDao.getBudget('budget-1'))
-            .thenAnswer((_) async => testLocalBudget);
-        when(() => budgetsApiClient.updateBudget(any()))
-            .thenThrow(const EnvelopeApiException('API error'));
+        when(
+          () => budgetsDao.getBudget('budget-1'),
+        ).thenAnswer((_) async => testLocalBudget);
+        when(
+          () => budgetsApiClient.updateBudget(any()),
+        ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
           () => repository.archiveBudget('budget-1'),
@@ -409,10 +420,12 @@ void main() {
       });
 
       test('throws BudgetException when budget not found', () async {
-        when(() => budgetsDao.getBudget('budget-1'))
-            .thenAnswer((_) async => null);
-        when(() => budgetsApiClient.getBudget('budget-1'))
-            .thenThrow(const EnvelopeApiException('not found'));
+        when(
+          () => budgetsDao.getBudget('budget-1'),
+        ).thenAnswer((_) async => null);
+        when(
+          () => budgetsApiClient.getBudget('budget-1'),
+        ).thenThrow(const EnvelopeApiException('not found'));
 
         expect(
           () => repository.archiveBudget('budget-1'),
@@ -423,8 +436,9 @@ void main() {
 
     group('refreshBudgets', () {
       test('fetches from API and batch caches all', () async {
-        when(() => budgetsApiClient.getBudgetsByOwner('owner-1'))
-            .thenAnswer((_) async => [testBudgetDto]);
+        when(
+          () => budgetsApiClient.getBudgetsByOwner('owner-1'),
+        ).thenAnswer((_) async => [testBudgetDto]);
         when(
           () => budgetsDao.batchInsertBudgets(
             any(),
@@ -434,8 +448,7 @@ void main() {
 
         await repository.refreshBudgets('owner-1');
 
-        verify(() => budgetsApiClient.getBudgetsByOwner('owner-1'))
-            .called(1);
+        verify(() => budgetsApiClient.getBudgetsByOwner('owner-1')).called(1);
         verify(
           () => budgetsDao.batchInsertBudgets(
             any(),
@@ -445,8 +458,9 @@ void main() {
       });
 
       test('throws BudgetException on API failure', () async {
-        when(() => budgetsApiClient.getBudgetsByOwner('owner-1'))
-            .thenThrow(const EnvelopeApiException('API error'));
+        when(
+          () => budgetsApiClient.getBudgetsByOwner('owner-1'),
+        ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
           () => repository.refreshBudgets('owner-1'),
@@ -460,8 +474,9 @@ void main() {
     // -----------------------------------------------------------------
     group('createBudgetPeriod', () {
       test('creates via API, caches, and returns model', () async {
-        when(() => budgetsApiClient.createBudgetPeriod(any()))
-            .thenAnswer((_) async => testBudgetPeriodDto);
+        when(
+          () => budgetsApiClient.createBudgetPeriod(any()),
+        ).thenAnswer((_) async => testBudgetPeriodDto);
         when(
           () => budgetsDao.insertBudgetPeriod(
             any(),
@@ -477,13 +492,13 @@ void main() {
 
         expect(result.id, equals('period-1'));
         expect(result.budgetId, equals('budget-1'));
-        verify(() => budgetsApiClient.createBudgetPeriod(any()))
-            .called(1);
+        verify(() => budgetsApiClient.createBudgetPeriod(any())).called(1);
       });
 
       test('throws BudgetException on API failure', () async {
-        when(() => budgetsApiClient.createBudgetPeriod(any()))
-            .thenThrow(const EnvelopeApiException('API error'));
+        when(
+          () => budgetsApiClient.createBudgetPeriod(any()),
+        ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
           () => repository.createBudgetPeriod(
@@ -498,8 +513,7 @@ void main() {
 
     group('watchBudgetPeriods', () {
       test('streams from local storage mapped to domain models', () {
-        when(() => budgetsDao.watchPeriodsByBudgetId('budget-1'))
-            .thenAnswer(
+        when(() => budgetsDao.watchPeriodsByBudgetId('budget-1')).thenAnswer(
           (_) => Stream.value([testLocalBudgetPeriod]),
         );
 
@@ -523,8 +537,9 @@ void main() {
     group('closeBudgetPeriod', () {
       test('closes via API and caches result', () async {
         final closedDto = testBudgetPeriodDto.copyWith(isClosed: true);
-        when(() => budgetsApiClient.closeBudgetPeriod('period-1'))
-            .thenAnswer((_) async => closedDto);
+        when(
+          () => budgetsApiClient.closeBudgetPeriod('period-1'),
+        ).thenAnswer((_) async => closedDto);
         when(
           () => budgetsDao.insertBudgetPeriod(
             any(),
@@ -534,8 +549,7 @@ void main() {
 
         await repository.closeBudgetPeriod('period-1');
 
-        verify(() => budgetsApiClient.closeBudgetPeriod('period-1'))
-            .called(1);
+        verify(() => budgetsApiClient.closeBudgetPeriod('period-1')).called(1);
         verify(
           () => budgetsDao.insertBudgetPeriod(
             any(),
@@ -545,8 +559,9 @@ void main() {
       });
 
       test('throws BudgetException on API failure', () async {
-        when(() => budgetsApiClient.closeBudgetPeriod('period-1'))
-            .thenThrow(const EnvelopeApiException('API error'));
+        when(
+          () => budgetsApiClient.closeBudgetPeriod('period-1'),
+        ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
           () => repository.closeBudgetPeriod('period-1'),
@@ -557,8 +572,9 @@ void main() {
 
     group('refreshBudgetPeriods', () {
       test('fetches from API and batch caches all', () async {
-        when(() => budgetsApiClient.getBudgetPeriods('budget-1'))
-            .thenAnswer((_) async => [testBudgetPeriodDto]);
+        when(
+          () => budgetsApiClient.getBudgetPeriods('budget-1'),
+        ).thenAnswer((_) async => [testBudgetPeriodDto]);
         when(
           () => budgetsDao.batchInsertBudgetPeriods(
             any(),
@@ -568,8 +584,7 @@ void main() {
 
         await repository.refreshBudgetPeriods('budget-1');
 
-        verify(() => budgetsApiClient.getBudgetPeriods('budget-1'))
-            .called(1);
+        verify(() => budgetsApiClient.getBudgetPeriods('budget-1')).called(1);
         verify(
           () => budgetsDao.batchInsertBudgetPeriods(
             any(),
@@ -579,8 +594,9 @@ void main() {
       });
 
       test('throws BudgetException on API failure', () async {
-        when(() => budgetsApiClient.getBudgetPeriods('budget-1'))
-            .thenThrow(const EnvelopeApiException('API error'));
+        when(
+          () => budgetsApiClient.getBudgetPeriods('budget-1'),
+        ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
           () => repository.refreshBudgetPeriods('budget-1'),
@@ -590,16 +606,17 @@ void main() {
     });
 
     group('autoCreateNextPeriod', () {
-      test('creates next period based on latest existing period',
-          () async {
-        when(() => budgetsDao.getBudget('budget-1'))
-            .thenAnswer((_) async => testLocalBudget);
-        when(() => budgetsDao.getPeriodsByBudgetId('budget-1'))
-            .thenAnswer((_) async => [testLocalBudgetPeriod]);
-        when(() => budgetsApiClient.createBudgetPeriod(any()))
-            .thenAnswer((inv) async {
-          final dto =
-              inv.positionalArguments.first as BudgetPeriodDto;
+      test('creates next period based on latest existing period', () async {
+        when(
+          () => budgetsDao.getBudget('budget-1'),
+        ).thenAnswer((_) async => testLocalBudget);
+        when(
+          () => budgetsDao.getPeriodsByBudgetId('budget-1'),
+        ).thenAnswer((_) async => [testLocalBudgetPeriod]);
+        when(() => budgetsApiClient.createBudgetPeriod(any())).thenAnswer((
+          inv,
+        ) async {
+          final dto = inv.positionalArguments.first as BudgetPeriodDto;
           return dto.copyWith(id: 'period-2');
         });
         when(
@@ -609,8 +626,7 @@ void main() {
           ),
         ).thenAnswer((_) async => 1);
 
-        final result =
-            await repository.autoCreateNextPeriod('budget-1');
+        final result = await repository.autoCreateNextPeriod('budget-1');
 
         expect(result.id, equals('period-2'));
         // Start date should be day after previous end date.
@@ -621,14 +637,16 @@ void main() {
       });
 
       test('creates first period when no periods exist', () async {
-        when(() => budgetsDao.getBudget('budget-1'))
-            .thenAnswer((_) async => testLocalBudget);
-        when(() => budgetsDao.getPeriodsByBudgetId('budget-1'))
-            .thenAnswer((_) async => []);
-        when(() => budgetsApiClient.createBudgetPeriod(any()))
-            .thenAnswer((inv) async {
-          final dto =
-              inv.positionalArguments.first as BudgetPeriodDto;
+        when(
+          () => budgetsDao.getBudget('budget-1'),
+        ).thenAnswer((_) async => testLocalBudget);
+        when(
+          () => budgetsDao.getPeriodsByBudgetId('budget-1'),
+        ).thenAnswer((_) async => []);
+        when(() => budgetsApiClient.createBudgetPeriod(any())).thenAnswer((
+          inv,
+        ) async {
+          final dto = inv.positionalArguments.first as BudgetPeriodDto;
           return dto.copyWith(id: 'period-1');
         });
         when(
@@ -638,12 +656,10 @@ void main() {
           ),
         ).thenAnswer((_) async => 1);
 
-        final result =
-            await repository.autoCreateNextPeriod('budget-1');
+        final result = await repository.autoCreateNextPeriod('budget-1');
 
         expect(result.id, equals('period-1'));
-        verify(() => budgetsApiClient.createBudgetPeriod(any()))
-            .called(1);
+        verify(() => budgetsApiClient.createBudgetPeriod(any())).called(1);
       });
 
       test('handles weekly period type', () async {
@@ -668,14 +684,16 @@ void main() {
           isClosed: false,
           createdAt: now,
         );
-        when(() => budgetsDao.getBudget('budget-1'))
-            .thenAnswer((_) async => weeklyBudget);
-        when(() => budgetsDao.getPeriodsByBudgetId('budget-1'))
-            .thenAnswer((_) async => [weeklyPeriod]);
-        when(() => budgetsApiClient.createBudgetPeriod(any()))
-            .thenAnswer((inv) async {
-          final dto =
-              inv.positionalArguments.first as BudgetPeriodDto;
+        when(
+          () => budgetsDao.getBudget('budget-1'),
+        ).thenAnswer((_) async => weeklyBudget);
+        when(
+          () => budgetsDao.getPeriodsByBudgetId('budget-1'),
+        ).thenAnswer((_) async => [weeklyPeriod]);
+        when(() => budgetsApiClient.createBudgetPeriod(any())).thenAnswer((
+          inv,
+        ) async {
+          final dto = inv.positionalArguments.first as BudgetPeriodDto;
           return dto.copyWith(id: 'period-2');
         });
         when(
@@ -685,8 +703,7 @@ void main() {
           ),
         ).thenAnswer((_) async => 1);
 
-        final result =
-            await repository.autoCreateNextPeriod('budget-1');
+        final result = await repository.autoCreateNextPeriod('budget-1');
 
         // Weekly: start = Jan 8, end = Jan 14
         expect(result.startDate, equals(DateTime(2024, 1, 8)));
@@ -717,14 +734,16 @@ void main() {
           isClosed: false,
           createdAt: now,
         );
-        when(() => budgetsDao.getBudget('budget-1'))
-            .thenAnswer((_) async => budget31);
-        when(() => budgetsDao.getPeriodsByBudgetId('budget-1'))
-            .thenAnswer((_) async => [janPeriod]);
-        when(() => budgetsApiClient.createBudgetPeriod(any()))
-            .thenAnswer((inv) async {
-          final dto =
-              inv.positionalArguments.first as BudgetPeriodDto;
+        when(
+          () => budgetsDao.getBudget('budget-1'),
+        ).thenAnswer((_) async => budget31);
+        when(
+          () => budgetsDao.getPeriodsByBudgetId('budget-1'),
+        ).thenAnswer((_) async => [janPeriod]);
+        when(() => budgetsApiClient.createBudgetPeriod(any())).thenAnswer((
+          inv,
+        ) async {
+          final dto = inv.positionalArguments.first as BudgetPeriodDto;
           return dto.copyWith(id: 'period-2');
         });
         when(
@@ -734,8 +753,7 @@ void main() {
           ),
         ).thenAnswer((_) async => 1);
 
-        final result =
-            await repository.autoCreateNextPeriod('budget-1');
+        final result = await repository.autoCreateNextPeriod('budget-1');
 
         // Start date = Jan 31 (day after Jan 30 end)
         expect(result.startDate, equals(DateTime(2024, 1, 31)));
@@ -749,23 +767,24 @@ void main() {
     // Budget-Level Allocation Operations
     // -----------------------------------------------------------------
     group('calculateReadyToAssign', () {
-      test('computes totalIncome - totalAllocated + rollovers',
-          () async {
-        when(() => budgetsDao.getBudgetPeriod('period-1'))
-            .thenAnswer((_) async => testLocalBudgetPeriod);
-        when(() => envelopesDao.getAllocationsByPeriodId('period-1'))
-            .thenAnswer((_) async => [testLocalAllocation]);
+      test('computes totalIncome - totalAllocated + rollovers', () async {
+        when(
+          () => budgetsDao.getBudgetPeriod('period-1'),
+        ).thenAnswer((_) async => testLocalBudgetPeriod);
+        when(
+          () => envelopesDao.getAllocationsByPeriodId('period-1'),
+        ).thenAnswer((_) async => [testLocalAllocation]);
 
-        final result =
-            await repository.calculateReadyToAssign('period-1');
+        final result = await repository.calculateReadyToAssign('period-1');
 
         // 500000 - 300000 + 5000 = 205000
         expect(result, equals(205000));
       });
 
       test('throws BudgetException when period not found', () async {
-        when(() => budgetsDao.getBudgetPeriod('period-1'))
-            .thenAnswer((_) async => null);
+        when(
+          () => budgetsDao.getBudgetPeriod('period-1'),
+        ).thenAnswer((_) async => null);
 
         expect(
           () => repository.calculateReadyToAssign('period-1'),
@@ -775,15 +794,14 @@ void main() {
     });
 
     group('duplicateAllocations', () {
-      test('copies allocated amounts with zeroed spent/rollover',
-          () async {
-        when(() => envelopesDao.getAllocationsByPeriodId('period-1'))
-            .thenAnswer((_) async => [testLocalAllocation]);
+      test('copies allocated amounts with zeroed spent/rollover', () async {
+        when(
+          () => envelopesDao.getAllocationsByPeriodId('period-1'),
+        ).thenAnswer((_) async => [testLocalAllocation]);
         when(
           () => envelopesApiClient.createEnvelopeAllocation(any()),
         ).thenAnswer((inv) async {
-          final dto =
-              inv.positionalArguments.first as EnvelopeAllocationDto;
+          final dto = inv.positionalArguments.first as EnvelopeAllocationDto;
           return dto.copyWith(id: 'alloc-new');
         });
         when(
@@ -798,10 +816,12 @@ void main() {
           toPeriodId: 'period-2',
         );
 
-        final captured = verify(
-          () => envelopesApiClient
-              .createEnvelopeAllocation(captureAny()),
-        ).captured.single as EnvelopeAllocationDto;
+        final captured =
+            verify(
+                  () =>
+                      envelopesApiClient.createEnvelopeAllocation(captureAny()),
+                ).captured.single
+                as EnvelopeAllocationDto;
         // Allocated amount copied from source.
         expect(captured.allocatedAmount, equals(100000));
         // Spent and rollover should be 0 for new period.
@@ -811,8 +831,9 @@ void main() {
       });
 
       test('throws BudgetException on API failure', () async {
-        when(() => envelopesDao.getAllocationsByPeriodId('period-1'))
-            .thenAnswer((_) async => [testLocalAllocation]);
+        when(
+          () => envelopesDao.getAllocationsByPeriodId('period-1'),
+        ).thenAnswer((_) async => [testLocalAllocation]);
         when(
           () => envelopesApiClient.createEnvelopeAllocation(any()),
         ).thenThrow(const EnvelopeApiException('API error'));
@@ -845,18 +866,15 @@ void main() {
         );
 
         when(
-          () => envelopesApiClient
-              .getEnvelopeAllocation('alloc-from'),
+          () => envelopesApiClient.getEnvelopeAllocation('alloc-from'),
         ).thenAnswer((_) async => fromDto);
         when(
-          () => envelopesApiClient
-              .getEnvelopeAllocation('alloc-to'),
+          () => envelopesApiClient.getEnvelopeAllocation('alloc-to'),
         ).thenAnswer((_) async => toDto);
         when(
           () => envelopesApiClient.updateEnvelopeAllocation(any()),
         ).thenAnswer((inv) async {
-          return inv.positionalArguments.first
-              as EnvelopeAllocationDto;
+          return inv.positionalArguments.first as EnvelopeAllocationDto;
         });
         when(
           () => envelopesDao.insertAllocation(
@@ -872,8 +890,7 @@ void main() {
         );
 
         final captured = verify(
-          () => envelopesApiClient
-              .updateEnvelopeAllocation(captureAny()),
+          () => envelopesApiClient.updateEnvelopeAllocation(captureAny()),
         ).captured;
         final updatedFrom = captured[0] as EnvelopeAllocationDto;
         final updatedTo = captured[1] as EnvelopeAllocationDto;
@@ -926,12 +943,10 @@ void main() {
         );
 
         when(
-          () => envelopesApiClient
-              .getEnvelopeAllocation('alloc-from'),
+          () => envelopesApiClient.getEnvelopeAllocation('alloc-from'),
         ).thenAnswer((_) async => fromDto);
         when(
-          () => envelopesApiClient
-              .getEnvelopeAllocation('alloc-to'),
+          () => envelopesApiClient.getEnvelopeAllocation('alloc-to'),
         ).thenAnswer((_) async => toDto);
 
         expect(
@@ -967,12 +982,10 @@ void main() {
         );
 
         when(
-          () => envelopesApiClient
-              .getEnvelopeAllocation('alloc-from'),
+          () => envelopesApiClient.getEnvelopeAllocation('alloc-from'),
         ).thenAnswer((_) async => fromDto);
         when(
-          () => envelopesApiClient
-              .getEnvelopeAllocation('alloc-to'),
+          () => envelopesApiClient.getEnvelopeAllocation('alloc-to'),
         ).thenAnswer((_) async => toDto);
 
         var callCount = 0;
@@ -982,15 +995,13 @@ void main() {
           callCount++;
           if (callCount == 1) {
             // First update succeeds (debit from source).
-            return inv.positionalArguments.first
-                as EnvelopeAllocationDto;
+            return inv.positionalArguments.first as EnvelopeAllocationDto;
           } else if (callCount == 2) {
             // Second update fails (credit to target).
             throw const EnvelopeApiException('network error');
           }
           // Third call is the revert.
-          return inv.positionalArguments.first
-              as EnvelopeAllocationDto;
+          return inv.positionalArguments.first as EnvelopeAllocationDto;
         });
 
         expect(
@@ -1013,8 +1024,7 @@ void main() {
 
       test('throws BudgetException on API failure', () async {
         when(
-          () => envelopesApiClient
-              .getEnvelopeAllocation('alloc-from'),
+          () => envelopesApiClient.getEnvelopeAllocation('alloc-from'),
         ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
@@ -1032,8 +1042,7 @@ void main() {
     // Allocation Templates
     // -----------------------------------------------------------------
     group('createAllocationTemplate', () {
-      test('creates template + items via API, caches, returns model',
-          () async {
+      test('creates template + items via API, caches, returns model', () async {
         when(
           () => envelopesApiClient.createAllocationTemplate(any()),
         ).thenAnswer((_) async => testTemplateDto);
@@ -1095,30 +1104,29 @@ void main() {
 
     group('getAllocationTemplates', () {
       test('returns from local storage when available', () async {
-        when(() => envelopesDao.getTemplatesByBudgetId('budget-1'))
-            .thenAnswer((_) async => [testLocalTemplate]);
+        when(
+          () => envelopesDao.getTemplatesByBudgetId('budget-1'),
+        ).thenAnswer((_) async => [testLocalTemplate]);
         when(
           () => envelopesDao.getTemplateItemsByTemplateId('tmpl-1'),
         ).thenAnswer((_) async => [testLocalTemplateItem]);
 
-        final result =
-            await repository.getAllocationTemplates('budget-1');
+        final result = await repository.getAllocationTemplates('budget-1');
 
         expect(result, hasLength(1));
         expect(result.first.id, equals('tmpl-1'));
         expect(result.first.items, hasLength(1));
         verifyNever(
-          () => envelopesApiClient
-              .getAllocationTemplatesByBudget(any()),
+          () => envelopesApiClient.getAllocationTemplatesByBudget(any()),
         );
       });
 
       test('falls back to API when local is empty', () async {
-        when(() => envelopesDao.getTemplatesByBudgetId('budget-1'))
-            .thenAnswer((_) async => []);
         when(
-          () => envelopesApiClient
-              .getAllocationTemplatesByBudget('budget-1'),
+          () => envelopesDao.getTemplatesByBudgetId('budget-1'),
+        ).thenAnswer((_) async => []);
+        when(
+          () => envelopesApiClient.getAllocationTemplatesByBudget('budget-1'),
         ).thenAnswer((_) async => [testTemplateDto]);
         when(
           () => envelopesDao.insertTemplate(
@@ -1127,8 +1135,7 @@ void main() {
           ),
         ).thenAnswer((_) async => 1);
         when(
-          () => envelopesApiClient
-              .getAllocationTemplateItems('tmpl-1'),
+          () => envelopesApiClient.getAllocationTemplateItems('tmpl-1'),
         ).thenAnswer((_) async => [testTemplateItemDto]);
         when(
           () => envelopesDao.insertTemplateItem(
@@ -1137,23 +1144,21 @@ void main() {
           ),
         ).thenAnswer((_) async => 1);
 
-        final result =
-            await repository.getAllocationTemplates('budget-1');
+        final result = await repository.getAllocationTemplates('budget-1');
 
         expect(result, hasLength(1));
         expect(result.first.id, equals('tmpl-1'));
         verify(
-          () => envelopesApiClient
-              .getAllocationTemplatesByBudget('budget-1'),
+          () => envelopesApiClient.getAllocationTemplatesByBudget('budget-1'),
         ).called(1);
       });
 
       test('throws BudgetException on API failure', () async {
-        when(() => envelopesDao.getTemplatesByBudgetId('budget-1'))
-            .thenAnswer((_) async => []);
         when(
-          () => envelopesApiClient
-              .getAllocationTemplatesByBudget('budget-1'),
+          () => envelopesDao.getTemplatesByBudgetId('budget-1'),
+        ).thenAnswer((_) async => []);
+        when(
+          () => envelopesApiClient.getAllocationTemplatesByBudget('budget-1'),
         ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
@@ -1165,16 +1170,16 @@ void main() {
 
     group('watchAllocationTemplates', () {
       test('streams templates with items from local storage', () {
-        when(() => envelopesDao.watchTemplatesByBudgetId('budget-1'))
-            .thenAnswer(
+        when(
+          () => envelopesDao.watchTemplatesByBudgetId('budget-1'),
+        ).thenAnswer(
           (_) => Stream.value([testLocalTemplate]),
         );
         when(
           () => envelopesDao.getTemplateItemsByTemplateId('tmpl-1'),
         ).thenAnswer((_) async => [testLocalTemplateItem]);
 
-        final stream =
-            repository.watchAllocationTemplates('budget-1');
+        final stream = repository.watchAllocationTemplates('budget-1');
 
         expect(
           stream,
@@ -1192,8 +1197,7 @@ void main() {
     });
 
     group('updateAllocationTemplate', () {
-      test('deletes old items from API before local (remote-first)',
-          () async {
+      test('deletes old items from API before local (remote-first)', () async {
         when(
           () => envelopesApiClient.updateAllocationTemplate(any()),
         ).thenAnswer((_) async => testTemplateDto);
@@ -1204,16 +1208,13 @@ void main() {
           ),
         ).thenAnswer((_) async => 1);
         when(
-          () => envelopesApiClient
-              .getAllocationTemplateItems('tmpl-1'),
+          () => envelopesApiClient.getAllocationTemplateItems('tmpl-1'),
         ).thenAnswer((_) async => [testTemplateItemDto]);
         when(
-          () => envelopesApiClient
-              .deleteAllocationTemplateItem('item-1'),
+          () => envelopesApiClient.deleteAllocationTemplateItem('item-1'),
         ).thenAnswer((_) async {});
         when(
-          () =>
-              envelopesDao.deleteTemplateItemsByTemplateId('tmpl-1'),
+          () => envelopesDao.deleteTemplateItemsByTemplateId('tmpl-1'),
         ).thenAnswer((_) async => 1);
         when(
           () => envelopesApiClient.createAllocationTemplateItem(any()),
@@ -1247,12 +1248,10 @@ void main() {
         ).called(1);
         // API items deleted before local items.
         verify(
-          () => envelopesApiClient
-              .deleteAllocationTemplateItem('item-1'),
+          () => envelopesApiClient.deleteAllocationTemplateItem('item-1'),
         ).called(1);
         verify(
-          () =>
-              envelopesDao.deleteTemplateItemsByTemplateId('tmpl-1'),
+          () => envelopesDao.deleteTemplateItemsByTemplateId('tmpl-1'),
         ).called(1);
         verify(
           () => envelopesApiClient.createAllocationTemplateItem(any()),
@@ -1263,40 +1262,34 @@ void main() {
     group('deleteAllocationTemplate', () {
       test('deletes items first, then template', () async {
         when(
-          () => envelopesApiClient
-              .getAllocationTemplateItems('tmpl-1'),
+          () => envelopesApiClient.getAllocationTemplateItems('tmpl-1'),
         ).thenAnswer((_) async => [testTemplateItemDto]);
         when(
-          () => envelopesApiClient
-              .deleteAllocationTemplateItem('item-1'),
+          () => envelopesApiClient.deleteAllocationTemplateItem('item-1'),
         ).thenAnswer((_) async {});
         when(
-          () => envelopesApiClient
-              .deleteAllocationTemplate('tmpl-1'),
+          () => envelopesApiClient.deleteAllocationTemplate('tmpl-1'),
         ).thenAnswer((_) async {});
         when(
-          () =>
-              envelopesDao.deleteTemplateItemsByTemplateId('tmpl-1'),
+          () => envelopesDao.deleteTemplateItemsByTemplateId('tmpl-1'),
         ).thenAnswer((_) async => 1);
-        when(() => envelopesDao.deleteTemplate('tmpl-1'))
-            .thenAnswer((_) async => 1);
+        when(
+          () => envelopesDao.deleteTemplate('tmpl-1'),
+        ).thenAnswer((_) async => 1);
 
         await repository.deleteAllocationTemplate('tmpl-1');
 
         verify(
-          () => envelopesApiClient
-              .deleteAllocationTemplateItem('item-1'),
+          () => envelopesApiClient.deleteAllocationTemplateItem('item-1'),
         ).called(1);
         verify(
-          () => envelopesApiClient
-              .deleteAllocationTemplate('tmpl-1'),
+          () => envelopesApiClient.deleteAllocationTemplate('tmpl-1'),
         ).called(1);
       });
 
       test('throws BudgetException on API failure', () async {
         when(
-          () => envelopesApiClient
-              .getAllocationTemplateItems('tmpl-1'),
+          () => envelopesApiClient.getAllocationTemplateItems('tmpl-1'),
         ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
@@ -1307,23 +1300,19 @@ void main() {
 
       test('succeeds even when local cleanup fails', () async {
         when(
-          () => envelopesApiClient
-              .getAllocationTemplateItems('tmpl-1'),
+          () => envelopesApiClient.getAllocationTemplateItems('tmpl-1'),
         ).thenAnswer((_) async => []);
         when(
-          () => envelopesApiClient
-              .deleteAllocationTemplate('tmpl-1'),
+          () => envelopesApiClient.deleteAllocationTemplate('tmpl-1'),
         ).thenAnswer((_) async {});
         when(
-          () =>
-              envelopesDao.deleteTemplateItemsByTemplateId('tmpl-1'),
+          () => envelopesDao.deleteTemplateItemsByTemplateId('tmpl-1'),
         ).thenThrow(Exception('local error'));
 
         await repository.deleteAllocationTemplate('tmpl-1');
 
         verify(
-          () => envelopesApiClient
-              .deleteAllocationTemplate('tmpl-1'),
+          () => envelopesApiClient.deleteAllocationTemplate('tmpl-1'),
         ).called(1);
       });
     });
@@ -1331,18 +1320,17 @@ void main() {
     group('applyAllocationTemplate', () {
       test('creates allocations from template percentages', () async {
         when(
-          () => envelopesApiClient
-              .getAllocationTemplateItems('tmpl-1'),
+          () => envelopesApiClient.getAllocationTemplateItems('tmpl-1'),
         ).thenAnswer(
           (_) async => [testTemplateItemDto, testTemplateItemDto2],
         );
-        when(() => envelopesDao.getAllocationsByPeriodId('period-1'))
-            .thenAnswer((_) async => []);
+        when(
+          () => envelopesDao.getAllocationsByPeriodId('period-1'),
+        ).thenAnswer((_) async => []);
         when(
           () => envelopesApiClient.createEnvelopeAllocation(any()),
         ).thenAnswer((inv) async {
-          final dto =
-              inv.positionalArguments.first as EnvelopeAllocationDto;
+          final dto = inv.positionalArguments.first as EnvelopeAllocationDto;
           return dto.copyWith(id: 'alloc-new');
         });
         when(
@@ -1385,20 +1373,18 @@ void main() {
         );
 
         when(
-          () => envelopesApiClient
-              .getAllocationTemplateItems('tmpl-1'),
+          () => envelopesApiClient.getAllocationTemplateItems('tmpl-1'),
         ).thenAnswer((_) async => [item1, item2, item3]);
-        when(() => envelopesDao.getAllocationsByPeriodId('period-1'))
-            .thenAnswer((_) async => []);
+        when(
+          () => envelopesDao.getAllocationsByPeriodId('period-1'),
+        ).thenAnswer((_) async => []);
 
         final createdDtos = <EnvelopeAllocationDto>[];
         when(
           () => envelopesApiClient.createEnvelopeAllocation(any()),
         ).thenAnswer((inv) async {
-          final dto =
-              inv.positionalArguments.first as EnvelopeAllocationDto;
-          final created =
-              dto.copyWith(id: 'alloc-${createdDtos.length}');
+          final dto = inv.positionalArguments.first as EnvelopeAllocationDto;
+          final created = dto.copyWith(id: 'alloc-${createdDtos.length}');
           createdDtos.add(created);
           return created;
         });
@@ -1438,8 +1424,7 @@ void main() {
         );
 
         when(
-          () => envelopesApiClient
-              .getAllocationTemplateItems('tmpl-1'),
+          () => envelopesApiClient.getAllocationTemplateItems('tmpl-1'),
         ).thenAnswer((_) async => [badItem1, badItem2]);
 
         expect(
@@ -1458,17 +1443,16 @@ void main() {
         );
       });
 
-      test('throws when allocations already exist for envelopes',
-          () async {
+      test('throws when allocations already exist for envelopes', () async {
         when(
-          () => envelopesApiClient
-              .getAllocationTemplateItems('tmpl-1'),
+          () => envelopesApiClient.getAllocationTemplateItems('tmpl-1'),
         ).thenAnswer(
           (_) async => [testTemplateItemDto, testTemplateItemDto2],
         );
         // Existing allocation for env-1 in the target period.
-        when(() => envelopesDao.getAllocationsByPeriodId('period-1'))
-            .thenAnswer((_) async => [testLocalAllocation]);
+        when(
+          () => envelopesDao.getAllocationsByPeriodId('period-1'),
+        ).thenAnswer((_) async => [testLocalAllocation]);
 
         expect(
           () => repository.applyAllocationTemplate(
@@ -1488,8 +1472,7 @@ void main() {
 
       test('throws BudgetException on API failure', () async {
         when(
-          () => envelopesApiClient
-              .getAllocationTemplateItems('tmpl-1'),
+          () => envelopesApiClient.getAllocationTemplateItems('tmpl-1'),
         ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
@@ -1504,11 +1487,9 @@ void main() {
     });
 
     group('refreshAllocationTemplates', () {
-      test('fetches templates and items from API and batch caches',
-          () async {
+      test('fetches templates and items from API and batch caches', () async {
         when(
-          () => envelopesApiClient
-              .getAllocationTemplatesByBudget('budget-1'),
+          () => envelopesApiClient.getAllocationTemplatesByBudget('budget-1'),
         ).thenAnswer((_) async => [testTemplateDto]);
         when(
           () => envelopesDao.batchInsertTemplates(
@@ -1517,8 +1498,7 @@ void main() {
           ),
         ).thenAnswer((_) async {});
         when(
-          () => envelopesApiClient
-              .getAllocationTemplateItems('tmpl-1'),
+          () => envelopesApiClient.getAllocationTemplateItems('tmpl-1'),
         ).thenAnswer((_) async => [testTemplateItemDto]);
         when(
           () => envelopesDao.batchInsertTemplateItems(
@@ -1530,8 +1510,7 @@ void main() {
         await repository.refreshAllocationTemplates('budget-1');
 
         verify(
-          () => envelopesApiClient
-              .getAllocationTemplatesByBudget('budget-1'),
+          () => envelopesApiClient.getAllocationTemplatesByBudget('budget-1'),
         ).called(1);
         verify(
           () => envelopesDao.batchInsertTemplates(
@@ -1549,8 +1528,7 @@ void main() {
 
       test('throws BudgetException on API failure', () async {
         when(
-          () => envelopesApiClient
-              .getAllocationTemplatesByBudget('budget-1'),
+          () => envelopesApiClient.getAllocationTemplatesByBudget('budget-1'),
         ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
@@ -1576,8 +1554,9 @@ void main() {
           createdAt: now,
         );
 
-        when(() => budgetsApiClient.updateBudgetPeriod(any()))
-            .thenAnswer((_) async => testBudgetPeriodDto);
+        when(
+          () => budgetsApiClient.updateBudgetPeriod(any()),
+        ).thenAnswer((_) async => testBudgetPeriodDto);
         when(
           () => budgetsDao.insertBudgetPeriod(
             any(),
@@ -1587,8 +1566,7 @@ void main() {
 
         await repository.updateBudgetPeriod(period);
 
-        verify(() => budgetsApiClient.updateBudgetPeriod(any()))
-            .called(1);
+        verify(() => budgetsApiClient.updateBudgetPeriod(any())).called(1);
         verify(
           () => budgetsDao.insertBudgetPeriod(
             any(),
@@ -1609,8 +1587,9 @@ void main() {
           createdAt: now,
         );
 
-        when(() => budgetsApiClient.updateBudgetPeriod(any()))
-            .thenThrow(const EnvelopeApiException('API error'));
+        when(
+          () => budgetsApiClient.updateBudgetPeriod(any()),
+        ).thenThrow(const EnvelopeApiException('API error'));
 
         expect(
           () => repository.updateBudgetPeriod(period),
@@ -1626,10 +1605,12 @@ void main() {
       test(
         'finds latest period and increments totalIncome',
         () async {
-          when(() => budgetsDao.getPeriodsByBudgetId('budget-1'))
-              .thenAnswer((_) async => [testLocalBudgetPeriod]);
-          when(() => budgetsApiClient.updateBudgetPeriod(any()))
-              .thenAnswer((_) async => testBudgetPeriodDto);
+          when(
+            () => budgetsDao.getPeriodsByBudgetId('budget-1'),
+          ).thenAnswer((_) async => [testLocalBudgetPeriod]);
+          when(
+            () => budgetsApiClient.updateBudgetPeriod(any()),
+          ).thenAnswer((_) async => testBudgetPeriodDto);
           when(
             () => budgetsDao.insertBudgetPeriod(
               any(),
@@ -1642,16 +1623,19 @@ void main() {
             amount: 10000,
           );
 
-          final captured = verify(
-            () => budgetsApiClient.updateBudgetPeriod(captureAny()),
-          ).captured.single as BudgetPeriodDto;
+          final captured =
+              verify(
+                    () => budgetsApiClient.updateBudgetPeriod(captureAny()),
+                  ).captured.single
+                  as BudgetPeriodDto;
           expect(captured.totalIncome, equals(510000));
         },
       );
 
       test('does nothing when no periods exist', () async {
-        when(() => budgetsDao.getPeriodsByBudgetId('budget-1'))
-            .thenAnswer((_) async => []);
+        when(
+          () => budgetsDao.getPeriodsByBudgetId('budget-1'),
+        ).thenAnswer((_) async => []);
 
         await repository.addIncomeToCurrentPeriod(
           budgetId: 'budget-1',
@@ -1677,12 +1661,12 @@ void main() {
             createdAt: now,
           );
 
-          when(() => budgetsDao.getPeriodsByBudgetId('budget-1'))
-              .thenAnswer(
+          when(() => budgetsDao.getPeriodsByBudgetId('budget-1')).thenAnswer(
             (_) async => [olderPeriod, testLocalBudgetPeriod],
           );
-          when(() => budgetsApiClient.updateBudgetPeriod(any()))
-              .thenAnswer((_) async => testBudgetPeriodDto);
+          when(
+            () => budgetsApiClient.updateBudgetPeriod(any()),
+          ).thenAnswer((_) async => testBudgetPeriodDto);
           when(
             () => budgetsDao.insertBudgetPeriod(
               any(),
@@ -1695,9 +1679,11 @@ void main() {
             amount: 10000,
           );
 
-          final captured = verify(
-            () => budgetsApiClient.updateBudgetPeriod(captureAny()),
-          ).captured.single as BudgetPeriodDto;
+          final captured =
+              verify(
+                    () => budgetsApiClient.updateBudgetPeriod(captureAny()),
+                  ).captured.single
+                  as BudgetPeriodDto;
           // Should update period-1 (Jan 2024), not period-0 (Dec 2023)
           expect(captured.id, equals('period-1'));
           expect(captured.totalIncome, equals(510000));
@@ -1707,8 +1693,9 @@ void main() {
       test(
         'throws BudgetException on failure',
         () async {
-          when(() => budgetsDao.getPeriodsByBudgetId('budget-1'))
-              .thenThrow(Exception('DB error'));
+          when(
+            () => budgetsDao.getPeriodsByBudgetId('budget-1'),
+          ).thenThrow(Exception('DB error'));
 
           expect(
             () => repository.addIncomeToCurrentPeriod(

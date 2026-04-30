@@ -55,10 +55,7 @@ class TransactionDateGroup extends StatelessWidget {
 
   String? _envelopeName(Transaction txn) {
     if (txn.envelopeId == null) return null;
-    return envelopes
-        .where((e) => e.id == txn.envelopeId)
-        .firstOrNull
-        ?.name;
+    return envelopes.where((e) => e.id == txn.envelopeId).firstOrNull?.name;
   }
 
   List<String>? _splitEnvelopeNames(Transaction txn) {

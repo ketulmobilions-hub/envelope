@@ -1,5 +1,6 @@
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:flutter/material.dart';
 
 /// Shows a warning dialog when a transaction causes an
@@ -16,7 +17,8 @@ Future<bool?> showOverspendWarningDialog(
     context: context,
     builder: (dialogContext) {
       final l10n = dialogContext.l10n;
-      final formatted = formatCents(deficitCents.abs());
+      final symbol = currencySymbol(dialogContext);
+      final formatted = formatCents(deficitCents.abs(), symbol: symbol);
 
       return AlertDialog(
         icon: Icon(
@@ -33,13 +35,11 @@ Future<bool?> showOverspendWarningDialog(
         ),
         actions: [
           TextButton(
-            onPressed: () =>
-                Navigator.of(dialogContext).pop(false),
+            onPressed: () => Navigator.of(dialogContext).pop(false),
             child: Text(l10n.overspendDismiss),
           ),
           FilledButton(
-            onPressed: () =>
-                Navigator.of(dialogContext).pop(true),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
             child: Text(l10n.overspendCoverButton),
           ),
         ],

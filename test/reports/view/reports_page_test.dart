@@ -26,8 +26,9 @@ void main() {
     reportRepository = MockReportRepository();
     budgetRepository = MockBudgetRepository();
 
-    when(() => budgetRepository.watchBudgetPeriods(any()))
-        .thenAnswer((_) => Stream.value([]));
+    when(
+      () => budgetRepository.watchBudgetPeriods(any()),
+    ).thenAnswer((_) => Stream.value([]));
   });
 
   group('ReportsPage', () {

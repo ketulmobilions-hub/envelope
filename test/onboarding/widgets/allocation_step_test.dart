@@ -20,7 +20,6 @@ void main() {
       when(() => cubit.state).thenReturn(
         const OnboardingState(
           currentStep: OnboardingStep.allocation,
-          expectedIncome: 5000,
           categoryGroups: [
             OnboardingCategoryGroup(
               name: 'Needs',
@@ -31,7 +30,7 @@ void main() {
       );
     });
 
-    testWidgets('renders title and income info', (tester) async {
+    testWidgets('renders title', (tester) async {
       await tester.pumpApp(
         BlocProvider<OnboardingCubit>.value(
           value: cubit,
@@ -41,10 +40,6 @@ void main() {
       expect(
         find.text('Allocate Your Income'),
         findsOneWidget,
-      );
-      expect(
-        find.textContaining('5000.00'),
-        findsWidgets,
       );
     });
 
@@ -58,11 +53,8 @@ void main() {
       expect(find.text('Complete Setup'), findsOneWidget);
     });
 
-    testWidgets(
-        'complete button calls completeOnboarding',
-        (tester) async {
-      when(() => cubit.completeOnboarding())
-          .thenAnswer((_) async {});
+    testWidgets('complete button calls completeOnboarding', (tester) async {
+      when(() => cubit.completeOnboarding()).thenAnswer((_) async {});
       await tester.pumpApp(
         BlocProvider<OnboardingCubit>.value(
           value: cubit,

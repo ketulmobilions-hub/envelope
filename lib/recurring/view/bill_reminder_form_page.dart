@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/recurring/widgets/frequency_label.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
+import 'package:envelope/shared/widgets/app_option_picker.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -98,6 +101,7 @@ class _BillReminderFormPageState extends State<BillReminderFormPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -137,7 +141,7 @@ class _BillReminderFormPageState extends State<BillReminderFormPage> {
                   controller: _amountController,
                   decoration: InputDecoration(
                     labelText: l10n.recurringEstimatedAmountLabel,
-                    prefixIcon: const Icon(Icons.attach_money),
+                    prefixText: symbol,
                   ),
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
@@ -183,49 +187,29 @@ class _BillReminderFormPageState extends State<BillReminderFormPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Frequency
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedFrequency,
-                  decoration: InputDecoration(
-                    labelText: l10n.recurringFrequencyLabel,
-                    prefixIcon: const Icon(Icons.repeat),
-                  ),
-                  items: _frequencies.map((f) {
-                    return DropdownMenuItem(
-                      value: f,
-                      child: Text(localizedFrequency(f, l10n)),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => _selectedFrequency = value);
-                    }
-                  },
+                // Frequency picker
+                AppOptionPicker<String>(
+                  options: _frequencies,
+                  value: _selectedFrequency,
+                  onChanged: (f) => setState(() => _selectedFrequency = f),
+                  labelText: l10n.recurringFrequencyLabel,
+                  icon: Icons.repeat,
+                  itemLabel: (f) => localizedFrequency(f, l10n),
                 ),
                 const SizedBox(height: 16),
 
-                // Envelope dropdown
+                // Envelope picker
                 if (_envelopes.isNotEmpty)
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedEnvelopeId,
-                    decoration: InputDecoration(
-                      labelText: l10n.transactionsEnvelopeLabel,
-                      prefixIcon: const Icon(Icons.mail_outlined),
-                    ),
-                    items: [
-                      DropdownMenuItem<String>(
-                        child: Text(l10n.transactionsNoEnvelope),
-                      ),
-                      ..._envelopes.map((env) {
-                        return DropdownMenuItem(
-                          value: env.id,
-                          child: Text(env.name),
-                        );
-                      }),
-                    ],
-                    onChanged: (value) {
-                      setState(() => _selectedEnvelopeId = value);
-                    },
+                  AppOptionPicker<Envelope>(
+                    options: _envelopes,
+                    value: _envelopes
+                        .where((e) => e.id == _selectedEnvelopeId)
+                        .firstOrNull,
+                    onChanged: (e) =>
+                        setState(() => _selectedEnvelopeId = e.id),
+                    labelText: l10n.transactionsEnvelopeLabel,
+                    icon: Icons.mail_outlined,
+                    itemLabel: (e) => e.name,
                   ),
                 const SizedBox(height: 16),
 
@@ -273,8 +257,8 @@ class _BillReminderFormPageState extends State<BillReminderFormPage> {
     setState(() => _isSubmitting = true);
 
     try {
-      final amountCents =
-          ((double.tryParse(_amountController.text) ?? 0) * 100).round();
+      final amountCents = ((double.tryParse(_amountController.text) ?? 0) * 100)
+          .round();
       final dueDay = int.tryParse(_dueDayController.text) ?? 1;
       final reminderDays = int.tryParse(_reminderDaysController.text) ?? 3;
 
@@ -303,13 +287,10 @@ class _BillReminderFormPageState extends State<BillReminderFormPage> {
       if (mounted) Navigator.of(context).pop(true);
     } on TransactionException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(e.message)));
+        showAppSnackBar(context, SnackBar(content: Text(e.message)));
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
   }
-
 }

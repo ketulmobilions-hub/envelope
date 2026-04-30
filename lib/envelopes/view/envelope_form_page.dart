@@ -1,5 +1,7 @@
 import 'package:envelope/envelopes/cubit/cubit.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/widgets/app_option_picker.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
@@ -76,23 +78,20 @@ class _EnvelopeFormPageState extends State<EnvelopeFormPage> {
         if (state.status == EnvelopeFormStatus.success) {
           Navigator.of(context).pop(true);
         } else if (state.status == EnvelopeFormStatus.failure) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: Text(
-                  state.errorMessage ?? l10n.envelopesErrorUpdateFailed,
-                ),
+          showAppSnackBar(
+            context,
+            SnackBar(
+              content: Text(
+                state.errorMessage ?? l10n.envelopesErrorUpdateFailed,
               ),
-            );
+            ),
+          );
         }
       },
       child: Scaffold(
         appBar: AppBar(
           title: Text(
-            _isEditing
-                ? l10n.envelopesEditEnvelope
-                : l10n.envelopesAddEnvelope,
+            _isEditing ? l10n.envelopesEditEnvelope : l10n.envelopesAddEnvelope,
           ),
         ),
         body: SingleChildScrollView(
@@ -122,25 +121,15 @@ class _EnvelopeFormPageState extends State<EnvelopeFormPage> {
                   ),
                   const SizedBox(height: 16),
                   if (widget.categoryGroups.isNotEmpty)
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedGroupId.isNotEmpty
-                          ? _selectedGroupId
-                          : null,
-                      decoration: InputDecoration(
-                        labelText: l10n.envelopesCategoryGroupLabel,
-                        prefixIcon: const Icon(Icons.category_outlined),
-                      ),
-                      items: widget.categoryGroups.map((group) {
-                        return DropdownMenuItem(
-                          value: group.id,
-                          child: Text(group.name),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() => _selectedGroupId = value);
-                        }
-                      },
+                    AppOptionPicker<CategoryGroup>(
+                      options: widget.categoryGroups,
+                      value: widget.categoryGroups
+                          .where((g) => g.id == _selectedGroupId)
+                          .firstOrNull,
+                      onChanged: (g) => setState(() => _selectedGroupId = g.id),
+                      labelText: l10n.envelopesCategoryGroupLabel,
+                      icon: Icons.category_outlined,
+                      itemLabel: (g) => g.name,
                     ),
                   const SizedBox(height: 16),
                   Text(
@@ -162,8 +151,7 @@ class _EnvelopeFormPageState extends State<EnvelopeFormPage> {
                         child: GestureDetector(
                           onTap: () {
                             setState(() {
-                              _selectedColor =
-                                  isSelected ? null : swatch.hex;
+                              _selectedColor = isSelected ? null : swatch.hex;
                             });
                           },
                           child: Tooltip(
@@ -229,11 +217,10 @@ class _EnvelopeFormPageState extends State<EnvelopeFormPage> {
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_selectedGroupId.isEmpty) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(content: Text(context.l10n.envelopesNoCategoryGroupsError)),
-        );
+      showAppSnackBar(
+        context,
+        SnackBar(content: Text(context.l10n.envelopesNoCategoryGroupsError)),
+      );
       return;
     }
 

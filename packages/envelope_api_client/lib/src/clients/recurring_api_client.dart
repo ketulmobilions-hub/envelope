@@ -6,7 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class RecurringApiClient {
   /// Creates a [RecurringApiClient] with the given [SupabaseClient].
   const RecurringApiClient({required SupabaseClient supabaseClient})
-      : _supabaseClient = supabaseClient;
+    : _supabaseClient = supabaseClient;
 
   final SupabaseClient _supabaseClient;
 

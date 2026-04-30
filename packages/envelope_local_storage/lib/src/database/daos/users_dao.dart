@@ -29,25 +29,21 @@ class UsersDao extends DatabaseAccessor<AppDatabase> with _$UsersDaoMixin {
   // Notification preferences
   Future<NotificationPreference?> getNotificationPreferences(
     String userId,
-  ) =>
-      (select(notificationPreferences)
-            ..where((t) => t.userId.equals(userId)))
-          .getSingleOrNull();
+  ) => (select(
+    notificationPreferences,
+  )..where((t) => t.userId.equals(userId))).getSingleOrNull();
 
   Stream<NotificationPreference?> watchNotificationPreferences(
     String userId,
-  ) =>
-      (select(notificationPreferences)
-            ..where((t) => t.userId.equals(userId)))
-          .watchSingleOrNull();
+  ) => (select(
+    notificationPreferences,
+  )..where((t) => t.userId.equals(userId))).watchSingleOrNull();
 
   Future<int> upsertNotificationPreferences(
     NotificationPreferencesCompanion prefs,
-  ) =>
-      into(notificationPreferences).insertOnConflictUpdate(prefs);
+  ) => into(notificationPreferences).insertOnConflictUpdate(prefs);
 
-  Future<int> deleteNotificationPreferences(String userId) =>
-      (delete(notificationPreferences)
-            ..where((t) => t.userId.equals(userId)))
-          .go();
+  Future<int> deleteNotificationPreferences(String userId) => (delete(
+    notificationPreferences,
+  )..where((t) => t.userId.equals(userId))).go();
 }

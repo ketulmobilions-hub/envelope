@@ -1,4 +1,5 @@
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 
@@ -32,8 +33,9 @@ class _CategoryGroupFormPageState extends State<CategoryGroupFormPage> {
   @override
   void initState() {
     super.initState();
-    _nameController =
-        TextEditingController(text: widget.categoryGroup?.name ?? '');
+    _nameController = TextEditingController(
+      text: widget.categoryGroup?.name ?? '',
+    );
   }
 
   @override
@@ -122,9 +124,7 @@ class _CategoryGroupFormPageState extends State<CategoryGroupFormPage> {
       if (mounted) Navigator.of(context).pop(true);
     } on EnvelopeException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(e.message)));
+        showAppSnackBar(context, SnackBar(content: Text(e.message)));
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);

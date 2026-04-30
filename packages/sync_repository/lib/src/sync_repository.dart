@@ -28,9 +28,9 @@ class SyncRepository {
     required AppDatabase localDatabase,
     required String deviceId,
     Clock? clock,
-  })  : _localDatabase = localDatabase,
-        _deviceId = deviceId,
-        _clock = clock ?? DateTime.now;
+  }) : _localDatabase = localDatabase,
+       _deviceId = deviceId,
+       _clock = clock ?? DateTime.now;
 
   final AppDatabase _localDatabase;
   final String _deviceId;
@@ -146,9 +146,9 @@ class SyncRepository {
 
   /// Stream of pending change count updates.
   Stream<int> watchPendingChangeCount() {
-    return _localDatabase.syncDao
-        .watchPendingSyncMetadata()
-        .map((items) => items.length);
+    return _localDatabase.syncDao.watchPendingSyncMetadata().map(
+      (items) => items.length,
+    );
   }
 
   /// Resolves a sync conflict for a specific record.
@@ -158,8 +158,7 @@ class SyncRepository {
     required String recordId,
     required String resolution,
   }) async {
-    final metadata =
-        await _localDatabase.syncDao.getSyncMetadataById(recordId);
+    final metadata = await _localDatabase.syncDao.getSyncMetadataById(recordId);
 
     if (metadata == null) {
       throw const SyncConflictException(
@@ -184,8 +183,7 @@ class SyncRepository {
       // Accept remote version — fetch the single record and apply it
       final delegate = _delegates[metadata.syncTableName];
       if (delegate != null) {
-        final remoteRecord =
-            await delegate.getRemoteRecord(metadata.recordId);
+        final remoteRecord = await delegate.getRemoteRecord(metadata.recordId);
         if (remoteRecord != null) {
           await delegate.writeToLocal(remoteRecord);
         }
@@ -214,8 +212,7 @@ class SyncRepository {
   }
 
   Future<void> _pushPendingChanges() async {
-    final pendingItems =
-        await _localDatabase.syncDao.getPendingSyncMetadata();
+    final pendingItems = await _localDatabase.syncDao.getPendingSyncMetadata();
 
     for (final item in pendingItems) {
       final delegate = _delegates[item.syncTableName];
@@ -225,8 +222,7 @@ class SyncRepository {
         if (item.isDeleted) {
           await delegate.deleteFromRemote(item.recordId);
         } else {
-          final localRecord =
-              await delegate.getLocalRecord(item.recordId);
+          final localRecord = await delegate.getLocalRecord(item.recordId);
           if (localRecord == null) continue;
           await delegate.pushToRemote(localRecord);
         }
@@ -260,7 +256,8 @@ class SyncRepository {
         // Log the error but continue pulling from other delegates
         _emitStatus(
           _status.copyWith(
-            errorMessage: 'Pull warning for '
+            errorMessage:
+                'Pull warning for '
                 '${delegate.tableName}: $e',
           ),
         );
@@ -273,10 +270,10 @@ class SyncRepository {
     required Map<String, dynamic> record,
     required String recordId,
   }) async {
-    final metadataId =
-        '${delegate.tableName}_${recordId}_$_deviceId';
-    final localMeta =
-        await _localDatabase.syncDao.getSyncMetadataById(metadataId);
+    final metadataId = '${delegate.tableName}_${recordId}_$_deviceId';
+    final localMeta = await _localDatabase.syncDao.getSyncMetadataById(
+      metadataId,
+    );
 
     if (localMeta != null &&
         localMeta.syncStatus == SyncMetadataStatus.pending) {
@@ -323,18 +320,15 @@ class SyncRepository {
     if (value == null) return DateTime.fromMillisecondsSinceEpoch(0);
     if (value is DateTime) return value;
     if (value is String) {
-      return DateTime.tryParse(value) ??
-          DateTime.fromMillisecondsSinceEpoch(0);
+      return DateTime.tryParse(value) ?? DateTime.fromMillisecondsSinceEpoch(0);
     }
     return DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   Future<void> _purgeDeletedRecords() async {
-    final allMetadata =
-        await _localDatabase.syncDao.getAllSyncMetadata();
+    final allMetadata = await _localDatabase.syncDao.getAllSyncMetadata();
     final syncedDeletes = allMetadata.where(
-      (m) =>
-          m.isDeleted && m.syncStatus == SyncMetadataStatus.synced,
+      (m) => m.isDeleted && m.syncStatus == SyncMetadataStatus.synced,
     );
 
     for (final meta in syncedDeletes) {
@@ -347,8 +341,9 @@ class SyncRepository {
   }
 
   Future<void> _markSynced(String metadataId) async {
-    final existing =
-        await _localDatabase.syncDao.getSyncMetadataById(metadataId);
+    final existing = await _localDatabase.syncDao.getSyncMetadataById(
+      metadataId,
+    );
     if (existing == null) return;
 
     await _localDatabase.syncDao.upsertSyncMetadata(
@@ -365,8 +360,9 @@ class SyncRepository {
   }
 
   Future<void> _markConflict(String metadataId) async {
-    final existing =
-        await _localDatabase.syncDao.getSyncMetadataById(metadataId);
+    final existing = await _localDatabase.syncDao.getSyncMetadataById(
+      metadataId,
+    );
     if (existing == null) return;
 
     await _localDatabase.syncDao.upsertSyncMetadata(
@@ -383,8 +379,9 @@ class SyncRepository {
   }
 
   Future<void> _markError(String metadataId, String message) async {
-    final existing =
-        await _localDatabase.syncDao.getSyncMetadataById(metadataId);
+    final existing = await _localDatabase.syncDao.getSyncMetadataById(
+      metadataId,
+    );
     if (existing == null) return;
 
     // Keep as pending so it retries on next sync

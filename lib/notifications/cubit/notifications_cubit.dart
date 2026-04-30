@@ -6,9 +6,9 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   NotificationsCubit({
     required NotificationRepository notificationRepository,
     required String userId,
-  })  : _repository = notificationRepository,
-        _userId = userId,
-        super(const NotificationsState());
+  }) : _repository = notificationRepository,
+       _userId = userId,
+       super(const NotificationsState());
 
   final NotificationRepository _repository;
   final String _userId;
@@ -36,13 +36,18 @@ class NotificationsCubit extends Cubit<NotificationsState> {
 
   Future<void> updatePreference(NotificationPreferences updated) async {
     final previous = state.preferences;
-    emit(state.copyWith(preferences: updated));
+    emit(state.copyWith(preferences: updated, saveErrorMessage: null));
     try {
       await _repository.updatePreferences(updated);
-    } on Exception catch (_) {
-      // Revert to previous state locally on failure.
+    } on Exception {
+      // Revert to previous state locally on failure and signal the UI.
       if (previous != null) {
-        emit(state.copyWith(preferences: previous));
+        emit(
+          state.copyWith(
+            preferences: previous,
+            saveErrorMessage: 'error',
+          ),
+        );
       }
     }
   }
@@ -69,6 +74,12 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     final prefs = state.preferences;
     if (prefs == null) return;
     await updatePreference(prefs.copyWith(billReminders: enabled));
+  }
+
+  Future<void> toggleEmailBillReminders({required bool enabled}) async {
+    final prefs = state.preferences;
+    if (prefs == null) return;
+    await updatePreference(prefs.copyWith(emailBillReminders: enabled));
   }
 
   Future<void> toggleDailyReminder({required bool enabled}) async {

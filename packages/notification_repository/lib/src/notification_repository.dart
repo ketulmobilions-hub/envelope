@@ -10,8 +10,8 @@ class NotificationRepository {
   const NotificationRepository({
     required EnvelopeApiClient apiClient,
     required local.AppDatabase localDatabase,
-  })  : _apiClient = apiClient,
-        _localDatabase = localDatabase;
+  }) : _apiClient = apiClient,
+       _localDatabase = localDatabase;
 
   final EnvelopeApiClient _apiClient;
   final local.AppDatabase _localDatabase;
@@ -32,21 +32,22 @@ class NotificationRepository {
               emailEnabled: Value(prefs.emailEnabled),
               overspendAlerts: Value(prefs.overspendAlerts),
               billReminders: Value(prefs.billReminders),
+              emailBillReminders: Value(prefs.emailBillReminders),
               dailyLoggingReminder: Value(prefs.dailyLoggingReminder),
-              recurringTransactionAlerts:
-                  Value(prefs.recurringTransactionAlerts),
+              recurringTransactionAlerts: Value(
+                prefs.recurringTransactionAlerts,
+              ),
               sharedBudgetActivity: Value(prefs.sharedBudgetActivity),
               weeklySummary: Value(prefs.weeklySummary),
             ),
           );
 
       return prefs;
-    } on Exception catch (_) {
+    } on Exception catch (e) {
       // Fallback to local cache.
       final row = await (_localDatabase.select(
         _localDatabase.notificationPreferences,
-      )..where((t) => t.userId.equals(userId)))
-          .getSingleOrNull();
+      )..where((t) => t.userId.equals(userId))).getSingleOrNull();
 
       if (row == null) {
         throw NotificationPreferencesNotFoundException(userId);
@@ -58,6 +59,7 @@ class NotificationRepository {
         emailEnabled: row.emailEnabled,
         overspendAlerts: row.overspendAlerts,
         billReminders: row.billReminders,
+        emailBillReminders: row.emailBillReminders,
         dailyLoggingReminder: row.dailyLoggingReminder,
         recurringTransactionAlerts: row.recurringTransactionAlerts,
         sharedBudgetActivity: row.sharedBudgetActivity,
@@ -76,6 +78,7 @@ class NotificationRepository {
       emailEnabled: preferences.emailEnabled,
       overspendAlerts: preferences.overspendAlerts,
       billReminders: preferences.billReminders,
+      emailBillReminders: preferences.emailBillReminders,
       dailyLoggingReminder: preferences.dailyLoggingReminder,
       recurringTransactionAlerts: preferences.recurringTransactionAlerts,
       sharedBudgetActivity: preferences.sharedBudgetActivity,
@@ -85,17 +88,19 @@ class NotificationRepository {
     await _apiClient.users.updateNotificationPreferences(dto);
 
     // Update local cache.
-    await (_localDatabase.update(_localDatabase.notificationPreferences)
-          ..where((t) => t.userId.equals(preferences.userId)))
-        .write(
+    await (_localDatabase.update(
+      _localDatabase.notificationPreferences,
+    )..where((t) => t.userId.equals(preferences.userId))).write(
       local.NotificationPreferencesCompanion(
         pushEnabled: Value(preferences.pushEnabled),
         emailEnabled: Value(preferences.emailEnabled),
         overspendAlerts: Value(preferences.overspendAlerts),
         billReminders: Value(preferences.billReminders),
+        emailBillReminders: Value(preferences.emailBillReminders),
         dailyLoggingReminder: Value(preferences.dailyLoggingReminder),
-        recurringTransactionAlerts:
-            Value(preferences.recurringTransactionAlerts),
+        recurringTransactionAlerts: Value(
+          preferences.recurringTransactionAlerts,
+        ),
         sharedBudgetActivity: Value(preferences.sharedBudgetActivity),
         weeklySummary: Value(preferences.weeklySummary),
       ),
@@ -144,10 +149,9 @@ class NotificationRepository {
     await _apiClient.notifications.unregisterToken(userId, token);
 
     // Remove from local cache.
-    await (_localDatabase.delete(_localDatabase.pushTokens)
-          ..where(
-            (t) => t.userId.equals(userId) & t.token.equals(token),
-          ))
+    await (_localDatabase.delete(_localDatabase.pushTokens)..where(
+          (t) => t.userId.equals(userId) & t.token.equals(token),
+        ))
         .go();
   }
 
@@ -158,6 +162,7 @@ class NotificationRepository {
       emailEnabled: dto.emailEnabled,
       overspendAlerts: dto.overspendAlerts,
       billReminders: dto.billReminders,
+      emailBillReminders: dto.emailBillReminders,
       dailyLoggingReminder: dto.dailyLoggingReminder,
       recurringTransactionAlerts: dto.recurringTransactionAlerts,
       sharedBudgetActivity: dto.sharedBudgetActivity,

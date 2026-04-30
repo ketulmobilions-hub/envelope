@@ -32,12 +32,12 @@ void main() {
     });
 
     OnboardingCubit buildCubit() => OnboardingCubit(
-          sharedPreferences: prefs,
-          envelopeRepository: envelopeRepository,
-          accountRepository: accountRepository,
-          budgetRepository: budgetRepository,
-          userId: testUserId,
-        );
+      sharedPreferences: prefs,
+      envelopeRepository: envelopeRepository,
+      accountRepository: accountRepository,
+      budgetRepository: budgetRepository,
+      userId: testUserId,
+    );
 
     test('initial state is correct', () {
       final cubit = buildCubit();
@@ -49,7 +49,6 @@ void main() {
       expect(cubit.state.status, OnboardingStatus.initial);
       expect(cubit.state.baseCurrency, 'USD');
       expect(cubit.state.accounts, isEmpty);
-      expect(cubit.state.expectedIncome, 0);
       expect(cubit.state.categoryGroups, defaultCategoryGroups);
       expect(cubit.state.allocations, isEmpty);
     });
@@ -131,47 +130,6 @@ void main() {
               currency: 'USD',
             ),
           ],
-        ),
-        act: (cubit) => cubit.nextStep(),
-        expect: () => [
-          isA<OnboardingState>().having(
-            (s) => s.currentStep,
-            'currentStep',
-            OnboardingStep.income,
-          ),
-        ],
-      );
-    });
-
-    group('income validation', () {
-      blocTest<OnboardingCubit, OnboardingState>(
-        'nextStep fails on income step with zero income',
-        build: buildCubit,
-        seed: () => const OnboardingState(
-          currentStep: OnboardingStep.income,
-        ),
-        act: (cubit) => cubit.nextStep(),
-        expect: () => [
-          isA<OnboardingState>()
-              .having(
-                (s) => s.status,
-                'status',
-                OnboardingStatus.failure,
-              )
-              .having(
-                (s) => s.error,
-                'error',
-                OnboardingError.incomeRequired,
-              ),
-        ],
-      );
-
-      blocTest<OnboardingCubit, OnboardingState>(
-        'nextStep advances on income step with income set',
-        build: buildCubit,
-        seed: () => const OnboardingState(
-          currentStep: OnboardingStep.income,
-          expectedIncome: 5000,
         ),
         act: (cubit) => cubit.nextStep(),
         expect: () => [
@@ -274,32 +232,23 @@ void main() {
       );
     });
 
-    group('income', () {
-      blocTest<OnboardingCubit, OnboardingState>(
-        'setExpectedIncome updates income',
-        build: buildCubit,
-        act: (cubit) => cubit.setExpectedIncome(5000),
-        expect: () => [
-          const OnboardingState(expectedIncome: 5000),
-        ],
-      );
-    });
-
     group('category group CRUD', () {
       blocTest<OnboardingCubit, OnboardingState>(
         'addCategoryGroup adds a new group',
         build: buildCubit,
         act: (cubit) => cubit.addCategoryGroup('Custom'),
         expect: () => [
-          isA<OnboardingState>().having(
-            (s) => s.categoryGroups.length,
-            'length',
-            defaultCategoryGroups.length + 1,
-          ).having(
-            (s) => s.categoryGroups.last.name,
-            'last group name',
-            'Custom',
-          ),
+          isA<OnboardingState>()
+              .having(
+                (s) => s.categoryGroups.length,
+                'length',
+                defaultCategoryGroups.length + 1,
+              )
+              .having(
+                (s) => s.categoryGroups.last.name,
+                'last group name',
+                'Custom',
+              ),
         ],
       );
 
@@ -487,8 +436,10 @@ void main() {
             id: 'period-1',
             budgetId: testBudgetId,
             startDate: DateTime(now.year, now.month),
-            endDate: DateTime(now.year, now.month + 1)
-                .subtract(const Duration(days: 1)),
+            endDate: DateTime(
+              now.year,
+              now.month + 1,
+            ).subtract(const Duration(days: 1)),
             createdAt: now,
           ),
         );
@@ -772,6 +723,347 @@ void main() {
               ),
         ],
       );
+
+      group('credit cards', () {
+        Account ccAccount(String id, String name) => Account(
+          id: id,
+          budgetId: testBudgetId,
+          name: name,
+          type: 'credit_card',
+          currency: 'USD',
+          createdAt: now,
+          updatedAt: now,
+        );
+
+        CategoryGroup catGroup(String id, String name) => CategoryGroup(
+          id: id,
+          budgetId: testBudgetId,
+          name: name,
+          createdAt: now,
+        );
+
+        Envelope envelope(String id, String groupId, String name) => Envelope(
+          id: id,
+          categoryGroupId: groupId,
+          budgetId: testBudgetId,
+          name: name,
+          createdAt: now,
+        );
+
+        void stubAccountCreate(Account account) {
+          when(
+            () => accountRepository.createAccount(
+              budgetId: any(named: 'budgetId'),
+              name: any(named: 'name'),
+              type: any(named: 'type'),
+              currency: any(named: 'currency'),
+              startingBalance: any(named: 'startingBalance'),
+              isOnBudget: any(named: 'isOnBudget'),
+            ),
+          ).thenAnswer((_) async => account);
+        }
+
+        void stubEnvelopeCreate(Envelope env) {
+          when(
+            () => envelopeRepository.createEnvelope(
+              categoryGroupId: any(named: 'categoryGroupId'),
+              budgetId: any(named: 'budgetId'),
+              name: any(named: 'name'),
+              linkedAccountId: any(named: 'linkedAccountId'),
+            ),
+          ).thenAnswer((_) async => env);
+        }
+
+        void stubGroupCreate(CategoryGroup group) {
+          when(
+            () => envelopeRepository.createCategoryGroup(
+              budgetId: any(named: 'budgetId'),
+              name: any(named: 'name'),
+            ),
+          ).thenAnswer((_) async => group);
+        }
+
+        void stubWatchGroups(List<CategoryGroup> groups) {
+          when(
+            () => envelopeRepository.watchCategoryGroups(any()),
+          ).thenAnswer((_) => Stream.value(groups));
+        }
+
+        blocTest<OnboardingCubit, OnboardingState>(
+          'persists credit limit and creates linked CC payment envelope',
+          build: () {
+            stubCreateBudget();
+            stubAccountCreate(ccAccount('acc-cc', 'Visa'));
+            stubGroupCreate(catGroup('cc-group', 'Credit Card Payments'));
+            stubEnvelopeCreate(envelope('env-cc', 'cc-group', 'Visa Payment'));
+            stubWatchGroups(const []);
+            when(
+              () => accountRepository.upsertDebtAccountCreditLimit(
+                any(),
+                any(),
+              ),
+            ).thenAnswer((_) async {});
+            return buildCubit();
+          },
+          seed: () => const OnboardingState(
+            accounts: [
+              OnboardingAccount(
+                name: 'Visa',
+                type: 'credit_card',
+                currency: 'USD',
+                creditLimitCents: 500000,
+              ),
+            ],
+            categoryGroups: [],
+          ),
+          act: (cubit) => cubit.completeOnboarding(),
+          verify: (_) {
+            verify(
+              () => accountRepository.upsertDebtAccountCreditLimit(
+                'acc-cc',
+                500000,
+              ),
+            ).called(1);
+            verify(
+              () => envelopeRepository.createCategoryGroup(
+                budgetId: testBudgetId,
+                name: 'Credit Card Payments',
+              ),
+            ).called(1);
+            verify(
+              () => envelopeRepository.createEnvelope(
+                categoryGroupId: 'cc-group',
+                budgetId: testBudgetId,
+                name: 'Visa Payment',
+                linkedAccountId: 'acc-cc',
+              ),
+            ).called(1);
+          },
+        );
+
+        blocTest<OnboardingCubit, OnboardingState>(
+          'skips upsert when creditLimitCents is null but still creates env',
+          build: () {
+            stubCreateBudget();
+            stubAccountCreate(ccAccount('acc-cc', 'Amex'));
+            stubGroupCreate(catGroup('cc-group', 'Credit Card Payments'));
+            stubEnvelopeCreate(envelope('env-cc', 'cc-group', 'Amex Payment'));
+            stubWatchGroups(const []);
+            return buildCubit();
+          },
+          seed: () => const OnboardingState(
+            accounts: [
+              OnboardingAccount(
+                name: 'Amex',
+                type: 'credit_card',
+                currency: 'USD',
+              ),
+            ],
+            categoryGroups: [],
+          ),
+          act: (cubit) => cubit.completeOnboarding(),
+          verify: (_) {
+            verifyNever(
+              () => accountRepository.upsertDebtAccountCreditLimit(
+                any(),
+                any(),
+              ),
+            );
+            verify(
+              () => envelopeRepository.createEnvelope(
+                categoryGroupId: 'cc-group',
+                budgetId: testBudgetId,
+                name: 'Amex Payment',
+                linkedAccountId: 'acc-cc',
+              ),
+            ).called(1);
+          },
+        );
+
+        blocTest<OnboardingCubit, OnboardingState>(
+          'creates one CC group for multiple cards and one envelope per card',
+          build: () {
+            stubCreateBudget();
+            var n = 0;
+            when(
+              () => accountRepository.createAccount(
+                budgetId: any(named: 'budgetId'),
+                name: any(named: 'name'),
+                type: any(named: 'type'),
+                currency: any(named: 'currency'),
+                startingBalance: any(named: 'startingBalance'),
+                isOnBudget: any(named: 'isOnBudget'),
+              ),
+            ).thenAnswer((invocation) async {
+              n++;
+              return ccAccount(
+                'acc-$n',
+                invocation.namedArguments[#name] as String,
+              );
+            });
+            stubGroupCreate(catGroup('cc-group', 'Credit Card Payments'));
+            stubEnvelopeCreate(envelope('env-cc', 'cc-group', 'X Payment'));
+            stubWatchGroups(const []);
+            return buildCubit();
+          },
+          seed: () => const OnboardingState(
+            accounts: [
+              OnboardingAccount(
+                name: 'Visa',
+                type: 'credit_card',
+                currency: 'USD',
+              ),
+              OnboardingAccount(
+                name: 'Amex',
+                type: 'credit_card',
+                currency: 'USD',
+              ),
+            ],
+            categoryGroups: [],
+          ),
+          act: (cubit) => cubit.completeOnboarding(),
+          verify: (_) {
+            verify(
+              () => envelopeRepository.createCategoryGroup(
+                budgetId: testBudgetId,
+                name: 'Credit Card Payments',
+              ),
+            ).called(1);
+            verify(
+              () => envelopeRepository.createEnvelope(
+                categoryGroupId: 'cc-group',
+                budgetId: testBudgetId,
+                name: any(named: 'name'),
+                linkedAccountId: any(named: 'linkedAccountId'),
+              ),
+            ).called(2);
+          },
+        );
+
+        blocTest<OnboardingCubit, OnboardingState>(
+          'reuses existing Credit Card Payments group when present',
+          build: () {
+            stubCreateBudget();
+            stubAccountCreate(ccAccount('acc-cc', 'Visa'));
+            stubEnvelopeCreate(envelope('env-cc', 'existing', 'Visa Payment'));
+            stubWatchGroups(
+              [catGroup('existing', 'Credit Card Payments')],
+            );
+            return buildCubit();
+          },
+          seed: () => const OnboardingState(
+            accounts: [
+              OnboardingAccount(
+                name: 'Visa',
+                type: 'credit_card',
+                currency: 'USD',
+              ),
+            ],
+            categoryGroups: [],
+          ),
+          act: (cubit) => cubit.completeOnboarding(),
+          verify: (_) {
+            verifyNever(
+              () => envelopeRepository.createCategoryGroup(
+                budgetId: any(named: 'budgetId'),
+                name: 'Credit Card Payments',
+              ),
+            );
+            verify(
+              () => envelopeRepository.createEnvelope(
+                categoryGroupId: 'existing',
+                budgetId: testBudgetId,
+                name: 'Visa Payment',
+                linkedAccountId: 'acc-cc',
+              ),
+            ).called(1);
+          },
+        );
+
+        blocTest<OnboardingCubit, OnboardingState>(
+          'completes successfully when CC envelope creation throws',
+          build: () {
+            stubCreateBudget();
+            stubAccountCreate(ccAccount('acc-cc', 'Visa'));
+            stubGroupCreate(catGroup('cc-group', 'Credit Card Payments'));
+            stubWatchGroups(const []);
+            when(
+              () => envelopeRepository.createEnvelope(
+                categoryGroupId: any(named: 'categoryGroupId'),
+                budgetId: any(named: 'budgetId'),
+                name: any(named: 'name'),
+                linkedAccountId: any(named: 'linkedAccountId'),
+              ),
+            ).thenThrow(Exception('boom'));
+            return buildCubit();
+          },
+          seed: () => const OnboardingState(
+            accounts: [
+              OnboardingAccount(
+                name: 'Visa',
+                type: 'credit_card',
+                currency: 'USD',
+              ),
+            ],
+            categoryGroups: [],
+          ),
+          act: (cubit) => cubit.completeOnboarding(),
+          expect: () => [
+            isA<OnboardingState>().having(
+              (s) => s.status,
+              'status',
+              OnboardingStatus.submitting,
+            ),
+            isA<OnboardingState>().having(
+              (s) => s.status,
+              'status',
+              OnboardingStatus.success,
+            ),
+          ],
+        );
+
+        blocTest<OnboardingCubit, OnboardingState>(
+          'completes successfully when credit limit upsert throws',
+          build: () {
+            stubCreateBudget();
+            stubAccountCreate(ccAccount('acc-cc', 'Visa'));
+            stubGroupCreate(catGroup('cc-group', 'Credit Card Payments'));
+            stubEnvelopeCreate(envelope('env-cc', 'cc-group', 'Visa Payment'));
+            stubWatchGroups(const []);
+            when(
+              () => accountRepository.upsertDebtAccountCreditLimit(
+                any(),
+                any(),
+              ),
+            ).thenThrow(Exception('boom'));
+            return buildCubit();
+          },
+          seed: () => const OnboardingState(
+            accounts: [
+              OnboardingAccount(
+                name: 'Visa',
+                type: 'credit_card',
+                currency: 'USD',
+                creditLimitCents: 500000,
+              ),
+            ],
+            categoryGroups: [],
+          ),
+          act: (cubit) => cubit.completeOnboarding(),
+          expect: () => [
+            isA<OnboardingState>().having(
+              (s) => s.status,
+              'status',
+              OnboardingStatus.submitting,
+            ),
+            isA<OnboardingState>().having(
+              (s) => s.status,
+              'status',
+              OnboardingStatus.success,
+            ),
+          ],
+        );
+      });
     });
 
     group('isOnboardingComplete', () {

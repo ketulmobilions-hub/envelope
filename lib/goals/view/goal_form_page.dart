@@ -1,7 +1,10 @@
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/goals/cubit/cubit.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/goals/widgets/goal_helpers.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/widgets/app_option_picker.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -67,21 +70,21 @@ class _GoalFormPageState extends State<GoalFormPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
 
     return BlocListener<GoalFormCubit, GoalFormState>(
       listener: (context, state) {
         if (state.status == GoalFormStatus.success) {
           Navigator.of(context).pop(true);
         } else if (state.status == GoalFormStatus.failure) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: Text(
-                  state.errorMessage ?? l10n.goalsErrorUpdateFailed,
-                ),
+          showAppSnackBar(
+            context,
+            SnackBar(
+              content: Text(
+                state.errorMessage ?? l10n.goalsErrorUpdateFailed,
               ),
-            );
+            ),
+          );
         }
       },
       child: Scaffold(
@@ -115,23 +118,13 @@ class _GoalFormPageState extends State<GoalFormPage> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedType,
-                    decoration: InputDecoration(
-                      labelText: l10n.goalsTypeLabel,
-                      prefixIcon: const Icon(Icons.category_outlined),
-                    ),
-                    items: _goalTypes.map((type) {
-                      return DropdownMenuItem(
-                        value: type,
-                        child: Text(localizedGoalType(type, l10n)),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() => _selectedType = value);
-                      }
-                    },
+                  AppOptionPicker<String>(
+                    options: _goalTypes,
+                    value: _selectedType,
+                    onChanged: (type) => setState(() => _selectedType = type),
+                    labelText: l10n.goalsTypeLabel,
+                    icon: Icons.category_outlined,
+                    itemLabel: (type) => localizedGoalType(type, l10n),
                   ),
                   const SizedBox(height: 16),
                   // Type-specific fields.
@@ -141,10 +134,11 @@ class _GoalFormPageState extends State<GoalFormPage> {
                       controller: _targetAmountController,
                       decoration: InputDecoration(
                         labelText: l10n.goalsTargetAmountLabel,
-                        prefixIcon: const Icon(Icons.attach_money),
+                        prefixText: symbol,
                       ),
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(
                           RegExp(r'^\d*\.?\d{0,2}'),
@@ -176,10 +170,11 @@ class _GoalFormPageState extends State<GoalFormPage> {
                       controller: _monthlyContributionController,
                       decoration: InputDecoration(
                         labelText: l10n.goalsMonthlyContributionLabel,
-                        prefixIcon: const Icon(Icons.attach_money),
+                        prefixText: symbol,
                       ),
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(
                           RegExp(r'^\d*\.?\d{0,2}'),
@@ -225,8 +220,9 @@ class _GoalFormPageState extends State<GoalFormPage> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final targetAmountCents = parseCents(_targetAmountController.text);
-    final monthlyContributionCents =
-        parseCents(_monthlyContributionController.text);
+    final monthlyContributionCents = parseCents(
+      _monthlyContributionController.text,
+    );
 
     context.read<GoalFormCubit>().submit(
       name: _nameController.text.trim(),
@@ -271,8 +267,8 @@ class _DatePickerField extends StatelessWidget {
         child: Text(
           value != null
               ? '${value!.month.toString().padLeft(2, '0')}/'
-                  '${value!.day.toString().padLeft(2, '0')}/'
-                  '${value!.year}'
+                    '${value!.day.toString().padLeft(2, '0')}/'
+                    '${value!.year}'
               : '',
         ),
       ),

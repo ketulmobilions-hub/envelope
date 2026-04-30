@@ -13,17 +13,13 @@ import 'package:transaction_repository/transaction_repository.dart';
 
 import '../../helpers/pump_app.dart';
 
-class MockTransactionRepository extends Mock
-    implements TransactionRepository {}
+class MockTransactionRepository extends Mock implements TransactionRepository {}
 
-class MockAccountRepository extends Mock
-    implements AccountRepository {}
+class MockAccountRepository extends Mock implements AccountRepository {}
 
-class MockEnvelopeRepository extends Mock
-    implements EnvelopeRepository {}
+class MockEnvelopeRepository extends Mock implements EnvelopeRepository {}
 
-class MockBudgetRepository extends Mock
-    implements BudgetRepository {}
+class MockBudgetRepository extends Mock implements BudgetRepository {}
 
 void main() {
   final now = DateTime(2026, 3, 17);
@@ -92,17 +88,17 @@ void main() {
   ];
 
   Transaction makeTransaction() => Transaction(
-        id: 'txn-1',
-        budgetId: 'budget-1',
-        accountId: 'acc-1',
-        type: 'expense',
-        amount: 5000,
-        currency: 'USD',
-        date: now,
-        createdBy: 'user-1',
-        createdAt: now,
-        updatedAt: now,
-      );
+    id: 'txn-1',
+    budgetId: 'budget-1',
+    accountId: 'acc-1',
+    type: 'expense',
+    amount: 5000,
+    currency: 'USD',
+    date: now,
+    createdBy: 'user-1',
+    createdAt: now,
+    updatedAt: now,
+  );
 
   setUp(() {
     transactionRepo = MockTransactionRepository();
@@ -110,12 +106,13 @@ void main() {
     envelopeRepo = MockEnvelopeRepository();
     budgetRepo = MockBudgetRepository();
 
-    when(() => accountRepo.watchAccounts(any()))
-        .thenAnswer((_) => Stream.value(accounts));
-    when(() => envelopeRepo.watchEnvelopes(any()))
-        .thenAnswer((_) => Stream.value(envelopes));
-    when(() => transactionRepo.getTags(any()))
-        .thenAnswer((_) async => <Tag>[]);
+    when(
+      () => accountRepo.watchAccounts(any()),
+    ).thenAnswer((_) => Stream.value(accounts));
+    when(
+      () => envelopeRepo.watchEnvelopes(any()),
+    ).thenAnswer((_) => Stream.value(envelopes));
+    when(() => transactionRepo.getTags(any())).thenAnswer((_) async => <Tag>[]);
 
     registerFallbackValue(makeTransaction());
   });
@@ -203,10 +200,10 @@ void main() {
       'shows warning dialog when expense overspends',
       (tester) async {
         stubCreateTransaction();
-        when(() => envelopeRepo.refreshAllocations(any()))
-            .thenAnswer((_) async {});
-        when(() => envelopeRepo.watchAllocations(any()))
-            .thenAnswer(
+        when(
+          () => envelopeRepo.refreshAllocations(any()),
+        ).thenAnswer((_) async {});
+        when(() => envelopeRepo.watchAllocations(any())).thenAnswer(
           (_) => Stream.value(overspentAllocations),
         );
 
@@ -273,10 +270,10 @@ void main() {
       'no warning when envelope is not overspent',
       (tester) async {
         stubCreateTransaction();
-        when(() => envelopeRepo.refreshAllocations(any()))
-            .thenAnswer((_) async {});
-        when(() => envelopeRepo.watchAllocations(any()))
-            .thenAnswer(
+        when(
+          () => envelopeRepo.refreshAllocations(any()),
+        ).thenAnswer((_) async {});
+        when(() => envelopeRepo.watchAllocations(any())).thenAnswer(
           (_) => Stream.value(healthyAllocations),
         );
 
@@ -295,10 +292,10 @@ void main() {
       'dismiss closes warning without cover dialog',
       (tester) async {
         stubCreateTransaction();
-        when(() => envelopeRepo.refreshAllocations(any()))
-            .thenAnswer((_) async {});
-        when(() => envelopeRepo.watchAllocations(any()))
-            .thenAnswer(
+        when(
+          () => envelopeRepo.refreshAllocations(any()),
+        ).thenAnswer((_) async {});
+        when(() => envelopeRepo.watchAllocations(any())).thenAnswer(
           (_) => Stream.value(overspentAllocations),
         );
 

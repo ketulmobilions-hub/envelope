@@ -27,8 +27,8 @@ class ReportEmptyState extends StatelessWidget {
           Text(
             l10n.reportsNoDataSubtitle,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
+              color: Theme.of(context).colorScheme.outline,
+            ),
           ),
         ],
       ),

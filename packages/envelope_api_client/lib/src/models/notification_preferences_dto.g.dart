@@ -14,6 +14,7 @@ _NotificationPreferencesDto _$NotificationPreferencesDtoFromJson(
   emailEnabled: json['email_enabled'] as bool? ?? true,
   overspendAlerts: json['overspend_alerts'] as bool? ?? true,
   billReminders: json['bill_reminders'] as bool? ?? true,
+  emailBillReminders: json['email_bill_reminders'] as bool? ?? true,
   dailyLoggingReminder: json['daily_logging_reminder'] as bool? ?? true,
   recurringTransactionAlerts:
       json['recurring_transaction_alerts'] as bool? ?? true,
@@ -29,6 +30,7 @@ Map<String, dynamic> _$NotificationPreferencesDtoToJson(
   'email_enabled': instance.emailEnabled,
   'overspend_alerts': instance.overspendAlerts,
   'bill_reminders': instance.billReminders,
+  'email_bill_reminders': instance.emailBillReminders,
   'daily_logging_reminder': instance.dailyLoggingReminder,
   'recurring_transaction_alerts': instance.recurringTransactionAlerts,
   'shared_budget_activity': instance.sharedBudgetActivity,

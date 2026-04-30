@@ -49,8 +49,9 @@ void main() {
   });
 
   group('RecurringView', () {
-    testWidgets('shows loading indicator when status is loading',
-        (tester) async {
+    testWidgets('shows loading indicator when status is loading', (
+      tester,
+    ) async {
       when(() => recurringBloc.state).thenReturn(
         const RecurringState(status: RecurringStatus.loading),
       );
@@ -151,8 +152,7 @@ void main() {
       expect(find.byType(FloatingActionButton), findsOneWidget);
     });
 
-    testWidgets('dispatches delete event after confirmation',
-        (tester) async {
+    testWidgets('dispatches delete event after confirmation', (tester) async {
       when(() => recurringBloc.state).thenReturn(
         RecurringState(
           status: RecurringStatus.loaded,
@@ -199,13 +199,13 @@ void main() {
       await tester.pumpAndSettle();
 
       verify(
-        () => recurringBloc
-            .add(const RecurringRulePauseToggled('rule-1')),
+        () => recurringBloc.add(const RecurringRulePauseToggled('rule-1')),
       ).called(1);
     });
 
-    testWidgets('dispatches bill delete event after confirmation',
-        (tester) async {
+    testWidgets('dispatches bill delete event after confirmation', (
+      tester,
+    ) async {
       when(() => recurringBloc.state).thenReturn(
         RecurringState(
           status: RecurringStatus.loaded,

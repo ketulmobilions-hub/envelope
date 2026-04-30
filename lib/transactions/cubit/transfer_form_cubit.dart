@@ -1,5 +1,7 @@
 import 'package:account_repository/account_repository.dart';
 import 'package:bloc/bloc.dart';
+import 'package:envelope/accounts/widgets/account_helpers.dart';
+import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 import 'package:uuid/uuid.dart';
@@ -12,22 +14,25 @@ class TransferFormCubit extends Cubit<TransferFormState> {
     required AccountRepository accountRepository,
     required this.budgetId,
     required this.userId,
-  })  : _transactionRepository = transactionRepository,
-        _accountRepository = accountRepository,
-        super(const TransferFormState()) {
+    EnvelopeRepository? envelopeRepository,
+    this.budgetPeriodId,
+  }) : _transactionRepository = transactionRepository,
+       _accountRepository = accountRepository,
+       _envelopeRepository = envelopeRepository,
+       super(const TransferFormState()) {
     _loadAccounts();
   }
 
   final TransactionRepository _transactionRepository;
   final AccountRepository _accountRepository;
+  final EnvelopeRepository? _envelopeRepository;
   final String budgetId;
   final String userId;
+  final String? budgetPeriodId;
 
   Future<void> _loadAccounts() async {
     try {
-      final accounts = await _accountRepository
-          .watchAccounts(budgetId)
-          .first;
+      final accounts = await _accountRepository.watchAccounts(budgetId).first;
       if (isClosed) return;
       emit(
         state.copyWith(
@@ -80,6 +85,22 @@ class TransferFormCubit extends Cubit<TransferFormState> {
         await _accountRepository.refreshAccounts(budgetId);
       } on AccountException {
         // Best-effort; local cache will be corrected on next full sync.
+      }
+
+      // When paying a CC bill, refresh allocations so BudgetBloc recomputes
+      // CC Payment available from the new transaction in local storage.
+      final toAccount = state.accounts
+          .where((a) => a.id == toAccountId)
+          .firstOrNull;
+      if (toAccount != null &&
+          isCreditCard(toAccount.type) &&
+          _envelopeRepository != null &&
+          budgetPeriodId != null) {
+        try {
+          await _envelopeRepository!.refreshAllocations(budgetPeriodId!);
+        } on Exception {
+          // Best-effort.
+        }
       }
 
       if (isClosed) return;

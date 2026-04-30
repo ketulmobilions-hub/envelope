@@ -226,6 +226,7 @@ class AccountRepository {
     required int minimumPayment,
     required int originalBalance,
     String? payoffStrategy,
+    int? creditLimit,
   }) async {
     try {
       final dto = DebtAccountDto(
@@ -234,6 +235,7 @@ class AccountRepository {
         minimumPayment: minimumPayment,
         originalBalance: originalBalance,
         payoffStrategy: payoffStrategy,
+        creditLimit: creditLimit,
       );
 
       final created = await _apiClient.accounts.createDebtAccount(dto);
@@ -354,6 +356,10 @@ class AccountRepository {
     return channel;
   }
 
+  void beginExternalWrite() => _beginLocalWrite();
+
+  void endExternalWrite() => _endLocalWrite();
+
   /// Marks a local write as in progress to suppress self-change notifications.
   void _beginLocalWrite() => _localWriteCount++;
 
@@ -428,6 +434,7 @@ class AccountRepository {
       minimumPayment: dto.minimumPayment,
       originalBalance: dto.originalBalance,
       payoffStrategy: dto.payoffStrategy,
+      creditLimit: dto.creditLimit,
     );
   }
 
@@ -438,6 +445,7 @@ class AccountRepository {
       minimumPayment: row.minimumPayment,
       originalBalance: row.originalBalance,
       payoffStrategy: row.payoffStrategy,
+      creditLimit: row.creditLimit,
     );
   }
 
@@ -448,6 +456,7 @@ class AccountRepository {
       minimumPayment: debtAccount.minimumPayment,
       originalBalance: debtAccount.originalBalance,
       payoffStrategy: debtAccount.payoffStrategy,
+      creditLimit: debtAccount.creditLimit,
     );
   }
 
@@ -485,10 +494,41 @@ class AccountRepository {
       minimumPayment: dto.minimumPayment,
       originalBalance: dto.originalBalance,
       payoffStrategy: Value(dto.payoffStrategy),
+      creditLimit: Value(dto.creditLimit),
     );
     await _localDatabase.accountsDao.insertDebtAccount(
       companion,
       mode: InsertMode.insertOrReplace,
     );
+  }
+
+  /// Creates or updates the credit limit for a CC account's debt record.
+  ///
+  /// Uses default zero-values for required debt fields when creating a new row.
+  Future<void> upsertDebtAccountCreditLimit(
+    String accountId,
+    int? creditLimit,
+  ) async {
+    try {
+      final existing = await getDebtAccount(accountId);
+      if (existing != null) {
+        await updateDebtAccount(existing.copyWith(creditLimit: creditLimit));
+      } else {
+        await createDebtAccount(
+          accountId: accountId,
+          interestRate: 0,
+          minimumPayment: 0,
+          originalBalance: 0,
+          creditLimit: creditLimit,
+        );
+      }
+    } on AccountException {
+      rethrow;
+    } on Exception catch (e) {
+      throw AccountException(
+        'Failed to upsert debt account credit limit',
+        error: e,
+      );
+    }
   }
 }

@@ -23,6 +23,8 @@ mixin _$DebtAccountDto {
   int get originalBalance;
   @JsonKey(name: 'payoff_strategy')
   String? get payoffStrategy;
+  @JsonKey(name: 'credit_limit', includeIfNull: false)
+  int? get creditLimit;
 
   /// Create a copy of DebtAccountDto
   /// with the given fields replaced by the non-null parameter values.
@@ -51,7 +53,9 @@ mixin _$DebtAccountDto {
             (identical(other.originalBalance, originalBalance) ||
                 other.originalBalance == originalBalance) &&
             (identical(other.payoffStrategy, payoffStrategy) ||
-                other.payoffStrategy == payoffStrategy));
+                other.payoffStrategy == payoffStrategy) &&
+            (identical(other.creditLimit, creditLimit) ||
+                other.creditLimit == creditLimit));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -63,11 +67,12 @@ mixin _$DebtAccountDto {
     minimumPayment,
     originalBalance,
     payoffStrategy,
+    creditLimit,
   );
 
   @override
   String toString() {
-    return 'DebtAccountDto(accountId: $accountId, interestRate: $interestRate, minimumPayment: $minimumPayment, originalBalance: $originalBalance, payoffStrategy: $payoffStrategy)';
+    return 'DebtAccountDto(accountId: $accountId, interestRate: $interestRate, minimumPayment: $minimumPayment, originalBalance: $originalBalance, payoffStrategy: $payoffStrategy, creditLimit: $creditLimit)';
   }
 }
 
@@ -84,6 +89,7 @@ abstract mixin class $DebtAccountDtoCopyWith<$Res> {
     @JsonKey(name: 'minimum_payment') int minimumPayment,
     @JsonKey(name: 'original_balance') int originalBalance,
     @JsonKey(name: 'payoff_strategy') String? payoffStrategy,
+    @JsonKey(name: 'credit_limit', includeIfNull: false) int? creditLimit,
   });
 }
 
@@ -105,6 +111,7 @@ class _$DebtAccountDtoCopyWithImpl<$Res>
     Object? minimumPayment = null,
     Object? originalBalance = null,
     Object? payoffStrategy = freezed,
+    Object? creditLimit = freezed,
   }) {
     return _then(
       _self.copyWith(
@@ -128,6 +135,10 @@ class _$DebtAccountDtoCopyWithImpl<$Res>
             ? _self.payoffStrategy
             : payoffStrategy // ignore: cast_nullable_to_non_nullable
                   as String?,
+        creditLimit: freezed == creditLimit
+            ? _self.creditLimit
+            : creditLimit // ignore: cast_nullable_to_non_nullable
+                  as int?,
       ),
     );
   }
@@ -232,6 +243,7 @@ extension DebtAccountDtoPatterns on DebtAccountDto {
       @JsonKey(name: 'minimum_payment') int minimumPayment,
       @JsonKey(name: 'original_balance') int originalBalance,
       @JsonKey(name: 'payoff_strategy') String? payoffStrategy,
+      @JsonKey(name: 'credit_limit', includeIfNull: false) int? creditLimit,
     )?
     $default, {
     required TResult orElse(),
@@ -245,6 +257,7 @@ extension DebtAccountDtoPatterns on DebtAccountDto {
           _that.minimumPayment,
           _that.originalBalance,
           _that.payoffStrategy,
+          _that.creditLimit,
         );
       case _:
         return orElse();
@@ -272,6 +285,7 @@ extension DebtAccountDtoPatterns on DebtAccountDto {
       @JsonKey(name: 'minimum_payment') int minimumPayment,
       @JsonKey(name: 'original_balance') int originalBalance,
       @JsonKey(name: 'payoff_strategy') String? payoffStrategy,
+      @JsonKey(name: 'credit_limit', includeIfNull: false) int? creditLimit,
     )
     $default,
   ) {
@@ -284,6 +298,7 @@ extension DebtAccountDtoPatterns on DebtAccountDto {
           _that.minimumPayment,
           _that.originalBalance,
           _that.payoffStrategy,
+          _that.creditLimit,
         );
       case _:
         throw StateError('Unexpected subclass');
@@ -310,6 +325,7 @@ extension DebtAccountDtoPatterns on DebtAccountDto {
       @JsonKey(name: 'minimum_payment') int minimumPayment,
       @JsonKey(name: 'original_balance') int originalBalance,
       @JsonKey(name: 'payoff_strategy') String? payoffStrategy,
+      @JsonKey(name: 'credit_limit', includeIfNull: false) int? creditLimit,
     )?
     $default,
   ) {
@@ -322,6 +338,7 @@ extension DebtAccountDtoPatterns on DebtAccountDto {
           _that.minimumPayment,
           _that.originalBalance,
           _that.payoffStrategy,
+          _that.creditLimit,
         );
       case _:
         return null;
@@ -338,6 +355,7 @@ class _DebtAccountDto implements DebtAccountDto {
     @JsonKey(name: 'minimum_payment') required this.minimumPayment,
     @JsonKey(name: 'original_balance') required this.originalBalance,
     @JsonKey(name: 'payoff_strategy') this.payoffStrategy,
+    @JsonKey(name: 'credit_limit', includeIfNull: false) this.creditLimit,
   });
   factory _DebtAccountDto.fromJson(Map<String, dynamic> json) =>
       _$DebtAccountDtoFromJson(json);
@@ -357,6 +375,9 @@ class _DebtAccountDto implements DebtAccountDto {
   @override
   @JsonKey(name: 'payoff_strategy')
   final String? payoffStrategy;
+  @override
+  @JsonKey(name: 'credit_limit', includeIfNull: false)
+  final int? creditLimit;
 
   /// Create a copy of DebtAccountDto
   /// with the given fields replaced by the non-null parameter values.
@@ -385,7 +406,9 @@ class _DebtAccountDto implements DebtAccountDto {
             (identical(other.originalBalance, originalBalance) ||
                 other.originalBalance == originalBalance) &&
             (identical(other.payoffStrategy, payoffStrategy) ||
-                other.payoffStrategy == payoffStrategy));
+                other.payoffStrategy == payoffStrategy) &&
+            (identical(other.creditLimit, creditLimit) ||
+                other.creditLimit == creditLimit));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -397,11 +420,12 @@ class _DebtAccountDto implements DebtAccountDto {
     minimumPayment,
     originalBalance,
     payoffStrategy,
+    creditLimit,
   );
 
   @override
   String toString() {
-    return 'DebtAccountDto(accountId: $accountId, interestRate: $interestRate, minimumPayment: $minimumPayment, originalBalance: $originalBalance, payoffStrategy: $payoffStrategy)';
+    return 'DebtAccountDto(accountId: $accountId, interestRate: $interestRate, minimumPayment: $minimumPayment, originalBalance: $originalBalance, payoffStrategy: $payoffStrategy, creditLimit: $creditLimit)';
   }
 }
 
@@ -420,6 +444,7 @@ abstract mixin class _$DebtAccountDtoCopyWith<$Res>
     @JsonKey(name: 'minimum_payment') int minimumPayment,
     @JsonKey(name: 'original_balance') int originalBalance,
     @JsonKey(name: 'payoff_strategy') String? payoffStrategy,
+    @JsonKey(name: 'credit_limit', includeIfNull: false) int? creditLimit,
   });
 }
 
@@ -441,6 +466,7 @@ class __$DebtAccountDtoCopyWithImpl<$Res>
     Object? minimumPayment = null,
     Object? originalBalance = null,
     Object? payoffStrategy = freezed,
+    Object? creditLimit = freezed,
   }) {
     return _then(
       _DebtAccountDto(
@@ -464,6 +490,10 @@ class __$DebtAccountDtoCopyWithImpl<$Res>
             ? _self.payoffStrategy
             : payoffStrategy // ignore: cast_nullable_to_non_nullable
                   as String?,
+        creditLimit: freezed == creditLimit
+            ? _self.creditLimit
+            : creditLimit // ignore: cast_nullable_to_non_nullable
+                  as int?,
       ),
     );
   }

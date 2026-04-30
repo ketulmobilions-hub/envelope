@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:account_repository/account_repository.dart';
 import 'package:bloc/bloc.dart';
 import 'package:budget_repository/budget_repository.dart';
+import 'package:envelope/accounts/widgets/account_helpers.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import 'package:sharing_repository/sharing_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:transaction_repository/transaction_repository.dart';
@@ -39,6 +41,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     on<DashboardRefreshRequested>(_onRefreshRequested);
     on<QuickAllocationRequested>(_onQuickAllocationRequested);
     on<BudgetDeleteRequested>(_onBudgetDeleteRequested);
+    on<_CcCreditLimitsLoaded>(_onCcCreditLimitsLoaded);
   }
 
   final BudgetRepository _budgetRepository;
@@ -62,6 +65,8 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
 
   int _generation = 0;
   int _allocationsGeneration = 0;
+
+  bool _signedOut = false;
 
   bool _periodsReceived = false;
   bool _accountsReceived = false;
@@ -121,8 +126,13 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     await _remoteChangeSubscription?.cancel();
     _remoteChangeMergeController?.close();
     _remoteChangeSubscription = _mergeRemoteChangeStreams().listen(
-      (_) => add(const _RemoteChangeReceived()),
-      onError: (Object _) {/* Ignore merge stream errors. */},
+      (_) {
+        if (!isClosed) add(const _RemoteChangeReceived());
+      },
+      onError: (Object e) {
+        debugPrint('Error in merge stream: $e');
+        /* Ignore merge stream errors. */
+      },
     );
 
     // Refresh from API first so local DB is populated before watch streams
@@ -254,6 +264,29 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         accounts: event.accounts,
       ),
     );
+    unawaited(_fetchCcCreditLimits(event.accounts));
+  }
+
+  Future<void> _fetchCcCreditLimits(List<Account> accounts) async {
+    final ccAccounts = accounts.where((a) => isCreditCard(a.type)).toList();
+    if (ccAccounts.isEmpty) return;
+    final limits = <String, int?>{};
+    for (final account in ccAccounts) {
+      try {
+        final debt = await _accountRepository.getDebtAccount(account.id);
+        limits[account.id] = debt?.creditLimit;
+      } on Exception {
+        // Non-critical; skip this account.
+      }
+    }
+    if (!isClosed) add(_CcCreditLimitsLoaded(limits));
+  }
+
+  void _onCcCreditLimitsLoaded(
+    _CcCreditLimitsLoaded event,
+    Emitter<DashboardState> emit,
+  ) {
+    emit(state.copyWith(ccCreditLimits: event.limits));
   }
 
   void _onEnvelopesUpdated(
@@ -328,6 +361,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       state.copyWith(
         status: _isLoaded ? DashboardStatus.loaded : state.status,
         recentTransactions: recent,
+        transactions: sorted,
       ),
     );
 
@@ -439,6 +473,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   ) async {
     try {
       await _budgetRepository.deleteBudget(_budgetId);
+      emit(state.copyWith(status: DashboardStatus.budgetDeleted));
     } on BudgetException {
       emit(
         state.copyWith(
@@ -479,8 +514,8 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
 
     // Resubscribe allocation Realtime channel for the new period.
     _allocationRealtimeChannel?.unsubscribe();
-    _allocationRealtimeChannel =
-        _envelopeRepository.subscribeToAllocationChanges(periodId);
+    _allocationRealtimeChannel = _envelopeRepository
+        .subscribeToAllocationChanges(periodId);
 
     final gen = _allocationsGeneration;
     _allocationsSubscription = _envelopeRepository
@@ -491,10 +526,21 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         );
   }
 
+  // Stops remote-update snackbars from cascade-delete events on sign-out.
+  void cancelRealtimeSubscriptions() {
+    _signedOut = true;
+    for (final ch in _realtimeChannels) {
+      unawaited(ch.unsubscribe());
+    }
+    unawaited(_allocationRealtimeChannel?.unsubscribe() ?? Future.value());
+    unawaited(_remoteChangeSubscription?.cancel() ?? Future.value());
+  }
+
   Future<void> _onRemoteChangeReceived(
     _RemoteChangeReceived event,
     Emitter<DashboardState> emit,
   ) async {
+    if (_signedOut) return;
     emit(state.copyWith(hasRemoteUpdate: true));
     await Future<void>.delayed(const Duration(seconds: 3));
     if (!isClosed) {
@@ -514,7 +560,11 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     controller = StreamController<void>.broadcast(
       onListen: () {
         for (final stream in streams) {
-          subscriptions.add(stream.listen((_) => controller.add(null)));
+          subscriptions.add(
+            stream.listen((_) {
+              if (!controller.isClosed) controller.add(null);
+            }),
+          );
         }
       },
       onCancel: () {
@@ -529,11 +579,13 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
 
   @override
   Future<void> close() async {
-    // Unsubscribe Realtime channels.
-    for (final ch in _realtimeChannels) {
-      ch.unsubscribe();
-    }
-    _allocationRealtimeChannel?.unsubscribe();
+    // Unsubscribe Realtime channels first so no new events arrive during
+    // the remaining async cleanup steps.
+    await Future.wait([
+      for (final ch in _realtimeChannels) ch.unsubscribe(),
+      if (_allocationRealtimeChannel != null)
+        _allocationRealtimeChannel!.unsubscribe(),
+    ]);
     await _remoteChangeSubscription?.cancel();
     await _remoteChangeMergeController?.close();
 

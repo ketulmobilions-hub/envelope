@@ -54,9 +54,7 @@ final class SharedBudgetState extends Equatable {
       status: status ?? this.status,
       members: members ?? this.members,
       pendingInvites: pendingInvites ?? this.pendingInvites,
-      error: error == _sentinel
-          ? this.error
-          : error as SharedBudgetError?,
+      error: error == _sentinel ? this.error : error as SharedBudgetError?,
       success: success == _sentinel
           ? this.success
           : success as SharedBudgetSuccess?,
@@ -69,6 +67,12 @@ final class SharedBudgetState extends Equatable {
   static const Object _sentinel = Object();
 
   @override
-  List<Object?> get props =>
-      [status, members, pendingInvites, error, success, generatedInviteLink];
+  List<Object?> get props => [
+    status,
+    members,
+    pendingInvites,
+    error,
+    success,
+    generatedInviteLink,
+  ];
 }

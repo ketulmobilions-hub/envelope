@@ -37,12 +37,10 @@ class EnvelopeShapePainter extends CustomPainter {
     canvas.drawPath(
       shadowPath,
       Paint()
-        ..color = const Color(0xFF000000)
-            .withValues(alpha: 0.12)
+        ..color = const Color(0xFF000000).withValues(alpha: 0.12)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 3
-        ..maskFilter =
-            const MaskFilter.blur(BlurStyle.normal, 2),
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
     );
 
     // 3. Darker flap triangle on top, clipped to rounded
@@ -73,8 +71,7 @@ class EnvelopeShapePainter extends CustomPainter {
       ..drawPath(
         edgePath,
         Paint()
-          ..color = const Color(0xFF000000)
-              .withValues(alpha: 0.08)
+          ..color = const Color(0xFF000000).withValues(alpha: 0.08)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 0.8,
       )
@@ -84,7 +81,5 @@ class EnvelopeShapePainter extends CustomPainter {
   @override
   bool shouldRepaint(
     covariant EnvelopeShapePainter oldDelegate,
-  ) =>
-      fillColor != oldDelegate.fillColor ||
-      flapRatio != oldDelegate.flapRatio;
+  ) => fillColor != oldDelegate.fillColor || flapRatio != oldDelegate.flapRatio;
 }

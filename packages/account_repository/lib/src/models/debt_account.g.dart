@@ -12,6 +12,7 @@ _DebtAccount _$DebtAccountFromJson(Map<String, dynamic> json) => _DebtAccount(
   minimumPayment: (json['minimumPayment'] as num).toInt(),
   originalBalance: (json['originalBalance'] as num).toInt(),
   payoffStrategy: json['payoffStrategy'] as String?,
+  creditLimit: (json['creditLimit'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$DebtAccountToJson(_DebtAccount instance) =>
@@ -21,4 +22,5 @@ Map<String, dynamic> _$DebtAccountToJson(_DebtAccount instance) =>
       'minimumPayment': instance.minimumPayment,
       'originalBalance': instance.originalBalance,
       'payoffStrategy': instance.payoffStrategy,
+      'creditLimit': instance.creditLimit,
     };

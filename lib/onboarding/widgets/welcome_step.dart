@@ -35,8 +35,7 @@ class WelcomeStep extends StatelessWidget {
           ),
           const SizedBox(height: 48),
           FilledButton(
-            onPressed: () =>
-                context.read<OnboardingCubit>().nextStep(),
+            onPressed: () => context.read<OnboardingCubit>().nextStep(),
             child: Text(l10n.onboardingGetStarted),
           ),
         ],

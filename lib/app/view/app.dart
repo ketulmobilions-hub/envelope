@@ -171,8 +171,9 @@ class _FcmAuthListenerState extends State<_FcmAuthListener> {
         ),
       );
       // Chain after any pending clear so restore never races with it.
-      _sessionTask = (_sessionTask ?? Future.value())
-          .then((_) => _restoreSessionForUser(state.user!.id));
+      _sessionTask = (_sessionTask ?? Future.value()).then(
+        (_) => _restoreSessionForUser(state.user!.id),
+      );
     } else if (state.status == AuthStatus.unauthenticated) {
       unawaited(
         _fcmService.unregisterCurrentToken(
@@ -255,6 +256,7 @@ class AppView extends StatefulWidget {
 
 class _AppViewState extends State<AppView> {
   late final GoRouter _router;
+  final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
   void initState() {
@@ -263,6 +265,9 @@ class _AppViewState extends State<AppView> {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
         systemNavigationBarColor: Colors.transparent,
         systemNavigationBarDividerColor: Colors.transparent,
       ),
@@ -283,20 +288,29 @@ class _AppViewState extends State<AppView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AuthBloc, AuthState>(
-      buildWhen: (prev, curr) => prev.user?.themeMode != curr.user?.themeMode,
-      builder: (context, authState) {
-        return MaterialApp.router(
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
-          themeMode: _themeModeFromString(
-            authState.user?.themeMode ?? 'system',
-          ),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          routerConfig: _router,
-        );
+    return BlocListener<AuthBloc, AuthState>(
+      listenWhen: (prev, curr) =>
+          prev.status == AuthStatus.authenticated &&
+          curr.status == AuthStatus.unauthenticated,
+      listener: (_, state) {
+        _scaffoldMessengerKey.currentState?.clearSnackBars();
       },
+      child: BlocBuilder<AuthBloc, AuthState>(
+        buildWhen: (prev, curr) => prev.user?.themeMode != curr.user?.themeMode,
+        builder: (context, authState) {
+          return MaterialApp.router(
+            scaffoldMessengerKey: _scaffoldMessengerKey,
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            themeMode: _themeModeFromString(
+              authState.user?.themeMode ?? 'system',
+            ),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            routerConfig: _router,
+          );
+        },
+      ),
     );
   }
 }

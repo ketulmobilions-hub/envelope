@@ -118,8 +118,9 @@ void main() {
   group('AccountRepository', () {
     group('createAccount', () {
       test('creates account via API and caches locally', () async {
-        when(() => accountsApiClient.createAccount(any()))
-            .thenAnswer((_) async => testAccountDto);
+        when(
+          () => accountsApiClient.createAccount(any()),
+        ).thenAnswer((_) async => testAccountDto);
         when(
           () => accountsDao.insertAccount(
             any(),
@@ -148,8 +149,9 @@ void main() {
       });
 
       test('throws AccountException on API failure', () async {
-        when(() => accountsApiClient.createAccount(any()))
-            .thenThrow(const EnvelopeApiException('Network error'));
+        when(
+          () => accountsApiClient.createAccount(any()),
+        ).thenThrow(const EnvelopeApiException('Network error'));
 
         expect(
           () => repository.createAccount(
@@ -165,8 +167,9 @@ void main() {
 
     group('getAccount', () {
       test('returns from local storage when available', () async {
-        when(() => accountsDao.getAccount('acc-1'))
-            .thenAnswer((_) async => testLocalAccount);
+        when(
+          () => accountsDao.getAccount('acc-1'),
+        ).thenAnswer((_) async => testLocalAccount);
 
         final result = await repository.getAccount('acc-1');
 
@@ -176,10 +179,12 @@ void main() {
       });
 
       test('falls back to API when not in local storage', () async {
-        when(() => accountsDao.getAccount('acc-1'))
-            .thenAnswer((_) async => null);
-        when(() => accountsApiClient.getAccount('acc-1'))
-            .thenAnswer((_) async => testAccountDto);
+        when(
+          () => accountsDao.getAccount('acc-1'),
+        ).thenAnswer((_) async => null);
+        when(
+          () => accountsApiClient.getAccount('acc-1'),
+        ).thenAnswer((_) async => testAccountDto);
         when(
           () => accountsDao.insertAccount(
             any(),
@@ -194,10 +199,12 @@ void main() {
       });
 
       test('throws AccountException on API failure', () async {
-        when(() => accountsDao.getAccount('acc-1'))
-            .thenAnswer((_) async => null);
-        when(() => accountsApiClient.getAccount('acc-1'))
-            .thenThrow(const EnvelopeApiException('Not found'));
+        when(
+          () => accountsDao.getAccount('acc-1'),
+        ).thenAnswer((_) async => null);
+        when(
+          () => accountsApiClient.getAccount('acc-1'),
+        ).thenThrow(const EnvelopeApiException('Not found'));
 
         expect(
           () => repository.getAccount('acc-1'),
@@ -208,8 +215,9 @@ void main() {
 
     group('watchAccounts', () {
       test('streams mapped accounts from local storage', () {
-        when(() => accountsDao.watchAccountsByBudgetId('budget-1'))
-            .thenAnswer((_) => Stream.value([testLocalAccount]));
+        when(
+          () => accountsDao.watchAccountsByBudgetId('budget-1'),
+        ).thenAnswer((_) => Stream.value([testLocalAccount]));
 
         final stream = repository.watchAccounts('budget-1');
 
@@ -224,8 +232,9 @@ void main() {
       });
 
       test('wraps stream errors in AccountException', () {
-        when(() => accountsDao.watchAccountsByBudgetId('budget-1'))
-            .thenAnswer((_) => Stream.error(Exception('DB error')));
+        when(
+          () => accountsDao.watchAccountsByBudgetId('budget-1'),
+        ).thenAnswer((_) => Stream.error(Exception('DB error')));
 
         final stream = repository.watchAccounts('budget-1');
 
@@ -235,8 +244,9 @@ void main() {
 
     group('updateAccount', () {
       test('updates via API and caches locally', () async {
-        when(() => accountsApiClient.updateAccount(any()))
-            .thenAnswer((_) async => testAccountDto);
+        when(
+          () => accountsApiClient.updateAccount(any()),
+        ).thenAnswer((_) async => testAccountDto);
         when(
           () => accountsDao.insertAccount(
             any(),
@@ -256,8 +266,9 @@ void main() {
       });
 
       test('throws AccountException on API failure', () async {
-        when(() => accountsApiClient.updateAccount(any()))
-            .thenThrow(const EnvelopeApiException('Update failed'));
+        when(
+          () => accountsApiClient.updateAccount(any()),
+        ).thenThrow(const EnvelopeApiException('Update failed'));
 
         expect(
           () => repository.updateAccount(testAccount),
@@ -268,10 +279,12 @@ void main() {
 
     group('deleteAccount', () {
       test('deletes from API and local storage', () async {
-        when(() => accountsApiClient.deleteAccount('acc-1'))
-            .thenAnswer((_) async {});
-        when(() => accountsDao.deleteAccount('acc-1'))
-            .thenAnswer((_) async => 1);
+        when(
+          () => accountsApiClient.deleteAccount('acc-1'),
+        ).thenAnswer((_) async {});
+        when(
+          () => accountsDao.deleteAccount('acc-1'),
+        ).thenAnswer((_) async => 1);
 
         await repository.deleteAccount('acc-1');
 
@@ -280,8 +293,9 @@ void main() {
       });
 
       test('throws AccountException on API failure', () async {
-        when(() => accountsApiClient.deleteAccount('acc-1'))
-            .thenThrow(const EnvelopeApiException('Delete failed'));
+        when(
+          () => accountsApiClient.deleteAccount('acc-1'),
+        ).thenThrow(const EnvelopeApiException('Delete failed'));
 
         expect(
           () => repository.deleteAccount('acc-1'),
@@ -290,10 +304,12 @@ void main() {
       });
 
       test('succeeds even if local delete fails', () async {
-        when(() => accountsApiClient.deleteAccount('acc-1'))
-            .thenAnswer((_) async {});
-        when(() => accountsDao.deleteAccount('acc-1'))
-            .thenThrow(Exception('DB error'));
+        when(
+          () => accountsApiClient.deleteAccount('acc-1'),
+        ).thenAnswer((_) async {});
+        when(
+          () => accountsDao.deleteAccount('acc-1'),
+        ).thenThrow(Exception('DB error'));
 
         // Should not throw — local failure is best-effort.
         await repository.deleteAccount('acc-1');
@@ -304,10 +320,12 @@ void main() {
 
     group('archiveAccount', () {
       test('sets isArchived to true and updates', () async {
-        when(() => accountsDao.getAccount('acc-1'))
-            .thenAnswer((_) async => testLocalAccount);
-        when(() => accountsApiClient.updateAccount(any()))
-            .thenAnswer((_) async => testAccountDto);
+        when(
+          () => accountsDao.getAccount('acc-1'),
+        ).thenAnswer((_) async => testLocalAccount);
+        when(
+          () => accountsApiClient.updateAccount(any()),
+        ).thenAnswer((_) async => testAccountDto);
         when(
           () => accountsDao.insertAccount(
             any(),
@@ -325,10 +343,12 @@ void main() {
       });
 
       test('throws AccountException on failure', () async {
-        when(() => accountsDao.getAccount('acc-1'))
-            .thenAnswer((_) async => null);
-        when(() => accountsApiClient.getAccount('acc-1'))
-            .thenThrow(const EnvelopeApiException('Not found'));
+        when(
+          () => accountsDao.getAccount('acc-1'),
+        ).thenAnswer((_) async => null);
+        when(
+          () => accountsApiClient.getAccount('acc-1'),
+        ).thenThrow(const EnvelopeApiException('Not found'));
 
         expect(
           () => repository.archiveAccount('acc-1'),
@@ -351,10 +371,12 @@ void main() {
           createdAt: now,
           updatedAt: now,
         );
-        when(() => accountsDao.getAccount('acc-1'))
-            .thenAnswer((_) async => archivedLocal);
-        when(() => accountsApiClient.updateAccount(any()))
-            .thenAnswer((_) async => testAccountDto);
+        when(
+          () => accountsDao.getAccount('acc-1'),
+        ).thenAnswer((_) async => archivedLocal);
+        when(
+          () => accountsApiClient.updateAccount(any()),
+        ).thenAnswer((_) async => testAccountDto);
         when(
           () => accountsDao.insertAccount(
             any(),
@@ -374,10 +396,12 @@ void main() {
 
     group('reconcileAccount', () {
       test('updates currentBalance to the reconciled value', () async {
-        when(() => accountsDao.getAccount('acc-1'))
-            .thenAnswer((_) async => testLocalAccount);
-        when(() => accountsApiClient.updateAccount(any()))
-            .thenAnswer((_) async => testAccountDto);
+        when(
+          () => accountsDao.getAccount('acc-1'),
+        ).thenAnswer((_) async => testLocalAccount);
+        when(
+          () => accountsApiClient.updateAccount(any()),
+        ).thenAnswer((_) async => testAccountDto);
         when(
           () => accountsDao.insertAccount(
             any(),
@@ -395,10 +419,12 @@ void main() {
       });
 
       test('throws AccountException on failure', () async {
-        when(() => accountsDao.getAccount('acc-1'))
-            .thenAnswer((_) async => null);
-        when(() => accountsApiClient.getAccount('acc-1'))
-            .thenThrow(const EnvelopeApiException('Not found'));
+        when(
+          () => accountsDao.getAccount('acc-1'),
+        ).thenAnswer((_) async => null);
+        when(
+          () => accountsApiClient.getAccount('acc-1'),
+        ).thenThrow(const EnvelopeApiException('Not found'));
 
         expect(
           () => repository.reconcileAccount('acc-1', 20000),
@@ -409,8 +435,9 @@ void main() {
 
     group('refreshAccounts', () {
       test('fetches from API and batch-caches all accounts', () async {
-        when(() => accountsApiClient.getAccountsByBudget('budget-1'))
-            .thenAnswer((_) async => [testAccountDto]);
+        when(
+          () => accountsApiClient.getAccountsByBudget('budget-1'),
+        ).thenAnswer((_) async => [testAccountDto]);
         when(
           () => accountsDao.batchInsertAccounts(
             any(),
@@ -432,8 +459,9 @@ void main() {
       });
 
       test('throws AccountException on API failure', () async {
-        when(() => accountsApiClient.getAccountsByBudget('budget-1'))
-            .thenThrow(const EnvelopeApiException('Network error'));
+        when(
+          () => accountsApiClient.getAccountsByBudget('budget-1'),
+        ).thenThrow(const EnvelopeApiException('Network error'));
 
         expect(
           () => repository.refreshAccounts('budget-1'),
@@ -444,8 +472,9 @@ void main() {
 
     group('createDebtAccount', () {
       test('creates debt account via API and caches locally', () async {
-        when(() => accountsApiClient.createDebtAccount(any()))
-            .thenAnswer((_) async => testDebtAccountDto);
+        when(
+          () => accountsApiClient.createDebtAccount(any()),
+        ).thenAnswer((_) async => testDebtAccountDto);
         when(
           () => accountsDao.insertDebtAccount(
             any(),
@@ -466,8 +495,9 @@ void main() {
       });
 
       test('throws AccountException on API failure', () async {
-        when(() => accountsApiClient.createDebtAccount(any()))
-            .thenThrow(const EnvelopeApiException('Create failed'));
+        when(
+          () => accountsApiClient.createDebtAccount(any()),
+        ).thenThrow(const EnvelopeApiException('Create failed'));
 
         expect(
           () => repository.createDebtAccount(
@@ -483,8 +513,9 @@ void main() {
 
     group('getDebtAccount', () {
       test('returns from local storage when available', () async {
-        when(() => accountsDao.getDebtAccount('acc-1'))
-            .thenAnswer((_) async => testLocalDebtAccount);
+        when(
+          () => accountsDao.getDebtAccount('acc-1'),
+        ).thenAnswer((_) async => testLocalDebtAccount);
 
         final result = await repository.getDebtAccount('acc-1');
 
@@ -494,10 +525,12 @@ void main() {
       });
 
       test('falls back to API when not in local storage', () async {
-        when(() => accountsDao.getDebtAccount('acc-1'))
-            .thenAnswer((_) async => null);
-        when(() => accountsApiClient.getDebtAccount('acc-1'))
-            .thenAnswer((_) async => testDebtAccountDto);
+        when(
+          () => accountsDao.getDebtAccount('acc-1'),
+        ).thenAnswer((_) async => null);
+        when(
+          () => accountsApiClient.getDebtAccount('acc-1'),
+        ).thenAnswer((_) async => testDebtAccountDto);
         when(
           () => accountsDao.insertDebtAccount(
             any(),
@@ -512,10 +545,12 @@ void main() {
       });
 
       test('returns null when not found locally or remotely', () async {
-        when(() => accountsDao.getDebtAccount('acc-1'))
-            .thenAnswer((_) async => null);
-        when(() => accountsApiClient.getDebtAccount('acc-1'))
-            .thenAnswer((_) async => null);
+        when(
+          () => accountsDao.getDebtAccount('acc-1'),
+        ).thenAnswer((_) async => null);
+        when(
+          () => accountsApiClient.getDebtAccount('acc-1'),
+        ).thenAnswer((_) async => null);
 
         final result = await repository.getDebtAccount('acc-1');
 
@@ -523,10 +558,12 @@ void main() {
       });
 
       test('throws AccountException on API failure', () async {
-        when(() => accountsDao.getDebtAccount('acc-1'))
-            .thenAnswer((_) async => null);
-        when(() => accountsApiClient.getDebtAccount('acc-1'))
-            .thenThrow(const EnvelopeApiException('Network error'));
+        when(
+          () => accountsDao.getDebtAccount('acc-1'),
+        ).thenAnswer((_) async => null);
+        when(
+          () => accountsApiClient.getDebtAccount('acc-1'),
+        ).thenThrow(const EnvelopeApiException('Network error'));
 
         expect(
           () => repository.getDebtAccount('acc-1'),
@@ -537,8 +574,9 @@ void main() {
 
     group('updateDebtAccount', () {
       test('updates via API and caches locally', () async {
-        when(() => accountsApiClient.updateDebtAccount(any()))
-            .thenAnswer((_) async => testDebtAccountDto);
+        when(
+          () => accountsApiClient.updateDebtAccount(any()),
+        ).thenAnswer((_) async => testDebtAccountDto);
         when(
           () => accountsDao.insertDebtAccount(
             any(),
@@ -558,8 +596,9 @@ void main() {
       });
 
       test('throws AccountException on API failure', () async {
-        when(() => accountsApiClient.updateDebtAccount(any()))
-            .thenThrow(const EnvelopeApiException('Update failed'));
+        when(
+          () => accountsApiClient.updateDebtAccount(any()),
+        ).thenThrow(const EnvelopeApiException('Update failed'));
 
         expect(
           () => repository.updateDebtAccount(testDebtAccount),
@@ -570,10 +609,12 @@ void main() {
 
     group('deleteDebtAccount', () {
       test('deletes from API and local storage', () async {
-        when(() => accountsApiClient.deleteDebtAccount('acc-1'))
-            .thenAnswer((_) async {});
-        when(() => accountsDao.deleteDebtAccount('acc-1'))
-            .thenAnswer((_) async => 1);
+        when(
+          () => accountsApiClient.deleteDebtAccount('acc-1'),
+        ).thenAnswer((_) async {});
+        when(
+          () => accountsDao.deleteDebtAccount('acc-1'),
+        ).thenAnswer((_) async => 1);
 
         await repository.deleteDebtAccount('acc-1');
 
@@ -582,8 +623,9 @@ void main() {
       });
 
       test('throws AccountException on API failure', () async {
-        when(() => accountsApiClient.deleteDebtAccount('acc-1'))
-            .thenThrow(const EnvelopeApiException('Delete failed'));
+        when(
+          () => accountsApiClient.deleteDebtAccount('acc-1'),
+        ).thenThrow(const EnvelopeApiException('Delete failed'));
 
         expect(
           () => repository.deleteDebtAccount('acc-1'),
@@ -592,10 +634,12 @@ void main() {
       });
 
       test('succeeds even if local delete fails', () async {
-        when(() => accountsApiClient.deleteDebtAccount('acc-1'))
-            .thenAnswer((_) async {});
-        when(() => accountsDao.deleteDebtAccount('acc-1'))
-            .thenThrow(Exception('DB error'));
+        when(
+          () => accountsApiClient.deleteDebtAccount('acc-1'),
+        ).thenAnswer((_) async {});
+        when(
+          () => accountsDao.deleteDebtAccount('acc-1'),
+        ).thenThrow(Exception('DB error'));
 
         await repository.deleteDebtAccount('acc-1');
 

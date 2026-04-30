@@ -8,6 +8,7 @@ import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
 import 'package:envelope/recurring/cubit/recurring_check_cubit.dart';
 import 'package:envelope/shared/widgets/confirm_delete_dialog.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/sync/sync.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
@@ -119,7 +120,8 @@ class _HomeView extends StatelessWidget {
                 if (picked != null && context.mounted) {
                   await context.read<RecurringCheckCubit>().check(now: picked);
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    showAppSnackBar(
+                      context,
                       SnackBar(
                         content: Text(
                           '[Debug] Simulated auto-post: '
@@ -183,6 +185,13 @@ class _HomeView extends StatelessWidget {
       ),
       body: MultiBlocListener(
         listeners: [
+          BlocListener<AuthBloc, AuthState>(
+            listenWhen: (prev, curr) =>
+                prev.status == AuthStatus.authenticated &&
+                curr.status == AuthStatus.unauthenticated,
+            listener: (context, _) =>
+                context.read<DashboardBloc>().cancelRealtimeSubscriptions(),
+          ),
           BlocListener<DashboardBloc, DashboardState>(
             listenWhen: (prev, curr) =>
                 prev.error != curr.error && curr.error != null,
@@ -190,21 +199,31 @@ class _HomeView extends StatelessWidget {
               final message = state.error == DashboardError.allocationFailed
                   ? l10n.dashboardErrorAllocation
                   : l10n.dashboardErrorLoad;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(message)),
-              );
+              showAppSnackBar(context, SnackBar(content: Text(message)));
             },
           ),
           BlocListener<DashboardBloc, DashboardState>(
             listenWhen: (prev, curr) =>
-                !prev.hasRemoteUpdate && curr.hasRemoteUpdate,
+                !prev.hasRemoteUpdate &&
+                curr.hasRemoteUpdate &&
+                curr.status != DashboardStatus.budgetDeleted,
             listener: (context, state) {
-              ScaffoldMessenger.of(context).showSnackBar(
+              context.read<SyncBloc>().add(const SyncRequested());
+              showAppSnackBar(
+                context,
                 SnackBar(
                   content: Text(l10n.realtimeChangeReceived),
                   duration: const Duration(seconds: 3),
                 ),
               );
+            },
+          ),
+          BlocListener<DashboardBloc, DashboardState>(
+            listenWhen: (prev, curr) =>
+                curr.status == DashboardStatus.budgetDeleted,
+            listener: (context, state) async {
+              await context.read<SharedPreferences>().remove(activeBudgetIdKey);
+              if (context.mounted) context.go(AppRoutes.onboarding);
             },
           ),
         ],
@@ -251,7 +270,8 @@ class _HomeView extends StatelessWidget {
                               actions: [
                                 TextButton(
                                   onPressed: () => context.push(
-                                    '${AppRoutes.recurring}?budgetId=$budgetId',
+                                    '${AppRoutes.recurring}'
+                                    '?budgetId=$budgetId&initialTab=1',
                                   ),
                                   child: Text(l10n.recurringTabBills),
                                 ),
@@ -274,6 +294,8 @@ class _HomeView extends StatelessWidget {
                   EnvelopeSummaryCard(
                     summaries: state.envelopeSummaries,
                     categoryGroups: state.categoryGroups,
+                    accounts: state.accounts,
+                    ccCreditLimits: state.ccCreditLimits,
                     onViewAll: () => context.push(
                       '${AppRoutes.envelopes}?budgetId=$budgetId',
                     ),
@@ -317,8 +339,6 @@ class _HomeView extends StatelessWidget {
     );
     if (confirmed == true && context.mounted) {
       context.read<DashboardBloc>().add(const BudgetDeleteRequested());
-      // Navigate back to home — the budget stream will update.
-      context.go(AppRoutes.home);
     }
   }
 }

@@ -233,18 +233,6 @@
     "@onboardingAccountTypeOther": {
         "description": "Other account type"
     },
-    "onboardingIncomeTitle": "Expected Monthly Income",
-    "@onboardingIncomeTitle": {
-        "description": "Income step title"
-    },
-    "onboardingIncomeDescription": "How much do you expect to earn each month? This helps pre-fill your envelope allocations.",
-    "@onboardingIncomeDescription": {
-        "description": "Income step description"
-    },
-    "onboardingIncomeLabel": "Monthly Income",
-    "@onboardingIncomeLabel": {
-        "description": "Income input label"
-    },
     "onboardingEnvelopesTitle": "Set Up Your Envelopes",
     "@onboardingEnvelopesTitle": {
         "description": "Envelopes step title"
@@ -281,21 +269,9 @@
     "@onboardingAllocationDescription": {
         "description": "Allocation step description"
     },
-    "onboardingIncomeToAllocate": "Income to Allocate",
-    "@onboardingIncomeToAllocate": {
-        "description": "Label for total income to allocate"
-    },
-    "onboardingRemainingToAllocate": "Remaining",
-    "@onboardingRemainingToAllocate": {
-        "description": "Label for remaining amount to allocate"
-    },
     "onboardingErrorAccountRequired": "Please add at least one account to continue.",
     "@onboardingErrorAccountRequired": {
         "description": "Error when no accounts added"
-    },
-    "onboardingErrorIncomeRequired": "Please enter your expected monthly income.",
-    "@onboardingErrorIncomeRequired": {
-        "description": "Error when income is zero"
     },
     "onboardingErrorEnvelopeRequired": "Please add at least one envelope to continue.",
     "@onboardingErrorEnvelopeRequired": {
@@ -382,6 +358,10 @@
     "@accountsStartingBalanceLabel": {
         "description": "Label for starting balance input"
     },
+    "accountsBalanceTooLarge": "Amount must be $999,999,999.99 or less",
+    "@accountsBalanceTooLarge": {
+        "description": "Error when balance exceeds the maximum allowed amount"
+    },
     "accountsCreateButton": "Create Account",
     "@accountsCreateButton": {
         "description": "Button to create a new account"
@@ -401,6 +381,18 @@
     "accountsRunningBalance": "Running",
     "@accountsRunningBalance": {
         "description": "Short label for running balance"
+    },
+    "accountsCreditLimitLabel": "Credit Limit",
+    "@accountsCreditLimitLabel": {
+        "description": "Label for credit card credit limit field"
+    },
+    "accountsCreditLimitTooLarge": "Credit limit must be $999,999,999.99 or less",
+    "@accountsCreditLimitTooLarge": {
+        "description": "Error when credit limit exceeds maximum allowed amount"
+    },
+    "accountsAvailableCreditLabel": "Available Credit",
+    "@accountsAvailableCreditLabel": {
+        "description": "Label showing remaining available credit on a CC account"
     },
     "accountsCurrencyLabel": "Currency",
     "@accountsCurrencyLabel": {
@@ -767,6 +759,10 @@
     "budgetManageTemplates": "Manage Templates",
     "@budgetManageTemplates": {
         "description": "Action menu item to open the templates management page"
+    },
+    "budgetSaveAsTemplate": "Save Current as Template",
+    "@budgetSaveAsTemplate": {
+        "description": "Action menu item and dialog title for saving the current period's allocation as a new named template"
     },
     "budgetDuplicateFromPrevious": "Copy from Previous Period",
     "@budgetDuplicateFromPrevious": {
@@ -2094,6 +2090,10 @@
     "@notificationError": {
         "description": "Error message when loading notification preferences fails"
     },
+    "notificationSaveError": "Couldn't save. Check your connection.",
+    "@notificationSaveError": {
+        "description": "Snackbar shown when a notification preference toggle fails to save"
+    },
     "notificationWeeklySummary": "Weekly Budget Summary",
     "@notificationWeeklySummary": {
         "description": "Toggle label for weekly budget summary email notifications"
@@ -2219,5 +2219,38 @@
     "inviteRevoked": "Invite revoked",
     "@inviteRevoked": { "description": "Snackbar after revoking invite" },
     "inviteGenerating": "Generating invite link...",
-    "@inviteGenerating": { "description": "Loading message while generating invite" }
+    "@inviteGenerating": { "description": "Loading message while generating invite" },
+    "ccPaymentsCategoryGroupName": "Credit Card Payments",
+    "@ccPaymentsCategoryGroupName": { "description": "Name for the auto-created category group that holds CC payment envelopes" },
+    "ccPaymentEnvelopeName": "{name} Payment",
+    "@ccPaymentEnvelopeName": { "description": "Name for an auto-created CC payment envelope", "placeholders": { "name": { "type": "String" } } },
+    "ccFloatWarning": "Riding the float — reserve more funds to cover your balance",
+    "@ccFloatWarning": { "description": "Warning shown when CC account balance exceeds CC payment envelope balance" },
+
+    "ccPayTitle": "Pay {accountName}",
+    "@ccPayTitle": { "description": "Title for the CC pay bottom sheet", "placeholders": { "accountName": { "type": "String" } } },
+    "ccPayBalanceDue": "Balance Due",
+    "@ccPayBalanceDue": { "description": "Label for the CC balance due amount" },
+    "ccPayPayFull": "Pay Full ({amount})",
+    "@ccPayPayFull": { "description": "Quick-select chip to pay the full CC balance", "placeholders": { "amount": { "type": "String" } } },
+    "ccPayFromAccount": "From Account",
+    "@ccPayFromAccount": { "description": "Label for the from-account dropdown in CC pay sheet" },
+    "ccPayAmount": "Amount",
+    "@ccPayAmount": { "description": "Label for the amount field in CC pay sheet" },
+    "ccPayConfirm": "Confirm Payment",
+    "@ccPayConfirm": { "description": "Confirm button in CC pay bottom sheet" },
+    "ccPaySuccess": "Payment recorded",
+    "@ccPaySuccess": { "description": "Snackbar message after successful CC payment" },
+    "ccPayFromRequired": "Select an account",
+    "@ccPayFromRequired": { "description": "Validation when no from-account selected in CC pay sheet" },
+    "ccPayAmountRequired": "Enter a valid amount",
+    "@ccPayAmountRequired": { "description": "Validation when amount is invalid in CC pay sheet" },
+    "ccPayError": "Payment failed. Please try again.",
+    "@ccPayError": { "description": "Error message when CC payment fails" },
+    "ccPayButton": "Pay",
+    "@ccPayButton": { "description": "Pay button label on CC payment envelope cards" },
+    "ccDueLabel": "Due: {amount}",
+    "@ccDueLabel": { "description": "Primary label on CC envelope cards showing the balance due", "placeholders": { "amount": { "type": "String" } } },
+    "ccLimitLabel": "{available} of {limit}",
+    "@ccLimitLabel": { "description": "Small limit label on CC envelope cards", "placeholders": { "available": { "type": "String" }, "limit": { "type": "String" } } }
 }

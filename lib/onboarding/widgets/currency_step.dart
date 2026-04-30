@@ -29,8 +29,7 @@ class _CurrencyStepState extends State<CurrencyStep> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final selected =
-        context.select<OnboardingCubit, String>(
+    final selected = context.select<OnboardingCubit, String>(
       (c) => c.state.baseCurrency,
     );
 
@@ -54,8 +53,7 @@ class _CurrencyStepState extends State<CurrencyStep> {
                   hintText: l10n.onboardingCurrencySearch,
                   prefixIcon: const Icon(Icons.search),
                 ),
-                onChanged: (value) =>
-                    setState(() => _searchQuery = value),
+                onChanged: (value) => setState(() => _searchQuery = value),
               ),
             ],
           ),
@@ -66,9 +64,7 @@ class _CurrencyStepState extends State<CurrencyStep> {
             groupValue: selected,
             onChanged: (value) {
               if (value != null) {
-                context
-                    .read<OnboardingCubit>()
-                    .selectCurrency(value);
+                context.read<OnboardingCubit>().selectCurrency(value);
               }
             },
             child: ListView.builder(
@@ -76,14 +72,16 @@ class _CurrencyStepState extends State<CurrencyStep> {
               itemBuilder: (context, index) {
                 final currency = _filteredCurrencies[index];
                 return ListTile(
+                  dense: true,
+                  visualDensity: VisualDensity.compact,
                   title: Text(
-                    '${currency.code} - ${currency.name}',
+                    '${currency.code} - ${currency.name} (${currency.symbol})',
+                    style: const TextStyle(fontSize: 15),
                   ),
-                  subtitle: Text(currency.symbol),
                   leading: Radio<String>(value: currency.code),
-                  onTap: () => context
-                      .read<OnboardingCubit>()
-                      .selectCurrency(currency.code),
+                  onTap: () => context.read<OnboardingCubit>().selectCurrency(
+                    currency.code,
+                  ),
                 );
               },
             ),

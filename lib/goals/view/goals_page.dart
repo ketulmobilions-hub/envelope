@@ -4,6 +4,7 @@ import 'package:envelope/goals/view/goal_detail_page.dart';
 import 'package:envelope/goals/view/goal_form_page.dart';
 import 'package:envelope/goals/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:goal_repository/goal_repository.dart';
@@ -44,9 +45,7 @@ class GoalsView extends StatelessWidget {
           GoalsError.updateFailed => l10n.goalsErrorUpdateFailed,
           GoalsError.deleteFailed => l10n.goalsErrorDeleteFailed,
         };
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(message)));
+        showAppSnackBar(context, SnackBar(content: Text(message)));
       },
       child: Scaffold(
         appBar: AppBar(
@@ -133,8 +132,8 @@ class _EmptyState extends StatelessWidget {
           Text(
             l10n.goalsEmptySubtitle,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
+              color: Theme.of(context).colorScheme.outline,
+            ),
           ),
           const SizedBox(height: 24),
           FilledButton.icon(
@@ -177,9 +176,8 @@ class _GoalsList extends StatelessWidget {
               goal: goal,
               onTap: () => _openDetail(context, goal),
               onEdit: () => _openEdit(context, goal),
-              onComplete: () => context
-                  .read<GoalsBloc>()
-                  .add(GoalCompleteToggled(goal)),
+              onComplete: () =>
+                  context.read<GoalsBloc>().add(GoalCompleteToggled(goal)),
               onDelete: () => _confirmDelete(context, goal),
             ),
         ],
@@ -189,8 +187,8 @@ class _GoalsList extends StatelessWidget {
             child: Text(
               l10n.goalsCompleted,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
+                color: Theme.of(context).colorScheme.outline,
+              ),
             ),
           ),
           for (final goal in completed)
@@ -198,9 +196,8 @@ class _GoalsList extends StatelessWidget {
               goal: goal,
               onTap: () => _openDetail(context, goal),
               onEdit: () => _openEdit(context, goal),
-              onComplete: () => context
-                  .read<GoalsBloc>()
-                  .add(GoalCompleteToggled(goal)),
+              onComplete: () =>
+                  context.read<GoalsBloc>().add(GoalCompleteToggled(goal)),
               onDelete: () => _confirmDelete(context, goal),
             ),
         ],
@@ -267,8 +264,7 @@ class _GoalsList extends StatelessWidget {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor:
-                  Theme.of(dialogContext).colorScheme.error,
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
             ),
             onPressed: () => Navigator.of(dialogContext).pop(true),
             child: Text(l10n.goalsDelete),
@@ -295,8 +291,8 @@ class _TypeHeader extends StatelessWidget {
       child: Text(
         localizedGoalType(type, l10n),
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-            ),
+          color: Theme.of(context).colorScheme.primary,
+        ),
       ),
     );
   }

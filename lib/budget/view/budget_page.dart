@@ -4,6 +4,7 @@ import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/budget/bloc/bloc.dart';
 import 'package:envelope/budget/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -52,9 +53,7 @@ class _BudgetViewState extends State<BudgetView> {
           BudgetError.templateFailed => l10n.budgetErrorTemplateFailed,
           BudgetError.periodFailed => l10n.budgetErrorPeriodFailed,
         };
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(message)));
+        showAppSnackBar(context, SnackBar(content: Text(message)));
       },
       child: Scaffold(
         appBar: AppBar(
@@ -71,9 +70,9 @@ class _BudgetViewState extends State<BudgetView> {
                   return const SizedBox.shrink();
                 }
                 return TextButton(
-                  onPressed: () => context
-                      .read<BudgetBloc>()
-                      .add(const AllocationsSaveRequested()),
+                  onPressed: () => context.read<BudgetBloc>().add(
+                    const AllocationsSaveRequested(),
+                  ),
                   child: Text(l10n.budgetSaveAllocations),
                 );
               },
@@ -151,8 +150,8 @@ class _EmptyState extends StatelessWidget {
               l10n.budgetNoPeriodsSubtitle,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
+                color: Theme.of(context).colorScheme.outline,
+              ),
             ),
           ),
         ],
@@ -192,8 +191,8 @@ class _AllocationList extends StatelessWidget {
             Text(
               l10n.budgetNoAllocationsSubtitle,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
+                color: Theme.of(context).colorScheme.outline,
+              ),
             ),
           ],
         ),
@@ -208,6 +207,7 @@ class _AllocationList extends StatelessWidget {
               key: ValueKey(pair.$1.id),
               group: pair.$1,
               envelopesWithAllocations: pair.$2,
+              ccPaymentAvailable: state.ccPaymentAvailable,
             ),
           )
           .toList(),

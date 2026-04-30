@@ -1,5 +1,7 @@
 # Envelope App — QA Test Plan
 
+> **Companion doc**: `QA_PERSONA_SCENARIOS.md` — cross-feature, multi-day journeys for 12 fictional personas (TC-S namespace). Run after feature-level TCs below are green.
+
 ## How to Test
 
 ### Setup

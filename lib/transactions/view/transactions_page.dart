@@ -26,6 +26,7 @@ class TransactionsPage extends StatelessWidget {
         transactionRepository: context.read<TransactionRepository>(),
         accountRepository: context.read<AccountRepository>(),
         envelopeRepository: context.read<EnvelopeRepository>(),
+        budgetRepository: context.read<BudgetRepository>(),
         budgetId: budgetId,
       )..add(const TransactionsStarted()),
       child: TransactionsView(budgetId: budgetId),
@@ -51,9 +52,7 @@ class TransactionsView extends StatelessWidget {
           TransactionsError.deleteFailed => l10n.transactionsErrorDeleteFailed,
           TransactionsError.undoFailed => l10n.transactionsErrorUndoFailed,
         };
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(message)));
+        showAppSnackBar(context, SnackBar(content: Text(message)));
       },
       child: Scaffold(
         appBar: AppBar(
@@ -171,6 +170,7 @@ class _EmptyState extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             l10n.transactionsEmptySubtitle,
+            textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.outline,
             ),

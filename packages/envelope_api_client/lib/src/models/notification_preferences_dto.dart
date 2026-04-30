@@ -12,6 +12,9 @@ abstract class NotificationPreferencesDto with _$NotificationPreferencesDto {
     @JsonKey(name: 'email_enabled') @Default(true) bool emailEnabled,
     @JsonKey(name: 'overspend_alerts') @Default(true) bool overspendAlerts,
     @JsonKey(name: 'bill_reminders') @Default(true) bool billReminders,
+    @JsonKey(name: 'email_bill_reminders')
+    @Default(true)
+    bool emailBillReminders,
     @JsonKey(name: 'daily_logging_reminder')
     @Default(true)
     bool dailyLoggingReminder,

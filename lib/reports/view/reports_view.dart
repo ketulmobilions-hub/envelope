@@ -1,5 +1,6 @@
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/reports/bloc/bloc.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/reports/view/budget_vs_actual_report_page.dart';
 import 'package:envelope/reports/view/export_report_page.dart';
 import 'package:envelope/reports/view/net_worth_report_page.dart';
@@ -27,9 +28,7 @@ class ReportsView extends StatelessWidget {
           ReportsError.exportFailed => l10n.reportsErrorExport,
           ReportsError.snapshotFailed => l10n.reportsErrorLoad,
         };
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(message)));
+        showAppSnackBar(context, SnackBar(content: Text(message)));
       },
       child: Scaffold(
         appBar: AppBar(title: Text(l10n.reportsTitle)),
@@ -47,8 +46,8 @@ class ReportsView extends StatelessWidget {
                 Text(
                   l10n.reportsSubtitle,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 _ReportsGrid(budgetId: budgetId),

@@ -1,6 +1,7 @@
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/budget/bloc/bloc.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,11 +16,16 @@ class AllocationRow extends StatefulWidget {
   const AllocationRow({
     required this.envelope,
     required this.allocation,
+    this.availableOverride,
     super.key,
   });
 
   final Envelope envelope;
   final EnvelopeAllocation? allocation;
+
+  /// When non-null, overrides the computed available amount. Used for CC
+  /// Payment envelopes where available is derived from transaction history.
+  final int? availableOverride;
 
   @override
   State<AllocationRow> createState() => _AllocationRowState();
@@ -68,11 +74,14 @@ class _AllocationRowState extends State<AllocationRow> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
     final allocation = widget.allocation;
     final spent = allocation?.spentAmount ?? 0;
-    final available = allocation != null
-        ? EnvelopeRepository.calculateRollover(allocation)
-        : 0;
+    final available =
+        widget.availableOverride ??
+        (allocation != null
+            ? EnvelopeRepository.calculateRollover(allocation)
+            : 0);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -91,12 +100,14 @@ class _AllocationRowState extends State<AllocationRow> {
                   TextSpan(
                     children: [
                       TextSpan(
-                        text: '${l10n.budgetSpentLabel}: '
-                            '${formatCents(spent)}  ',
+                        text:
+                            '${l10n.budgetSpentLabel}: '
+                            '${formatCents(spent, symbol: symbol)}  ',
                       ),
                       TextSpan(
-                        text: '${l10n.budgetAvailableLabel}: '
-                            '${formatCents(available)}',
+                        text:
+                            '${l10n.budgetAvailableLabel}: '
+                            '${formatCents(available, symbol: symbol)}',
                         style: available < 0
                             ? TextStyle(
                                 color: Theme.of(context).colorScheme.error,
@@ -107,8 +118,8 @@ class _AllocationRowState extends State<AllocationRow> {
                     ],
                   ),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
                 ),
               ],
             ),
@@ -118,14 +129,15 @@ class _AllocationRowState extends State<AllocationRow> {
             child: TextFormField(
               controller: _controller,
               focusNode: _focusNode,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
               ],
               textAlign: TextAlign.right,
-              decoration: const InputDecoration(
-                prefixText: r'$',
+              decoration: InputDecoration(
+                prefixText: symbol,
                 isDense: true,
                 contentPadding: EdgeInsets.symmetric(
                   horizontal: 8,
@@ -135,11 +147,11 @@ class _AllocationRowState extends State<AllocationRow> {
               onChanged: (value) {
                 final cents = parseCents(value) ?? 0;
                 context.read<BudgetBloc>().add(
-                      AllocationAmountChanged(
-                        envelopeId: widget.envelope.id,
-                        amount: cents,
-                      ),
-                    );
+                  AllocationAmountChanged(
+                    envelopeId: widget.envelope.id,
+                    amount: cents,
+                  ),
+                );
               },
             ),
           ),

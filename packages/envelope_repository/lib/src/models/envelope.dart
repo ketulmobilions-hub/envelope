@@ -14,6 +14,7 @@ abstract class Envelope with _$Envelope {
     @Default(0) int sortOrder,
     @Default(false) bool isArchived,
     @Default(null) String? color,
+    @Default(null) String? linkedAccountId,
   }) = _Envelope;
 
   factory Envelope.fromJson(Map<String, dynamic> json) =>

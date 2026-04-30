@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:envelope/budget/bloc/bloc.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -56,8 +57,9 @@ class _TransferDialogState extends State<_TransferDialog> {
     super.initState();
     _allocatedEnvelopes = widget.allocations
         .map((a) {
-          final env =
-              widget.envelopes.where((e) => e.id == a.envelopeId).firstOrNull;
+          final env = widget.envelopes
+              .where((e) => e.id == a.envelopeId)
+              .firstOrNull;
           return env != null ? (env, a) : null;
         })
         .whereType<(Envelope, EnvelopeAllocation)>()
@@ -73,6 +75,7 @@ class _TransferDialogState extends State<_TransferDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
 
     return AlertDialog(
       title: Text(l10n.budgetTransferTitle),
@@ -116,10 +119,11 @@ class _TransferDialogState extends State<_TransferDialog> {
               controller: _amountController,
               decoration: InputDecoration(
                 labelText: l10n.budgetTransferAmount,
-                prefixText: r'$',
+                prefixText: symbol,
               ),
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
               ],
@@ -130,8 +134,8 @@ class _TransferDialogState extends State<_TransferDialog> {
                 final availableCents = from == null
                     ? 0
                     : from.allocatedAmount -
-                        from.spentAmount +
-                        from.rolloverAmount;
+                          from.spentAmount +
+                          from.rolloverAmount;
                 if (cents > availableCents) {
                   return l10n.budgetTransferInsufficientFunds;
                 }

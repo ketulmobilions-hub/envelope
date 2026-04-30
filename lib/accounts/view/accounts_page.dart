@@ -8,8 +8,12 @@ import 'package:envelope/accounts/view/account_detail_page.dart';
 import 'package:envelope/accounts/view/account_form_page.dart';
 import 'package:envelope/accounts/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
+import 'package:envelope/transactions/bloc/bloc.dart';
+import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:transaction_repository/transaction_repository.dart';
 
 /// Page that provides [AccountsBloc] and displays the accounts list.
 class AccountsPage extends StatelessWidget {
@@ -22,6 +26,8 @@ class AccountsPage extends StatelessWidget {
     return BlocProvider(
       create: (_) => AccountsBloc(
         accountRepository: context.read<AccountRepository>(),
+        budgetRepository: context.read<BudgetRepository>(),
+        envelopeRepository: context.read<EnvelopeRepository>(),
         budgetId: budgetId,
       )..add(const AccountsStarted()),
       child: AccountsView(budgetId: budgetId),
@@ -47,9 +53,7 @@ class AccountsView extends StatelessWidget {
           AccountsError.updateFailed => l10n.accountsErrorUpdateFailed,
           AccountsError.deleteFailed => l10n.accountsErrorDeleteFailed,
         };
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(message)));
+        showAppSnackBar(context, SnackBar(content: Text(message)));
       },
       child: Scaffold(
         appBar: AppBar(
@@ -76,10 +80,10 @@ class AccountsView extends StatelessWidget {
               onRefresh: () {
                 final completer = Completer<void>();
                 context.read<AccountsBloc>().add(
-                      AccountsRefreshRequested(
-                        onComplete: completer.complete,
-                      ),
-                    );
+                  AccountsRefreshRequested(
+                    onComplete: completer.complete,
+                  ),
+                );
                 return completer.future;
               },
               child: _AccountsList(
@@ -101,6 +105,7 @@ class AccountsView extends StatelessWidget {
           create: (_) => AccountFormCubit(
             accountRepository: context.read<AccountRepository>(),
             budgetRepository: context.read<BudgetRepository>(),
+            envelopeRepository: context.read<EnvelopeRepository>(),
             budgetId: budgetId,
           ),
           child: const AccountFormPage(),
@@ -139,8 +144,8 @@ class _EmptyState extends StatelessWidget {
           Text(
             l10n.accountsEmptySubtitle,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
+              color: Theme.of(context).colorScheme.outline,
+            ),
           ),
           const SizedBox(height: 24),
           FilledButton.icon(
@@ -173,13 +178,18 @@ class _AccountsList extends StatelessWidget {
         AccountsTotalCard(totalBalance: state.totalBalance),
         for (final type in typeOrder) ...[
           _TypeHeader(type: type, l10n: l10n),
-          for (final account in grouped[type]!)
+          for (final account in grouped[type]!) ...[
             AccountListTile(
               account: account,
               onTap: () => _openDetail(context, account),
-              onArchive: () => _confirmArchive(context, account),
-              onDelete: () => _confirmDelete(context, account),
             ),
+            if (isCreditCard(account.type) && account.currentBalance < 0)
+              CreditCardFloatWarning(
+                accountId: account.id,
+                budgetId: budgetId,
+                accountBalance: account.currentBalance,
+              ),
+          ],
         ],
         if (archived.isNotEmpty) ...[
           Padding(
@@ -187,18 +197,14 @@ class _AccountsList extends StatelessWidget {
             child: Text(
               l10n.accountsArchived,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
+                color: Theme.of(context).colorScheme.outline,
+              ),
             ),
           ),
           for (final account in archived)
             AccountListTile(
               account: account,
               onTap: () => _openDetail(context, account),
-              onArchive: () => context
-                  .read<AccountsBloc>()
-                  .add(AccountArchiveToggled(account)),
-              onDelete: () => _confirmDelete(context, account),
             ),
         ],
       ],
@@ -211,75 +217,38 @@ class _AccountsList extends StatelessWidget {
   ) async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => BlocProvider(
-          create: (_) => AccountDetailCubit(
-            accountRepository: context.read<AccountRepository>(),
-            account: account,
-          ),
+        builder: (_) => MultiBlocProvider(
+          providers: [
+            BlocProvider(
+              create: (_) => AccountDetailCubit(
+                accountRepository: context.read<AccountRepository>(),
+                account: account,
+              ),
+            ),
+            BlocProvider(
+              create: (_) =>
+                  TransactionsBloc(
+                      transactionRepository: context
+                          .read<TransactionRepository>(),
+                      accountRepository: context.read<AccountRepository>(),
+                      envelopeRepository: context.read<EnvelopeRepository>(),
+                      budgetRepository: context.read<BudgetRepository>(),
+                      budgetId: account.budgetId,
+                    )
+                    ..add(const TransactionsStarted())
+                    ..add(
+                      TransactionsFilterChanged(
+                        TransactionsFilter(accountId: account.id),
+                      ),
+                    ),
+            ),
+          ],
           child: const AccountDetailPage(),
         ),
       ),
     );
     if (context.mounted) {
       context.read<AccountsBloc>().add(const AccountsRefreshRequested());
-    }
-  }
-
-  Future<void> _confirmArchive(
-    BuildContext context,
-    Account account,
-  ) async {
-    final l10n = context.l10n;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.accountsArchiveConfirmTitle),
-        content: Text(l10n.accountsArchiveConfirmMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(l10n.accountsReconcileCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(l10n.accountsArchive),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true && context.mounted) {
-      context.read<AccountsBloc>().add(AccountArchiveToggled(account));
-    }
-  }
-
-  Future<void> _confirmDelete(
-    BuildContext context,
-    Account account,
-  ) async {
-    final l10n = context.l10n;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.accountsDeleteConfirmTitle),
-        content: Text(l10n.accountsDeleteConfirmMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(l10n.accountsReconcileCancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor:
-                  Theme.of(dialogContext).colorScheme.error,
-            ),
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(l10n.accountsDelete),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true && context.mounted) {
-      context.read<AccountsBloc>().add(AccountDeleted(account.id));
     }
   }
 }
@@ -297,8 +266,8 @@ class _TypeHeader extends StatelessWidget {
       child: Text(
         localizedAccountType(type, l10n),
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-            ),
+          color: Theme.of(context).colorScheme.primary,
+        ),
       ),
     );
   }

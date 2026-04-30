@@ -17,6 +17,7 @@ final class OverspendData extends Equatable {
     required this.allocations,
     required this.envelopes,
     this.readyToAssign = 0,
+    this.ccPaymentAllocation,
   });
 
   final String envelopeName;
@@ -26,15 +27,21 @@ final class OverspendData extends Equatable {
   final List<Envelope> envelopes;
   final int readyToAssign;
 
+  /// The CC Payment envelope allocation for the account that made this
+  /// expense, if it was a credit card transaction. When present, covering the
+  /// overspend should also fund this allocation by the same amount.
+  final EnvelopeAllocation? ccPaymentAllocation;
+
   @override
   List<Object?> get props => [
-        envelopeName,
-        deficitCents,
-        overspentAllocation,
-        allocations,
-        envelopes,
-        readyToAssign,
-      ];
+    envelopeName,
+    deficitCents,
+    overspentAllocation,
+    allocations,
+    envelopes,
+    readyToAssign,
+    ccPaymentAllocation,
+  ];
 }
 
 final class TransactionFormState extends Equatable {
@@ -42,6 +49,7 @@ final class TransactionFormState extends Equatable {
     this.status = TransactionFormStatus.loading,
     this.accounts = const [],
     this.envelopes = const [],
+    this.categoryGroups = const [],
     this.tags = const [],
     this.selectedTagIds = const [],
     this.initialSplits = const [],
@@ -59,6 +67,7 @@ final class TransactionFormState extends Equatable {
   final TransactionFormStatus status;
   final List<Account> accounts;
   final List<Envelope> envelopes;
+  final List<CategoryGroup> categoryGroups;
   final List<Tag> tags;
   final List<String> selectedTagIds;
   final List<SplitEntry> initialSplits;
@@ -82,6 +91,7 @@ final class TransactionFormState extends Equatable {
     TransactionFormStatus? status,
     List<Account>? accounts,
     List<Envelope>? envelopes,
+    List<CategoryGroup>? categoryGroups,
     List<Tag>? tags,
     List<String>? selectedTagIds,
     List<SplitEntry>? initialSplits,
@@ -99,6 +109,7 @@ final class TransactionFormState extends Equatable {
       status: status ?? this.status,
       accounts: accounts ?? this.accounts,
       envelopes: envelopes ?? this.envelopes,
+      categoryGroups: categoryGroups ?? this.categoryGroups,
       tags: tags ?? this.tags,
       selectedTagIds: selectedTagIds ?? this.selectedTagIds,
       initialSplits: initialSplits ?? this.initialSplits,
@@ -111,8 +122,8 @@ final class TransactionFormState extends Equatable {
       recurringFrequency: recurringFrequency ?? this.recurringFrequency,
       recurringCustomInterval:
           recurringCustomInterval == _customIntervalSentinel
-              ? this.recurringCustomInterval
-              : recurringCustomInterval as int?,
+          ? this.recurringCustomInterval
+          : recurringCustomInterval as int?,
       recurringCustomUnit: recurringCustomUnit ?? this.recurringCustomUnit,
       recurringEndDate: recurringEndDate == _endDateSentinel
           ? this.recurringEndDate
@@ -123,20 +134,21 @@ final class TransactionFormState extends Equatable {
 
   @override
   List<Object?> get props => [
-        status,
-        accounts,
-        envelopes,
-        tags,
-        selectedTagIds,
-        initialSplits,
-        errorMessage,
-        tagError,
-        overspendData,
-        isRecurring,
-        recurringFrequency,
-        recurringCustomInterval,
-        recurringCustomUnit,
-        recurringEndDate,
-        recurringAutoPost,
-      ];
+    status,
+    accounts,
+    envelopes,
+    categoryGroups,
+    tags,
+    selectedTagIds,
+    initialSplits,
+    errorMessage,
+    tagError,
+    overspendData,
+    isRecurring,
+    recurringFrequency,
+    recurringCustomInterval,
+    recurringCustomUnit,
+    recurringEndDate,
+    recurringAutoPost,
+  ];
 }

@@ -3,12 +3,12 @@ import 'package:envelope/app/routes/app_router.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/notifications/notifications.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
 import 'package:envelope/onboarding/data/currencies.dart';
 import 'package:envelope/settings/cubit/cubit.dart';
 import 'package:envelope_api_client/envelope_api_client.dart';
-import 'package:envelope_local_storage/envelope_local_storage.dart'
-    hide User;
+import 'package:envelope_local_storage/envelope_local_storage.dart' hide User;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -46,7 +46,8 @@ class _SettingsView extends StatelessWidget {
       listener: (context, state) {
         final l10n = context.l10n;
         if (state.successMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          showAppSnackBar(
+            context,
             SnackBar(
               content: Text(_localizeMessage(state.successMessage!, l10n)),
             ),
@@ -54,7 +55,8 @@ class _SettingsView extends StatelessWidget {
         }
         if (state.status == SettingsStatus.error &&
             state.errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          showAppSnackBar(
+            context,
             SnackBar(
               content: Text(_localizeMessage(state.errorMessage!, l10n)),
             ),
@@ -79,6 +81,7 @@ class _SettingsView extends StatelessWidget {
                       leading: const Icon(Icons.person_outline),
                       title: Text(l10n.settingsDisplayName),
                       subtitle: Text(user.displayName),
+                      trailing: const Icon(Icons.edit_outlined),
                       onTap: () => _showEditNameDialog(context, user),
                     ),
                     ListTile(
@@ -109,8 +112,7 @@ class _SettingsView extends StatelessWidget {
                           builder: (_) => BlocProvider.value(
                             value: context.read<AuthBloc>(),
                             child: RepositoryProvider.value(
-                              value:
-                                  context.read<NotificationRepository>(),
+                              value: context.read<NotificationRepository>(),
                               child: const NotificationSettingsPage(),
                             ),
                           ),
@@ -124,9 +126,10 @@ class _SettingsView extends StatelessWidget {
                       title: Text(l10n.settingsExportData),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () {
-                        final budgetId = context
-                                .read<SharedPreferences>()
-                                .getString(activeBudgetIdKey) ??
+                        final budgetId =
+                            context.read<SharedPreferences>().getString(
+                              activeBudgetIdKey,
+                            ) ??
                             '';
                         context.go(
                           '${AppRoutes.reports}?budgetId=$budgetId',
@@ -137,9 +140,8 @@ class _SettingsView extends StatelessWidget {
                       leading: const Icon(Icons.file_download_outlined),
                       title: Text(l10n.settingsExportAllData),
                       subtitle: Text(l10n.settingsExportAllDataSubtitle),
-                      onTap: () => context
-                          .read<SettingsCubit>()
-                          .exportAllData(user.id),
+                      onTap: () =>
+                          context.read<SettingsCubit>().exportAllData(user.id),
                     ),
                     const Divider(),
                     _SectionHeader(title: l10n.settingsAccount),
@@ -266,7 +268,8 @@ class _SettingsView extends StatelessWidget {
               final newPassword = newPasswordController.text;
               final confirm = confirmController.text;
               if (newPassword.length < 6) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                showAppSnackBar(
+                  context,
                   SnackBar(
                     content: Text(l10n.settingsPasswordTooShort),
                   ),
@@ -274,7 +277,8 @@ class _SettingsView extends StatelessWidget {
                 return;
               }
               if (newPassword != confirm) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                showAppSnackBar(
+                  context,
                   SnackBar(
                     content: Text(l10n.settingsPasswordMismatch),
                   ),
@@ -292,51 +296,12 @@ class _SettingsView extends StatelessWidget {
   }
 
   void _showCurrencyPicker(BuildContext context, User user) {
-    final l10n = context.l10n;
-
     showModalBottomSheet<void>(
       context: context,
-      builder: (sheetContext) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              l10n.settingsBaseCurrency,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              l10n.settingsCurrencyWarning,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Flexible(
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: supportedCurrencies.length,
-              itemBuilder: (_, index) {
-                final currency = supportedCurrencies[index];
-                final isSelected = currency.code == user.baseCurrency;
-                return ListTile(
-                  title: Text('${currency.symbol} ${currency.code}'),
-                  subtitle: Text(currency.name),
-                  trailing:
-                      isSelected ? const Icon(Icons.check) : null,
-                  onTap: () {
-                    context
-                        .read<SettingsCubit>()
-                        .updateBaseCurrency(currency.code);
-                    Navigator.pop(sheetContext);
-                  },
-                );
-              },
-            ),
-          ),
-        ],
+      isScrollControlled: true,
+      builder: (sheetContext) => BlocProvider.value(
+        value: context.read<SettingsCubit>(),
+        child: _CurrencyPickerSheet(baseCurrency: user.baseCurrency),
       ),
     );
   }
@@ -369,42 +334,65 @@ class _SettingsView extends StatelessWidget {
   void _showDeleteAccountDialog(BuildContext context) {
     final controller = TextEditingController();
     final l10n = context.l10n;
+    final cubit = context.read<SettingsCubit>();
 
     showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.settingsDeleteAccount),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(l10n.settingsDeleteConfirmation),
-            const SizedBox(height: 16),
-            TextField(
-              controller: controller,
-              decoration: InputDecoration(
-                hintText: l10n.settingsTypeDelete,
+      barrierDismissible: false,
+      builder: (dialogContext) => BlocProvider.value(
+        value: cubit,
+        child: BlocConsumer<SettingsCubit, SettingsState>(
+          listenWhen: (prev, curr) =>
+              prev.status != curr.status && curr.status == SettingsStatus.error,
+          listener: (_, _) => Navigator.pop(dialogContext),
+          buildWhen: (prev, curr) => prev.status != curr.status,
+          builder: (builderContext, state) {
+            final isLoading = state.status == SettingsStatus.loading;
+            return AlertDialog(
+              title: Text(l10n.settingsDeleteAccount),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(l10n.settingsDeleteConfirmation),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: controller,
+                    enabled: !isLoading,
+                    decoration: InputDecoration(
+                      hintText: l10n.settingsTypeDelete,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+              actions: [
+                TextButton(
+                  onPressed: isLoading
+                      ? null
+                      : () => Navigator.pop(dialogContext),
+                  child: Text(l10n.settingsCancel),
+                ),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Theme.of(builderContext).colorScheme.error,
+                  ),
+                  onPressed: isLoading
+                      ? null
+                      : () {
+                          if (controller.text.trim() == 'DELETE') {
+                            cubit.deleteAccount();
+                          }
+                        },
+                  child: isLoading
+                      ? const SizedBox.square(
+                          dimension: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(l10n.settingsDeleteAccount),
+                ),
+              ],
+            );
+          },
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(l10n.settingsCancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            onPressed: () {
-              if (controller.text.trim().toUpperCase() == 'DELETE') {
-                Navigator.pop(dialogContext);
-                context.read<SettingsCubit>().deleteAccount();
-              }
-            },
-            child: Text(l10n.settingsDeleteAccount),
-          ),
-        ],
       ),
     );
   }
@@ -442,45 +430,25 @@ class _ThemeSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          const Icon(Icons.palette_outlined),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(l10n.settingsTheme,
-                    style: Theme.of(context).textTheme.bodyLarge),
-                const SizedBox(height: 8),
-                SegmentedButton<String>(
-                  segments: [
-                    ButtonSegment(
-                      value: 'light',
-                      label: Text(l10n.settingsThemeLight),
-                    ),
-                    ButtonSegment(
-                      value: 'dark',
-                      label: Text(l10n.settingsThemeDark),
-                    ),
-                    ButtonSegment(
-                      value: 'system',
-                      label: Text(l10n.settingsThemeSystem),
-                    ),
-                  ],
-                  selected: {currentMode},
-                  onSelectionChanged: (selected) {
-                    context
-                        .read<SettingsCubit>()
-                        .updateThemeMode(selected.first);
-                  },
-                ),
-              ],
-            ),
-          ),
+    return ListTile(
+      leading: const Icon(Icons.palette_outlined),
+      title: Text(l10n.settingsTheme),
+      trailing: SegmentedButton<String>(
+        showSelectedIcon: false,
+        style: SegmentedButton.styleFrom(
+          padding: EdgeInsets.zero,
+          textStyle: const TextStyle(fontSize: 12),
+          visualDensity: VisualDensity.compact,
+        ),
+        segments: [
+          ButtonSegment(value: 'light', label: Text(l10n.settingsThemeLight)),
+          ButtonSegment(value: 'dark', label: Text(l10n.settingsThemeDark)),
+          ButtonSegment(value: 'system', label: Text(l10n.settingsThemeSystem)),
         ],
+        selected: {currentMode},
+        onSelectionChanged: (selected) {
+          context.read<SettingsCubit>().updateThemeMode(selected.first);
+        },
       ),
     );
   }
@@ -498,8 +466,105 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+      ),
+    );
+  }
+}
+
+class _CurrencyPickerSheet extends StatefulWidget {
+  const _CurrencyPickerSheet({required this.baseCurrency});
+
+  final String baseCurrency;
+
+  @override
+  State<_CurrencyPickerSheet> createState() => _CurrencyPickerSheetState();
+}
+
+class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
+  String _searchQuery = '';
+
+  List<CurrencyInfo> get _filteredCurrencies {
+    if (_searchQuery.isEmpty) return supportedCurrencies;
+    final query = _searchQuery.toLowerCase();
+    return supportedCurrencies
+        .where(
+          (c) =>
+              c.code.toLowerCase().contains(query) ||
+              c.name.toLowerCase().contains(query),
+        )
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.6,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                l10n.settingsBaseCurrency,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                l10n.settingsCurrencyWarning,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: l10n.onboardingCurrencySearch,
+                  prefixIcon: const Icon(Icons.search),
+                ),
+                onChanged: (value) => setState(() => _searchQuery = value),
+              ),
+            ),
+            if (_filteredCurrencies.isEmpty)
+              const Expanded(
+                child: Center(child: Text('No currencies found')),
+              )
+            else
+              Flexible(
+                child: ListView.builder(
+                  itemCount: _filteredCurrencies.length,
+                  itemBuilder: (_, index) {
+                    final currency = _filteredCurrencies[index];
+                    final isSelected = currency.code == widget.baseCurrency;
+                    return ListTile(
+                      dense: true,
+                      visualDensity: VisualDensity.compact,
+                      title: Text(
+                        '${currency.symbol} ${currency.code}'
+                        ' - ${currency.name}',
+                        style: const TextStyle(fontSize: 15),
+                      ),
+                      trailing: isSelected ? const Icon(Icons.check) : null,
+                      onTap: () {
+                        context.read<SettingsCubit>().updateBaseCurrency(
+                          currency.code,
+                        );
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -41,13 +41,14 @@ final class TransactionsFilter extends Equatable {
     List<String>? tagIds,
   }) {
     return TransactionsFilter(
-      accountId:
-          accountId == _sentinel ? this.accountId : accountId as String?,
-      envelopeId:
-          envelopeId == _sentinel ? this.envelopeId : envelopeId as String?,
+      accountId: accountId == _sentinel ? this.accountId : accountId as String?,
+      envelopeId: envelopeId == _sentinel
+          ? this.envelopeId
+          : envelopeId as String?,
       type: type == _sentinel ? this.type : type as String?,
-      startDate:
-          startDate == _sentinel ? this.startDate : startDate as DateTime?,
+      startDate: startDate == _sentinel
+          ? this.startDate
+          : startDate as DateTime?,
       endDate: endDate == _sentinel ? this.endDate : endDate as DateTime?,
       tagIds: tagIds ?? this.tagIds,
     );
@@ -56,8 +57,14 @@ final class TransactionsFilter extends Equatable {
   static const Object _sentinel = Object();
 
   @override
-  List<Object?> get props =>
-      [accountId, envelopeId, type, startDate, endDate, tagIds];
+  List<Object?> get props => [
+    accountId,
+    envelopeId,
+    type,
+    startDate,
+    endDate,
+    tagIds,
+  ];
 }
 
 final class TransactionsState extends Equatable {
@@ -150,12 +157,12 @@ final class TransactionsState extends Equatable {
 
   @override
   List<Object?> get props => [
-        status,
-        transactions,
-        accounts,
-        envelopes,
-        splitEnvelopeIds,
-        filter,
-        error,
-      ];
+    status,
+    transactions,
+    accounts,
+    envelopes,
+    splitEnvelopeIds,
+    filter,
+    error,
+  ];
 }

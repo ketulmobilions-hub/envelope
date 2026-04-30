@@ -11,9 +11,9 @@ class ActivityLogBloc extends Bloc<ActivityLogEvent, ActivityLogState> {
   ActivityLogBloc({
     required SharingRepository sharingRepository,
     required String budgetId,
-  })  : _sharingRepository = sharingRepository,
-        _budgetId = budgetId,
-        super(const ActivityLogState()) {
+  }) : _sharingRepository = sharingRepository,
+       _budgetId = budgetId,
+       super(const ActivityLogState()) {
     on<ActivityLogStarted>(_onStarted);
     on<ActivityLogRefreshRequested>(_onRefreshRequested);
     on<ActivityLogFilterChanged>(_onFilterChanged);

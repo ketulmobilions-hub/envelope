@@ -204,10 +204,7 @@ class BudgetsApiClient {
   /// Deletes (revokes) a pending invite.
   Future<void> deleteBudgetInvite(String inviteId) async {
     try {
-      await _supabaseClient
-          .from('budget_invites')
-          .delete()
-          .eq('id', inviteId);
+      await _supabaseClient.from('budget_invites').delete().eq('id', inviteId);
     } catch (error) {
       throw EnvelopeApiException.fromPostgrestException(error);
     }

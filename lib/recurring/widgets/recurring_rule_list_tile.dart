@@ -1,5 +1,6 @@
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/recurring/widgets/frequency_label.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/transactions/widgets/transaction_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -29,6 +30,7 @@ class RecurringRuleListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final colorScheme = Theme.of(context).colorScheme;
+    final symbol = currencySymbol(context);
     final typeColor = colorForTransactionType(rule.type, colorScheme);
     final nextDate = DateFormat.MMMd().format(rule.nextOccurrence);
 
@@ -87,10 +89,10 @@ class RecurringRuleListTile extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              formatCents(rule.amount),
+              formatCents(rule.amount, symbol: symbol),
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: typeColor,
-                  ),
+                color: typeColor,
+              ),
             ),
             if (isPending && onPost != null) ...[
               const SizedBox(width: 4),
@@ -126,5 +128,4 @@ class RecurringRuleListTile extends StatelessWidget {
       ),
     );
   }
-
 }

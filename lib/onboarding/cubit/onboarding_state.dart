@@ -5,7 +5,6 @@ enum OnboardingStep {
   welcome,
   currency,
   accounts,
-  income,
   envelopes,
   allocation,
 }
@@ -16,7 +15,6 @@ enum OnboardingStatus { initial, submitting, success, failure }
 /// Error codes emitted by the cubit for localization in the UI.
 enum OnboardingError {
   accountRequired,
-  incomeRequired,
   envelopeRequired,
   completionFailed,
 }
@@ -29,6 +27,7 @@ final class OnboardingAccount extends Equatable {
     required this.currency,
     this.startingBalance = 0,
     this.isOnBudget = true,
+    this.creditLimitCents,
   });
 
   final String name;
@@ -36,9 +35,17 @@ final class OnboardingAccount extends Equatable {
   final String currency;
   final double startingBalance;
   final bool isOnBudget;
+  final int? creditLimitCents;
 
   @override
-  List<Object?> get props => [name, type, currency, startingBalance, isOnBudget];
+  List<Object?> get props => [
+    name,
+    type,
+    currency,
+    startingBalance,
+    isOnBudget,
+    creditLimitCents,
+  ];
 }
 
 /// A category group with its envelope names.
@@ -105,7 +112,6 @@ final class OnboardingState extends Equatable {
     this.error,
     this.baseCurrency = 'USD',
     this.accounts = const [],
-    this.expectedIncome = 0,
     this.categoryGroups = defaultCategoryGroups,
     this.allocations = const {},
   });
@@ -115,7 +121,6 @@ final class OnboardingState extends Equatable {
   final OnboardingError? error;
   final String baseCurrency;
   final List<OnboardingAccount> accounts;
-  final double expectedIncome;
   final List<OnboardingCategoryGroup> categoryGroups;
   final Map<String, double> allocations;
 
@@ -130,7 +135,6 @@ final class OnboardingState extends Equatable {
     bool clearError = false,
     String? baseCurrency,
     List<OnboardingAccount>? accounts,
-    double? expectedIncome,
     List<OnboardingCategoryGroup>? categoryGroups,
     Map<String, double>? allocations,
   }) {
@@ -140,7 +144,6 @@ final class OnboardingState extends Equatable {
       error: clearError ? null : (error ?? this.error),
       baseCurrency: baseCurrency ?? this.baseCurrency,
       accounts: accounts ?? this.accounts,
-      expectedIncome: expectedIncome ?? this.expectedIncome,
       categoryGroups: categoryGroups ?? this.categoryGroups,
       allocations: allocations ?? this.allocations,
     );
@@ -148,13 +151,12 @@ final class OnboardingState extends Equatable {
 
   @override
   List<Object?> get props => [
-        currentStep,
-        status,
-        error,
-        baseCurrency,
-        accounts,
-        expectedIncome,
-        categoryGroups,
-        allocations,
-      ];
+    currentStep,
+    status,
+    error,
+    baseCurrency,
+    accounts,
+    categoryGroups,
+    allocations,
+  ];
 }

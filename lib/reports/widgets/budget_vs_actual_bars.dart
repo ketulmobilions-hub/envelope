@@ -1,4 +1,5 @@
-import 'package:envelope/reports/widgets/report_helpers.dart';
+import 'package:envelope/accounts/widgets/format_cents.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:report_repository/report_repository.dart';
@@ -34,9 +35,9 @@ class _BudgetBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final symbol = currencySymbol(context);
     final isOver = item.remaining < 0;
-    final allocatedFraction =
-        maxAmount > 0 ? item.allocated / maxAmount : 0.0;
+    final allocatedFraction = maxAmount > 0 ? item.allocated / maxAmount : 0.0;
     final spentFraction = maxAmount > 0 ? item.spent / maxAmount : 0.0;
 
     return Padding(
@@ -51,17 +52,17 @@ class _BudgetBar extends StatelessWidget {
                 child: Text(
                   item.envelopeName,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                    fontWeight: FontWeight.w600,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               Text(
-                formatCents(item.remaining),
+                formatCents(item.remaining, symbol: symbol),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: isOver ? AppColors.expense : AppColors.income,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: isOver ? AppColors.expense : AppColors.income,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
@@ -69,8 +70,8 @@ class _BudgetBar extends StatelessWidget {
           Text(
             item.categoryGroupName,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.secondaryText,
-                ),
+              color: AppColors.secondaryText,
+            ),
           ),
           const SizedBox(height: 8),
           // Allocated bar
@@ -88,7 +89,6 @@ class _BudgetBar extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class _ProgressBar extends StatelessWidget {

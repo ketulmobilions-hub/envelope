@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "205081347876",
+    "project_id": "envelope-staging-47b3c",
+    "storage_bucket": "envelope-staging-47b3c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:205081347876:android:3bc0e51e946f49935b95b1",
+        "android_client_info": {
+          "package_name": "com.envelope.ml.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFq3uQ0OKXTkC3eirHhghuJuLPv8PWIGg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

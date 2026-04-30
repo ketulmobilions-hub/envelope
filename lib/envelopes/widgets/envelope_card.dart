@@ -1,6 +1,7 @@
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/envelopes/widgets/envelope_shape_painter.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,11 +14,14 @@ class EnvelopeCard extends StatefulWidget {
     required this.allocatedCents,
     required this.spentCents,
     this.isOverspent = false,
+    this.primaryLabel,
+    this.limitLabel,
     this.color,
     this.heroTag,
     this.onTap,
     this.onAllocate,
     this.onFixOverspend,
+    this.onPay,
     super.key,
   });
 
@@ -26,6 +30,12 @@ class EnvelopeCard extends StatefulWidget {
   final int allocatedCents;
   final int spentCents;
   final bool isOverspent;
+
+  /// When set, replaces the big amount with this text (e.g. "Due: $450").
+  final String? primaryLabel;
+
+  /// Small secondary line shown below [primaryLabel] (e.g. "$550 of $1,000").
+  final String? limitLabel;
   final Color? color;
   final String? heroTag;
   final VoidCallback? onTap;
@@ -35,6 +45,9 @@ class EnvelopeCard extends StatefulWidget {
 
   /// Called when the user taps "Fix Overspend" on an overspent card.
   final VoidCallback? onFixOverspend;
+
+  /// Called when the user taps "Pay" on a CC payment envelope card.
+  final VoidCallback? onPay;
 
   @override
   State<EnvelopeCard> createState() => _EnvelopeCardState();
@@ -88,7 +101,7 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
   void _submitEditing() {
     final text = _controller.text.trim();
     final cents = parseCents(text);
-    if (cents != null && cents > 0) {
+    if (cents != null && cents >= 0) {
       widget.onAllocate?.call(cents);
     }
     setState(() => _isEditing = false);
@@ -97,6 +110,7 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
     final fillColor = widget.isOverspent
         ? AppColors.expense
         : (widget.color ?? AppColors.primary);
@@ -117,9 +131,7 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
           Positioned.fill(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: _isEditing
-                  ? () => _focusNode.unfocus()
-                  : widget.onTap,
+              onTap: _isEditing ? () => _focusNode.unfocus() : widget.onTap,
             ),
           ),
           Padding(
@@ -140,27 +152,48 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                        Text(
-                          widget.name.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: textColor,
-                            letterSpacing: 0.8,
+                          Text(
+                            widget.name.toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: textColor,
+                              letterSpacing: 0.8,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const Spacer(),
-                        Text(
-                          formatCents(widget.availableCents),
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: textColor,
-                          ),
-                        ),
-                      ],
+                          const Spacer(),
+                          if (widget.primaryLabel != null) ...[
+                            Text(
+                              widget.primaryLabel!,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: textColor,
+                              ),
+                            ),
+                            if (widget.limitLabel != null)
+                              Text(
+                                widget.limitLabel!,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: textColor.withValues(alpha: 0.7),
+                                ),
+                              ),
+                          ] else
+                            Text(
+                              formatCents(
+                                widget.availableCents,
+                                symbol: symbol,
+                              ),
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: textColor,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ),
@@ -172,9 +205,32 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
                   color: textColor.withValues(alpha: 0.3),
                 ),
                 const SizedBox(height: 4),
-                // Bottom area — "Fix Overspend" when overspent,
-                // inline allocation editing otherwise.
-                if (widget.isOverspent && widget.onFixOverspend != null)
+                // Bottom area — "Pay" for CC envelopes, "Fix Overspend"
+                // when overspent, inline allocation editing otherwise.
+                if (widget.onPay != null)
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: widget.onPay,
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.credit_card_outlined,
+                          size: 10,
+                          color: textColor,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          l10n.ccPayButton,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: textColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else if (widget.isOverspent && widget.onFixOverspend != null)
                   GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onTap: widget.onFixOverspend,
@@ -216,8 +272,8 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
                               cursorWidth: 1.5,
                               keyboardType:
                                   const TextInputType.numberWithOptions(
-                                decimal: true,
-                              ),
+                                    decimal: true,
+                                  ),
                               textInputAction: TextInputAction.done,
                               inputFormatters: [
                                 FilteringTextInputFormatter.allow(
@@ -225,7 +281,7 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
                                 ),
                               ],
                               decoration: InputDecoration(
-                                prefixText: r'$',
+                                prefixText: symbol,
                                 prefixStyle: const TextStyle(
                                   fontSize: 11,
                                   color: Colors.white,
@@ -234,8 +290,7 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
                                 border: InputBorder.none,
                                 enabledBorder: UnderlineInputBorder(
                                   borderSide: BorderSide(
-                                    color:
-                                        Colors.white.withValues(alpha: 0.6),
+                                    color: Colors.white.withValues(alpha: 0.6),
                                   ),
                                 ),
                                 focusedBorder: const UnderlineInputBorder(
@@ -243,8 +298,9 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
                                     color: Colors.white,
                                   ),
                                 ),
-                                contentPadding:
-                                    const EdgeInsets.only(bottom: 4),
+                                contentPadding: const EdgeInsets.only(
+                                  bottom: 4,
+                                ),
                                 isDense: true,
                               ),
                               onSubmitted: (_) => _submitEditing(),
@@ -257,6 +313,7 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
                                   l10n.envelopeCardOfAllocated(
                                     formatCents(
                                       widget.allocatedCents,
+                                      symbol: symbol,
                                     ),
                                   ),
                                   style: TextStyle(
@@ -288,30 +345,30 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
     if (widget.heroTag != null) {
       card = Hero(
         tag: widget.heroTag!,
-        flightShuttleBuilder: (
-          _,
-          animation,
-          direction,
-          fromContext,
-          toContext,
-        ) {
-          final curvedAnim = CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeInOut,
-          );
-          return AnimatedBuilder(
-            animation: curvedAnim,
-            builder: (context, _) {
-              final t = curvedAnim.value;
-              final radius =
-                  BorderRadius.circular(12 * (1 - t));
-              return ClipRRect(
-                borderRadius: radius,
-                child: Container(color: fillColor),
+        flightShuttleBuilder:
+            (
+              _,
+              animation,
+              direction,
+              fromContext,
+              toContext,
+            ) {
+              final curvedAnim = CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeInOut,
+              );
+              return AnimatedBuilder(
+                animation: curvedAnim,
+                builder: (context, _) {
+                  final t = curvedAnim.value;
+                  final radius = BorderRadius.circular(12 * (1 - t));
+                  return ClipRRect(
+                    borderRadius: radius,
+                    child: Container(color: fillColor),
+                  );
+                },
               );
             },
-          );
-        },
         child: Material(
           type: MaterialType.transparency,
           child: card,
@@ -320,9 +377,7 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
     }
 
     return Semantics(
-      label: widget.onAllocate != null
-          ? 'Tap allocated amount to edit'
-          : null,
+      label: widget.onAllocate != null ? 'Tap allocated amount to edit' : null,
       child: _isEditing
           ? TapRegion(
               onTapOutside: (_) {

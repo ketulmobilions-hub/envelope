@@ -8,7 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class UsersApiClient {
   /// Creates a [UsersApiClient] with the given [SupabaseClient].
   const UsersApiClient({required SupabaseClient supabaseClient})
-      : _supabaseClient = supabaseClient;
+    : _supabaseClient = supabaseClient;
 
   final SupabaseClient _supabaseClient;
 
@@ -94,8 +94,9 @@ class UsersApiClient {
           .select()
           .eq('owner_id', userId);
 
-      final budgetIds =
-          (budgets as List).map((b) => b['id'] as String).toList();
+      final budgetIds = (budgets as List)
+          .map((b) => b['id'] as String)
+          .toList();
 
       // Fetch data for all user's budgets.
       List<dynamic> accounts = [];
@@ -142,13 +143,14 @@ class UsersApiClient {
             .select()
             .inFilter('budget_id', budgetIds);
 
-        final periodIds =
-            (periods as List).map((p) => p['id'] as String).toList();
+        final periodIds = (periods as List)
+            .map((p) => p['id'] as String)
+            .toList();
         if (periodIds.isNotEmpty) {
           allocations = await _supabaseClient
               .from('envelope_allocations')
               .select()
-              .inFilter('period_id', periodIds);
+              .inFilter('budget_period_id', periodIds);
         }
       }
 
@@ -201,7 +203,8 @@ class UsersApiClient {
     }
   }
 
-  /// Fetches notification preferences for a user.
+  /// Fetches notification preferences for a user, creating a default row
+  /// if none exists yet.
   Future<NotificationPreferencesDto> getNotificationPreferences(
     String userId,
   ) async {
@@ -210,8 +213,16 @@ class UsersApiClient {
           .from('notification_preferences')
           .select()
           .eq('user_id', userId)
-          .single();
-      return NotificationPreferencesDto.fromJson(response);
+          .maybeSingle();
+
+      if (response != null) {
+        return NotificationPreferencesDto.fromJson(response);
+      }
+
+      // First visit — insert a row with all defaults enabled.
+      return createNotificationPreferences(
+        NotificationPreferencesDto(userId: userId),
+      );
     } catch (error) {
       throw EnvelopeApiException.fromPostgrestException(error);
     }

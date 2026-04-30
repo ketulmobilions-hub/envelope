@@ -188,7 +188,10 @@ GoRouter createRouter({
             redirect: _requireBudgetId,
             builder: (context, state) {
               final budgetId = state.uri.queryParameters['budgetId']!;
-              return RecurringPage(budgetId: budgetId);
+              final initialTab =
+                  int.tryParse(state.uri.queryParameters['initialTab'] ?? '') ??
+                  0;
+              return RecurringPage(budgetId: budgetId, initialTab: initialTab);
             },
           ),
           GoRoute(

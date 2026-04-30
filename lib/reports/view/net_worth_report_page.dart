@@ -1,5 +1,8 @@
+import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/reports/bloc/bloc.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/reports/widgets/widgets.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -32,7 +35,8 @@ class _NetWorthReportPageState extends State<NetWorthReportPage> {
             prev.netWorthSnapshots.length < curr.netWorthSnapshots.length &&
             curr.status == ReportsStatus.loaded,
         listener: (context, state) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          showAppSnackBar(
+            context,
             SnackBar(content: Text(l10n.reportsSnapshotRecorded)),
           );
         },
@@ -57,16 +61,15 @@ class _NetWorthReportPageState extends State<NetWorthReportPage> {
                   const SizedBox(height: 24),
                   // Latest snapshot summary
                   _LatestSnapshotCard(
-                    snapshot: ([...state.netWorthSnapshots]
-                          ..sort(
-                            (a, b) => b.date.compareTo(a.date),
-                          ))
-                        .first,
+                    snapshot:
+                        ([...state.netWorthSnapshots]..sort(
+                              (a, b) => b.date.compareTo(a.date),
+                            ))
+                            .first,
                   ),
                   const SizedBox(height: 16),
                 ],
-                if (!hasData && !isLoading)
-                  const ReportEmptyState(),
+                if (!hasData && !isLoading) const ReportEmptyState(),
                 // Record snapshot button — always shown once loaded so users
                 // can record their first snapshot from the empty state.
                 if (!isLoading &&
@@ -141,6 +144,7 @@ class _LatestSnapshotCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
 
     return Card(
       elevation: 0,
@@ -158,14 +162,14 @@ class _LatestSnapshotCard extends StatelessWidget {
                   Text(
                     l10n.reportsAssets,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.secondaryText,
-                        ),
+                      color: AppColors.secondaryText,
+                    ),
                   ),
                   Text(
-                    formatCents(snapshot.assets),
+                    formatCents(snapshot.assets, symbol: symbol),
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: AppColors.income,
-                        ),
+                      color: AppColors.income,
+                    ),
                   ),
                 ],
               ),
@@ -176,14 +180,14 @@ class _LatestSnapshotCard extends StatelessWidget {
                   Text(
                     l10n.reportsLiabilities,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.secondaryText,
-                        ),
+                      color: AppColors.secondaryText,
+                    ),
                   ),
                   Text(
-                    formatCents(snapshot.liabilities),
+                    formatCents(snapshot.liabilities, symbol: symbol),
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: AppColors.expense,
-                        ),
+                      color: AppColors.expense,
+                    ),
                   ),
                 ],
               ),
@@ -194,15 +198,15 @@ class _LatestSnapshotCard extends StatelessWidget {
                   Text(
                     l10n.reportsNetWorth,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.secondaryText,
-                        ),
+                      color: AppColors.secondaryText,
+                    ),
                   ),
                   Text(
-                    formatCents(snapshot.netWorth),
+                    formatCents(snapshot.netWorth, symbol: symbol),
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),

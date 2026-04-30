@@ -11,6 +11,7 @@ abstract class NotificationPreferences with _$NotificationPreferences {
     @Default(true) bool emailEnabled,
     @Default(true) bool overspendAlerts,
     @Default(true) bool billReminders,
+    @Default(true) bool emailBillReminders,
     @Default(true) bool dailyLoggingReminder,
     @Default(true) bool recurringTransactionAlerts,
     @Default(true) bool sharedBudgetActivity,

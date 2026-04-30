@@ -34,8 +34,7 @@ void main() {
       expect(find.byIcon(Icons.cloud_outlined), findsOneWidget);
     });
 
-    testWidgets('renders progress indicator for syncing state',
-        (tester) async {
+    testWidgets('renders progress indicator for syncing state', (tester) async {
       when(() => syncBloc.state).thenReturn(
         const SyncBlocState(
           syncStatus: SyncStatus(state: SyncState.syncing),
@@ -104,8 +103,7 @@ void main() {
       expect(find.text('1 pending change'), findsOneWidget);
     });
 
-    testWidgets('does not show badge when pending count is 0',
-        (tester) async {
+    testWidgets('does not show badge when pending count is 0', (tester) async {
       when(() => syncBloc.state).thenReturn(const SyncBlocState());
       await tester.pumpApp(buildSubject());
 
@@ -121,8 +119,7 @@ void main() {
       verify(() => syncBloc.add(const SyncRequested())).called(1);
     });
 
-    testWidgets('does not dispatch SyncRequested when offline',
-        (tester) async {
+    testWidgets('does not dispatch SyncRequested when offline', (tester) async {
       when(() => syncBloc.state).thenReturn(
         const SyncBlocState(isOnline: false),
       );

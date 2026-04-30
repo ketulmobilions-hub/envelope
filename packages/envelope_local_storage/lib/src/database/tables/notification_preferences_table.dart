@@ -10,6 +10,9 @@ class NotificationPreferences extends Table {
       boolean().named('overspend_alerts').withDefault(const Constant(true))();
   BoolColumn get billReminders =>
       boolean().named('bill_reminders').withDefault(const Constant(true))();
+  BoolColumn get emailBillReminders => boolean()
+      .named('email_bill_reminders')
+      .withDefault(const Constant(true))();
   BoolColumn get dailyLoggingReminder => boolean()
       .named('daily_logging_reminder')
       .withDefault(const Constant(true))();

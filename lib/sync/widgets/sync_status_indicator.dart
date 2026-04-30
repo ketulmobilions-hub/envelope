@@ -26,28 +26,28 @@ class SyncStatusIndicator extends StatelessWidget {
 
         return switch (state.syncStatus.state) {
           SyncState.idle => _buildIcon(
-              context,
-              icon: Icons.cloud_outlined,
-              color: colorScheme.onSurfaceVariant,
-              tooltip: null,
-              pendingChanges: state.syncStatus.pendingChanges,
-            ),
+            context,
+            icon: Icons.cloud_outlined,
+            color: colorScheme.onSurfaceVariant,
+            tooltip: null,
+            pendingChanges: state.syncStatus.pendingChanges,
+          ),
           SyncState.syncing => _buildSyncing(context),
           SyncState.synced => _buildIcon(
-              context,
-              icon: Icons.cloud_done,
-              color: colorScheme.primary,
-              tooltip: context.l10n.syncStatusSynced,
-              pendingChanges: 0,
-            ),
+            context,
+            icon: Icons.cloud_done,
+            color: colorScheme.primary,
+            tooltip: context.l10n.syncStatusSynced,
+            pendingChanges: 0,
+          ),
           SyncState.error => _buildIcon(
-              context,
-              icon: Icons.cloud_off,
-              color: colorScheme.error,
-              tooltip: state.syncStatus.errorMessage ??
-                  context.l10n.syncStatusError,
-              pendingChanges: state.syncStatus.pendingChanges,
-            ),
+            context,
+            icon: Icons.cloud_off,
+            color: colorScheme.error,
+            tooltip:
+                state.syncStatus.errorMessage ?? context.l10n.syncStatusError,
+            pendingChanges: state.syncStatus.pendingChanges,
+          ),
         };
       },
     );

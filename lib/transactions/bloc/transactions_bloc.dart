@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:account_repository/account_repository.dart';
 import 'package:bloc/bloc.dart';
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:transaction_repository/transaction_repository.dart';
@@ -14,10 +15,12 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
     required TransactionRepository transactionRepository,
     required AccountRepository accountRepository,
     required EnvelopeRepository envelopeRepository,
+    required BudgetRepository budgetRepository,
     required String budgetId,
   }) : _transactionRepository = transactionRepository,
        _accountRepository = accountRepository,
        _envelopeRepository = envelopeRepository,
+       _budgetRepository = budgetRepository,
        _budgetId = budgetId,
        super(const TransactionsState()) {
     on<TransactionsStarted>(_onStarted);
@@ -35,6 +38,7 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
   final TransactionRepository _transactionRepository;
   final AccountRepository _accountRepository;
   final EnvelopeRepository _envelopeRepository;
+  final BudgetRepository _budgetRepository;
   final String _budgetId;
   StreamSubscription<List<Transaction>>? _transactionsSubscription;
   StreamSubscription<List<Account>>? _accountsSubscription;
@@ -154,17 +158,28 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
       // the home page reflects the deletion instantly (before the API
       // refreshAllocations round-trip completes).
       final deleted = _lastDeleted;
-      if (deleted != null &&
-          deleted.type == 'expense' &&
-          deleted.envelopeId != null) {
-        unawaited(
-          _envelopeRepository.decrementLocalSpentAmount(
-            envelopeId: deleted.envelopeId!,
-            budgetId: deleted.budgetId,
-            date: deleted.date,
-            amount: deleted.amount,
-          ),
-        );
+      if (deleted != null) {
+        if (deleted.type == 'expense' && deleted.envelopeId != null) {
+          unawaited(
+            _envelopeRepository.decrementLocalSpentAmount(
+              envelopeId: deleted.envelopeId!,
+              budgetId: deleted.budgetId,
+              date: deleted.date,
+              amount: deleted.amount,
+            ),
+          );
+        }
+        if (deleted.type == 'income') {
+          unawaited(
+            _budgetRepository
+                .removeIncomeFromPeriod(
+                  budgetId: deleted.budgetId,
+                  date: deleted.date,
+                  amount: deleted.amount,
+                )
+                .catchError((_) {}),
+          );
+        }
       }
     } on TransactionException {
       emit(

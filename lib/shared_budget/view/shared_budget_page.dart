@@ -1,6 +1,7 @@
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/shared_budget/bloc/bloc.dart';
 import 'package:envelope/shared_budget/view/activity_log_page.dart';
 import 'package:envelope/shared_budget/view/invite_page.dart';
@@ -62,9 +63,7 @@ class SharedBudgetView extends StatelessWidget {
           SharedBudgetError.memberLimitReached =>
             l10n.sharedBudgetErrorMemberLimit,
         };
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(message)));
+        showAppSnackBar(context, SnackBar(content: Text(message)));
       },
       child: Scaffold(
         appBar: AppBar(
@@ -104,8 +103,7 @@ class SharedBudgetView extends StatelessWidget {
                         ..add(const SharedBudgetRefreshRequested());
                       await b.stream
                           .firstWhere(
-                            (s) =>
-                                s.status != SharedBudgetStatus.refreshing,
+                            (s) => s.status != SharedBudgetStatus.refreshing,
                           )
                           .timeout(const Duration(seconds: 10))
                           .catchError((_) => b.state);
@@ -117,12 +115,10 @@ class SharedBudgetView extends StatelessWidget {
                         return MemberListTile(
                           member: member,
                           isOwner: isOwner,
-                          isCurrentUser:
-                              member.userId == bloc.currentUserId,
+                          isCurrentUser: member.userId == bloc.currentUserId,
                           onChangeRole: () =>
                               _showChangeRoleDialog(context, member),
-                          onRemove: () =>
-                              _showRemoveDialog(context, member),
+                          onRemove: () => _showRemoveDialog(context, member),
                           onRevokeInvite: () => context
                               .read<SharedBudgetBloc>()
                               .add(SharedBudgetMemberRemoved(member.id)),
@@ -189,16 +185,13 @@ class SharedBudgetView extends StatelessWidget {
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
               child: Text(
-                MaterialLocalizations.of(dialogContext)
-                    .cancelButtonLabel,
+                MaterialLocalizations.of(dialogContext).cancelButtonLabel,
               ),
             ),
             FilledButton(
-              onPressed: () =>
-                  Navigator.of(dialogContext).pop(selectedRole),
+              onPressed: () => Navigator.of(dialogContext).pop(selectedRole),
               child: Text(
-                MaterialLocalizations.of(dialogContext)
-                    .okButtonLabel,
+                MaterialLocalizations.of(dialogContext).okButtonLabel,
               ),
             ),
           ],
@@ -208,11 +201,11 @@ class SharedBudgetView extends StatelessWidget {
 
     if (newRole != null && newRole != member.role && context.mounted) {
       context.read<SharedBudgetBloc>().add(
-            SharedBudgetMemberRoleUpdated(
-              memberId: member.id,
-              role: newRole,
-            ),
-          );
+        SharedBudgetMemberRoleUpdated(
+          memberId: member.id,
+          role: newRole,
+        ),
+      );
     }
   }
 
@@ -230,14 +223,12 @@ class SharedBudgetView extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
             child: Text(
-              MaterialLocalizations.of(dialogContext)
-                  .cancelButtonLabel,
+              MaterialLocalizations.of(dialogContext).cancelButtonLabel,
             ),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor:
-                  Theme.of(dialogContext).colorScheme.error,
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
             ),
             onPressed: () => Navigator.of(dialogContext).pop(true),
             child: Text(l10n.sharedBudgetRemoveMember),
@@ -248,8 +239,8 @@ class SharedBudgetView extends StatelessWidget {
 
     if (confirmed == true && context.mounted) {
       context.read<SharedBudgetBloc>().add(
-            SharedBudgetMemberRemoved(member.id),
-          );
+        SharedBudgetMemberRemoved(member.id),
+      );
     }
   }
 
@@ -288,8 +279,8 @@ class _EmptyState extends StatelessWidget {
           Text(
             l10n.sharedBudgetEmptySubtitle,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
+              color: Theme.of(context).colorScheme.outline,
+            ),
           ),
           const SizedBox(height: 24),
           FilledButton.icon(

@@ -4,6 +4,7 @@ import 'package:async/async.dart';
 import 'package:auth_repository/src/exceptions.dart';
 import 'package:auth_repository/src/models/models.dart';
 import 'package:envelope_api_client/envelope_api_client.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart'
     hide SignInWithAppleException;
@@ -11,8 +12,10 @@ import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 /// Signature for obtaining Apple ID credentials.
 /// Defaults to [SignInWithApple.getAppleIDCredential].
-typedef AppleCredentialProvider = Future<AuthorizationCredentialAppleID>
-    Function({required List<AppleIDAuthorizationScopes> scopes});
+typedef AppleCredentialProvider =
+    Future<AuthorizationCredentialAppleID> Function({
+      required List<AppleIDAuthorizationScopes> scopes,
+    });
 
 /// Repository for authentication operations.
 class AuthRepository {
@@ -21,19 +24,22 @@ class AuthRepository {
     required EnvelopeApiClient apiClient,
     GoogleSignIn? googleSignIn,
     AppleCredentialProvider? appleCredentialProvider,
-  })  : _apiClient = apiClient,
-        _googleSignIn = googleSignIn ??
-            GoogleSignIn(
-              serverClientId:
-                  '767046810526-5rmr4ulbj24qdc52fllojlcino8ciesa'
-                  '.apps.googleusercontent.com',
-            ),
-        _getAppleCredential =
-            appleCredentialProvider ?? SignInWithApple.getAppleIDCredential;
+  }) : _apiClient = apiClient,
+       _googleSignIn = googleSignIn ?? _buildGoogleSignIn(),
+       _getAppleCredential =
+           appleCredentialProvider ?? SignInWithApple.getAppleIDCredential;
 
   final EnvelopeApiClient _apiClient;
   final GoogleSignIn _googleSignIn;
   final AppleCredentialProvider _getAppleCredential;
+
+  static GoogleSignIn _buildGoogleSignIn() {
+    const clientId =
+        '767046810526-5rmr4ulbj24qdc52fllojlcino8ciesa'
+        '.apps.googleusercontent.com';
+    if (kIsWeb) return GoogleSignIn(clientId: clientId);
+    return GoogleSignIn(serverClientId: clientId);
+  }
 
   /// Cache of the current user to avoid unnecessary lookups.
   User _cachedUser = User.empty;
@@ -45,8 +51,9 @@ class AuthRepository {
   /// or when the profile is updated locally.
   /// Emits [User.empty] if the user is not authenticated.
   Stream<User> get user {
-    final authStream =
-        _apiClient.auth.onAuthStateChange.asyncMap((authState) async {
+    final authStream = _apiClient.auth.onAuthStateChange.asyncMap((
+      authState,
+    ) async {
       final supabaseUser = authState.session?.user;
       if (supabaseUser == null) {
         _cachedUser = User.empty;
@@ -297,33 +304,36 @@ class AuthRepository {
         throw const UpdateProfileException('No authenticated user found.');
       }
 
-      // Fetch current user record, apply updates, and save.
-      final currentDto = await _apiClient.users.getUser(supabaseUser.id);
-      final updatedDto = UserDto(
-        id: currentDto.id,
-        email: currentDto.email,
-        displayName: displayName ?? currentDto.displayName,
-        createdAt: currentDto.createdAt,
+      // Optimistically update the cache and stream before the network call so
+      // the UI reflects the change immediately.
+      final previousUser = _cachedUser;
+      _cachedUser = _cachedUser.copyWith(
+        displayName: displayName ?? _cachedUser.displayName,
+        baseCurrency: baseCurrency ?? _cachedUser.baseCurrency,
+        themeMode: themeMode ?? _cachedUser.themeMode,
+        accentColor: accentColor ?? _cachedUser.accentColor,
         updatedAt: DateTime.now(),
-        baseCurrency: baseCurrency ?? currentDto.baseCurrency,
-        themeMode: themeMode ?? currentDto.themeMode,
-        accentColor: accentColor ?? currentDto.accentColor,
-      );
-
-      await _apiClient.users.updateUser(updatedDto);
-
-      // Update the cached user and push through the stream.
-      _cachedUser = User(
-        id: updatedDto.id,
-        email: updatedDto.email,
-        displayName: updatedDto.displayName,
-        createdAt: updatedDto.createdAt,
-        updatedAt: updatedDto.updatedAt,
-        baseCurrency: updatedDto.baseCurrency,
-        themeMode: updatedDto.themeMode,
-        accentColor: updatedDto.accentColor,
       );
       _profileUpdateController.add(_cachedUser);
+
+      try {
+        final updatedDto = UserDto(
+          id: _cachedUser.id,
+          email: _cachedUser.email,
+          displayName: _cachedUser.displayName,
+          createdAt: _cachedUser.createdAt,
+          updatedAt: _cachedUser.updatedAt,
+          baseCurrency: _cachedUser.baseCurrency,
+          themeMode: _cachedUser.themeMode,
+          accentColor: _cachedUser.accentColor,
+        );
+        await _apiClient.users.updateUser(updatedDto);
+      } on Exception {
+        // Revert the optimistic update on failure.
+        _cachedUser = previousUser;
+        _profileUpdateController.add(_cachedUser);
+        rethrow;
+      }
     } on UpdateProfileException {
       rethrow;
     } on Exception {
@@ -368,7 +378,7 @@ class AuthRepository {
       }
     } on DeleteAccountException {
       rethrow;
-    } on Exception {
+    } on Exception catch (e) {
       throw const DeleteAccountException(
         'An unexpected error occurred while deleting account.',
       );
@@ -440,9 +450,9 @@ class AuthRepository {
           metadata['full_name'] as String? ??
           metadata['name'] as String? ??
           '',
-      createdAt:
-          DateTime.tryParse(supabaseUser.createdAt) ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(
+      createdAt: DateTime.tryParse(supabaseUser.createdAt) ?? DateTime.now(),
+      updatedAt:
+          DateTime.tryParse(
             supabaseUser.updatedAt ?? '',
           ) ??
           DateTime.now(),

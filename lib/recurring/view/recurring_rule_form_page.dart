@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:account_repository/account_repository.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/recurring/widgets/frequency_label.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
+import 'package:envelope/shared/widgets/app_option_picker.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/transactions/widgets/transaction_helpers.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
@@ -119,6 +122,7 @@ class _RecurringRuleFormPageState extends State<RecurringRuleFormPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final symbol = currencySymbol(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -156,54 +160,32 @@ class _RecurringRuleFormPageState extends State<RecurringRuleFormPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Account dropdown
+                // Account picker
                 if (_accounts.isNotEmpty)
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedAccountId,
-                    decoration: InputDecoration(
-                      labelText: l10n.transactionsAccountLabel,
-                      prefixIcon: const Icon(Icons.account_balance_outlined),
-                    ),
-                    items: _accounts.map((account) {
-                      return DropdownMenuItem(
-                        value: account.id,
-                        child: Text(account.name),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() => _selectedAccountId = value);
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return l10n.transactionsAccountRequired;
-                      }
-                      return null;
-                    },
+                  AppOptionPicker<Account>(
+                    options: _accounts,
+                    value: _accounts
+                        .where((a) => a.id == _selectedAccountId)
+                        .firstOrNull,
+                    onChanged: (a) => setState(() => _selectedAccountId = a.id),
+                    labelText: l10n.transactionsAccountLabel,
+                    icon: Icons.account_balance_outlined,
+                    itemLabel: (a) => a.name,
                   ),
                 const SizedBox(height: 16),
 
-                // Envelope dropdown
-                if (_envelopes.isNotEmpty)
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedEnvelopeId,
-                    decoration: InputDecoration(
-                      labelText: l10n.transactionsEnvelopeLabel,
-                      prefixIcon: const Icon(Icons.mail_outlined),
-                    ),
-                    items: [
-                      DropdownMenuItem<String>(
-                        child: Text(l10n.transactionsNoEnvelope),
-                      ),
-                      ..._envelopes.map((env) {
-                        return DropdownMenuItem(
-                          value: env.id,
-                          child: Text(env.name),
-                        );
-                      }),
-                    ],
-                    onChanged: (value) {
-                      setState(() => _selectedEnvelopeId = value);
-                    },
+                // Envelope picker
+                if (_envelopes.isNotEmpty && _selectedType != 'income')
+                  AppOptionPicker<Envelope>(
+                    options: _envelopes,
+                    value: _envelopes
+                        .where((e) => e.id == _selectedEnvelopeId)
+                        .firstOrNull,
+                    onChanged: (e) =>
+                        setState(() => _selectedEnvelopeId = e.id),
+                    labelText: l10n.transactionsEnvelopeLabel,
+                    icon: Icons.mail_outlined,
+                    itemLabel: (e) => e.name,
                   ),
                 const SizedBox(height: 16),
 
@@ -212,7 +194,7 @@ class _RecurringRuleFormPageState extends State<RecurringRuleFormPage> {
                   controller: _amountController,
                   decoration: InputDecoration(
                     labelText: l10n.transactionsAmountLabel,
-                    prefixIcon: const Icon(Icons.attach_money),
+                    prefixText: symbol,
                   ),
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
@@ -260,24 +242,14 @@ class _RecurringRuleFormPageState extends State<RecurringRuleFormPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Frequency dropdown
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedFrequency,
-                  decoration: InputDecoration(
-                    labelText: l10n.recurringFrequencyLabel,
-                    prefixIcon: const Icon(Icons.repeat),
-                  ),
-                  items: _frequencies.map((f) {
-                    return DropdownMenuItem(
-                      value: f,
-                      child: Text(localizedFrequency(f, l10n)),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => _selectedFrequency = value);
-                    }
-                  },
+                // Frequency picker
+                AppOptionPicker<String>(
+                  options: _frequencies,
+                  value: _selectedFrequency,
+                  onChanged: (f) => setState(() => _selectedFrequency = f),
+                  labelText: l10n.recurringFrequencyLabel,
+                  icon: Icons.repeat,
+                  itemLabel: (f) => localizedFrequency(f, l10n),
                 ),
                 const SizedBox(height: 16),
 
@@ -299,8 +271,7 @@ class _RecurringRuleFormPageState extends State<RecurringRuleFormPage> {
                             if (_selectedFrequency == 'custom') {
                               final n = int.tryParse(value ?? '');
                               if (n == null || n <= 0) {
-                                return l10n
-                                    .recurringCustomIntervalRequired;
+                                return l10n.recurringCustomIntervalRequired;
                               }
                             }
                             return null;
@@ -347,9 +318,7 @@ class _RecurringRuleFormPageState extends State<RecurringRuleFormPage> {
                   leading: const Icon(Icons.event),
                   title: Text(l10n.recurringEndDateLabel),
                   subtitle: Text(
-                    _endDate != null
-                        ? formatTransactionDate(_endDate!)
-                        : '—',
+                    _endDate != null ? formatTransactionDate(_endDate!) : '—',
                   ),
                   onTap: _pickEndDate,
                   trailing: _endDate != null
@@ -468,9 +437,7 @@ class _RecurringRuleFormPageState extends State<RecurringRuleFormPage> {
       if (mounted) Navigator.of(context).pop(true);
     } on TransactionException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(e.message)));
+        showAppSnackBar(context, SnackBar(content: Text(e.message)));
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);

@@ -94,8 +94,9 @@ void main() {
   group('GoalRepository', () {
     group('createGoal', () {
       test('creates goal via API and caches locally', () async {
-        when(() => goalsApiClient.createGoal(any()))
-            .thenAnswer((_) async => testGoalDto);
+        when(
+          () => goalsApiClient.createGoal(any()),
+        ).thenAnswer((_) async => testGoalDto);
         when(
           () => goalsDao.insertGoal(
             any(),
@@ -126,8 +127,9 @@ void main() {
       });
 
       test('throws GoalException on API failure', () async {
-        when(() => goalsApiClient.createGoal(any()))
-            .thenThrow(const EnvelopeApiException('Network error'));
+        when(
+          () => goalsApiClient.createGoal(any()),
+        ).thenThrow(const EnvelopeApiException('Network error'));
 
         expect(
           () => repository.createGoal(
@@ -142,8 +144,9 @@ void main() {
 
     group('getGoal', () {
       test('returns from local storage when available', () async {
-        when(() => goalsDao.getGoal('goal-1'))
-            .thenAnswer((_) async => testLocalGoal);
+        when(
+          () => goalsDao.getGoal('goal-1'),
+        ).thenAnswer((_) async => testLocalGoal);
 
         final result = await repository.getGoal('goal-1');
 
@@ -153,10 +156,10 @@ void main() {
       });
 
       test('falls back to API when not in local storage', () async {
-        when(() => goalsDao.getGoal('goal-1'))
-            .thenAnswer((_) async => null);
-        when(() => goalsApiClient.getGoal('goal-1'))
-            .thenAnswer((_) async => testGoalDto);
+        when(() => goalsDao.getGoal('goal-1')).thenAnswer((_) async => null);
+        when(
+          () => goalsApiClient.getGoal('goal-1'),
+        ).thenAnswer((_) async => testGoalDto);
         when(
           () => goalsDao.insertGoal(
             any(),
@@ -171,10 +174,10 @@ void main() {
       });
 
       test('throws GoalException on API failure', () async {
-        when(() => goalsDao.getGoal('goal-1'))
-            .thenAnswer((_) async => null);
-        when(() => goalsApiClient.getGoal('goal-1'))
-            .thenThrow(const EnvelopeApiException('Not found'));
+        when(() => goalsDao.getGoal('goal-1')).thenAnswer((_) async => null);
+        when(
+          () => goalsApiClient.getGoal('goal-1'),
+        ).thenThrow(const EnvelopeApiException('Not found'));
 
         expect(
           () => repository.getGoal('goal-1'),
@@ -185,8 +188,9 @@ void main() {
 
     group('watchGoals', () {
       test('streams mapped goals from local storage', () {
-        when(() => goalsDao.watchGoalsByBudgetId('budget-1'))
-            .thenAnswer((_) => Stream.value([testLocalGoal]));
+        when(
+          () => goalsDao.watchGoalsByBudgetId('budget-1'),
+        ).thenAnswer((_) => Stream.value([testLocalGoal]));
 
         final stream = repository.watchGoals('budget-1');
 
@@ -201,8 +205,9 @@ void main() {
       });
 
       test('emits empty list when no goals exist', () {
-        when(() => goalsDao.watchGoalsByBudgetId('budget-1'))
-            .thenAnswer((_) => Stream.value([]));
+        when(
+          () => goalsDao.watchGoalsByBudgetId('budget-1'),
+        ).thenAnswer((_) => Stream.value([]));
 
         final stream = repository.watchGoals('budget-1');
 
@@ -210,8 +215,9 @@ void main() {
       });
 
       test('wraps stream errors in GoalException', () {
-        when(() => goalsDao.watchGoalsByBudgetId('budget-1'))
-            .thenAnswer((_) => Stream.error(Exception('DB error')));
+        when(
+          () => goalsDao.watchGoalsByBudgetId('budget-1'),
+        ).thenAnswer((_) => Stream.error(Exception('DB error')));
 
         final stream = repository.watchGoals('budget-1');
 
@@ -221,8 +227,9 @@ void main() {
 
     group('updateGoal', () {
       test('updates via API and caches locally', () async {
-        when(() => goalsApiClient.updateGoal(any()))
-            .thenAnswer((_) async => testGoalDto);
+        when(
+          () => goalsApiClient.updateGoal(any()),
+        ).thenAnswer((_) async => testGoalDto);
         when(
           () => goalsDao.insertGoal(
             any(),
@@ -242,8 +249,9 @@ void main() {
       });
 
       test('throws GoalException on API failure', () async {
-        when(() => goalsApiClient.updateGoal(any()))
-            .thenThrow(const EnvelopeApiException('Update failed'));
+        when(
+          () => goalsApiClient.updateGoal(any()),
+        ).thenThrow(const EnvelopeApiException('Update failed'));
 
         expect(
           () => repository.updateGoal(testGoal),
@@ -254,10 +262,10 @@ void main() {
 
     group('deleteGoal', () {
       test('deletes from API and local storage', () async {
-        when(() => goalsApiClient.deleteGoal('goal-1'))
-            .thenAnswer((_) async {});
-        when(() => goalsDao.deleteGoal('goal-1'))
-            .thenAnswer((_) async => 1);
+        when(
+          () => goalsApiClient.deleteGoal('goal-1'),
+        ).thenAnswer((_) async {});
+        when(() => goalsDao.deleteGoal('goal-1')).thenAnswer((_) async => 1);
 
         await repository.deleteGoal('goal-1');
 
@@ -266,8 +274,9 @@ void main() {
       });
 
       test('throws GoalException on API failure', () async {
-        when(() => goalsApiClient.deleteGoal('goal-1'))
-            .thenThrow(const EnvelopeApiException('Delete failed'));
+        when(
+          () => goalsApiClient.deleteGoal('goal-1'),
+        ).thenThrow(const EnvelopeApiException('Delete failed'));
 
         expect(
           () => repository.deleteGoal('goal-1'),
@@ -276,10 +285,12 @@ void main() {
       });
 
       test('succeeds even if local delete fails', () async {
-        when(() => goalsApiClient.deleteGoal('goal-1'))
-            .thenAnswer((_) async {});
-        when(() => goalsDao.deleteGoal('goal-1'))
-            .thenThrow(Exception('DB error'));
+        when(
+          () => goalsApiClient.deleteGoal('goal-1'),
+        ).thenAnswer((_) async {});
+        when(
+          () => goalsDao.deleteGoal('goal-1'),
+        ).thenThrow(Exception('DB error'));
 
         await repository.deleteGoal('goal-1');
 
@@ -289,10 +300,12 @@ void main() {
 
     group('completeGoal', () {
       test('fetches goal and updates with isCompleted true', () async {
-        when(() => goalsDao.getGoal('goal-1'))
-            .thenAnswer((_) async => testLocalGoal);
-        when(() => goalsApiClient.updateGoal(any()))
-            .thenAnswer((_) async => testGoalDto);
+        when(
+          () => goalsDao.getGoal('goal-1'),
+        ).thenAnswer((_) async => testLocalGoal);
+        when(
+          () => goalsApiClient.updateGoal(any()),
+        ).thenAnswer((_) async => testGoalDto);
         when(
           () => goalsDao.insertGoal(
             any(),
@@ -310,10 +323,10 @@ void main() {
       });
 
       test('throws GoalException on failure', () async {
-        when(() => goalsDao.getGoal('goal-1'))
-            .thenAnswer((_) async => null);
-        when(() => goalsApiClient.getGoal('goal-1'))
-            .thenThrow(const EnvelopeApiException('Not found'));
+        when(() => goalsDao.getGoal('goal-1')).thenAnswer((_) async => null);
+        when(
+          () => goalsApiClient.getGoal('goal-1'),
+        ).thenThrow(const EnvelopeApiException('Not found'));
 
         expect(
           () => repository.completeGoal('goal-1'),
@@ -339,10 +352,12 @@ void main() {
           createdAt: now,
           updatedAt: now,
         );
-        when(() => goalsDao.getGoal('goal-1'))
-            .thenAnswer((_) async => completedLocalGoal);
-        when(() => goalsApiClient.updateGoal(any()))
-            .thenAnswer((_) async => testGoalDto);
+        when(
+          () => goalsDao.getGoal('goal-1'),
+        ).thenAnswer((_) async => completedLocalGoal);
+        when(
+          () => goalsApiClient.updateGoal(any()),
+        ).thenAnswer((_) async => testGoalDto);
         when(
           () => goalsDao.insertGoal(
             any(),
@@ -360,10 +375,10 @@ void main() {
       });
 
       test('throws GoalException on failure', () async {
-        when(() => goalsDao.getGoal('goal-1'))
-            .thenAnswer((_) async => null);
-        when(() => goalsApiClient.getGoal('goal-1'))
-            .thenThrow(const EnvelopeApiException('Not found'));
+        when(() => goalsDao.getGoal('goal-1')).thenAnswer((_) async => null);
+        when(
+          () => goalsApiClient.getGoal('goal-1'),
+        ).thenThrow(const EnvelopeApiException('Not found'));
 
         expect(
           () => repository.uncompleteGoal('goal-1'),
@@ -374,8 +389,9 @@ void main() {
 
     group('refreshGoals', () {
       test('fetches from API and batch-caches all goals', () async {
-        when(() => goalsApiClient.getGoalsByBudget('budget-1'))
-            .thenAnswer((_) async => [testGoalDto]);
+        when(
+          () => goalsApiClient.getGoalsByBudget('budget-1'),
+        ).thenAnswer((_) async => [testGoalDto]);
         when(
           () => goalsDao.batchInsertGoals(
             any(),
@@ -397,8 +413,9 @@ void main() {
       });
 
       test('handles empty list from API', () async {
-        when(() => goalsApiClient.getGoalsByBudget('budget-1'))
-            .thenAnswer((_) async => []);
+        when(
+          () => goalsApiClient.getGoalsByBudget('budget-1'),
+        ).thenAnswer((_) async => []);
         when(
           () => goalsDao.batchInsertGoals(
             any(),
@@ -417,8 +434,9 @@ void main() {
       });
 
       test('throws GoalException on API failure', () async {
-        when(() => goalsApiClient.getGoalsByBudget('budget-1'))
-            .thenThrow(const EnvelopeApiException('Network error'));
+        when(
+          () => goalsApiClient.getGoalsByBudget('budget-1'),
+        ).thenThrow(const EnvelopeApiException('Network error'));
 
         expect(
           () => repository.refreshGoals('budget-1'),
