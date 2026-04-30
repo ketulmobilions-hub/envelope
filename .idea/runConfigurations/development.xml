@@ -2,6 +2,7 @@
   <configuration default="false" name="development" type="FlutterRunConfigurationType" factoryName="Flutter">
     <option name="buildFlavor" value="development" />
     <option name="filePath" value="$PROJECT_DIR$/lib/main_development.dart" />
+    <option name="additionalArgs" value="--dart-define=SUPABASE_URL=https://xglrbalerqbbeqrupuih.supabase.co --dart-define=SUPABASE_ANON_KEY=sb_publishable_QvmKiqzZw6YdnU9H5ucLQQ_95LJNXIi" />
     <method v="2" />
   </configuration>
 </component>
