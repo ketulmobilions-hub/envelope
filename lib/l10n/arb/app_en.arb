@@ -431,6 +431,23 @@
     "@accountsDisplayFxRateInvalid": {
         "description": "Validation error for invalid FX rate"
     },
+    "transactionsExchangeRateLabel": "Exchange rate",
+    "@transactionsExchangeRateLabel": {
+        "description": "Label for per-transaction exchange rate input"
+    },
+    "transactionsExchangeRateHelper": "1 {accountCode} = X {baseSymbol} {baseCode}",
+    "@transactionsExchangeRateHelper": {
+        "description": "Helper under transaction FX rate input",
+        "placeholders": {
+            "accountCode": { "type": "String" },
+            "baseSymbol": { "type": "String" },
+            "baseCode": { "type": "String" }
+        }
+    },
+    "transactionsExchangeRateInvalid": "Enter a positive exchange rate",
+    "@transactionsExchangeRateInvalid": {
+        "description": "Validation error for invalid transaction FX rate"
+    },
     "accountsStatusLabel": "Status",
     "@accountsStatusLabel": {
         "description": "Label for account status field"

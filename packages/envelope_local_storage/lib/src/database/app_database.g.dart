@@ -6288,6 +6288,18 @@ class $RecurringRulesTable extends RecurringRules
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _exchangeRateMeta = const VerificationMeta(
+    'exchangeRate',
+  );
+  @override
+  late final GeneratedColumn<double> exchangeRate = GeneratedColumn<double>(
+    'exchange_rate',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
   static const VerificationMeta _payeeMeta = const VerificationMeta('payee');
   @override
   late final GeneratedColumn<String> payee = GeneratedColumn<String>(
@@ -6423,6 +6435,7 @@ class $RecurringRulesTable extends RecurringRules
     type,
     amount,
     currency,
+    exchangeRate,
     payee,
     notes,
     frequency,
@@ -6497,6 +6510,15 @@ class $RecurringRulesTable extends RecurringRules
       );
     } else if (isInserting) {
       context.missing(_currencyMeta);
+    }
+    if (data.containsKey('exchange_rate')) {
+      context.handle(
+        _exchangeRateMeta,
+        exchangeRate.isAcceptableOrUnknown(
+          data['exchange_rate']!,
+          _exchangeRateMeta,
+        ),
+      );
     }
     if (data.containsKey('payee')) {
       context.handle(
@@ -6615,6 +6637,10 @@ class $RecurringRulesTable extends RecurringRules
         DriftSqlType.string,
         data['${effectivePrefix}currency'],
       )!,
+      exchangeRate: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}exchange_rate'],
+      )!,
       payee: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}payee'],
@@ -6676,6 +6702,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
   final String type;
   final int amount;
   final String currency;
+  final double exchangeRate;
   final String? payee;
   final String? notes;
   final String frequency;
@@ -6695,6 +6722,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     required this.type,
     required this.amount,
     required this.currency,
+    required this.exchangeRate,
     this.payee,
     this.notes,
     required this.frequency,
@@ -6719,6 +6747,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     map['type'] = Variable<String>(type);
     map['amount'] = Variable<int>(amount);
     map['currency'] = Variable<String>(currency);
+    map['exchange_rate'] = Variable<double>(exchangeRate);
     if (!nullToAbsent || payee != null) {
       map['payee'] = Variable<String>(payee);
     }
@@ -6754,6 +6783,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
       type: Value(type),
       amount: Value(amount),
       currency: Value(currency),
+      exchangeRate: Value(exchangeRate),
       payee: payee == null && nullToAbsent
           ? const Value.absent()
           : Value(payee),
@@ -6791,6 +6821,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
       type: serializer.fromJson<String>(json['type']),
       amount: serializer.fromJson<int>(json['amount']),
       currency: serializer.fromJson<String>(json['currency']),
+      exchangeRate: serializer.fromJson<double>(json['exchangeRate']),
       payee: serializer.fromJson<String?>(json['payee']),
       notes: serializer.fromJson<String?>(json['notes']),
       frequency: serializer.fromJson<String>(json['frequency']),
@@ -6815,6 +6846,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
       'type': serializer.toJson<String>(type),
       'amount': serializer.toJson<int>(amount),
       'currency': serializer.toJson<String>(currency),
+      'exchangeRate': serializer.toJson<double>(exchangeRate),
       'payee': serializer.toJson<String?>(payee),
       'notes': serializer.toJson<String?>(notes),
       'frequency': serializer.toJson<String>(frequency),
@@ -6837,6 +6869,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     String? type,
     int? amount,
     String? currency,
+    double? exchangeRate,
     Value<String?> payee = const Value.absent(),
     Value<String?> notes = const Value.absent(),
     String? frequency,
@@ -6856,6 +6889,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     type: type ?? this.type,
     amount: amount ?? this.amount,
     currency: currency ?? this.currency,
+    exchangeRate: exchangeRate ?? this.exchangeRate,
     payee: payee.present ? payee.value : this.payee,
     notes: notes.present ? notes.value : this.notes,
     frequency: frequency ?? this.frequency,
@@ -6881,6 +6915,9 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
       type: data.type.present ? data.type.value : this.type,
       amount: data.amount.present ? data.amount.value : this.amount,
       currency: data.currency.present ? data.currency.value : this.currency,
+      exchangeRate: data.exchangeRate.present
+          ? data.exchangeRate.value
+          : this.exchangeRate,
       payee: data.payee.present ? data.payee.value : this.payee,
       notes: data.notes.present ? data.notes.value : this.notes,
       frequency: data.frequency.present ? data.frequency.value : this.frequency,
@@ -6911,6 +6948,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
           ..write('type: $type, ')
           ..write('amount: $amount, ')
           ..write('currency: $currency, ')
+          ..write('exchangeRate: $exchangeRate, ')
           ..write('payee: $payee, ')
           ..write('notes: $notes, ')
           ..write('frequency: $frequency, ')
@@ -6935,6 +6973,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     type,
     amount,
     currency,
+    exchangeRate,
     payee,
     notes,
     frequency,
@@ -6958,6 +6997,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
           other.type == this.type &&
           other.amount == this.amount &&
           other.currency == this.currency &&
+          other.exchangeRate == this.exchangeRate &&
           other.payee == this.payee &&
           other.notes == this.notes &&
           other.frequency == this.frequency &&
@@ -6979,6 +7019,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
   final Value<String> type;
   final Value<int> amount;
   final Value<String> currency;
+  final Value<double> exchangeRate;
   final Value<String?> payee;
   final Value<String?> notes;
   final Value<String> frequency;
@@ -6999,6 +7040,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
     this.type = const Value.absent(),
     this.amount = const Value.absent(),
     this.currency = const Value.absent(),
+    this.exchangeRate = const Value.absent(),
     this.payee = const Value.absent(),
     this.notes = const Value.absent(),
     this.frequency = const Value.absent(),
@@ -7020,6 +7062,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
     required String type,
     required int amount,
     required String currency,
+    this.exchangeRate = const Value.absent(),
     this.payee = const Value.absent(),
     this.notes = const Value.absent(),
     required String frequency,
@@ -7050,6 +7093,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
     Expression<String>? type,
     Expression<int>? amount,
     Expression<String>? currency,
+    Expression<double>? exchangeRate,
     Expression<String>? payee,
     Expression<String>? notes,
     Expression<String>? frequency,
@@ -7071,6 +7115,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
       if (type != null) 'type': type,
       if (amount != null) 'amount': amount,
       if (currency != null) 'currency': currency,
+      if (exchangeRate != null) 'exchange_rate': exchangeRate,
       if (payee != null) 'payee': payee,
       if (notes != null) 'notes': notes,
       if (frequency != null) 'frequency': frequency,
@@ -7094,6 +7139,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
     Value<String>? type,
     Value<int>? amount,
     Value<String>? currency,
+    Value<double>? exchangeRate,
     Value<String?>? payee,
     Value<String?>? notes,
     Value<String>? frequency,
@@ -7115,6 +7161,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
       type: type ?? this.type,
       amount: amount ?? this.amount,
       currency: currency ?? this.currency,
+      exchangeRate: exchangeRate ?? this.exchangeRate,
       payee: payee ?? this.payee,
       notes: notes ?? this.notes,
       frequency: frequency ?? this.frequency,
@@ -7153,6 +7200,9 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
     }
     if (currency.present) {
       map['currency'] = Variable<String>(currency.value);
+    }
+    if (exchangeRate.present) {
+      map['exchange_rate'] = Variable<double>(exchangeRate.value);
     }
     if (payee.present) {
       map['payee'] = Variable<String>(payee.value);
@@ -7203,6 +7253,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
           ..write('type: $type, ')
           ..write('amount: $amount, ')
           ..write('currency: $currency, ')
+          ..write('exchangeRate: $exchangeRate, ')
           ..write('payee: $payee, ')
           ..write('notes: $notes, ')
           ..write('frequency: $frequency, ')
@@ -15797,6 +15848,7 @@ typedef $$RecurringRulesTableCreateCompanionBuilder =
       required String type,
       required int amount,
       required String currency,
+      Value<double> exchangeRate,
       Value<String?> payee,
       Value<String?> notes,
       required String frequency,
@@ -15819,6 +15871,7 @@ typedef $$RecurringRulesTableUpdateCompanionBuilder =
       Value<String> type,
       Value<int> amount,
       Value<String> currency,
+      Value<double> exchangeRate,
       Value<String?> payee,
       Value<String?> notes,
       Value<String> frequency,
@@ -15874,6 +15927,11 @@ class $$RecurringRulesTableFilterComposer
 
   ColumnFilters<String> get currency => $composableBuilder(
     column: $table.currency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get exchangeRate => $composableBuilder(
+    column: $table.exchangeRate,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -15977,6 +16035,11 @@ class $$RecurringRulesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get exchangeRate => $composableBuilder(
+    column: $table.exchangeRate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get payee => $composableBuilder(
     column: $table.payee,
     builder: (column) => ColumnOrderings(column),
@@ -16065,6 +16128,11 @@ class $$RecurringRulesTableAnnotationComposer
   GeneratedColumn<String> get currency =>
       $composableBuilder(column: $table.currency, builder: (column) => column);
 
+  GeneratedColumn<double> get exchangeRate => $composableBuilder(
+    column: $table.exchangeRate,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get payee =>
       $composableBuilder(column: $table.payee, builder: (column) => column);
 
@@ -16145,6 +16213,7 @@ class $$RecurringRulesTableTableManager
                 Value<String> type = const Value.absent(),
                 Value<int> amount = const Value.absent(),
                 Value<String> currency = const Value.absent(),
+                Value<double> exchangeRate = const Value.absent(),
                 Value<String?> payee = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<String> frequency = const Value.absent(),
@@ -16165,6 +16234,7 @@ class $$RecurringRulesTableTableManager
                 type: type,
                 amount: amount,
                 currency: currency,
+                exchangeRate: exchangeRate,
                 payee: payee,
                 notes: notes,
                 frequency: frequency,
@@ -16187,6 +16257,7 @@ class $$RecurringRulesTableTableManager
                 required String type,
                 required int amount,
                 required String currency,
+                Value<double> exchangeRate = const Value.absent(),
                 Value<String?> payee = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 required String frequency,
@@ -16207,6 +16278,7 @@ class $$RecurringRulesTableTableManager
                 type: type,
                 amount: amount,
                 currency: currency,
+                exchangeRate: exchangeRate,
                 payee: payee,
                 notes: notes,
                 frequency: frequency,

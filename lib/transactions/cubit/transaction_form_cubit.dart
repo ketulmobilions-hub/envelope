@@ -174,6 +174,8 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     List<SplitEntry> splits = const [],
     List<String> selectedTagIds = const [],
     bool isRecurring = false,
+    String? currencyOverride,
+    double exchangeRate = 1.0,
   }) async {
     if (state.accounts.isEmpty) {
       emit(
@@ -186,6 +188,15 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     }
     emit(state.copyWith(status: TransactionFormStatus.submitting));
     try {
+      // Resolve effective transaction currency: explicit override (form
+      // currency picker) wins, else fall back to the selected account's.
+      final effectiveCurrency =
+          currencyOverride ?? state.accounts.currencyForAccountId(accountId);
+      // Convert any amount expressed in the transaction's currency to the
+      // budget's base currency cents. Used by addIncomeToCurrentPeriod and
+      // incrementLocalSpentAmount, both of which operate in base currency.
+      int toBase(int amountInTxCcy) =>
+          (amountInTxCcy * exchangeRate).round();
       if (isEditing) {
         // ── Edit existing transaction ──────────────────────────────────────
         final updated = transaction!.copyWith(
@@ -193,6 +204,8 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
           accountId: accountId,
           envelopeId: isSplitMode ? null : envelopeId,
           amount: amountCents,
+          currency: effectiveCurrency,
+          exchangeRate: exchangeRate,
           date: date,
           payee: payee,
           notes: notes,
@@ -206,11 +219,11 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         }
         await _saveTags(transactionId, selectedTagIds);
 
-        // Income delta for edits.
+        // Income delta for edits, expressed in base currency.
         final oldIncome = transaction!.type == 'income'
-            ? transaction!.amount
+            ? (transaction!.amount * transaction!.exchangeRate).round()
             : 0;
-        final newIncome = type == 'income' ? amountCents : 0;
+        final newIncome = type == 'income' ? toBase(amountCents) : 0;
         final incomeDelta = newIncome - oldIncome;
         if (incomeDelta != 0) {
           try {
@@ -302,7 +315,8 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
               accountId: accountId,
               type: type,
               amount: amountCents,
-              currency: state.accounts.currencyForAccountId(accountId),
+              currency: effectiveCurrency,
+              exchangeRate: exchangeRate,
               date: date,
               createdBy: userId,
               envelopeId: isSplitMode ? null : envelopeId,
@@ -320,7 +334,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
           }
           await _saveTags(transactionId, selectedTagIds);
 
-          final newIncome = type == 'income' ? amountCents : 0;
+          final newIncome = type == 'income' ? toBase(amountCents) : 0;
           if (newIncome != 0) {
             try {
               await _budgetRepository.addIncomeToCurrentPeriod(
@@ -364,6 +378,8 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
             envelopeId: envelopeId,
             payee: payee,
             notes: notes,
+            currencyOverride: currencyOverride,
+            exchangeRate: exchangeRate,
           );
 
           final overspendData = await _checkOverspend(
@@ -398,6 +414,8 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
             envelopeId: envelopeId,
             payee: payee,
             notes: notes,
+            currencyOverride: currencyOverride,
+            exchangeRate: exchangeRate,
           );
 
           if (isClosed) return;
@@ -443,7 +461,8 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
             accountId: accountId,
             type: type,
             amount: amountCents,
-            currency: state.accounts.currencyForAccountId(accountId),
+            currency: effectiveCurrency,
+            exchangeRate: exchangeRate,
             date: date,
             createdBy: userId,
             envelopeId: isSplitMode ? null : envelopeId,
@@ -461,7 +480,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         }
         await _saveTags(transactionId, selectedTagIds);
 
-        final newIncome = type == 'income' ? amountCents : 0;
+        final newIncome = type == 'income' ? toBase(amountCents) : 0;
         if (newIncome != 0) {
           try {
             await _budgetRepository.addIncomeToCurrentPeriod(
@@ -474,15 +493,13 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         }
 
         if (type == 'expense') {
-          // Phase 3 will wire a real exchangeRate from the form. Until then
-          // rate=1.0 means baseCurrencyAmount == amountCents.
           if (!isSplitMode && envelopeId != null) {
             unawaited(
               _envelopeRepository.incrementLocalSpentAmount(
                 envelopeId: envelopeId,
                 budgetId: budgetId,
                 date: date,
-                baseCurrencyAmount: amountCents,
+                baseCurrencyAmount: toBase(amountCents),
               ),
             );
           } else if (isSplitMode) {
@@ -494,7 +511,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
                     envelopeId: splitEnvId,
                     budgetId: budgetId,
                     date: date,
-                    baseCurrencyAmount: split.amountCents,
+                    baseCurrencyAmount: toBase(split.amountCents),
                   ),
                 );
               }
@@ -572,6 +589,8 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     String? envelopeId,
     String? payee,
     String? notes,
+    String? currencyOverride,
+    double exchangeRate = 1.0,
   }) async {
     // Future date: rule starts on the chosen date (no transaction yet).
     // Today/past: rule starts from the next occurrence to avoid an
@@ -592,7 +611,9 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
       accountId: accountId,
       type: type,
       amount: amountCents,
-      currency: state.accounts.currencyForAccountId(accountId),
+      currency: currencyOverride ??
+          state.accounts.currencyForAccountId(accountId),
+      exchangeRate: exchangeRate,
       frequency: state.recurringFrequency,
       startDate: startDate,
       envelopeId: envelopeId,

@@ -412,6 +412,14 @@ class _RecurringRuleFormPageState extends State<RecurringRuleFormPage> {
       // already-created rules.
       final effectiveAccountId = _selectedAccountId ?? widget.rule?.accountId;
       final ruleCurrency = _accounts.currencyForAccountId(effectiveAccountId);
+      // Snapshot the selected account's displayFxRate so the rule fires
+      // future transactions with a consistent FX, even if the account's
+      // displayFxRate is later edited. RecurringCheckCubit reads
+      // rule.exchangeRate when auto-posting.
+      final selectedAccount = _accounts
+          .where((a) => a.id == effectiveAccountId)
+          .firstOrNull;
+      final ruleFxRate = selectedAccount?.displayFxRate ?? 1.0;
 
       if (_isEditing) {
         final updated = widget.rule!.copyWith(
@@ -420,6 +428,7 @@ class _RecurringRuleFormPageState extends State<RecurringRuleFormPage> {
           envelopeId: _selectedEnvelopeId,
           amount: amountCents,
           currency: ruleCurrency,
+          exchangeRate: ruleFxRate,
           frequency: _selectedFrequency,
           startDate: _startDate,
           endDate: _endDate,
@@ -439,6 +448,7 @@ class _RecurringRuleFormPageState extends State<RecurringRuleFormPage> {
           type: _selectedType,
           amount: amountCents,
           currency: ruleCurrency,
+          exchangeRate: ruleFxRate,
           frequency: _selectedFrequency,
           startDate: _startDate,
           envelopeId: _selectedEnvelopeId,

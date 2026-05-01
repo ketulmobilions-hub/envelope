@@ -119,6 +119,7 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
         type: rule.type,
         amount: rule.amount,
         currency: rule.currency,
+        exchangeRate: rule.exchangeRate,
         date: effectiveNow,
         createdBy: _userId,
         envelopeId: rule.envelopeId,

@@ -19,6 +19,7 @@ mixin _$RecurringRule {
   String get type;
   int get amount;
   String get currency;
+  double get exchangeRate;
   String get frequency;
   DateTime get startDate;
   DateTime get nextOccurrence;
@@ -59,6 +60,8 @@ mixin _$RecurringRule {
             (identical(other.amount, amount) || other.amount == amount) &&
             (identical(other.currency, currency) ||
                 other.currency == currency) &&
+            (identical(other.exchangeRate, exchangeRate) ||
+                other.exchangeRate == exchangeRate) &&
             (identical(other.frequency, frequency) ||
                 other.frequency == frequency) &&
             (identical(other.startDate, startDate) ||
@@ -84,7 +87,7 @@ mixin _$RecurringRule {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     runtimeType,
     id,
     budgetId,
@@ -92,6 +95,7 @@ mixin _$RecurringRule {
     type,
     amount,
     currency,
+    exchangeRate,
     frequency,
     startDate,
     nextOccurrence,
@@ -104,11 +108,11 @@ mixin _$RecurringRule {
     endDate,
     autoPost,
     isPaused,
-  );
+  ]);
 
   @override
   String toString() {
-    return 'RecurringRule(id: $id, budgetId: $budgetId, accountId: $accountId, type: $type, amount: $amount, currency: $currency, frequency: $frequency, startDate: $startDate, nextOccurrence: $nextOccurrence, createdAt: $createdAt, envelopeId: $envelopeId, payee: $payee, notes: $notes, customInterval: $customInterval, customUnit: $customUnit, endDate: $endDate, autoPost: $autoPost, isPaused: $isPaused)';
+    return 'RecurringRule(id: $id, budgetId: $budgetId, accountId: $accountId, type: $type, amount: $amount, currency: $currency, exchangeRate: $exchangeRate, frequency: $frequency, startDate: $startDate, nextOccurrence: $nextOccurrence, createdAt: $createdAt, envelopeId: $envelopeId, payee: $payee, notes: $notes, customInterval: $customInterval, customUnit: $customUnit, endDate: $endDate, autoPost: $autoPost, isPaused: $isPaused)';
   }
 }
 
@@ -126,6 +130,7 @@ abstract mixin class $RecurringRuleCopyWith<$Res> {
     String type,
     int amount,
     String currency,
+    double exchangeRate,
     String frequency,
     DateTime startDate,
     DateTime nextOccurrence,
@@ -160,6 +165,7 @@ class _$RecurringRuleCopyWithImpl<$Res>
     Object? type = null,
     Object? amount = null,
     Object? currency = null,
+    Object? exchangeRate = null,
     Object? frequency = null,
     Object? startDate = null,
     Object? nextOccurrence = null,
@@ -199,6 +205,10 @@ class _$RecurringRuleCopyWithImpl<$Res>
             ? _self.currency
             : currency // ignore: cast_nullable_to_non_nullable
                   as String,
+        exchangeRate: null == exchangeRate
+            ? _self.exchangeRate
+            : exchangeRate // ignore: cast_nullable_to_non_nullable
+                  as double,
         frequency: null == frequency
             ? _self.frequency
             : frequency // ignore: cast_nullable_to_non_nullable
@@ -352,6 +362,7 @@ extension RecurringRulePatterns on RecurringRule {
       String type,
       int amount,
       String currency,
+      double exchangeRate,
       String frequency,
       DateTime startDate,
       DateTime nextOccurrence,
@@ -378,6 +389,7 @@ extension RecurringRulePatterns on RecurringRule {
           _that.type,
           _that.amount,
           _that.currency,
+          _that.exchangeRate,
           _that.frequency,
           _that.startDate,
           _that.nextOccurrence,
@@ -418,6 +430,7 @@ extension RecurringRulePatterns on RecurringRule {
       String type,
       int amount,
       String currency,
+      double exchangeRate,
       String frequency,
       DateTime startDate,
       DateTime nextOccurrence,
@@ -443,6 +456,7 @@ extension RecurringRulePatterns on RecurringRule {
           _that.type,
           _that.amount,
           _that.currency,
+          _that.exchangeRate,
           _that.frequency,
           _that.startDate,
           _that.nextOccurrence,
@@ -482,6 +496,7 @@ extension RecurringRulePatterns on RecurringRule {
       String type,
       int amount,
       String currency,
+      double exchangeRate,
       String frequency,
       DateTime startDate,
       DateTime nextOccurrence,
@@ -507,6 +522,7 @@ extension RecurringRulePatterns on RecurringRule {
           _that.type,
           _that.amount,
           _that.currency,
+          _that.exchangeRate,
           _that.frequency,
           _that.startDate,
           _that.nextOccurrence,
@@ -536,6 +552,7 @@ class _RecurringRule implements RecurringRule {
     required this.type,
     required this.amount,
     required this.currency,
+    this.exchangeRate = 1.0,
     required this.frequency,
     required this.startDate,
     required this.nextOccurrence,
@@ -564,6 +581,9 @@ class _RecurringRule implements RecurringRule {
   final int amount;
   @override
   final String currency;
+  @override
+  @JsonKey()
+  final double exchangeRate;
   @override
   final String frequency;
   @override
@@ -618,6 +638,8 @@ class _RecurringRule implements RecurringRule {
             (identical(other.amount, amount) || other.amount == amount) &&
             (identical(other.currency, currency) ||
                 other.currency == currency) &&
+            (identical(other.exchangeRate, exchangeRate) ||
+                other.exchangeRate == exchangeRate) &&
             (identical(other.frequency, frequency) ||
                 other.frequency == frequency) &&
             (identical(other.startDate, startDate) ||
@@ -643,7 +665,7 @@ class _RecurringRule implements RecurringRule {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     runtimeType,
     id,
     budgetId,
@@ -651,6 +673,7 @@ class _RecurringRule implements RecurringRule {
     type,
     amount,
     currency,
+    exchangeRate,
     frequency,
     startDate,
     nextOccurrence,
@@ -663,11 +686,11 @@ class _RecurringRule implements RecurringRule {
     endDate,
     autoPost,
     isPaused,
-  );
+  ]);
 
   @override
   String toString() {
-    return 'RecurringRule(id: $id, budgetId: $budgetId, accountId: $accountId, type: $type, amount: $amount, currency: $currency, frequency: $frequency, startDate: $startDate, nextOccurrence: $nextOccurrence, createdAt: $createdAt, envelopeId: $envelopeId, payee: $payee, notes: $notes, customInterval: $customInterval, customUnit: $customUnit, endDate: $endDate, autoPost: $autoPost, isPaused: $isPaused)';
+    return 'RecurringRule(id: $id, budgetId: $budgetId, accountId: $accountId, type: $type, amount: $amount, currency: $currency, exchangeRate: $exchangeRate, frequency: $frequency, startDate: $startDate, nextOccurrence: $nextOccurrence, createdAt: $createdAt, envelopeId: $envelopeId, payee: $payee, notes: $notes, customInterval: $customInterval, customUnit: $customUnit, endDate: $endDate, autoPost: $autoPost, isPaused: $isPaused)';
   }
 }
 
@@ -687,6 +710,7 @@ abstract mixin class _$RecurringRuleCopyWith<$Res>
     String type,
     int amount,
     String currency,
+    double exchangeRate,
     String frequency,
     DateTime startDate,
     DateTime nextOccurrence,
@@ -721,6 +745,7 @@ class __$RecurringRuleCopyWithImpl<$Res>
     Object? type = null,
     Object? amount = null,
     Object? currency = null,
+    Object? exchangeRate = null,
     Object? frequency = null,
     Object? startDate = null,
     Object? nextOccurrence = null,
@@ -760,6 +785,10 @@ class __$RecurringRuleCopyWithImpl<$Res>
             ? _self.currency
             : currency // ignore: cast_nullable_to_non_nullable
                   as String,
+        exchangeRate: null == exchangeRate
+            ? _self.exchangeRate
+            : exchangeRate // ignore: cast_nullable_to_non_nullable
+                  as double,
         frequency: null == frequency
             ? _self.frequency
             : frequency // ignore: cast_nullable_to_non_nullable

@@ -147,6 +147,7 @@ void main() {
     type: 'expense',
     amount: 10000,
     currency: 'USD',
+    exchangeRate: 1.0,
     frequency: 'monthly',
     startDate: now,
     nextOccurrence: now,

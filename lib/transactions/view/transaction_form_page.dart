@@ -2,10 +2,13 @@ import 'dart:async';
 
 import 'package:account_repository/account_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
+import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/onboarding/data/currencies.dart';
 import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/shared/widgets/app_option_picker.dart';
+import 'package:envelope/shared/widgets/currency_picker_sheet.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/transactions/cubit/cubit.dart';
 import 'package:envelope/transactions/view/transfer_form_page.dart';
@@ -48,12 +51,15 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
   late final TextEditingController _amountController;
   late final TextEditingController _payeeController;
   late final TextEditingController _notesController;
+  late final TextEditingController _fxRateController;
   String? _selectedAccountId;
   String? _selectedEnvelopeId;
+  String? _selectedCurrency;
   bool _isSplitMode = false;
   bool _isRecurring = false;
   bool _tagIdsInitialized = false;
   bool _splitsInitialized = false;
+  bool _currencyManuallySet = false;
 
   List<SplitEntry> _splits = [];
   List<String> _selectedTagIds = [];
@@ -71,8 +77,13 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     );
     _payeeController = TextEditingController(text: txn?.payee ?? '');
     _notesController = TextEditingController(text: txn?.notes ?? '');
+    _fxRateController = TextEditingController(
+      text: txn != null ? txn.exchangeRate.toString() : '1.0',
+    );
     _selectedAccountId = txn?.accountId;
     _selectedEnvelopeId = txn?.envelopeId;
+    _selectedCurrency = txn?.currency;
+    _currencyManuallySet = txn != null;
   }
 
   @override
@@ -80,13 +91,19 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     _amountController.dispose();
     _payeeController.dispose();
     _notesController.dispose();
+    _fxRateController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final symbol = currencySymbol(context);
+    final baseCurrency =
+        context.watch<AuthBloc>().state.user?.baseCurrency ?? 'USD';
+    final txCurrency = _selectedCurrency ?? baseCurrency;
+    final symbol = currencySymbolFromCode(txCurrency);
+    final baseSymbol = currencySymbolFromCode(baseCurrency);
+    final isForeign = txCurrency != baseCurrency;
 
     return BlocListener<TransactionFormCubit, TransactionFormState>(
       listener: (context, state) {
@@ -218,8 +235,18 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                                 value: accounts
                                     .where((a) => a.id == _selectedAccountId)
                                     .firstOrNull,
-                                onChanged: (a) =>
-                                    setState(() => _selectedAccountId = a.id),
+                                onChanged: (a) => setState(() {
+                                  _selectedAccountId = a.id;
+                                  // Auto-track account currency unless user
+                                  // overrode it explicitly. Also seed
+                                  // displayFxRate from the selected account
+                                  // for foreign currencies.
+                                  if (!_currencyManuallySet) {
+                                    _selectedCurrency = a.currency;
+                                    _fxRateController.text =
+                                        a.displayFxRate.toString();
+                                  }
+                                }),
                                 labelText: l10n.transactionsAccountLabel,
                                 icon: Icons.account_balance_outlined,
                                 itemLabel: (a) => a.name,
@@ -281,6 +308,78 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                                 return null;
                               },
                             ),
+                            const SizedBox(height: 8),
+
+                            // Currency override + FX rate (foreign tx).
+                            _CurrencyOverrideTile(
+                              code: txCurrency,
+                              onChanged: (code) => setState(() {
+                                _selectedCurrency = code;
+                                _currencyManuallySet = true;
+                                if (code == baseCurrency) {
+                                  _fxRateController.text = '1.0';
+                                }
+                              }),
+                            ),
+                            if (isForeign) ...[
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _fxRateController,
+                                decoration: InputDecoration(
+                                  labelText:
+                                      l10n.transactionsExchangeRateLabel,
+                                  helperText: l10n.transactionsExchangeRateHelper(
+                                    txCurrency,
+                                    baseSymbol,
+                                    baseCurrency,
+                                  ),
+                                  prefixIcon: const Icon(
+                                    Icons.currency_exchange,
+                                  ),
+                                ),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(
+                                    RegExp(r'^\d*\.?\d{0,6}'),
+                                  ),
+                                ],
+                                validator: (value) {
+                                  final parsed =
+                                      double.tryParse(value?.trim() ?? '');
+                                  if (parsed == null || parsed <= 0) {
+                                    return l10n.transactionsExchangeRateInvalid;
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 4),
+                              Builder(
+                                builder: (_) {
+                                  final cents =
+                                      parseCents(_amountController.text) ?? 0;
+                                  final rate = double.tryParse(
+                                        _fxRateController.text.trim(),
+                                      ) ??
+                                      1.0;
+                                  final base =
+                                      ((cents * rate).round() / 100)
+                                          .toStringAsFixed(2);
+                                  return Padding(
+                                    padding:
+                                        const EdgeInsets.only(left: 12),
+                                    child: Text(
+                                      '≈ $baseSymbol$base',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
                             const SizedBox(height: 16),
 
                             // Payee
@@ -496,6 +595,8 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final amountCents = parseCents(_amountController.text) ?? 0;
+    final rate =
+        double.tryParse(_fxRateController.text.trim()) ?? 1.0;
 
     context.read<TransactionFormCubit>().submit(
       type: _selectedType,
@@ -509,6 +610,47 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       splits: _splits,
       selectedTagIds: _selectedTagIds,
       isRecurring: _isRecurring,
+      currencyOverride: _selectedCurrency,
+      exchangeRate: rate,
+    );
+  }
+}
+
+class _CurrencyOverrideTile extends StatelessWidget {
+  const _CurrencyOverrideTile({
+    required this.code,
+    required this.onChanged,
+  });
+
+  final String code;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = supportedCurrencies.firstWhere(
+      (c) => c.code == code,
+      orElse: () => supportedCurrencies.first,
+    );
+    return InkWell(
+      onTap: () async {
+        final picked = await showModalBottomSheet<String>(
+          context: context,
+          isScrollControlled: true,
+          builder: (_) => CurrencyPickerSheet(initialCode: code),
+        );
+        if (picked != null) onChanged(picked);
+      },
+      child: InputDecorator(
+        decoration: const InputDecoration(
+          labelText: 'Currency',
+          prefixIcon: Icon(Icons.attach_money_outlined),
+          suffixIcon: Icon(Icons.arrow_drop_down),
+          isDense: true,
+        ),
+        child: Text(
+          '${selected.symbol} ${selected.code} - ${selected.name}',
+        ),
+      ),
     );
   }
 }

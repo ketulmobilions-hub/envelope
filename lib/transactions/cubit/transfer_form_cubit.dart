@@ -64,8 +64,19 @@ class TransferFormCubit extends Cubit<TransferFormState> {
     emit(state.copyWith(status: TransferFormStatus.submitting));
     try {
       final transferPairId = const Uuid().v4();
-      final fromCurrency = state.accounts.currencyForAccountId(fromAccountId);
-      final toCurrency = state.accounts.currencyForAccountId(toAccountId);
+      final fromAccount = state.accounts
+          .where((a) => a.id == fromAccountId)
+          .firstOrNull;
+      final toAccount = state.accounts
+          .where((a) => a.id == toAccountId)
+          .firstOrNull;
+      final fromCurrency = fromAccount?.currency ?? 'USD';
+      final toCurrency = toAccount?.currency ?? 'USD';
+      // Each leg snapshots its own account's displayFxRate so the
+      // base_currency_amount is correct per leg, even for cross-currency
+      // transfers (e.g. USD → INR via Wise).
+      final fromRate = fromAccount?.displayFxRate ?? 1.0;
+      final toRate = toAccount?.displayFxRate ?? 1.0;
 
       // Create outgoing transaction (from account — negative amount).
       await _transactionRepository.createTransaction(
@@ -74,6 +85,7 @@ class TransferFormCubit extends Cubit<TransferFormState> {
         type: 'transfer',
         amount: -amountCents,
         currency: fromCurrency,
+        exchangeRate: fromRate,
         date: date,
         createdBy: userId,
         transferPairId: transferPairId,
@@ -86,6 +98,7 @@ class TransferFormCubit extends Cubit<TransferFormState> {
         type: 'transfer',
         amount: amountCents,
         currency: toCurrency,
+        exchangeRate: toRate,
         date: date,
         createdBy: userId,
         transferPairId: transferPairId,
@@ -100,9 +113,6 @@ class TransferFormCubit extends Cubit<TransferFormState> {
 
       // When paying a CC bill, refresh allocations so BudgetBloc recomputes
       // CC Payment available from the new transaction in local storage.
-      final toAccount = state.accounts
-          .where((a) => a.id == toAccountId)
-          .firstOrNull;
       if (toAccount != null &&
           isCreditCard(toAccount.type) &&
           _envelopeRepository != null &&
