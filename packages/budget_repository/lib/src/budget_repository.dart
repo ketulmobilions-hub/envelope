@@ -239,6 +239,10 @@ class BudgetRepository {
   ///
   /// Finds the most recent period by start date, increments its
   /// `totalIncome` by [amount], and persists via the API + local cache.
+  ///
+  /// [amount] must be expressed in the budget's base currency (i.e.
+  /// `transaction.amount * transaction.exchangeRate`) so `totalIncome` and the
+  /// derived RTA stay denominated in a single currency.
   Future<void> addIncomeToCurrentPeriod({
     required String budgetId,
     required int amount,

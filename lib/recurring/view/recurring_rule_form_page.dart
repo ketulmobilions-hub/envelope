@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:account_repository/account_repository.dart';
+import 'package:envelope/accounts/widgets/account_helpers.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/recurring/widgets/frequency_label.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
@@ -389,11 +390,28 @@ class _RecurringRuleFormPageState extends State<RecurringRuleFormPage> {
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (_accounts.isEmpty) {
+      if (mounted) {
+        showAppSnackBar(
+          context,
+          const SnackBar(
+            content: Text('Accounts not loaded yet. Please retry.'),
+          ),
+        );
+      }
+      return;
+    }
 
     setState(() => _isSubmitting = true);
 
     try {
       final amountCents = parseCents(_amountController.text) ?? 0;
+      // Currency snapshots at create/edit time. RecurringCheckCubit fires
+      // future transactions using rule.currency (not a fresh account lookup),
+      // so changing the account currency afterward will not retro-update
+      // already-created rules.
+      final effectiveAccountId = _selectedAccountId ?? widget.rule?.accountId;
+      final ruleCurrency = _accounts.currencyForAccountId(effectiveAccountId);
 
       if (_isEditing) {
         final updated = widget.rule!.copyWith(
@@ -401,6 +419,7 @@ class _RecurringRuleFormPageState extends State<RecurringRuleFormPage> {
           accountId: _selectedAccountId ?? widget.rule!.accountId,
           envelopeId: _selectedEnvelopeId,
           amount: amountCents,
+          currency: ruleCurrency,
           frequency: _selectedFrequency,
           startDate: _startDate,
           endDate: _endDate,
@@ -419,7 +438,7 @@ class _RecurringRuleFormPageState extends State<RecurringRuleFormPage> {
           accountId: _selectedAccountId!,
           type: _selectedType,
           amount: amountCents,
-          currency: 'USD',
+          currency: ruleCurrency,
           frequency: _selectedFrequency,
           startDate: _startDate,
           envelopeId: _selectedEnvelopeId,

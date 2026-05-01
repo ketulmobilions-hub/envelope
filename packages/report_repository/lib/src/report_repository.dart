@@ -58,24 +58,27 @@ class ReportRepository {
       final envelopeSpend = <String, int>{};
 
       for (final tx in filtered) {
+        // Aggregate in base currency. baseCurrencyAmount = amount × exchangeRate
+        // and is maintained by a server-side trigger (see migration 00029).
+        final baseAmount = tx.baseCurrencyAmount;
         if (tx.type == 'income') {
-          totalIncome += tx.amount;
+          totalIncome += baseAmount;
         } else if (tx.type == 'expense') {
-          totalSpent += tx.amount;
+          totalSpent += baseAmount;
 
           if (tx.envelopeId != null) {
             envelopeSpend.update(
               tx.envelopeId!,
-              (v) => v + tx.amount,
-              ifAbsent: () => tx.amount,
+              (v) => v + baseAmount,
+              ifAbsent: () => baseAmount,
             );
           } else {
-            // Split transaction — amount is stored
-            // as double (Real); truncate to int cents.
+            // Split transaction — split.amount is stored in the transaction's
+            // currency; multiply by the parent's exchangeRate to convert.
             final splits = await _localDatabase.transactionsDao
                 .getSplitsByTransactionId(tx.id);
             for (final split in splits) {
-              final amount = split.amount.toInt();
+              final amount = (split.amount * tx.exchangeRate).round();
               envelopeSpend.update(
                 split.envelopeId,
                 (v) => v + amount,
@@ -179,16 +182,19 @@ class ReportRepository {
       for (final tx in filtered) {
         final key = _monthKey(tx.date);
         final current = buckets[key] ?? (income: 0, expense: 0);
+        // Aggregate in base currency so trends across mixed-currency
+        // transactions are comparable.
+        final baseAmount = tx.baseCurrencyAmount;
 
         if (tx.type == 'income') {
           buckets[key] = (
-            income: current.income + tx.amount,
+            income: current.income + baseAmount,
             expense: current.expense,
           );
         } else if (tx.type == 'expense') {
           buckets[key] = (
             income: current.income,
-            expense: current.expense + tx.amount,
+            expense: current.expense + baseAmount,
           );
         }
       }

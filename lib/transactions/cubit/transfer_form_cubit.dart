@@ -52,9 +52,20 @@ class TransferFormCubit extends Cubit<TransferFormState> {
     required int amountCents,
     required DateTime date,
   }) async {
+    if (state.accounts.isEmpty) {
+      emit(
+        state.copyWith(
+          status: TransferFormStatus.failure,
+          errorMessage: 'Accounts not loaded yet. Please retry.',
+        ),
+      );
+      return;
+    }
     emit(state.copyWith(status: TransferFormStatus.submitting));
     try {
       final transferPairId = const Uuid().v4();
+      final fromCurrency = state.accounts.currencyForAccountId(fromAccountId);
+      final toCurrency = state.accounts.currencyForAccountId(toAccountId);
 
       // Create outgoing transaction (from account — negative amount).
       await _transactionRepository.createTransaction(
@@ -62,7 +73,7 @@ class TransferFormCubit extends Cubit<TransferFormState> {
         accountId: fromAccountId,
         type: 'transfer',
         amount: -amountCents,
-        currency: 'USD',
+        currency: fromCurrency,
         date: date,
         createdBy: userId,
         transferPairId: transferPairId,
@@ -74,7 +85,7 @@ class TransferFormCubit extends Cubit<TransferFormState> {
         accountId: toAccountId,
         type: 'transfer',
         amount: amountCents,
-        currency: 'USD',
+        currency: toCurrency,
         date: date,
         createdBy: userId,
         transferPairId: transferPairId,

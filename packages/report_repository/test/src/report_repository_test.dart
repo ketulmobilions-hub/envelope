@@ -107,6 +107,8 @@ void main() {
     required DateTime date,
     String? envelopeId,
     String? transferPairId,
+    double exchangeRate = 1,
+    int? baseCurrencyAmount,
   }) => storage.Transaction(
     id: id,
     budgetId: 'budget-1',
@@ -115,7 +117,9 @@ void main() {
     type: type,
     amount: amount,
     currency: 'USD',
-    exchangeRate: 1,
+    exchangeRate: exchangeRate,
+    baseCurrencyAmount:
+        baseCurrencyAmount ?? (amount * exchangeRate).round(),
     date: date,
     isReconciled: false,
     transferPairId: transferPairId,

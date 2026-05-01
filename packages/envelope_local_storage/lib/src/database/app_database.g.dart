@@ -4395,6 +4395,17 @@ class $TransactionsTable extends Transactions
     requiredDuringInsert: false,
     defaultValue: const Constant(1),
   );
+  static const VerificationMeta _baseCurrencyAmountMeta =
+      const VerificationMeta('baseCurrencyAmount');
+  @override
+  late final GeneratedColumn<int> baseCurrencyAmount = GeneratedColumn<int>(
+    'base_currency_amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _payeeMeta = const VerificationMeta('payee');
   @override
   late final GeneratedColumn<String> payee = GeneratedColumn<String>(
@@ -4513,6 +4524,7 @@ class $TransactionsTable extends Transactions
     amount,
     currency,
     exchangeRate,
+    baseCurrencyAmount,
     payee,
     notes,
     date,
@@ -4593,6 +4605,15 @@ class $TransactionsTable extends Transactions
         exchangeRate.isAcceptableOrUnknown(
           data['exchange_rate']!,
           _exchangeRateMeta,
+        ),
+      );
+    }
+    if (data.containsKey('base_currency_amount')) {
+      context.handle(
+        _baseCurrencyAmountMeta,
+        baseCurrencyAmount.isAcceptableOrUnknown(
+          data['base_currency_amount']!,
+          _baseCurrencyAmountMeta,
         ),
       );
     }
@@ -4714,6 +4735,10 @@ class $TransactionsTable extends Transactions
         DriftSqlType.double,
         data['${effectivePrefix}exchange_rate'],
       )!,
+      baseCurrencyAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}base_currency_amount'],
+      )!,
       payee: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}payee'],
@@ -4772,6 +4797,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   final int amount;
   final String currency;
   final double exchangeRate;
+  final int baseCurrencyAmount;
   final String? payee;
   final String? notes;
   final DateTime date;
@@ -4791,6 +4817,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     required this.amount,
     required this.currency,
     required this.exchangeRate,
+    required this.baseCurrencyAmount,
     this.payee,
     this.notes,
     required this.date,
@@ -4815,6 +4842,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     map['amount'] = Variable<int>(amount);
     map['currency'] = Variable<String>(currency);
     map['exchange_rate'] = Variable<double>(exchangeRate);
+    map['base_currency_amount'] = Variable<int>(baseCurrencyAmount);
     if (!nullToAbsent || payee != null) {
       map['payee'] = Variable<String>(payee);
     }
@@ -4850,6 +4878,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       amount: Value(amount),
       currency: Value(currency),
       exchangeRate: Value(exchangeRate),
+      baseCurrencyAmount: Value(baseCurrencyAmount),
       payee: payee == null && nullToAbsent
           ? const Value.absent()
           : Value(payee),
@@ -4887,6 +4916,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       amount: serializer.fromJson<int>(json['amount']),
       currency: serializer.fromJson<String>(json['currency']),
       exchangeRate: serializer.fromJson<double>(json['exchangeRate']),
+      baseCurrencyAmount: serializer.fromJson<int>(json['baseCurrencyAmount']),
       payee: serializer.fromJson<String?>(json['payee']),
       notes: serializer.fromJson<String?>(json['notes']),
       date: serializer.fromJson<DateTime>(json['date']),
@@ -4911,6 +4941,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'amount': serializer.toJson<int>(amount),
       'currency': serializer.toJson<String>(currency),
       'exchangeRate': serializer.toJson<double>(exchangeRate),
+      'baseCurrencyAmount': serializer.toJson<int>(baseCurrencyAmount),
       'payee': serializer.toJson<String?>(payee),
       'notes': serializer.toJson<String?>(notes),
       'date': serializer.toJson<DateTime>(date),
@@ -4933,6 +4964,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     int? amount,
     String? currency,
     double? exchangeRate,
+    int? baseCurrencyAmount,
     Value<String?> payee = const Value.absent(),
     Value<String?> notes = const Value.absent(),
     DateTime? date,
@@ -4952,6 +4984,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     amount: amount ?? this.amount,
     currency: currency ?? this.currency,
     exchangeRate: exchangeRate ?? this.exchangeRate,
+    baseCurrencyAmount: baseCurrencyAmount ?? this.baseCurrencyAmount,
     payee: payee.present ? payee.value : this.payee,
     notes: notes.present ? notes.value : this.notes,
     date: date ?? this.date,
@@ -4981,6 +5014,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       exchangeRate: data.exchangeRate.present
           ? data.exchangeRate.value
           : this.exchangeRate,
+      baseCurrencyAmount: data.baseCurrencyAmount.present
+          ? data.baseCurrencyAmount.value
+          : this.baseCurrencyAmount,
       payee: data.payee.present ? data.payee.value : this.payee,
       notes: data.notes.present ? data.notes.value : this.notes,
       date: data.date.present ? data.date.value : this.date,
@@ -5011,6 +5047,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('amount: $amount, ')
           ..write('currency: $currency, ')
           ..write('exchangeRate: $exchangeRate, ')
+          ..write('baseCurrencyAmount: $baseCurrencyAmount, ')
           ..write('payee: $payee, ')
           ..write('notes: $notes, ')
           ..write('date: $date, ')
@@ -5035,6 +5072,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     amount,
     currency,
     exchangeRate,
+    baseCurrencyAmount,
     payee,
     notes,
     date,
@@ -5058,6 +5096,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.amount == this.amount &&
           other.currency == this.currency &&
           other.exchangeRate == this.exchangeRate &&
+          other.baseCurrencyAmount == this.baseCurrencyAmount &&
           other.payee == this.payee &&
           other.notes == this.notes &&
           other.date == this.date &&
@@ -5079,6 +5118,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<int> amount;
   final Value<String> currency;
   final Value<double> exchangeRate;
+  final Value<int> baseCurrencyAmount;
   final Value<String?> payee;
   final Value<String?> notes;
   final Value<DateTime> date;
@@ -5099,6 +5139,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.amount = const Value.absent(),
     this.currency = const Value.absent(),
     this.exchangeRate = const Value.absent(),
+    this.baseCurrencyAmount = const Value.absent(),
     this.payee = const Value.absent(),
     this.notes = const Value.absent(),
     this.date = const Value.absent(),
@@ -5120,6 +5161,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     required int amount,
     required String currency,
     this.exchangeRate = const Value.absent(),
+    this.baseCurrencyAmount = const Value.absent(),
     this.payee = const Value.absent(),
     this.notes = const Value.absent(),
     required DateTime date,
@@ -5150,6 +5192,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<int>? amount,
     Expression<String>? currency,
     Expression<double>? exchangeRate,
+    Expression<int>? baseCurrencyAmount,
     Expression<String>? payee,
     Expression<String>? notes,
     Expression<DateTime>? date,
@@ -5171,6 +5214,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (amount != null) 'amount': amount,
       if (currency != null) 'currency': currency,
       if (exchangeRate != null) 'exchange_rate': exchangeRate,
+      if (baseCurrencyAmount != null)
+        'base_currency_amount': baseCurrencyAmount,
       if (payee != null) 'payee': payee,
       if (notes != null) 'notes': notes,
       if (date != null) 'date': date,
@@ -5194,6 +5239,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Value<int>? amount,
     Value<String>? currency,
     Value<double>? exchangeRate,
+    Value<int>? baseCurrencyAmount,
     Value<String?>? payee,
     Value<String?>? notes,
     Value<DateTime>? date,
@@ -5215,6 +5261,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       amount: amount ?? this.amount,
       currency: currency ?? this.currency,
       exchangeRate: exchangeRate ?? this.exchangeRate,
+      baseCurrencyAmount: baseCurrencyAmount ?? this.baseCurrencyAmount,
       payee: payee ?? this.payee,
       notes: notes ?? this.notes,
       date: date ?? this.date,
@@ -5255,6 +5302,9 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     }
     if (exchangeRate.present) {
       map['exchange_rate'] = Variable<double>(exchangeRate.value);
+    }
+    if (baseCurrencyAmount.present) {
+      map['base_currency_amount'] = Variable<int>(baseCurrencyAmount.value);
     }
     if (payee.present) {
       map['payee'] = Variable<String>(payee.value);
@@ -5303,6 +5353,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
           ..write('amount: $amount, ')
           ..write('currency: $currency, ')
           ..write('exchangeRate: $exchangeRate, ')
+          ..write('baseCurrencyAmount: $baseCurrencyAmount, ')
           ..write('payee: $payee, ')
           ..write('notes: $notes, ')
           ..write('date: $date, ')
@@ -14694,6 +14745,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       required int amount,
       required String currency,
       Value<double> exchangeRate,
+      Value<int> baseCurrencyAmount,
       Value<String?> payee,
       Value<String?> notes,
       required DateTime date,
@@ -14716,6 +14768,7 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<int> amount,
       Value<String> currency,
       Value<double> exchangeRate,
+      Value<int> baseCurrencyAmount,
       Value<String?> payee,
       Value<String?> notes,
       Value<DateTime> date,
@@ -14775,6 +14828,11 @@ class $$TransactionsTableFilterComposer
 
   ColumnFilters<double> get exchangeRate => $composableBuilder(
     column: $table.exchangeRate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get baseCurrencyAmount => $composableBuilder(
+    column: $table.baseCurrencyAmount,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -14878,6 +14936,11 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get baseCurrencyAmount => $composableBuilder(
+    column: $table.baseCurrencyAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get payee => $composableBuilder(
     column: $table.payee,
     builder: (column) => ColumnOrderings(column),
@@ -14966,6 +15029,11 @@ class $$TransactionsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get baseCurrencyAmount => $composableBuilder(
+    column: $table.baseCurrencyAmount,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get payee =>
       $composableBuilder(column: $table.payee, builder: (column) => column);
 
@@ -15042,6 +15110,7 @@ class $$TransactionsTableTableManager
                 Value<int> amount = const Value.absent(),
                 Value<String> currency = const Value.absent(),
                 Value<double> exchangeRate = const Value.absent(),
+                Value<int> baseCurrencyAmount = const Value.absent(),
                 Value<String?> payee = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<DateTime> date = const Value.absent(),
@@ -15062,6 +15131,7 @@ class $$TransactionsTableTableManager
                 amount: amount,
                 currency: currency,
                 exchangeRate: exchangeRate,
+                baseCurrencyAmount: baseCurrencyAmount,
                 payee: payee,
                 notes: notes,
                 date: date,
@@ -15084,6 +15154,7 @@ class $$TransactionsTableTableManager
                 required int amount,
                 required String currency,
                 Value<double> exchangeRate = const Value.absent(),
+                Value<int> baseCurrencyAmount = const Value.absent(),
                 Value<String?> payee = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 required DateTime date,
@@ -15104,6 +15175,7 @@ class $$TransactionsTableTableManager
                 amount: amount,
                 currency: currency,
                 exchangeRate: exchangeRate,
+                baseCurrencyAmount: baseCurrencyAmount,
                 payee: payee,
                 notes: notes,
                 date: date,

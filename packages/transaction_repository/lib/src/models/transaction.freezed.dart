@@ -25,6 +25,7 @@ mixin _$Transaction {
   DateTime get updatedAt;
   String? get envelopeId;
   double get exchangeRate;
+  int get baseCurrencyAmount;
   String? get payee;
   String? get notes;
   bool get isReconciled;
@@ -66,6 +67,8 @@ mixin _$Transaction {
                 other.envelopeId == envelopeId) &&
             (identical(other.exchangeRate, exchangeRate) ||
                 other.exchangeRate == exchangeRate) &&
+            (identical(other.baseCurrencyAmount, baseCurrencyAmount) ||
+                other.baseCurrencyAmount == baseCurrencyAmount) &&
             (identical(other.payee, payee) || other.payee == payee) &&
             (identical(other.notes, notes) || other.notes == notes) &&
             (identical(other.isReconciled, isReconciled) ||
@@ -92,6 +95,7 @@ mixin _$Transaction {
     updatedAt,
     envelopeId,
     exchangeRate,
+    baseCurrencyAmount,
     payee,
     notes,
     isReconciled,
@@ -101,7 +105,7 @@ mixin _$Transaction {
 
   @override
   String toString() {
-    return 'Transaction(id: $id, budgetId: $budgetId, accountId: $accountId, type: $type, amount: $amount, currency: $currency, date: $date, createdBy: $createdBy, createdAt: $createdAt, updatedAt: $updatedAt, envelopeId: $envelopeId, exchangeRate: $exchangeRate, payee: $payee, notes: $notes, isReconciled: $isReconciled, recurringRuleId: $recurringRuleId, transferPairId: $transferPairId)';
+    return 'Transaction(id: $id, budgetId: $budgetId, accountId: $accountId, type: $type, amount: $amount, currency: $currency, date: $date, createdBy: $createdBy, createdAt: $createdAt, updatedAt: $updatedAt, envelopeId: $envelopeId, exchangeRate: $exchangeRate, baseCurrencyAmount: $baseCurrencyAmount, payee: $payee, notes: $notes, isReconciled: $isReconciled, recurringRuleId: $recurringRuleId, transferPairId: $transferPairId)';
   }
 }
 
@@ -125,6 +129,7 @@ abstract mixin class $TransactionCopyWith<$Res> {
     DateTime updatedAt,
     String? envelopeId,
     double exchangeRate,
+    int baseCurrencyAmount,
     String? payee,
     String? notes,
     bool isReconciled,
@@ -157,6 +162,7 @@ class _$TransactionCopyWithImpl<$Res> implements $TransactionCopyWith<$Res> {
     Object? updatedAt = null,
     Object? envelopeId = freezed,
     Object? exchangeRate = null,
+    Object? baseCurrencyAmount = null,
     Object? payee = freezed,
     Object? notes = freezed,
     Object? isReconciled = null,
@@ -213,6 +219,10 @@ class _$TransactionCopyWithImpl<$Res> implements $TransactionCopyWith<$Res> {
             ? _self.exchangeRate
             : exchangeRate // ignore: cast_nullable_to_non_nullable
                   as double,
+        baseCurrencyAmount: null == baseCurrencyAmount
+            ? _self.baseCurrencyAmount
+            : baseCurrencyAmount // ignore: cast_nullable_to_non_nullable
+                  as int,
         payee: freezed == payee
             ? _self.payee
             : payee // ignore: cast_nullable_to_non_nullable
@@ -344,6 +354,7 @@ extension TransactionPatterns on Transaction {
       DateTime updatedAt,
       String? envelopeId,
       double exchangeRate,
+      int baseCurrencyAmount,
       String? payee,
       String? notes,
       bool isReconciled,
@@ -369,6 +380,7 @@ extension TransactionPatterns on Transaction {
           _that.updatedAt,
           _that.envelopeId,
           _that.exchangeRate,
+          _that.baseCurrencyAmount,
           _that.payee,
           _that.notes,
           _that.isReconciled,
@@ -408,6 +420,7 @@ extension TransactionPatterns on Transaction {
       DateTime updatedAt,
       String? envelopeId,
       double exchangeRate,
+      int baseCurrencyAmount,
       String? payee,
       String? notes,
       bool isReconciled,
@@ -432,6 +445,7 @@ extension TransactionPatterns on Transaction {
           _that.updatedAt,
           _that.envelopeId,
           _that.exchangeRate,
+          _that.baseCurrencyAmount,
           _that.payee,
           _that.notes,
           _that.isReconciled,
@@ -470,6 +484,7 @@ extension TransactionPatterns on Transaction {
       DateTime updatedAt,
       String? envelopeId,
       double exchangeRate,
+      int baseCurrencyAmount,
       String? payee,
       String? notes,
       bool isReconciled,
@@ -494,6 +509,7 @@ extension TransactionPatterns on Transaction {
           _that.updatedAt,
           _that.envelopeId,
           _that.exchangeRate,
+          _that.baseCurrencyAmount,
           _that.payee,
           _that.notes,
           _that.isReconciled,
@@ -522,6 +538,7 @@ class _Transaction implements Transaction {
     required this.updatedAt,
     this.envelopeId,
     this.exchangeRate = 1.0,
+    this.baseCurrencyAmount = 0,
     this.payee,
     this.notes,
     this.isReconciled = false,
@@ -556,6 +573,9 @@ class _Transaction implements Transaction {
   @override
   @JsonKey()
   final double exchangeRate;
+  @override
+  @JsonKey()
+  final int baseCurrencyAmount;
   @override
   final String? payee;
   @override
@@ -606,6 +626,8 @@ class _Transaction implements Transaction {
                 other.envelopeId == envelopeId) &&
             (identical(other.exchangeRate, exchangeRate) ||
                 other.exchangeRate == exchangeRate) &&
+            (identical(other.baseCurrencyAmount, baseCurrencyAmount) ||
+                other.baseCurrencyAmount == baseCurrencyAmount) &&
             (identical(other.payee, payee) || other.payee == payee) &&
             (identical(other.notes, notes) || other.notes == notes) &&
             (identical(other.isReconciled, isReconciled) ||
@@ -632,6 +654,7 @@ class _Transaction implements Transaction {
     updatedAt,
     envelopeId,
     exchangeRate,
+    baseCurrencyAmount,
     payee,
     notes,
     isReconciled,
@@ -641,7 +664,7 @@ class _Transaction implements Transaction {
 
   @override
   String toString() {
-    return 'Transaction(id: $id, budgetId: $budgetId, accountId: $accountId, type: $type, amount: $amount, currency: $currency, date: $date, createdBy: $createdBy, createdAt: $createdAt, updatedAt: $updatedAt, envelopeId: $envelopeId, exchangeRate: $exchangeRate, payee: $payee, notes: $notes, isReconciled: $isReconciled, recurringRuleId: $recurringRuleId, transferPairId: $transferPairId)';
+    return 'Transaction(id: $id, budgetId: $budgetId, accountId: $accountId, type: $type, amount: $amount, currency: $currency, date: $date, createdBy: $createdBy, createdAt: $createdAt, updatedAt: $updatedAt, envelopeId: $envelopeId, exchangeRate: $exchangeRate, baseCurrencyAmount: $baseCurrencyAmount, payee: $payee, notes: $notes, isReconciled: $isReconciled, recurringRuleId: $recurringRuleId, transferPairId: $transferPairId)';
   }
 }
 
@@ -667,6 +690,7 @@ abstract mixin class _$TransactionCopyWith<$Res>
     DateTime updatedAt,
     String? envelopeId,
     double exchangeRate,
+    int baseCurrencyAmount,
     String? payee,
     String? notes,
     bool isReconciled,
@@ -699,6 +723,7 @@ class __$TransactionCopyWithImpl<$Res> implements _$TransactionCopyWith<$Res> {
     Object? updatedAt = null,
     Object? envelopeId = freezed,
     Object? exchangeRate = null,
+    Object? baseCurrencyAmount = null,
     Object? payee = freezed,
     Object? notes = freezed,
     Object? isReconciled = null,
@@ -755,6 +780,10 @@ class __$TransactionCopyWithImpl<$Res> implements _$TransactionCopyWith<$Res> {
             ? _self.exchangeRate
             : exchangeRate // ignore: cast_nullable_to_non_nullable
                   as double,
+        baseCurrencyAmount: null == baseCurrencyAmount
+            ? _self.baseCurrencyAmount
+            : baseCurrencyAmount // ignore: cast_nullable_to_non_nullable
+                  as int,
         payee: freezed == payee
             ? _self.payee
             : payee // ignore: cast_nullable_to_non_nullable

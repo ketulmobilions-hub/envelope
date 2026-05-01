@@ -175,6 +175,15 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     List<String> selectedTagIds = const [],
     bool isRecurring = false,
   }) async {
+    if (state.accounts.isEmpty) {
+      emit(
+        state.copyWith(
+          status: TransactionFormStatus.failure,
+          errorMessage: 'Accounts not loaded yet. Please retry.',
+        ),
+      );
+      return;
+    }
     emit(state.copyWith(status: TransactionFormStatus.submitting));
     try {
       if (isEditing) {
@@ -293,7 +302,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
               accountId: accountId,
               type: type,
               amount: amountCents,
-              currency: 'USD',
+              currency: state.accounts.currencyForAccountId(accountId),
               date: date,
               createdBy: userId,
               envelopeId: isSplitMode ? null : envelopeId,
@@ -434,7 +443,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
             accountId: accountId,
             type: type,
             amount: amountCents,
-            currency: 'USD',
+            currency: state.accounts.currencyForAccountId(accountId),
             date: date,
             createdBy: userId,
             envelopeId: isSplitMode ? null : envelopeId,
@@ -465,13 +474,15 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         }
 
         if (type == 'expense') {
+          // Phase 3 will wire a real exchangeRate from the form. Until then
+          // rate=1.0 means baseCurrencyAmount == amountCents.
           if (!isSplitMode && envelopeId != null) {
             unawaited(
               _envelopeRepository.incrementLocalSpentAmount(
                 envelopeId: envelopeId,
                 budgetId: budgetId,
                 date: date,
-                amount: amountCents,
+                baseCurrencyAmount: amountCents,
               ),
             );
           } else if (isSplitMode) {
@@ -483,7 +494,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
                     envelopeId: splitEnvId,
                     budgetId: budgetId,
                     date: date,
-                    amount: split.amountCents,
+                    baseCurrencyAmount: split.amountCents,
                   ),
                 );
               }
@@ -573,12 +584,15 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
             customInterval: state.recurringCustomInterval,
             customUnit: state.recurringCustomUnit,
           );
+    // Currency is snapshot at rule creation. If the account's currency is
+    // later edited, future fired transactions still use the snapshot here
+    // (see RecurringCheckCubit._autoPostRule which passes rule.currency).
     await _transactionRepository.createRecurringRule(
       budgetId: budgetId,
       accountId: accountId,
       type: type,
       amount: amountCents,
-      currency: 'USD',
+      currency: state.accounts.currencyForAccountId(accountId),
       frequency: state.recurringFrequency,
       startDate: startDate,
       envelopeId: envelopeId,

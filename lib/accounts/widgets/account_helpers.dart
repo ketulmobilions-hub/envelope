@@ -1,5 +1,20 @@
+import 'package:account_repository/account_repository.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:flutter/material.dart';
+
+/// Currency lookup helpers on a list of [Account].
+extension AccountListCurrency on List<Account> {
+  /// Returns the currency of the account whose id matches [accountId],
+  /// falling back to [fallback] (default `'USD'`) if no match is found.
+  ///
+  /// Callers that have a budget context should validate the list is non-empty
+  /// before relying on the fallback — an empty accounts list at submit time
+  /// usually indicates a load race that should be surfaced as a form error.
+  String currencyForAccountId(String? accountId, {String fallback = 'USD'}) {
+    if (accountId == null) return fallback;
+    return where((a) => a.id == accountId).firstOrNull?.currency ?? fallback;
+  }
+}
 
 /// Returns the localized display name for an account type.
 String localizedAccountType(String type, AppLocalizations l10n) {
