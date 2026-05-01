@@ -260,7 +260,9 @@ class AccountDetailPage extends StatelessWidget {
                     final raw = double.tryParse(controller.text.trim());
                     if (raw != null && raw.abs() > maxDollarAmount) {
                       setDialogState(
-                        () => balanceError = l10n.accountsBalanceTooLarge,
+                        () => balanceError = l10n.accountsBalanceTooLarge(
+                          '${symbol}999,999,999.99',
+                        ),
                       );
                       return;
                     }

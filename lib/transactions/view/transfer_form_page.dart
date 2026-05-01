@@ -1,8 +1,7 @@
 import 'package:account_repository/account_repository.dart';
-import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
-import 'package:envelope/onboarding/data/currencies.dart';
 import 'package:envelope/shared/services/app_clock.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/shared/widgets/app_option_picker.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/transactions/cubit/cubit.dart';
@@ -44,14 +43,7 @@ class _TransferFormPageState extends State<TransferFormPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final baseCurrency =
-        context.read<AuthBloc>().state.user?.baseCurrency ?? 'USD';
-    final currencySymbol = supportedCurrencies
-        .firstWhere(
-          (c) => c.code == baseCurrency,
-          orElse: () => supportedCurrencies.first,
-        )
-        .symbol;
+    final symbol = currencySymbol(context);
 
     return BlocListener<TransferFormCubit, TransferFormState>(
       listener: (context, state) {
@@ -122,7 +114,7 @@ class _TransferFormPageState extends State<TransferFormPage> {
                         controller: _amountController,
                         decoration: InputDecoration(
                           labelText: l10n.transactionsAmountLabel,
-                          prefixText: currencySymbol,
+                          prefixText: symbol,
                         ),
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,

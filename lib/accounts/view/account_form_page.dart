@@ -76,6 +76,7 @@ class _AccountFormPageState extends State<AccountFormPage> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final symbol = currencySymbol(context);
+    final maxAmountLabel = '${symbol}999,999,999.99';
 
     return BlocListener<AccountFormCubit, AccountFormState>(
       listener: (context, state) {
@@ -164,7 +165,7 @@ class _AccountFormPageState extends State<AccountFormPage> {
                     validator: (value) {
                       final parsed = double.tryParse(value?.trim() ?? '');
                       if (parsed != null && parsed.abs() > maxDollarAmount) {
-                        return l10n.accountsBalanceTooLarge;
+                        return l10n.accountsBalanceTooLarge(maxAmountLabel);
                       }
                       return null;
                     },
@@ -190,7 +191,9 @@ class _AccountFormPageState extends State<AccountFormPage> {
                         if (value == null || value.trim().isEmpty) return null;
                         final parsed = double.tryParse(value.trim());
                         if (parsed != null && parsed > maxDollarAmount) {
-                          return l10n.accountsBalanceTooLarge;
+                          return l10n.accountsCreditLimitTooLarge(
+                            maxAmountLabel,
+                          );
                         }
                         return null;
                       },
