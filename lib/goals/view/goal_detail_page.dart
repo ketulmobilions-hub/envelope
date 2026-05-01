@@ -5,6 +5,7 @@ import 'package:envelope/goals/view/goal_form_page.dart';
 import 'package:envelope/goals/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
+import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -51,9 +52,17 @@ class GoalDetailPage extends StatelessWidget {
       },
       builder: (context, state) {
         final goal = state.goal;
-        final progress = goalProgress(goal);
-        final monthly = monthlyContributionNeeded(goal);
+        final effectiveAmount = state.effectiveCurrentAmount;
+        final progress = goalProgress(
+          goal,
+          overrideCurrentAmount: effectiveAmount,
+        );
+        final monthly = monthlyContributionNeeded(
+          goal,
+          overrideCurrentAmount: effectiveAmount,
+        );
         final symbol = currencySymbol(context);
+        final isLinked = goal.envelopeId != null;
 
         return Scaffold(
           appBar: AppBar(
@@ -69,6 +78,12 @@ class GoalDetailPage extends StatelessWidget {
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              if (isLinked && state.linkedEnvelopeName != null) ...[
+                _LinkedEnvelopeBanner(
+                  envelopeName: state.linkedEnvelopeName!,
+                ),
+                const SizedBox(height: 12),
+              ],
               // Progress card.
               Card(
                 child: Padding(
@@ -89,7 +104,7 @@ class GoalDetailPage extends StatelessWidget {
                         children: [
                           _AmountDetail(
                             label: l10n.goalsCurrentAmount,
-                            amount: goal.currentAmount,
+                            amount: effectiveAmount,
                           ),
                           if (goal.targetAmount != null)
                             _AmountDetail(
@@ -155,24 +170,27 @@ class GoalDetailPage extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              // Contributions history card.
-              _ContributionsCard(
-                contributions: state.contributions,
-                onDelete: (c) => _confirmDeleteContribution(context, c),
-              ),
-              const SizedBox(height: 16),
-              // Add Contribution button.
-              FilledButton.icon(
-                onPressed:
-                    state.status == GoalDetailStatus.submitting ||
-                        goal.isCompleted
-                    ? null
-                    : () => _showAddContribution(context),
-                icon: const Icon(Icons.add),
-                label: Text(l10n.goalsAddContribution),
-              ),
-              const SizedBox(height: 8),
+              if (!isLinked) ...[
+                const SizedBox(height: 16),
+                // Contributions history card.
+                _ContributionsCard(
+                  contributions: state.contributions,
+                  onDelete: (c) => _confirmDeleteContribution(context, c),
+                ),
+                const SizedBox(height: 16),
+                // Add Contribution button.
+                FilledButton.icon(
+                  onPressed:
+                      state.status == GoalDetailStatus.submitting ||
+                          goal.isCompleted
+                      ? null
+                      : () => _showAddContribution(context),
+                  icon: const Icon(Icons.add),
+                  label: Text(l10n.goalsAddContribution),
+                ),
+                const SizedBox(height: 8),
+              ] else
+                const SizedBox(height: 16),
               // Complete/Uncomplete button.
               OutlinedButton.icon(
                 onPressed: state.status == GoalDetailStatus.submitting
@@ -303,6 +321,7 @@ class GoalDetailPage extends StatelessWidget {
         builder: (_) => BlocProvider(
           create: (_) => GoalFormCubit(
             goalRepository: context.read<GoalRepository>(),
+            envelopeRepository: context.read<EnvelopeRepository>(),
             budgetId: budgetId,
             goal: goal,
           ),
@@ -341,6 +360,43 @@ class GoalDetailPage extends StatelessWidget {
     if (confirmed == true && context.mounted) {
       await cubit.delete();
     }
+  }
+}
+
+class _LinkedEnvelopeBanner extends StatelessWidget {
+  const _LinkedEnvelopeBanner({required this.envelopeName});
+
+  final String envelopeName;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: colorScheme.primaryContainer.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.account_balance_wallet_outlined,
+            size: 20,
+            color: colorScheme.primary,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              l10n.goalsLinkedEnvelopeInfo(envelopeName),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

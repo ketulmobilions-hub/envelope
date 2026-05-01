@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:bloc/bloc.dart';
+import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:goal_repository/goal_repository.dart';
 
@@ -7,16 +10,30 @@ part 'goal_form_state.dart';
 class GoalFormCubit extends Cubit<GoalFormState> {
   GoalFormCubit({
     required GoalRepository goalRepository,
+    required EnvelopeRepository envelopeRepository,
     required this.budgetId,
     this.goal,
   }) : _goalRepository = goalRepository,
-       super(const GoalFormState());
+       _envelopeRepository = envelopeRepository,
+       super(GoalFormState(envelopeId: goal?.envelopeId)) {
+    _envelopesSub = _envelopeRepository.watchEnvelopes(budgetId).listen(
+      (envelopes) => emit(
+        state.copyWith(envelopes: envelopes, envelopesLoading: false),
+      ),
+    );
+  }
 
   final GoalRepository _goalRepository;
+  final EnvelopeRepository _envelopeRepository;
   final String budgetId;
   final Goal? goal;
+  StreamSubscription<List<Envelope>>? _envelopesSub;
 
   bool get isEditing => goal != null;
+
+  void envelopeChanged(String? envelopeId) {
+    emit(state.copyWith(envelopeId: envelopeId));
+  }
 
   Future<void> submit({
     required String name,
@@ -31,6 +48,7 @@ class GoalFormCubit extends Cubit<GoalFormState> {
         final updated = goal!.copyWith(
           name: name,
           type: type,
+          envelopeId: state.envelopeId,
           targetAmount: targetAmount,
           targetDate: targetDate,
           monthlyContribution: monthlyContribution,
@@ -42,6 +60,7 @@ class GoalFormCubit extends Cubit<GoalFormState> {
           budgetId: budgetId,
           name: name,
           type: type,
+          envelopeId: state.envelopeId,
           targetAmount: targetAmount,
           targetDate: targetDate,
           monthlyContribution: monthlyContribution,
@@ -63,5 +82,11 @@ class GoalFormCubit extends Cubit<GoalFormState> {
         ),
       );
     }
+  }
+
+  @override
+  Future<void> close() async {
+    await _envelopesSub?.cancel();
+    return super.close();
   }
 }

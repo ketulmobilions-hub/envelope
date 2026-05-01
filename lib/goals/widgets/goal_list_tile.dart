@@ -14,6 +14,7 @@ class GoalListTile extends StatelessWidget {
     required this.onEdit,
     required this.onComplete,
     required this.onDelete,
+    this.computedAmount,
     super.key,
   });
 
@@ -23,11 +24,19 @@ class GoalListTile extends StatelessWidget {
   final VoidCallback onComplete;
   final VoidCallback onDelete;
 
+  /// Derived current amount for linked goals; falls back to
+  /// [Goal.currentAmount] when null.
+  final int? computedAmount;
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final symbol = currencySymbol(context);
-    final progress = goalProgress(goal);
+    final effectiveAmount = computedAmount ?? goal.currentAmount;
+    final progress = goalProgress(
+      goal,
+      overrideCurrentAmount: effectiveAmount,
+    );
 
     return ListTile(
       leading: CircleAvatar(
@@ -55,7 +64,7 @@ class GoalListTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${formatCents(goal.currentAmount, symbol: symbol)} / '
+                  '${formatCents(effectiveAmount, symbol: symbol)} / '
                   '${formatCents(goal.targetAmount!, symbol: symbol)}',
                 ),
                 const SizedBox(height: 4),

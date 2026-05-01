@@ -1,3 +1,4 @@
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/goals/bloc/bloc.dart';
 import 'package:envelope/goals/cubit/cubit.dart';
 import 'package:envelope/goals/view/goal_detail_page.dart';
@@ -5,9 +6,11 @@ import 'package:envelope/goals/view/goal_form_page.dart';
 import 'package:envelope/goals/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
+import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:goal_repository/goal_repository.dart';
+import 'package:transaction_repository/transaction_repository.dart';
 
 /// Page that provides [GoalsBloc] and displays the goals list.
 class GoalsPage extends StatelessWidget {
@@ -20,6 +23,9 @@ class GoalsPage extends StatelessWidget {
     return BlocProvider(
       create: (_) => GoalsBloc(
         goalRepository: context.read<GoalRepository>(),
+        envelopeRepository: context.read<EnvelopeRepository>(),
+        budgetRepository: context.read<BudgetRepository>(),
+        transactionRepository: context.read<TransactionRepository>(),
         budgetId: budgetId,
       )..add(const GoalsStarted()),
       child: GoalsView(budgetId: budgetId),
@@ -94,6 +100,7 @@ class GoalsView extends StatelessWidget {
         builder: (_) => BlocProvider(
           create: (_) => GoalFormCubit(
             goalRepository: context.read<GoalRepository>(),
+            envelopeRepository: context.read<EnvelopeRepository>(),
             budgetId: budgetId,
           ),
           child: const GoalFormPage(),
@@ -174,6 +181,7 @@ class _GoalsList extends StatelessWidget {
           for (final goal in grouped[type]!)
             GoalListTile(
               goal: goal,
+              computedAmount: state.computedAmounts[goal.id],
               onTap: () => _openDetail(context, goal),
               onEdit: () => _openEdit(context, goal),
               onComplete: () =>
@@ -194,6 +202,7 @@ class _GoalsList extends StatelessWidget {
           for (final goal in completed)
             GoalListTile(
               goal: goal,
+              computedAmount: state.computedAmounts[goal.id],
               onTap: () => _openDetail(context, goal),
               onEdit: () => _openEdit(context, goal),
               onComplete: () =>
@@ -214,6 +223,9 @@ class _GoalsList extends StatelessWidget {
         builder: (_) => BlocProvider(
           create: (_) => GoalDetailCubit(
             goalRepository: context.read<GoalRepository>(),
+            envelopeRepository: context.read<EnvelopeRepository>(),
+            budgetRepository: context.read<BudgetRepository>(),
+            transactionRepository: context.read<TransactionRepository>(),
             goal: goal,
           ),
           child: GoalDetailPage(budgetId: budgetId),
@@ -235,6 +247,7 @@ class _GoalsList extends StatelessWidget {
         builder: (_) => BlocProvider(
           create: (_) => GoalFormCubit(
             goalRepository: context.read<GoalRepository>(),
+            envelopeRepository: context.read<EnvelopeRepository>(),
             budgetId: budgetId,
             goal: goal,
           ),

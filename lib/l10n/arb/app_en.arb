@@ -1455,6 +1455,21 @@
     "@goalsTypeLabel": {
         "description": "Label for goal type dropdown"
     },
+    "goalsEnvelopeLabel": "Envelope (optional)",
+    "@goalsEnvelopeLabel": {
+        "description": "Label for the envelope picker on the goal form"
+    },
+    "goalsEnvelopeNone": "No envelope",
+    "@goalsEnvelopeNone": {
+        "description": "Picker option for goals not linked to any envelope"
+    },
+    "goalsLinkedEnvelopeInfo": "Progress tracked from envelope “{name}”",
+    "@goalsLinkedEnvelopeInfo": {
+        "description": "Banner shown on goal detail page when linked to envelope",
+        "placeholders": {
+            "name": { "type": "String" }
+        }
+    },
     "goalsTargetAmountLabel": "Target Amount",
     "@goalsTargetAmountLabel": {
         "description": "Label for target amount input"
