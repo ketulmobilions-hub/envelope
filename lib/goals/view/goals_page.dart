@@ -1,4 +1,3 @@
-import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/goals/bloc/bloc.dart';
 import 'package:envelope/goals/cubit/cubit.dart';
 import 'package:envelope/goals/view/goal_detail_page.dart';
@@ -24,7 +23,6 @@ class GoalsPage extends StatelessWidget {
       create: (_) => GoalsBloc(
         goalRepository: context.read<GoalRepository>(),
         envelopeRepository: context.read<EnvelopeRepository>(),
-        budgetRepository: context.read<BudgetRepository>(),
         transactionRepository: context.read<TransactionRepository>(),
         budgetId: budgetId,
       )..add(const GoalsStarted()),
@@ -224,7 +222,6 @@ class _GoalsList extends StatelessWidget {
           create: (_) => GoalDetailCubit(
             goalRepository: context.read<GoalRepository>(),
             envelopeRepository: context.read<EnvelopeRepository>(),
-            budgetRepository: context.read<BudgetRepository>(),
             transactionRepository: context.read<TransactionRepository>(),
             goal: goal,
           ),

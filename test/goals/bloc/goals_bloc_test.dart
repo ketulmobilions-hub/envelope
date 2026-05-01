@@ -1,5 +1,4 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/goals/bloc/bloc.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,14 +10,11 @@ class MockGoalRepository extends Mock implements GoalRepository {}
 
 class MockEnvelopeRepository extends Mock implements EnvelopeRepository {}
 
-class MockBudgetRepository extends Mock implements BudgetRepository {}
-
 class MockTransactionRepository extends Mock implements TransactionRepository {}
 
 void main() {
   late MockGoalRepository goalRepository;
   late MockEnvelopeRepository envelopeRepository;
-  late MockBudgetRepository budgetRepository;
   late MockTransactionRepository transactionRepository;
 
   final now = DateTime(2024);
@@ -48,13 +44,9 @@ void main() {
   setUp(() {
     goalRepository = MockGoalRepository();
     envelopeRepository = MockEnvelopeRepository();
-    budgetRepository = MockBudgetRepository();
     transactionRepository = MockTransactionRepository();
     when(
-      () => budgetRepository.watchBudgetPeriods(any()),
-    ).thenAnswer((_) => const Stream<List<BudgetPeriod>>.empty());
-    when(
-      () => envelopeRepository.watchAllocations(any()),
+      () => envelopeRepository.watchAllocationsForEnvelope(any()),
     ).thenAnswer((_) => const Stream<List<EnvelopeAllocation>>.empty());
     when(
       () => transactionRepository.watchTransactions(
@@ -67,7 +59,6 @@ void main() {
     return GoalsBloc(
       goalRepository: goalRepository,
       envelopeRepository: envelopeRepository,
-      budgetRepository: budgetRepository,
       transactionRepository: transactionRepository,
       budgetId: 'budget-1',
     );
@@ -219,7 +210,7 @@ void main() {
     );
 
     blocTest<GoalsBloc, GoalsState>(
-      'computes amounts for linked goals after envelope stream emits',
+      'computes amounts from envelope-keyed allocation stream',
       build: () {
         final linkedGoal = Goal(
           id: 'goal-3',
@@ -231,22 +222,6 @@ void main() {
           createdAt: now,
           updatedAt: now,
         );
-        final period = BudgetPeriod(
-          id: 'period-1',
-          budgetId: 'budget-1',
-          startDate: DateTime(2000),
-          endDate: DateTime(2100),
-          createdAt: now,
-        );
-        final allocation = EnvelopeAllocation(
-          id: 'alloc-1',
-          envelopeId: 'env-1',
-          budgetPeriodId: 'period-1',
-          createdAt: now,
-          allocatedAmount: 200,
-          spentAmount: 50,
-          rolloverAmount: 100,
-        );
         when(
           () => goalRepository.watchGoals('budget-1'),
         ).thenAnswer((_) => Stream.value([linkedGoal]));
@@ -254,18 +229,34 @@ void main() {
           () => goalRepository.refreshGoals('budget-1'),
         ).thenAnswer((_) async {});
         when(
-          () => budgetRepository.watchBudgetPeriods('budget-1'),
-        ).thenAnswer((_) => Stream.value([period]));
-        when(
-          () => envelopeRepository.watchAllocations('period-1'),
-        ).thenAnswer((_) => Stream.value([allocation]));
+          () => envelopeRepository.watchAllocationsForEnvelope('env-1'),
+        ).thenAnswer(
+          (_) => Stream.value([
+            EnvelopeAllocation(
+              id: 'a1',
+              envelopeId: 'env-1',
+              budgetPeriodId: 'p1',
+              createdAt: now,
+              allocatedAmount: 200,
+              spentAmount: 50,
+            ),
+            EnvelopeAllocation(
+              id: 'a2',
+              envelopeId: 'env-1',
+              budgetPeriodId: 'p2',
+              createdAt: now,
+              allocatedAmount: 100,
+              spentAmount: 30,
+            ),
+          ]),
+        );
         return buildBloc();
       },
       act: (bloc) => bloc.add(const GoalsStarted()),
       wait: const Duration(milliseconds: 50),
       verify: (bloc) {
-        // 200 - 50 + 100 = 250
-        expect(bloc.state.computedAmounts['goal-3'], 250);
+        // (200-50) + (100-30) = 220
+        expect(bloc.state.computedAmounts['goal-3'], 220);
       },
     );
   });

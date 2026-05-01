@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
-import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/goals/services/goal_progress_calculator.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
@@ -14,12 +13,10 @@ class GoalDetailCubit extends Cubit<GoalDetailState> {
   GoalDetailCubit({
     required GoalRepository goalRepository,
     required EnvelopeRepository envelopeRepository,
-    required BudgetRepository budgetRepository,
     required TransactionRepository transactionRepository,
     required Goal goal,
   }) : _goalRepository = goalRepository,
        _envelopeRepository = envelopeRepository,
-       _budgetRepository = budgetRepository,
        _transactionRepository = transactionRepository,
        super(GoalDetailState(goal: goal)) {
     if (goal.envelopeId == null) {
@@ -37,17 +34,14 @@ class GoalDetailCubit extends Cubit<GoalDetailState> {
 
   final GoalRepository _goalRepository;
   final EnvelopeRepository _envelopeRepository;
-  final BudgetRepository _budgetRepository;
   final TransactionRepository _transactionRepository;
 
   StreamSubscription<List<GoalContribution>>? _contributionsSubscription;
   StreamSubscription<List<Envelope>>? _envelopesSubscription;
-  StreamSubscription<List<BudgetPeriod>>? _periodsSubscription;
-  StreamSubscription<List<EnvelopeAllocation>>? _allocationSubscription;
+  StreamSubscription<List<EnvelopeAllocation>>? _allocationsSubscription;
   StreamSubscription<List<Transaction>>? _transactionsSubscription;
 
-  String? _watchedPeriodId;
-  EnvelopeAllocation? _currentAllocation;
+  List<EnvelopeAllocation> _envelopeAllocations = const [];
   List<Transaction> _envelopeTransactions = const [];
 
   void _initLinkedWatchers() {
@@ -63,10 +57,11 @@ class GoalDetailCubit extends Cubit<GoalDetailState> {
           emit(state.copyWith(linkedEnvelopeName: match?.name));
         });
 
-    _periodsSubscription = _budgetRepository
-        .watchBudgetPeriods(budgetId)
-        .listen((periods) {
-          _watchAllocation(envelopeId, _pickCurrentPeriod(periods)?.id);
+    _allocationsSubscription = _envelopeRepository
+        .watchAllocationsForEnvelope(envelopeId)
+        .listen((allocs) {
+          _envelopeAllocations = allocs;
+          _recompute();
         });
 
     if (state.goal.type == 'debt_payoff') {
@@ -79,41 +74,10 @@ class GoalDetailCubit extends Cubit<GoalDetailState> {
     }
   }
 
-  static BudgetPeriod? _pickCurrentPeriod(List<BudgetPeriod> periods) {
-    if (periods.isEmpty) return null;
-    final now = DateTime.now();
-    final containing = periods
-        .where(
-          (p) => !p.startDate.isAfter(now) && !p.endDate.isBefore(now),
-        )
-        .firstOrNull;
-    if (containing != null) return containing;
-    return periods.reduce((a, b) => a.endDate.isAfter(b.endDate) ? a : b);
-  }
-
-  void _watchAllocation(String envelopeId, String? periodId) {
-    if (periodId == _watchedPeriodId) return;
-    _watchedPeriodId = periodId;
-    _allocationSubscription?.cancel().ignore();
-    if (periodId == null) {
-      _currentAllocation = null;
-      _recompute();
-      return;
-    }
-    _allocationSubscription = _envelopeRepository
-        .watchAllocations(periodId)
-        .listen((allocs) {
-          _currentAllocation = allocs
-              .where((a) => a.envelopeId == envelopeId)
-              .firstOrNull;
-          _recompute();
-        });
-  }
-
   void _recompute() {
     final amount = GoalProgressCalculator.compute(
       goal: state.goal,
-      allocation: _currentAllocation,
+      envelopeAllocations: _envelopeAllocations,
       envelopeTransactions: _envelopeTransactions,
     );
     emit(state.copyWith(computedCurrentAmount: amount));
@@ -216,8 +180,7 @@ class GoalDetailCubit extends Cubit<GoalDetailState> {
   Future<void> close() async {
     await _contributionsSubscription?.cancel();
     await _envelopesSubscription?.cancel();
-    await _periodsSubscription?.cancel();
-    await _allocationSubscription?.cancel();
+    await _allocationsSubscription?.cancel();
     await _transactionsSubscription?.cancel();
     return super.close();
   }

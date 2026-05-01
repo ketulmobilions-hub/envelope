@@ -4,6 +4,12 @@ import 'package:transaction_repository/transaction_repository.dart';
 
 /// Computes a goal's effective `currentAmount` from envelope state.
 ///
+/// Cross-period: `envelopeAllocations` should contain every allocation row
+/// for the linked envelope across all budget periods. This avoids fragile
+/// current-period detection — `savings_target` sums `allocated - spent` over
+/// all periods, which is mathematically equivalent to `calculateRollover` of
+/// the latest period.
+///
 /// For unlinked goals (`envelopeId == null`), returns the stored
 /// `goal.currentAmount` so manual contributions still apply.
 class GoalProgressCalculator {
@@ -11,17 +17,21 @@ class GoalProgressCalculator {
 
   static int compute({
     required Goal goal,
-    required EnvelopeAllocation? allocation,
+    required Iterable<EnvelopeAllocation> envelopeAllocations,
     required Iterable<Transaction> envelopeTransactions,
   }) {
     if (goal.envelopeId == null) return goal.currentAmount;
     switch (goal.type) {
-      case 'monthly_contribution':
-        return allocation?.allocatedAmount ?? 0;
       case 'savings_target':
-        return allocation == null
-            ? 0
-            : EnvelopeRepository.calculateRollover(allocation);
+        return envelopeAllocations.fold<int>(
+          0,
+          (sum, a) => sum + a.allocatedAmount - a.spentAmount,
+        );
+      case 'monthly_contribution':
+        if (envelopeAllocations.isEmpty) return 0;
+        final sorted = envelopeAllocations.toList()
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        return sorted.first.allocatedAmount;
       case 'debt_payoff':
         return envelopeTransactions
             .where((t) => t.type == 'expense')

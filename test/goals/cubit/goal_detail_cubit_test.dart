@@ -1,5 +1,4 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/goals/cubit/cubit.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,15 +10,12 @@ class _MockGoalRepository extends Mock implements GoalRepository {}
 
 class _MockEnvelopeRepository extends Mock implements EnvelopeRepository {}
 
-class _MockBudgetRepository extends Mock implements BudgetRepository {}
-
 class _MockTransactionRepository extends Mock
     implements TransactionRepository {}
 
 void main() {
   late _MockGoalRepository goalRepository;
   late _MockEnvelopeRepository envelopeRepository;
-  late _MockBudgetRepository budgetRepository;
   late _MockTransactionRepository transactionRepository;
 
   final now = DateTime(2024);
@@ -28,16 +24,12 @@ void main() {
   setUp(() {
     goalRepository = _MockGoalRepository();
     envelopeRepository = _MockEnvelopeRepository();
-    budgetRepository = _MockBudgetRepository();
     transactionRepository = _MockTransactionRepository();
     when(
       () => envelopeRepository.watchEnvelopes(any()),
     ).thenAnswer((_) => const Stream<List<Envelope>>.empty());
     when(
-      () => budgetRepository.watchBudgetPeriods(any()),
-    ).thenAnswer((_) => const Stream<List<BudgetPeriod>>.empty());
-    when(
-      () => envelopeRepository.watchAllocations(any()),
+      () => envelopeRepository.watchAllocationsForEnvelope(any()),
     ).thenAnswer((_) => const Stream<List<EnvelopeAllocation>>.empty());
     when(
       () => transactionRepository.watchTransactions(
@@ -51,7 +43,6 @@ void main() {
     return GoalDetailCubit(
       goalRepository: goalRepository,
       envelopeRepository: envelopeRepository,
-      budgetRepository: budgetRepository,
       transactionRepository: transactionRepository,
       goal: goal,
     );
@@ -87,43 +78,45 @@ void main() {
         expect(cubit.state.computedCurrentAmount, isNull);
         expect(cubit.state.effectiveCurrentAmount, 999);
         verify(() => goalRepository.watchContributions('goal-1')).called(1);
-        verifyNever(() => budgetRepository.watchBudgetPeriods(any()));
+        verifyNever(
+          () => envelopeRepository.watchAllocationsForEnvelope(any()),
+        );
         await cubit.close();
       },
     );
 
     blocTest<GoalDetailCubit, GoalDetailState>(
-      'linked savings_target emits computedCurrentAmount on allocation tick',
+      'linked savings_target sums allocated - spent across all periods',
       build: () {
-        final period = BudgetPeriod(
-          id: 'period-1',
-          budgetId: budgetId,
-          startDate: DateTime(2000),
-          endDate: DateTime(2100),
-          createdAt: now,
-        );
-        final allocation = EnvelopeAllocation(
-          id: 'alloc-1',
-          envelopeId: 'env-1',
-          budgetPeriodId: 'period-1',
-          createdAt: now,
-          allocatedAmount: 500,
-          spentAmount: 100,
-          rolloverAmount: 200,
-        );
         when(
-          () => budgetRepository.watchBudgetPeriods(budgetId),
-        ).thenAnswer((_) => Stream.value([period]));
-        when(
-          () => envelopeRepository.watchAllocations('period-1'),
-        ).thenAnswer((_) => Stream.value([allocation]));
+          () => envelopeRepository.watchAllocationsForEnvelope('env-1'),
+        ).thenAnswer(
+          (_) => Stream.value([
+            EnvelopeAllocation(
+              id: 'a1',
+              envelopeId: 'env-1',
+              budgetPeriodId: 'p1',
+              createdAt: now,
+              allocatedAmount: 200,
+              spentAmount: 50,
+            ),
+            EnvelopeAllocation(
+              id: 'a2',
+              envelopeId: 'env-1',
+              budgetPeriodId: 'p2',
+              createdAt: now,
+              allocatedAmount: 100,
+              spentAmount: 30,
+            ),
+          ]),
+        );
         return build(goal: goalWith(envelopeId: 'env-1'));
       },
       wait: const Duration(milliseconds: 50),
       verify: (cubit) {
-        // 500 - 100 + 200 = 600
-        expect(cubit.state.computedCurrentAmount, 600);
-        expect(cubit.state.effectiveCurrentAmount, 600);
+        // (200-50) + (100-30) = 150 + 70 = 220
+        expect(cubit.state.computedCurrentAmount, 220);
+        expect(cubit.state.effectiveCurrentAmount, 220);
       },
     );
 

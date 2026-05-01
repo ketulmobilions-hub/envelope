@@ -25,15 +25,17 @@ void main() {
   }
 
   EnvelopeAllocation allocation({
+    required String periodId,
     int allocated = 0,
     int spent = 0,
     int rollover = 0,
+    DateTime? createdAt,
   }) {
     return EnvelopeAllocation(
-      id: 'alloc-1',
+      id: 'alloc-$periodId',
       envelopeId: 'env-1',
-      budgetPeriodId: 'period-1',
-      createdAt: now,
+      budgetPeriodId: periodId,
+      createdAt: createdAt ?? now,
       allocatedAmount: allocated,
       spentAmount: spent,
       rolloverAmount: rollover,
@@ -64,44 +66,76 @@ void main() {
     test('returns stored currentAmount when envelopeId is null', () {
       final result = GoalProgressCalculator.compute(
         goal: goal(envelopeId: null, currentAmount: 12345),
-        allocation: allocation(allocated: 999),
+        envelopeAllocations: [allocation(periodId: 'p1', allocated: 999)],
         envelopeTransactions: [tx(amount: 500, type: 'expense')],
       );
       expect(result, 12345);
     });
 
-    test('savings_target → calculateRollover', () {
+    test('savings_target sums allocated - spent across all periods', () {
       final result = GoalProgressCalculator.compute(
         goal: goal(),
-        allocation: allocation(allocated: 100, spent: 30, rollover: 50),
+        envelopeAllocations: [
+          allocation(periodId: 'p1', allocated: 100, spent: 30),
+          allocation(periodId: 'p2', allocated: 0, spent: 0, rollover: 70),
+          allocation(periodId: 'p3', allocated: 50, spent: 10),
+        ],
         envelopeTransactions: const [],
       );
-      // 100 - 30 + 50 = 120
-      expect(result, 120);
+      // (100-30) + (0-0) + (50-10) = 70 + 0 + 40 = 110
+      expect(result, 110);
     });
 
-    test('savings_target with null allocation → 0', () {
+    test('savings_target with single allocation matches calculateRollover', () {
       final result = GoalProgressCalculator.compute(
         goal: goal(),
-        allocation: null,
+        envelopeAllocations: [
+          allocation(periodId: 'p1', allocated: 100, spent: 30),
+        ],
+        envelopeTransactions: const [],
+      );
+      // 100 - 30 = 70 (matches calculateRollover with rollover=0)
+      expect(result, 70);
+    });
+
+    test('savings_target with no allocations → 0', () {
+      final result = GoalProgressCalculator.compute(
+        goal: goal(),
+        envelopeAllocations: const [],
         envelopeTransactions: const [],
       );
       expect(result, 0);
     });
 
-    test('monthly_contribution → allocatedAmount', () {
+    test('monthly_contribution → latest allocation by createdAt', () {
       final result = GoalProgressCalculator.compute(
         goal: goal(type: 'monthly_contribution'),
-        allocation: allocation(allocated: 200, spent: 40, rollover: 80),
+        envelopeAllocations: [
+          allocation(
+            periodId: 'p1',
+            allocated: 100,
+            createdAt: DateTime(2024, 1),
+          ),
+          allocation(
+            periodId: 'p2',
+            allocated: 200,
+            createdAt: DateTime(2024, 3),
+          ),
+          allocation(
+            periodId: 'p3',
+            allocated: 150,
+            createdAt: DateTime(2024, 2),
+          ),
+        ],
         envelopeTransactions: const [],
       );
       expect(result, 200);
     });
 
-    test('monthly_contribution with null allocation → 0', () {
+    test('monthly_contribution with empty allocations → 0', () {
       final result = GoalProgressCalculator.compute(
         goal: goal(type: 'monthly_contribution'),
-        allocation: null,
+        envelopeAllocations: const [],
         envelopeTransactions: const [],
       );
       expect(result, 0);
@@ -110,7 +144,9 @@ void main() {
     test('debt_payoff → sums only expense transactions', () {
       final result = GoalProgressCalculator.compute(
         goal: goal(type: 'debt_payoff'),
-        allocation: allocation(allocated: 999),
+        envelopeAllocations: [
+          allocation(periodId: 'p1', allocated: 999),
+        ],
         envelopeTransactions: [
           tx(amount: 100, type: 'expense'),
           tx(amount: 50, type: 'income'),
@@ -124,7 +160,7 @@ void main() {
     test('debt_payoff with no transactions → 0', () {
       final result = GoalProgressCalculator.compute(
         goal: goal(type: 'debt_payoff'),
-        allocation: null,
+        envelopeAllocations: const [],
         envelopeTransactions: const [],
       );
       expect(result, 0);
@@ -133,7 +169,7 @@ void main() {
     test('unknown type falls back to stored currentAmount', () {
       final result = GoalProgressCalculator.compute(
         goal: goal(type: 'unknown', currentAmount: 999),
-        allocation: allocation(allocated: 100),
+        envelopeAllocations: [allocation(periodId: 'p1', allocated: 100)],
         envelopeTransactions: const [],
       );
       expect(result, 999);

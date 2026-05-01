@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
-import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/goals/services/goal_progress_calculator.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
@@ -15,12 +14,10 @@ class GoalsBloc extends Bloc<GoalsEvent, GoalsState> {
   GoalsBloc({
     required GoalRepository goalRepository,
     required EnvelopeRepository envelopeRepository,
-    required BudgetRepository budgetRepository,
     required TransactionRepository transactionRepository,
     required String budgetId,
   }) : _goalRepository = goalRepository,
        _envelopeRepository = envelopeRepository,
-       _budgetRepository = budgetRepository,
        _transactionRepository = transactionRepository,
        _budgetId = budgetId,
        super(const GoalsState()) {
@@ -35,17 +32,14 @@ class GoalsBloc extends Bloc<GoalsEvent, GoalsState> {
 
   final GoalRepository _goalRepository;
   final EnvelopeRepository _envelopeRepository;
-  final BudgetRepository _budgetRepository;
   final TransactionRepository _transactionRepository;
   final String _budgetId;
 
   StreamSubscription<List<Goal>>? _goalsSubscription;
-  StreamSubscription<List<BudgetPeriod>>? _periodsSubscription;
-  StreamSubscription<List<EnvelopeAllocation>>? _allocationsSubscription;
   StreamSubscription<List<Transaction>>? _transactionsSubscription;
-
-  String? _watchedPeriodId;
-  List<EnvelopeAllocation> _currentAllocations = const [];
+  final Map<String, StreamSubscription<List<EnvelopeAllocation>>>
+  _envelopeSubscriptions = {};
+  final Map<String, List<EnvelopeAllocation>> _envelopeAllocations = {};
   List<Transaction> _allTransactions = const [];
 
   String get budgetId => _budgetId;
@@ -64,7 +58,13 @@ class GoalsBloc extends Bloc<GoalsEvent, GoalsState> {
           onError: (Object _) => add(const _GoalsStreamError()),
         );
 
-    _initEnvelopeWatchers();
+    _transactionsSubscription?.cancel().ignore();
+    _transactionsSubscription = _transactionRepository
+        .watchTransactions(budgetId: _budgetId)
+        .listen((txs) {
+          _allTransactions = txs;
+          add(const _GoalsRecomputeRequested());
+        });
 
     try {
       await _goalRepository.refreshGoals(_budgetId);
@@ -73,58 +73,35 @@ class GoalsBloc extends Bloc<GoalsEvent, GoalsState> {
     }
   }
 
-  void _initEnvelopeWatchers() {
-    _periodsSubscription?.cancel().ignore();
-    _periodsSubscription = _budgetRepository
-        .watchBudgetPeriods(_budgetId)
-        .listen((periods) {
-          _watchPeriodAllocations(_pickCurrentPeriod(periods)?.id);
-        });
+  void _syncEnvelopeSubscriptions(List<Goal> goals) {
+    final needed = goals
+        .where((g) => g.envelopeId != null)
+        .map((g) => g.envelopeId!)
+        .toSet();
 
-    _transactionsSubscription?.cancel().ignore();
-    _transactionsSubscription = _transactionRepository
-        .watchTransactions(budgetId: _budgetId)
-        .listen((txs) {
-          _allTransactions = txs;
-          add(const _GoalsRecomputeRequested());
-        });
-  }
-
-  static BudgetPeriod? _pickCurrentPeriod(List<BudgetPeriod> periods) {
-    if (periods.isEmpty) return null;
-    final now = DateTime.now();
-    final containing = periods
-        .where(
-          (p) => !p.startDate.isAfter(now) && !p.endDate.isBefore(now),
-        )
-        .firstOrNull;
-    if (containing != null) return containing;
-    // Fallback: latest period by end date — matches BudgetBloc selection so
-    // allocations land on the same period goals are reading from.
-    return periods.reduce((a, b) => a.endDate.isAfter(b.endDate) ? a : b);
-  }
-
-  void _watchPeriodAllocations(String? periodId) {
-    if (periodId == _watchedPeriodId) return;
-    _watchedPeriodId = periodId;
-    _allocationsSubscription?.cancel().ignore();
-    if (periodId == null) {
-      _currentAllocations = const [];
-      add(const _GoalsRecomputeRequested());
-      return;
+    for (final id in _envelopeSubscriptions.keys.toList()) {
+      if (!needed.contains(id)) {
+        _envelopeSubscriptions.remove(id)?.cancel().ignore();
+        _envelopeAllocations.remove(id);
+      }
     }
-    _allocationsSubscription = _envelopeRepository
-        .watchAllocations(periodId)
-        .listen((allocs) {
-          _currentAllocations = allocs;
-          add(const _GoalsRecomputeRequested());
-        });
+
+    for (final id in needed) {
+      if (_envelopeSubscriptions.containsKey(id)) continue;
+      _envelopeSubscriptions[id] = _envelopeRepository
+          .watchAllocationsForEnvelope(id)
+          .listen((allocs) {
+            _envelopeAllocations[id] = allocs;
+            add(const _GoalsRecomputeRequested());
+          });
+    }
   }
 
   void _onUpdated(
     _GoalsUpdated event,
     Emitter<GoalsState> emit,
   ) {
+    _syncEnvelopeSubscriptions(event.goals);
     emit(
       state.copyWith(
         status: GoalsStatus.loaded,
@@ -148,15 +125,14 @@ class GoalsBloc extends Bloc<GoalsEvent, GoalsState> {
 
     final amounts = <String, int>{};
     for (final goal in linked) {
-      final allocation = _currentAllocations
-          .where((a) => a.envelopeId == goal.envelopeId)
-          .firstOrNull;
+      final envelopeAllocs =
+          _envelopeAllocations[goal.envelopeId] ?? const [];
       final envTxs = goal.type == 'debt_payoff'
           ? _allTransactions.where((t) => t.envelopeId == goal.envelopeId)
           : const <Transaction>[];
       amounts[goal.id] = GoalProgressCalculator.compute(
         goal: goal,
-        allocation: allocation,
+        envelopeAllocations: envelopeAllocs,
         envelopeTransactions: envTxs,
       );
     }
@@ -231,9 +207,11 @@ class GoalsBloc extends Bloc<GoalsEvent, GoalsState> {
   @override
   Future<void> close() async {
     await _goalsSubscription?.cancel();
-    await _periodsSubscription?.cancel();
-    await _allocationsSubscription?.cancel();
     await _transactionsSubscription?.cancel();
+    for (final sub in _envelopeSubscriptions.values) {
+      await sub.cancel();
+    }
+    _envelopeSubscriptions.clear();
     return super.close();
   }
 }
