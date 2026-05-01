@@ -1,7 +1,9 @@
+import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/transactions/widgets/transaction_helpers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 
 /// A dismissible list tile for a single transaction.
@@ -25,7 +27,11 @@ class TransactionListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final colorScheme = Theme.of(context).colorScheme;
-    final symbol = currencySymbol(context);
+    final baseCurrency =
+        context.watch<AuthBloc>().state.user?.baseCurrency ?? 'USD';
+    final txSymbol = currencySymbolFromCode(transaction.currency);
+    final baseSymbol = currencySymbolFromCode(baseCurrency);
+    final isForeign = transaction.currency != baseCurrency;
     final typeColor = colorForTransactionType(transaction.type, colorScheme);
 
     return Dismissible(
@@ -73,12 +79,31 @@ class TransactionListTile extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               )
             : null,
-        trailing: Text(
-          _formattedAmount(symbol),
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            color: typeColor,
-            fontWeight: FontWeight.w600,
-          ),
+        trailing: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              _formattedAmount(txSymbol),
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: typeColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (isForeign)
+              Text(
+                '≈ ${formatCents(
+                  transaction.baseCurrencyAmount != 0
+                      ? transaction.baseCurrencyAmount
+                      : (transaction.amount * transaction.exchangeRate)
+                          .round(),
+                  symbol: baseSymbol,
+                )}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: colorScheme.outline,
+                ),
+              ),
+          ],
         ),
         onTap: onTap,
       ),
