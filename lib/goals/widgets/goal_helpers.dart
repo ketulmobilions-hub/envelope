@@ -23,18 +23,23 @@ IconData iconForGoalType(String type) {
 }
 
 /// Returns progress ratio 0.0–1.0 for a goal.
-double goalProgress(Goal goal) {
+///
+/// [overrideCurrentAmount] lets linked goals use a derived amount instead
+/// of the stored `goal.currentAmount`.
+double goalProgress(Goal goal, {int? overrideCurrentAmount}) {
   final target = goal.targetAmount;
   if (target == null || target <= 0) return 0;
-  return (goal.currentAmount / target).clamp(0.0, 1.0);
+  final current = overrideCurrentAmount ?? goal.currentAmount;
+  return (current / target).clamp(0.0, 1.0);
 }
 
 /// Returns the monthly contribution needed (in cents) to reach target by date.
-int monthlyContributionNeeded(Goal goal) {
+int monthlyContributionNeeded(Goal goal, {int? overrideCurrentAmount}) {
   final target = goal.targetAmount;
   if (target == null || target <= 0) return 0;
 
-  final remaining = target - goal.currentAmount;
+  final current = overrideCurrentAmount ?? goal.currentAmount;
+  final remaining = target - current;
   if (remaining <= 0) return 0;
 
   final targetDate = goal.targetDate;

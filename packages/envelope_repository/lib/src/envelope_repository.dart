@@ -609,6 +609,27 @@ class EnvelopeRepository {
         );
   }
 
+  /// Watches all allocations for an [envelopeId] across every period.
+  ///
+  /// Returns a reactive stream from local storage. Used by goal-progress
+  /// computation, which sums balances across periods to avoid current-period
+  /// detection mismatches.
+  Stream<List<EnvelopeAllocation>> watchAllocationsForEnvelope(
+    String envelopeId,
+  ) {
+    return _localDatabase.envelopesDao
+        .watchAllocationsByEnvelopeId(envelopeId)
+        .map(
+          (rows) => rows.map(_mapAllocationFromLocal).toList(),
+        )
+        .handleError(
+          (Object error) => throw EnvelopeException(
+            'Failed to watch allocations for envelope',
+            error: error,
+          ),
+        );
+  }
+
   /// Updates an [allocation].
   ///
   /// Sends the update to the API and syncs locally.

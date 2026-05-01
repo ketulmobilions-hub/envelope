@@ -27,6 +27,12 @@ final class _GoalsStreamError extends GoalsEvent {
   const _GoalsStreamError();
 }
 
+/// Internal event triggered by envelope/transaction streams when state
+/// affecting linked-goal progress changes.
+final class _GoalsRecomputeRequested extends GoalsEvent {
+  const _GoalsRecomputeRequested();
+}
+
 /// Pull latest goals from the API.
 final class GoalsRefreshRequested extends GoalsEvent {
   const GoalsRefreshRequested();

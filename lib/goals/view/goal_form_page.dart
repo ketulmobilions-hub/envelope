@@ -5,6 +5,8 @@ import 'package:envelope/goals/widgets/goal_helpers.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/shared/widgets/app_option_picker.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
+import 'package:envelope_repository/envelope_repository.dart';
+import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -127,6 +129,33 @@ class _GoalFormPageState extends State<GoalFormPage> {
                     itemLabel: (type) => localizedGoalType(type, l10n),
                   ),
                   const SizedBox(height: 16),
+                  BlocBuilder<GoalFormCubit, GoalFormState>(
+                    buildWhen: (p, c) =>
+                        p.envelopeId != c.envelopeId ||
+                        p.envelopes != c.envelopes,
+                    builder: (context, state) {
+                      final options = <_EnvelopeOption>[
+                        const _EnvelopeOption(null),
+                        ...state.envelopes.map(_EnvelopeOption.new),
+                      ];
+                      final selected = options.firstWhere(
+                        (o) => o.envelope?.id == state.envelopeId,
+                        orElse: () => const _EnvelopeOption(null),
+                      );
+                      return AppOptionPicker<_EnvelopeOption>(
+                        options: options,
+                        value: selected,
+                        onChanged: (opt) => context
+                            .read<GoalFormCubit>()
+                            .envelopeChanged(opt.envelope?.id),
+                        labelText: l10n.goalsEnvelopeLabel,
+                        icon: Icons.account_balance_wallet_outlined,
+                        itemLabel: (opt) =>
+                            opt.envelope?.name ?? l10n.goalsEnvelopeNone,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
                   // Type-specific fields.
                   if (_selectedType == 'savings_target' ||
                       _selectedType == 'debt_payoff') ...[
@@ -232,6 +261,15 @@ class _GoalFormPageState extends State<GoalFormPage> {
       monthlyContribution: monthlyContributionCents,
     );
   }
+}
+
+class _EnvelopeOption extends Equatable {
+  const _EnvelopeOption(this.envelope);
+
+  final Envelope? envelope;
+
+  @override
+  List<Object?> get props => [envelope?.id];
 }
 
 class _DatePickerField extends StatelessWidget {
