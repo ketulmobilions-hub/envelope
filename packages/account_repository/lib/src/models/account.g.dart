@@ -16,6 +16,7 @@ _Account _$AccountFromJson(Map<String, dynamic> json) => _Account(
   updatedAt: DateTime.parse(json['updatedAt'] as String),
   startingBalance: (json['startingBalance'] as num?)?.toInt() ?? 0,
   currentBalance: (json['currentBalance'] as num?)?.toInt() ?? 0,
+  displayFxRate: (json['displayFxRate'] as num?)?.toDouble() ?? 1.0,
   isArchived: json['isArchived'] as bool? ?? false,
   isOnBudget: json['isOnBudget'] as bool? ?? true,
 );
@@ -30,6 +31,7 @@ Map<String, dynamic> _$AccountToJson(_Account instance) => <String, dynamic>{
   'updatedAt': instance.updatedAt.toIso8601String(),
   'startingBalance': instance.startingBalance,
   'currentBalance': instance.currentBalance,
+  'displayFxRate': instance.displayFxRate,
   'isArchived': instance.isArchived,
   'isOnBudget': instance.isOnBudget,
 };

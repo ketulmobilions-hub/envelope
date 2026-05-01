@@ -369,11 +369,15 @@ class ReportRepository {
       // Net worth includes ALL accounts regardless of isOnBudget —
       // isOnBudget only controls whether the balance feeds into the budget's
       // "Ready to Assign" pool, not whether the account counts toward wealth.
+      // Each account's currentBalance is in account.currency; multiply by
+      // account.displayFxRate to express it in the budget's base currency.
       for (final account in accounts) {
+        final inBase =
+            (account.currentBalance * account.displayFxRate).round();
         if (_assetTypes.contains(account.type)) {
-          assets += account.currentBalance;
+          assets += inBase;
         } else if (_liabilityTypes.contains(account.type)) {
-          liabilities += account.currentBalance.abs();
+          liabilities += inBase.abs();
         }
       }
 

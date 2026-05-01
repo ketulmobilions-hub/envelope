@@ -19,6 +19,8 @@ mixin _$AccountDto {
   String get name;
   String get type;
   String get currency;
+  @JsonKey(name: 'display_fx_rate')
+  double get displayFxRate;
   @JsonKey(name: 'created_at')
   DateTime get createdAt;
   @JsonKey(name: 'updated_at')
@@ -54,6 +56,8 @@ mixin _$AccountDto {
             (identical(other.type, type) || other.type == type) &&
             (identical(other.currency, currency) ||
                 other.currency == currency) &&
+            (identical(other.displayFxRate, displayFxRate) ||
+                other.displayFxRate == displayFxRate) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -77,6 +81,7 @@ mixin _$AccountDto {
     name,
     type,
     currency,
+    displayFxRate,
     createdAt,
     updatedAt,
     startingBalance,
@@ -87,7 +92,7 @@ mixin _$AccountDto {
 
   @override
   String toString() {
-    return 'AccountDto(id: $id, budgetId: $budgetId, name: $name, type: $type, currency: $currency, createdAt: $createdAt, updatedAt: $updatedAt, startingBalance: $startingBalance, currentBalance: $currentBalance, isArchived: $isArchived, isOnBudget: $isOnBudget)';
+    return 'AccountDto(id: $id, budgetId: $budgetId, name: $name, type: $type, currency: $currency, displayFxRate: $displayFxRate, createdAt: $createdAt, updatedAt: $updatedAt, startingBalance: $startingBalance, currentBalance: $currentBalance, isArchived: $isArchived, isOnBudget: $isOnBudget)';
   }
 }
 
@@ -104,6 +109,7 @@ abstract mixin class $AccountDtoCopyWith<$Res> {
     String name,
     String type,
     String currency,
+    @JsonKey(name: 'display_fx_rate') double displayFxRate,
     @JsonKey(name: 'created_at') DateTime createdAt,
     @JsonKey(name: 'updated_at') DateTime updatedAt,
     @JsonKey(name: 'starting_balance') int startingBalance,
@@ -130,6 +136,7 @@ class _$AccountDtoCopyWithImpl<$Res> implements $AccountDtoCopyWith<$Res> {
     Object? name = null,
     Object? type = null,
     Object? currency = null,
+    Object? displayFxRate = null,
     Object? createdAt = null,
     Object? updatedAt = null,
     Object? startingBalance = null,
@@ -159,6 +166,10 @@ class _$AccountDtoCopyWithImpl<$Res> implements $AccountDtoCopyWith<$Res> {
             ? _self.currency
             : currency // ignore: cast_nullable_to_non_nullable
                   as String,
+        displayFxRate: null == displayFxRate
+            ? _self.displayFxRate
+            : displayFxRate // ignore: cast_nullable_to_non_nullable
+                  as double,
         createdAt: null == createdAt
             ? _self.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
@@ -287,6 +298,7 @@ extension AccountDtoPatterns on AccountDto {
       String name,
       String type,
       String currency,
+      @JsonKey(name: 'display_fx_rate') double displayFxRate,
       @JsonKey(name: 'created_at') DateTime createdAt,
       @JsonKey(name: 'updated_at') DateTime updatedAt,
       @JsonKey(name: 'starting_balance') int startingBalance,
@@ -306,6 +318,7 @@ extension AccountDtoPatterns on AccountDto {
           _that.name,
           _that.type,
           _that.currency,
+          _that.displayFxRate,
           _that.createdAt,
           _that.updatedAt,
           _that.startingBalance,
@@ -339,6 +352,7 @@ extension AccountDtoPatterns on AccountDto {
       String name,
       String type,
       String currency,
+      @JsonKey(name: 'display_fx_rate') double displayFxRate,
       @JsonKey(name: 'created_at') DateTime createdAt,
       @JsonKey(name: 'updated_at') DateTime updatedAt,
       @JsonKey(name: 'starting_balance') int startingBalance,
@@ -357,6 +371,7 @@ extension AccountDtoPatterns on AccountDto {
           _that.name,
           _that.type,
           _that.currency,
+          _that.displayFxRate,
           _that.createdAt,
           _that.updatedAt,
           _that.startingBalance,
@@ -389,6 +404,7 @@ extension AccountDtoPatterns on AccountDto {
       String name,
       String type,
       String currency,
+      @JsonKey(name: 'display_fx_rate') double displayFxRate,
       @JsonKey(name: 'created_at') DateTime createdAt,
       @JsonKey(name: 'updated_at') DateTime updatedAt,
       @JsonKey(name: 'starting_balance') int startingBalance,
@@ -407,6 +423,7 @@ extension AccountDtoPatterns on AccountDto {
           _that.name,
           _that.type,
           _that.currency,
+          _that.displayFxRate,
           _that.createdAt,
           _that.updatedAt,
           _that.startingBalance,
@@ -429,6 +446,7 @@ class _AccountDto implements AccountDto {
     required this.name,
     required this.type,
     required this.currency,
+    @JsonKey(name: 'display_fx_rate') this.displayFxRate = 1.0,
     @JsonKey(name: 'created_at') required this.createdAt,
     @JsonKey(name: 'updated_at') required this.updatedAt,
     @JsonKey(name: 'starting_balance') this.startingBalance = 0,
@@ -450,6 +468,9 @@ class _AccountDto implements AccountDto {
   final String type;
   @override
   final String currency;
+  @override
+  @JsonKey(name: 'display_fx_rate')
+  final double displayFxRate;
   @override
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
@@ -494,6 +515,8 @@ class _AccountDto implements AccountDto {
             (identical(other.type, type) || other.type == type) &&
             (identical(other.currency, currency) ||
                 other.currency == currency) &&
+            (identical(other.displayFxRate, displayFxRate) ||
+                other.displayFxRate == displayFxRate) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.updatedAt, updatedAt) ||
@@ -517,6 +540,7 @@ class _AccountDto implements AccountDto {
     name,
     type,
     currency,
+    displayFxRate,
     createdAt,
     updatedAt,
     startingBalance,
@@ -527,7 +551,7 @@ class _AccountDto implements AccountDto {
 
   @override
   String toString() {
-    return 'AccountDto(id: $id, budgetId: $budgetId, name: $name, type: $type, currency: $currency, createdAt: $createdAt, updatedAt: $updatedAt, startingBalance: $startingBalance, currentBalance: $currentBalance, isArchived: $isArchived, isOnBudget: $isOnBudget)';
+    return 'AccountDto(id: $id, budgetId: $budgetId, name: $name, type: $type, currency: $currency, displayFxRate: $displayFxRate, createdAt: $createdAt, updatedAt: $updatedAt, startingBalance: $startingBalance, currentBalance: $currentBalance, isArchived: $isArchived, isOnBudget: $isOnBudget)';
   }
 }
 
@@ -546,6 +570,7 @@ abstract mixin class _$AccountDtoCopyWith<$Res>
     String name,
     String type,
     String currency,
+    @JsonKey(name: 'display_fx_rate') double displayFxRate,
     @JsonKey(name: 'created_at') DateTime createdAt,
     @JsonKey(name: 'updated_at') DateTime updatedAt,
     @JsonKey(name: 'starting_balance') int startingBalance,
@@ -572,6 +597,7 @@ class __$AccountDtoCopyWithImpl<$Res> implements _$AccountDtoCopyWith<$Res> {
     Object? name = null,
     Object? type = null,
     Object? currency = null,
+    Object? displayFxRate = null,
     Object? createdAt = null,
     Object? updatedAt = null,
     Object? startingBalance = null,
@@ -601,6 +627,10 @@ class __$AccountDtoCopyWithImpl<$Res> implements _$AccountDtoCopyWith<$Res> {
             ? _self.currency
             : currency // ignore: cast_nullable_to_non_nullable
                   as String,
+        displayFxRate: null == displayFxRate
+            ? _self.displayFxRate
+            : displayFxRate // ignore: cast_nullable_to_non_nullable
+                  as double,
         createdAt: null == createdAt
             ? _self.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable

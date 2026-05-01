@@ -50,7 +50,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   /// Deletes all rows from every table. Used for account deletion / GDPR.
   Future<void> clearAllTables() async {
@@ -125,6 +125,9 @@ class AppDatabase extends _$AppDatabase {
           'CAST(amount * exchange_rate AS INTEGER) '
           'WHERE base_currency_amount = 0',
         );
+      }
+      if (from < 12) {
+        await m.addColumn(accounts, accounts.displayFxRate);
       }
     },
   );

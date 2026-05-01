@@ -8,7 +8,7 @@ import 'package:envelope/notifications/notifications.dart';
 import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
-import 'package:envelope/onboarding/data/currencies.dart';
+import 'package:envelope/shared/widgets/currency_picker_sheet.dart';
 import 'package:envelope/settings/cubit/cubit.dart';
 import 'package:envelope_api_client/envelope_api_client.dart';
 import 'package:envelope_local_storage/envelope_local_storage.dart' hide User;
@@ -304,15 +304,20 @@ class _SettingsView extends StatelessWidget {
     );
   }
 
-  void _showCurrencyPicker(BuildContext context, User user) {
-    showModalBottomSheet<void>(
+  Future<void> _showCurrencyPicker(BuildContext context, User user) async {
+    final l10n = context.l10n;
+    final code = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      builder: (sheetContext) => BlocProvider.value(
-        value: context.read<SettingsCubit>(),
-        child: _CurrencyPickerSheet(baseCurrency: user.baseCurrency),
+      builder: (_) => CurrencyPickerSheet(
+        initialCode: user.baseCurrency,
+        title: l10n.settingsBaseCurrency,
+        warning: l10n.settingsCurrencyWarning,
       ),
     );
+    if (code != null && context.mounted) {
+      await context.read<SettingsCubit>().updateBaseCurrency(code);
+    }
   }
 
   void _showSignOutDialog(BuildContext context) {
@@ -476,103 +481,6 @@ class _SectionHeader extends StatelessWidget {
         title,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
           color: Theme.of(context).colorScheme.primary,
-        ),
-      ),
-    );
-  }
-}
-
-class _CurrencyPickerSheet extends StatefulWidget {
-  const _CurrencyPickerSheet({required this.baseCurrency});
-
-  final String baseCurrency;
-
-  @override
-  State<_CurrencyPickerSheet> createState() => _CurrencyPickerSheetState();
-}
-
-class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
-  String _searchQuery = '';
-
-  List<CurrencyInfo> get _filteredCurrencies {
-    if (_searchQuery.isEmpty) return supportedCurrencies;
-    final query = _searchQuery.toLowerCase();
-    return supportedCurrencies
-        .where(
-          (c) =>
-              c.code.toLowerCase().contains(query) ||
-              c.name.toLowerCase().contains(query),
-        )
-        .toList();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: SizedBox(
-        height: MediaQuery.of(context).size.height * 0.6,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                l10n.settingsBaseCurrency,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                l10n.settingsCurrencyWarning,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: l10n.onboardingCurrencySearch,
-                  prefixIcon: const Icon(Icons.search),
-                ),
-                onChanged: (value) => setState(() => _searchQuery = value),
-              ),
-            ),
-            if (_filteredCurrencies.isEmpty)
-              const Expanded(
-                child: Center(child: Text('No currencies found')),
-              )
-            else
-              Flexible(
-                child: ListView.builder(
-                  itemCount: _filteredCurrencies.length,
-                  itemBuilder: (_, index) {
-                    final currency = _filteredCurrencies[index];
-                    final isSelected = currency.code == widget.baseCurrency;
-                    return ListTile(
-                      dense: true,
-                      visualDensity: VisualDensity.compact,
-                      title: Text(
-                        '${currency.symbol} ${currency.code}'
-                        ' - ${currency.name}',
-                        style: const TextStyle(fontSize: 15),
-                      ),
-                      trailing: isSelected ? const Icon(Icons.check) : null,
-                      onTap: () {
-                        context.read<SettingsCubit>().updateBaseCurrency(
-                          currency.code,
-                        );
-                        Navigator.pop(context);
-                      },
-                    );
-                  },
-                ),
-              ),
-          ],
         ),
       ),
     );

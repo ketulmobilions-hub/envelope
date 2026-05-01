@@ -22,6 +22,7 @@ mixin _$Account {
   DateTime get updatedAt;
   int get startingBalance;
   int get currentBalance;
+  double get displayFxRate;
   bool get isArchived;
   bool get isOnBudget;
 
@@ -55,6 +56,8 @@ mixin _$Account {
                 other.startingBalance == startingBalance) &&
             (identical(other.currentBalance, currentBalance) ||
                 other.currentBalance == currentBalance) &&
+            (identical(other.displayFxRate, displayFxRate) ||
+                other.displayFxRate == displayFxRate) &&
             (identical(other.isArchived, isArchived) ||
                 other.isArchived == isArchived) &&
             (identical(other.isOnBudget, isOnBudget) ||
@@ -74,13 +77,14 @@ mixin _$Account {
     updatedAt,
     startingBalance,
     currentBalance,
+    displayFxRate,
     isArchived,
     isOnBudget,
   );
 
   @override
   String toString() {
-    return 'Account(id: $id, budgetId: $budgetId, name: $name, type: $type, currency: $currency, createdAt: $createdAt, updatedAt: $updatedAt, startingBalance: $startingBalance, currentBalance: $currentBalance, isArchived: $isArchived, isOnBudget: $isOnBudget)';
+    return 'Account(id: $id, budgetId: $budgetId, name: $name, type: $type, currency: $currency, createdAt: $createdAt, updatedAt: $updatedAt, startingBalance: $startingBalance, currentBalance: $currentBalance, displayFxRate: $displayFxRate, isArchived: $isArchived, isOnBudget: $isOnBudget)';
   }
 }
 
@@ -99,6 +103,7 @@ abstract mixin class $AccountCopyWith<$Res> {
     DateTime updatedAt,
     int startingBalance,
     int currentBalance,
+    double displayFxRate,
     bool isArchived,
     bool isOnBudget,
   });
@@ -125,6 +130,7 @@ class _$AccountCopyWithImpl<$Res> implements $AccountCopyWith<$Res> {
     Object? updatedAt = null,
     Object? startingBalance = null,
     Object? currentBalance = null,
+    Object? displayFxRate = null,
     Object? isArchived = null,
     Object? isOnBudget = null,
   }) {
@@ -166,6 +172,10 @@ class _$AccountCopyWithImpl<$Res> implements $AccountCopyWith<$Res> {
             ? _self.currentBalance
             : currentBalance // ignore: cast_nullable_to_non_nullable
                   as int,
+        displayFxRate: null == displayFxRate
+            ? _self.displayFxRate
+            : displayFxRate // ignore: cast_nullable_to_non_nullable
+                  as double,
         isArchived: null == isArchived
             ? _self.isArchived
             : isArchived // ignore: cast_nullable_to_non_nullable
@@ -282,6 +292,7 @@ extension AccountPatterns on Account {
       DateTime updatedAt,
       int startingBalance,
       int currentBalance,
+      double displayFxRate,
       bool isArchived,
       bool isOnBudget,
     )?
@@ -301,6 +312,7 @@ extension AccountPatterns on Account {
           _that.updatedAt,
           _that.startingBalance,
           _that.currentBalance,
+          _that.displayFxRate,
           _that.isArchived,
           _that.isOnBudget,
         );
@@ -334,6 +346,7 @@ extension AccountPatterns on Account {
       DateTime updatedAt,
       int startingBalance,
       int currentBalance,
+      double displayFxRate,
       bool isArchived,
       bool isOnBudget,
     )
@@ -352,6 +365,7 @@ extension AccountPatterns on Account {
           _that.updatedAt,
           _that.startingBalance,
           _that.currentBalance,
+          _that.displayFxRate,
           _that.isArchived,
           _that.isOnBudget,
         );
@@ -384,6 +398,7 @@ extension AccountPatterns on Account {
       DateTime updatedAt,
       int startingBalance,
       int currentBalance,
+      double displayFxRate,
       bool isArchived,
       bool isOnBudget,
     )?
@@ -402,6 +417,7 @@ extension AccountPatterns on Account {
           _that.updatedAt,
           _that.startingBalance,
           _that.currentBalance,
+          _that.displayFxRate,
           _that.isArchived,
           _that.isOnBudget,
         );
@@ -424,6 +440,7 @@ class _Account implements Account {
     required this.updatedAt,
     this.startingBalance = 0,
     this.currentBalance = 0,
+    this.displayFxRate = 1.0,
     this.isArchived = false,
     this.isOnBudget = true,
   });
@@ -450,6 +467,9 @@ class _Account implements Account {
   @override
   @JsonKey()
   final int currentBalance;
+  @override
+  @JsonKey()
+  final double displayFxRate;
   @override
   @JsonKey()
   final bool isArchived;
@@ -490,6 +510,8 @@ class _Account implements Account {
                 other.startingBalance == startingBalance) &&
             (identical(other.currentBalance, currentBalance) ||
                 other.currentBalance == currentBalance) &&
+            (identical(other.displayFxRate, displayFxRate) ||
+                other.displayFxRate == displayFxRate) &&
             (identical(other.isArchived, isArchived) ||
                 other.isArchived == isArchived) &&
             (identical(other.isOnBudget, isOnBudget) ||
@@ -509,13 +531,14 @@ class _Account implements Account {
     updatedAt,
     startingBalance,
     currentBalance,
+    displayFxRate,
     isArchived,
     isOnBudget,
   );
 
   @override
   String toString() {
-    return 'Account(id: $id, budgetId: $budgetId, name: $name, type: $type, currency: $currency, createdAt: $createdAt, updatedAt: $updatedAt, startingBalance: $startingBalance, currentBalance: $currentBalance, isArchived: $isArchived, isOnBudget: $isOnBudget)';
+    return 'Account(id: $id, budgetId: $budgetId, name: $name, type: $type, currency: $currency, createdAt: $createdAt, updatedAt: $updatedAt, startingBalance: $startingBalance, currentBalance: $currentBalance, displayFxRate: $displayFxRate, isArchived: $isArchived, isOnBudget: $isOnBudget)';
   }
 }
 
@@ -535,6 +558,7 @@ abstract mixin class _$AccountCopyWith<$Res> implements $AccountCopyWith<$Res> {
     DateTime updatedAt,
     int startingBalance,
     int currentBalance,
+    double displayFxRate,
     bool isArchived,
     bool isOnBudget,
   });
@@ -561,6 +585,7 @@ class __$AccountCopyWithImpl<$Res> implements _$AccountCopyWith<$Res> {
     Object? updatedAt = null,
     Object? startingBalance = null,
     Object? currentBalance = null,
+    Object? displayFxRate = null,
     Object? isArchived = null,
     Object? isOnBudget = null,
   }) {
@@ -602,6 +627,10 @@ class __$AccountCopyWithImpl<$Res> implements _$AccountCopyWith<$Res> {
             ? _self.currentBalance
             : currentBalance // ignore: cast_nullable_to_non_nullable
                   as int,
+        displayFxRate: null == displayFxRate
+            ? _self.displayFxRate
+            : displayFxRate // ignore: cast_nullable_to_non_nullable
+                  as double,
         isArchived: null == isArchived
             ? _self.isArchived
             : isArchived // ignore: cast_nullable_to_non_nullable

@@ -2153,6 +2153,18 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _displayFxRateMeta = const VerificationMeta(
+    'displayFxRate',
+  );
+  @override
+  late final GeneratedColumn<double> displayFxRate = GeneratedColumn<double>(
+    'display_fx_rate',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
   static const VerificationMeta _isArchivedMeta = const VerificationMeta(
     'isArchived',
   );
@@ -2214,6 +2226,7 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     startingBalance,
     currentBalance,
     currency,
+    displayFxRate,
     isArchived,
     isOnBudget,
     createdAt,
@@ -2286,6 +2299,15 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     } else if (isInserting) {
       context.missing(_currencyMeta);
     }
+    if (data.containsKey('display_fx_rate')) {
+      context.handle(
+        _displayFxRateMeta,
+        displayFxRate.isAcceptableOrUnknown(
+          data['display_fx_rate']!,
+          _displayFxRateMeta,
+        ),
+      );
+    }
     if (data.containsKey('is_archived')) {
       context.handle(
         _isArchivedMeta,
@@ -2354,6 +2376,10 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         DriftSqlType.string,
         data['${effectivePrefix}currency'],
       )!,
+      displayFxRate: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}display_fx_rate'],
+      )!,
       isArchived: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_archived'],
@@ -2387,6 +2413,7 @@ class Account extends DataClass implements Insertable<Account> {
   final int startingBalance;
   final int currentBalance;
   final String currency;
+  final double displayFxRate;
   final bool isArchived;
   final bool isOnBudget;
   final DateTime createdAt;
@@ -2399,6 +2426,7 @@ class Account extends DataClass implements Insertable<Account> {
     required this.startingBalance,
     required this.currentBalance,
     required this.currency,
+    required this.displayFxRate,
     required this.isArchived,
     required this.isOnBudget,
     required this.createdAt,
@@ -2414,6 +2442,7 @@ class Account extends DataClass implements Insertable<Account> {
     map['starting_balance'] = Variable<int>(startingBalance);
     map['current_balance'] = Variable<int>(currentBalance);
     map['currency'] = Variable<String>(currency);
+    map['display_fx_rate'] = Variable<double>(displayFxRate);
     map['is_archived'] = Variable<bool>(isArchived);
     map['is_on_budget'] = Variable<bool>(isOnBudget);
     map['created_at'] = Variable<DateTime>(createdAt);
@@ -2430,6 +2459,7 @@ class Account extends DataClass implements Insertable<Account> {
       startingBalance: Value(startingBalance),
       currentBalance: Value(currentBalance),
       currency: Value(currency),
+      displayFxRate: Value(displayFxRate),
       isArchived: Value(isArchived),
       isOnBudget: Value(isOnBudget),
       createdAt: Value(createdAt),
@@ -2450,6 +2480,7 @@ class Account extends DataClass implements Insertable<Account> {
       startingBalance: serializer.fromJson<int>(json['startingBalance']),
       currentBalance: serializer.fromJson<int>(json['currentBalance']),
       currency: serializer.fromJson<String>(json['currency']),
+      displayFxRate: serializer.fromJson<double>(json['displayFxRate']),
       isArchived: serializer.fromJson<bool>(json['isArchived']),
       isOnBudget: serializer.fromJson<bool>(json['isOnBudget']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
@@ -2467,6 +2498,7 @@ class Account extends DataClass implements Insertable<Account> {
       'startingBalance': serializer.toJson<int>(startingBalance),
       'currentBalance': serializer.toJson<int>(currentBalance),
       'currency': serializer.toJson<String>(currency),
+      'displayFxRate': serializer.toJson<double>(displayFxRate),
       'isArchived': serializer.toJson<bool>(isArchived),
       'isOnBudget': serializer.toJson<bool>(isOnBudget),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -2482,6 +2514,7 @@ class Account extends DataClass implements Insertable<Account> {
     int? startingBalance,
     int? currentBalance,
     String? currency,
+    double? displayFxRate,
     bool? isArchived,
     bool? isOnBudget,
     DateTime? createdAt,
@@ -2494,6 +2527,7 @@ class Account extends DataClass implements Insertable<Account> {
     startingBalance: startingBalance ?? this.startingBalance,
     currentBalance: currentBalance ?? this.currentBalance,
     currency: currency ?? this.currency,
+    displayFxRate: displayFxRate ?? this.displayFxRate,
     isArchived: isArchived ?? this.isArchived,
     isOnBudget: isOnBudget ?? this.isOnBudget,
     createdAt: createdAt ?? this.createdAt,
@@ -2512,6 +2546,9 @@ class Account extends DataClass implements Insertable<Account> {
           ? data.currentBalance.value
           : this.currentBalance,
       currency: data.currency.present ? data.currency.value : this.currency,
+      displayFxRate: data.displayFxRate.present
+          ? data.displayFxRate.value
+          : this.displayFxRate,
       isArchived: data.isArchived.present
           ? data.isArchived.value
           : this.isArchived,
@@ -2533,6 +2570,7 @@ class Account extends DataClass implements Insertable<Account> {
           ..write('startingBalance: $startingBalance, ')
           ..write('currentBalance: $currentBalance, ')
           ..write('currency: $currency, ')
+          ..write('displayFxRate: $displayFxRate, ')
           ..write('isArchived: $isArchived, ')
           ..write('isOnBudget: $isOnBudget, ')
           ..write('createdAt: $createdAt, ')
@@ -2550,6 +2588,7 @@ class Account extends DataClass implements Insertable<Account> {
     startingBalance,
     currentBalance,
     currency,
+    displayFxRate,
     isArchived,
     isOnBudget,
     createdAt,
@@ -2566,6 +2605,7 @@ class Account extends DataClass implements Insertable<Account> {
           other.startingBalance == this.startingBalance &&
           other.currentBalance == this.currentBalance &&
           other.currency == this.currency &&
+          other.displayFxRate == this.displayFxRate &&
           other.isArchived == this.isArchived &&
           other.isOnBudget == this.isOnBudget &&
           other.createdAt == this.createdAt &&
@@ -2580,6 +2620,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
   final Value<int> startingBalance;
   final Value<int> currentBalance;
   final Value<String> currency;
+  final Value<double> displayFxRate;
   final Value<bool> isArchived;
   final Value<bool> isOnBudget;
   final Value<DateTime> createdAt;
@@ -2593,6 +2634,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     this.startingBalance = const Value.absent(),
     this.currentBalance = const Value.absent(),
     this.currency = const Value.absent(),
+    this.displayFxRate = const Value.absent(),
     this.isArchived = const Value.absent(),
     this.isOnBudget = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -2607,6 +2649,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     this.startingBalance = const Value.absent(),
     this.currentBalance = const Value.absent(),
     required String currency,
+    this.displayFxRate = const Value.absent(),
     this.isArchived = const Value.absent(),
     this.isOnBudget = const Value.absent(),
     required DateTime createdAt,
@@ -2627,6 +2670,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Expression<int>? startingBalance,
     Expression<int>? currentBalance,
     Expression<String>? currency,
+    Expression<double>? displayFxRate,
     Expression<bool>? isArchived,
     Expression<bool>? isOnBudget,
     Expression<DateTime>? createdAt,
@@ -2641,6 +2685,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       if (startingBalance != null) 'starting_balance': startingBalance,
       if (currentBalance != null) 'current_balance': currentBalance,
       if (currency != null) 'currency': currency,
+      if (displayFxRate != null) 'display_fx_rate': displayFxRate,
       if (isArchived != null) 'is_archived': isArchived,
       if (isOnBudget != null) 'is_on_budget': isOnBudget,
       if (createdAt != null) 'created_at': createdAt,
@@ -2657,6 +2702,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Value<int>? startingBalance,
     Value<int>? currentBalance,
     Value<String>? currency,
+    Value<double>? displayFxRate,
     Value<bool>? isArchived,
     Value<bool>? isOnBudget,
     Value<DateTime>? createdAt,
@@ -2671,6 +2717,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       startingBalance: startingBalance ?? this.startingBalance,
       currentBalance: currentBalance ?? this.currentBalance,
       currency: currency ?? this.currency,
+      displayFxRate: displayFxRate ?? this.displayFxRate,
       isArchived: isArchived ?? this.isArchived,
       isOnBudget: isOnBudget ?? this.isOnBudget,
       createdAt: createdAt ?? this.createdAt,
@@ -2703,6 +2750,9 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     if (currency.present) {
       map['currency'] = Variable<String>(currency.value);
     }
+    if (displayFxRate.present) {
+      map['display_fx_rate'] = Variable<double>(displayFxRate.value);
+    }
     if (isArchived.present) {
       map['is_archived'] = Variable<bool>(isArchived.value);
     }
@@ -2731,6 +2781,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
           ..write('startingBalance: $startingBalance, ')
           ..write('currentBalance: $currentBalance, ')
           ..write('currency: $currency, ')
+          ..write('displayFxRate: $displayFxRate, ')
           ..write('isArchived: $isArchived, ')
           ..write('isOnBudget: $isOnBudget, ')
           ..write('createdAt: $createdAt, ')
@@ -13627,6 +13678,7 @@ typedef $$AccountsTableCreateCompanionBuilder =
       Value<int> startingBalance,
       Value<int> currentBalance,
       required String currency,
+      Value<double> displayFxRate,
       Value<bool> isArchived,
       Value<bool> isOnBudget,
       required DateTime createdAt,
@@ -13642,6 +13694,7 @@ typedef $$AccountsTableUpdateCompanionBuilder =
       Value<int> startingBalance,
       Value<int> currentBalance,
       Value<String> currency,
+      Value<double> displayFxRate,
       Value<bool> isArchived,
       Value<bool> isOnBudget,
       Value<DateTime> createdAt,
@@ -13690,6 +13743,11 @@ class $$AccountsTableFilterComposer
 
   ColumnFilters<String> get currency => $composableBuilder(
     column: $table.currency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get displayFxRate => $composableBuilder(
+    column: $table.displayFxRate,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13758,6 +13816,11 @@ class $$AccountsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get displayFxRate => $composableBuilder(
+    column: $table.displayFxRate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isArchived => $composableBuilder(
     column: $table.isArchived,
     builder: (column) => ColumnOrderings(column),
@@ -13813,6 +13876,11 @@ class $$AccountsTableAnnotationComposer
   GeneratedColumn<String> get currency =>
       $composableBuilder(column: $table.currency, builder: (column) => column);
 
+  GeneratedColumn<double> get displayFxRate => $composableBuilder(
+    column: $table.displayFxRate,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get isArchived => $composableBuilder(
     column: $table.isArchived,
     builder: (column) => column,
@@ -13865,6 +13933,7 @@ class $$AccountsTableTableManager
                 Value<int> startingBalance = const Value.absent(),
                 Value<int> currentBalance = const Value.absent(),
                 Value<String> currency = const Value.absent(),
+                Value<double> displayFxRate = const Value.absent(),
                 Value<bool> isArchived = const Value.absent(),
                 Value<bool> isOnBudget = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -13878,6 +13947,7 @@ class $$AccountsTableTableManager
                 startingBalance: startingBalance,
                 currentBalance: currentBalance,
                 currency: currency,
+                displayFxRate: displayFxRate,
                 isArchived: isArchived,
                 isOnBudget: isOnBudget,
                 createdAt: createdAt,
@@ -13893,6 +13963,7 @@ class $$AccountsTableTableManager
                 Value<int> startingBalance = const Value.absent(),
                 Value<int> currentBalance = const Value.absent(),
                 required String currency,
+                Value<double> displayFxRate = const Value.absent(),
                 Value<bool> isArchived = const Value.absent(),
                 Value<bool> isOnBudget = const Value.absent(),
                 required DateTime createdAt,
@@ -13906,6 +13977,7 @@ class $$AccountsTableTableManager
                 startingBalance: startingBalance,
                 currentBalance: currentBalance,
                 currency: currency,
+                displayFxRate: displayFxRate,
                 isArchived: isArchived,
                 isOnBudget: isOnBudget,
                 createdAt: createdAt,

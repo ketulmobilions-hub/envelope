@@ -410,6 +410,27 @@
     "@accountsCurrencyLabel": {
         "description": "Label for currency field"
     },
+    "accountsCurrencyEditingDisabled": "Currency cannot be changed after the account is created.",
+    "@accountsCurrencyEditingDisabled": {
+        "description": "Helper shown on the disabled currency field while editing"
+    },
+    "accountsDisplayFxRateLabel": "Conversion rate to base currency",
+    "@accountsDisplayFxRateLabel": {
+        "description": "Label for the per-account FX rate input"
+    },
+    "accountsDisplayFxRateHelper": "1 {accountCode} = X {baseSymbol} {baseCode}",
+    "@accountsDisplayFxRateHelper": {
+        "description": "Helper text under the FX rate input",
+        "placeholders": {
+            "accountCode": { "type": "String" },
+            "baseSymbol": { "type": "String" },
+            "baseCode": { "type": "String" }
+        }
+    },
+    "accountsDisplayFxRateInvalid": "Enter a positive conversion rate",
+    "@accountsDisplayFxRateInvalid": {
+        "description": "Validation error for invalid FX rate"
+    },
     "accountsStatusLabel": "Status",
     "@accountsStatusLabel": {
         "description": "Label for account status field"
