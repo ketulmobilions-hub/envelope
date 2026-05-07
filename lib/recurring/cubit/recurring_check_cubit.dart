@@ -1,4 +1,7 @@
 import 'package:bloc/bloc.dart';
+import 'package:budget_repository/budget_repository.dart';
+import 'package:envelope/transactions/widgets/transaction_helpers.dart';
+import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart' show DateUtils;
 import 'package:transaction_repository/transaction_repository.dart';
@@ -47,14 +50,20 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
     required TransactionRepository transactionRepository,
     required String budgetId,
     required String userId,
+    BudgetRepository? budgetRepository,
+    EnvelopeRepository? envelopeRepository,
     DateTime Function()? nowProvider,
   }) : _transactionRepository = transactionRepository,
+       _budgetRepository = budgetRepository,
+       _envelopeRepository = envelopeRepository,
        _budgetId = budgetId,
        _userId = userId,
        _nowProvider = nowProvider ?? DateTime.now,
        super(const RecurringCheckState());
 
   final TransactionRepository _transactionRepository;
+  final BudgetRepository? _budgetRepository;
+  final EnvelopeRepository? _envelopeRepository;
   final String _budgetId;
   final String _userId;
   final DateTime Function() _nowProvider;
@@ -112,8 +121,9 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
 
   Future<void> _autoPostRule(RecurringRule rule, DateTime effectiveNow) async {
     // Create the transaction first.
+    Transaction created;
     try {
-      await _transactionRepository.createTransaction(
+      created = await _transactionRepository.createTransaction(
         budgetId: rule.budgetId,
         accountId: rule.accountId,
         type: rule.type,
@@ -130,6 +140,47 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
     } on TransactionException {
       // Failed to create transaction; skip advancing nextOccurrence.
       return;
+    }
+
+    // Optimistic period totalIncome / envelope spent — mirror form-cubit
+    // submit so RTA + envelope cards reflect the auto-posted txn before
+    // the next refresh round-trip. `total_income` has no server-side trigger
+    // so without this the dashboard stays stale until a manual refresh.
+    //
+    // Awaited (not unawaited) because addIncomeToCurrentPeriod is a
+    // read-modify-write on the same period row — when multiple rules fire
+    // in the same `check()` invocation, concurrent unawaited calls would
+    // lose updates. Sequential awaits cost one local round-trip per rule.
+    //
+    // TODO: when recurring rules support splits, mirror the form-cubit
+    // split-loop here. Today recurring_rules has a single envelope_id.
+    final budgetRepo = _budgetRepository;
+    final envelopeRepo = _envelopeRepository;
+    if (budgetRepo != null || envelopeRepo != null) {
+      final baseAmount = effectiveBaseCurrencyAmount(created);
+      if (rule.type == 'income' && budgetRepo != null) {
+        try {
+          await budgetRepo.addIncomeToCurrentPeriod(
+            budgetId: rule.budgetId,
+            amount: baseAmount,
+          );
+        } on Exception {
+          // Best-effort; refresh on next check() will reconcile.
+        }
+      } else if (rule.type == 'expense' &&
+          rule.envelopeId != null &&
+          envelopeRepo != null) {
+        try {
+          await envelopeRepo.incrementLocalSpentAmount(
+            envelopeId: rule.envelopeId!,
+            budgetId: rule.budgetId,
+            date: effectiveNow,
+            baseCurrencyAmount: baseAmount,
+          );
+        } on Exception {
+          // Best-effort.
+        }
+      }
     }
 
     // Only advance nextOccurrence if the transaction was created.

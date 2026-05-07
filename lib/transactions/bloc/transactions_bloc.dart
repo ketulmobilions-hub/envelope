@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:account_repository/account_repository.dart';
 import 'package:bloc/bloc.dart';
 import 'package:budget_repository/budget_repository.dart';
+import 'package:envelope/transactions/widgets/transaction_helpers.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:transaction_repository/transaction_repository.dart';
@@ -44,7 +45,7 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
   StreamSubscription<List<Account>>? _accountsSubscription;
   StreamSubscription<List<Envelope>>? _envelopesSubscription;
   StreamSubscription<Map<String, List<String>>>? _splitIdsSubscription;
-  Transaction? _lastDeleted;
+  ({Transaction txn, List<TransactionSplit> splits})? _lastDeleted;
 
   /// The budget ID this bloc is watching.
   String get budgetId => _budgetId;
@@ -146,42 +147,71 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
     TransactionDeleted event,
     Emitter<TransactionsState> emit,
   ) async {
-    // Store for undo before deleting.
-    _lastDeleted = state.transactions.cast<Transaction?>().firstWhere(
+    final txn = state.transactions.cast<Transaction?>().firstWhere(
       (t) => t!.id == event.id,
       orElse: () => null,
     );
+    if (txn == null) return;
 
-    try {
-      await _transactionRepository.deleteTransaction(event.id);
-      // Optimistically decrement local spentAmount so the envelope card on
-      // the home page reflects the deletion instantly (before the API
-      // refreshAllocations round-trip completes).
-      final deleted = _lastDeleted;
-      if (deleted != null) {
-        if (deleted.type == 'expense' && deleted.envelopeId != null) {
-          unawaited(
+    // Snapshot splits before delete in case undo is requested.
+    var splits = const <TransactionSplit>[];
+    if (txn.type == 'expense' && txn.envelopeId == null) {
+      try {
+        splits = await _transactionRepository.getTransactionSplits(txn.id);
+      } on TransactionException {
+        // Best-effort — splits stay empty, optimistic decrement is skipped.
+      }
+    }
+    _lastDeleted = (txn: txn, splits: splits);
+
+    // Optimistic local update FIRST so the UI reflects the delete instantly.
+    // The realtime push from the server-side spent_amount trigger arrives
+    // after the await below and is the source of truth — it overwrites
+    // whatever optimistic value we set, eliminating the double-decrement
+    // race that exists if the optimistic update runs after the await.
+    final baseAmount = effectiveBaseCurrencyAmount(txn);
+    final optimisticFutures = <Future<void>>[];
+    if (txn.type == 'income') {
+      optimisticFutures.add(
+        _budgetRepository
+            .removeIncomeFromPeriod(
+              budgetId: txn.budgetId,
+              date: txn.date,
+              amount: baseAmount,
+            )
+            .catchError((_) {}),
+      );
+    } else if (txn.type == 'expense') {
+      if (txn.envelopeId != null) {
+        optimisticFutures.add(
+          _envelopeRepository.decrementLocalSpentAmount(
+            envelopeId: txn.envelopeId!,
+            budgetId: txn.budgetId,
+            date: txn.date,
+            amount: baseAmount,
+          ),
+        );
+      } else {
+        for (final s in splits) {
+          optimisticFutures.add(
             _envelopeRepository.decrementLocalSpentAmount(
-              envelopeId: deleted.envelopeId!,
-              budgetId: deleted.budgetId,
-              date: deleted.date,
-              amount: deleted.amount,
+              envelopeId: s.envelopeId,
+              budgetId: txn.budgetId,
+              date: txn.date,
+              amount: (s.amount * txn.exchangeRate).round(),
             ),
           );
         }
-        if (deleted.type == 'income') {
-          unawaited(
-            _budgetRepository
-                .removeIncomeFromPeriod(
-                  budgetId: deleted.budgetId,
-                  date: deleted.date,
-                  amount: deleted.amount,
-                )
-                .catchError((_) {}),
-          );
-        }
       }
+    }
+    await Future.wait(optimisticFutures);
+
+    try {
+      await _transactionRepository.deleteTransaction(event.id);
     } on TransactionException {
+      // Roll back the optimistic update so local state matches server.
+      await _rollbackDeleteOptimistic(txn, splits, baseAmount);
+      _lastDeleted = null;
       emit(
         state.copyWith(
           status: TransactionsStatus.error,
@@ -192,30 +222,112 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
     }
   }
 
+  Future<void> _rollbackDeleteOptimistic(
+    Transaction txn,
+    List<TransactionSplit> splits,
+    int baseAmount,
+  ) async {
+    final futures = <Future<void>>[];
+    if (txn.type == 'income') {
+      // Symmetric inverse of removeIncomeFromPeriod(date) — addIncomeToPeriod
+      // hits the same period the optimistic decrement targeted, even for
+      // past-dated transactions where the latest period is not the right one.
+      futures.add(
+        _budgetRepository
+            .addIncomeToPeriod(
+              budgetId: txn.budgetId,
+              date: txn.date,
+              amount: baseAmount,
+            )
+            .catchError((_) {}),
+      );
+    } else if (txn.type == 'expense') {
+      if (txn.envelopeId != null) {
+        futures.add(
+          _envelopeRepository.incrementLocalSpentAmount(
+            envelopeId: txn.envelopeId!,
+            budgetId: txn.budgetId,
+            date: txn.date,
+            baseCurrencyAmount: baseAmount,
+          ),
+        );
+      } else {
+        for (final s in splits) {
+          futures.add(
+            _envelopeRepository.incrementLocalSpentAmount(
+              envelopeId: s.envelopeId,
+              budgetId: txn.budgetId,
+              date: txn.date,
+              baseCurrencyAmount: (s.amount * txn.exchangeRate).round(),
+            ),
+          );
+        }
+      }
+    }
+    await Future.wait(futures);
+  }
+
   Future<void> _onUndoDelete(
     TransactionUndoDeleteRequested event,
     Emitter<TransactionsState> emit,
   ) async {
-    final deleted = _lastDeleted;
-    if (deleted == null) return;
-    _lastDeleted = null;
+    final snapshot = _lastDeleted;
+    if (snapshot == null) return;
+    final deleted = snapshot.txn;
+
+    // Optimistic re-add FIRST so RTA / envelope spent restore instantly.
+    // Server-side trigger emits the corrected value via realtime after the
+    // restore call below completes, overwriting whatever we set.
+    final baseAmount = effectiveBaseCurrencyAmount(deleted);
+    final optimisticFutures = <Future<void>>[];
+    if (deleted.type == 'income') {
+      optimisticFutures.add(
+        _budgetRepository
+            .addIncomeToPeriod(
+              budgetId: deleted.budgetId,
+              date: deleted.date,
+              amount: baseAmount,
+            )
+            .catchError((_) {}),
+      );
+    } else if (deleted.type == 'expense') {
+      if (deleted.envelopeId != null) {
+        optimisticFutures.add(
+          _envelopeRepository.incrementLocalSpentAmount(
+            envelopeId: deleted.envelopeId!,
+            budgetId: deleted.budgetId,
+            date: deleted.date,
+            baseCurrencyAmount: baseAmount,
+          ),
+        );
+      } else {
+        for (final s in snapshot.splits) {
+          optimisticFutures.add(
+            _envelopeRepository.incrementLocalSpentAmount(
+              envelopeId: s.envelopeId,
+              budgetId: deleted.budgetId,
+              date: deleted.date,
+              baseCurrencyAmount: (s.amount * deleted.exchangeRate).round(),
+            ),
+          );
+        }
+      }
+    }
+    await Future.wait(optimisticFutures);
 
     try {
-      await _transactionRepository.createTransaction(
-        budgetId: deleted.budgetId,
-        accountId: deleted.accountId,
-        type: deleted.type,
-        amount: deleted.amount,
-        currency: deleted.currency,
-        date: deleted.date,
-        createdBy: deleted.createdBy,
-        envelopeId: deleted.envelopeId,
-        exchangeRate: deleted.exchangeRate,
-        payee: deleted.payee,
-        notes: deleted.notes,
-        transferPairId: deleted.transferPairId,
-      );
+      // Use restoreTransaction so the original UUID is preserved. Creating a
+      // new transaction would orphan transferPairId / recurringRuleId /
+      // attachments. Splits, tags, and base_currency_amount survive the
+      // soft-delete window server-side. The paired transfer half (if any)
+      // was never deleted — `deleteTransaction` only removes the single
+      // row and `transferPairId` is a shared marker UUID, not a row id —
+      // so no separate pair-restore is needed.
+      await _transactionRepository.restoreTransaction(deleted.id);
+      _lastDeleted = null;
     } on TransactionException {
+      // Roll back the optimistic update so local state matches server.
+      await _rollbackUndoOptimistic(deleted, snapshot.splits, baseAmount);
       emit(
         state.copyWith(
           status: TransactionsStatus.error,
@@ -224,6 +336,48 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
       );
       emit(state.copyWith(status: TransactionsStatus.loaded, error: null));
     }
+  }
+
+  Future<void> _rollbackUndoOptimistic(
+    Transaction txn,
+    List<TransactionSplit> splits,
+    int baseAmount,
+  ) async {
+    final futures = <Future<void>>[];
+    if (txn.type == 'income') {
+      futures.add(
+        _budgetRepository
+            .removeIncomeFromPeriod(
+              budgetId: txn.budgetId,
+              date: txn.date,
+              amount: baseAmount,
+            )
+            .catchError((_) {}),
+      );
+    } else if (txn.type == 'expense') {
+      if (txn.envelopeId != null) {
+        futures.add(
+          _envelopeRepository.decrementLocalSpentAmount(
+            envelopeId: txn.envelopeId!,
+            budgetId: txn.budgetId,
+            date: txn.date,
+            amount: baseAmount,
+          ),
+        );
+      } else {
+        for (final s in splits) {
+          futures.add(
+            _envelopeRepository.decrementLocalSpentAmount(
+              envelopeId: s.envelopeId,
+              budgetId: txn.budgetId,
+              date: txn.date,
+              amount: (s.amount * txn.exchangeRate).round(),
+            ),
+          );
+        }
+      }
+    }
+    await Future.wait(futures);
   }
 
   void _onFilterChanged(

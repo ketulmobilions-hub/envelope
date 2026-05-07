@@ -206,10 +206,16 @@ class TransactionRepository {
   }
 
   /// Restores a soft-deleted transaction by clearing `deleted_at`.
+  ///
+  /// Re-caches the row locally so callers don't depend on the realtime push
+  /// to surface the restored transaction (offline / unsubscribed clients
+  /// would otherwise see optimistic balance bumps with no row).
   Future<void> restoreTransaction(String id) async {
     _beginLocalWrite();
     try {
       await _apiClient.transactions.restoreTransaction(id);
+      final dto = await _apiClient.transactions.getTransaction(id);
+      await _cacheTransaction(dto);
     } on EnvelopeApiException catch (e) {
       _endLocalWrite();
       throw TransactionException('Failed to restore transaction', error: e);

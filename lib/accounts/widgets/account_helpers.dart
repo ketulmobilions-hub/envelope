@@ -2,6 +2,22 @@ import 'package:account_repository/account_repository.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
+/// Conversion helpers for a single [Account].
+extension AccountBaseCurrency on Account {
+  /// Returns the account's `startingBalance` expressed in the budget's base
+  /// currency cents, applying the account's `displayFxRate`.
+  ///
+  /// Used by callers that mutate `budget_periods.total_income`, which is
+  /// stored in base-currency cents. For accounts whose currency matches the
+  /// base, `displayFxRate` defaults to 1.0 and the value is unchanged.
+  ///
+  /// Note: `displayFxRate` is `real` (single-precision) in Postgres and
+  /// `double` in Dart. For starting balances near the bigint cents max,
+  /// minor precision loss is possible.
+  int get startingBalanceInBase =>
+      (startingBalance * displayFxRate).round();
+}
+
 /// Currency lookup helpers on a list of [Account].
 extension AccountListCurrency on List<Account> {
   /// Returns the currency of the account whose id matches [accountId],

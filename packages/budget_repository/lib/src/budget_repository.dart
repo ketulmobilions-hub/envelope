@@ -272,6 +272,43 @@ class BudgetRepository {
     }
   }
 
+  /// Increments `totalIncome` on the budget period that contains [date].
+  ///
+  /// Symmetric counterpart to [removeIncomeFromPeriod]. Use this when undoing
+  /// a delete of a past-dated income transaction so the original period is
+  /// restored, instead of mistakenly bumping the latest period as
+  /// [addIncomeToCurrentPeriod] would.
+  ///
+  /// [amount] must be expressed in the budget's base currency.
+  Future<void> addIncomeToPeriod({
+    required String budgetId,
+    required DateTime date,
+    required int amount,
+  }) async {
+    try {
+      final periods = await _localDatabase.budgetsDao.getPeriodsByBudgetId(
+        budgetId,
+      );
+      storage.BudgetPeriod? period;
+      for (final p in periods) {
+        if (!p.startDate.isAfter(date) && !p.endDate.isBefore(date)) {
+          period = p;
+          break;
+        }
+      }
+      if (period == null) return;
+
+      final updatedPeriod = _mapBudgetPeriodFromLocal(period).copyWith(
+        totalIncome: period.totalIncome + amount,
+      );
+      await updateBudgetPeriod(updatedPeriod);
+    } on BudgetException {
+      rethrow;
+    } on Exception catch (e) {
+      throw BudgetException('Failed to add income to period', error: e);
+    }
+  }
+
   /// Decrements `totalIncome` on the budget period that contains [date].
   Future<void> removeIncomeFromPeriod({
     required String budgetId,

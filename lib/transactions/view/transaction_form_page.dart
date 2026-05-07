@@ -297,6 +297,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                                 ),
                               ],
                               textInputAction: TextInputAction.next,
+                              onChanged: (_) => setState(() {}),
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
                                   return l10n.transactionsAmountRequired;
@@ -346,6 +347,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                                     RegExp(r'^\d*\.?\d{0,6}'),
                                   ),
                                 ],
+                                onChanged: (_) => setState(() {}),
                                 validator: (value) {
                                   final parsed =
                                       double.tryParse(value?.trim() ?? '');

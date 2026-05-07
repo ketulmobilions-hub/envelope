@@ -2,9 +2,22 @@ import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:transaction_repository/transaction_repository.dart';
 
 // Re-export formatCents/parseCents so callers can import from one place.
 export 'package:envelope/accounts/widgets/format_cents.dart';
+
+/// Returns the transaction's amount in the budget's base currency cents.
+///
+/// Prefers the persisted `baseCurrencyAmount` (set server-side by the
+/// BEFORE-INSERT trigger from migration 00029). Falls back to client-side
+/// conversion `(amount * exchangeRate).round()` for legacy rows where the
+/// column might still be `0`. Same rounding (round-half-away-from-zero)
+/// is used by the SQL trigger so client/server stay byte-identical.
+int effectiveBaseCurrencyAmount(Transaction t) {
+  if (t.baseCurrencyAmount != 0) return t.baseCurrencyAmount;
+  return (t.amount * t.exchangeRate).round();
+}
 
 /// Returns a localized label for a transaction type.
 String localizedTransactionType(String type, AppLocalizations l10n) {

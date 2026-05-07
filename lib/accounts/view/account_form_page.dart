@@ -64,7 +64,11 @@ class _AccountFormPageState extends State<AccountFormPage> {
           : '1.0',
     );
     _selectedType = widget.account?.type ?? _accountTypes.first;
-    _selectedCurrency = widget.account?.currency ?? 'USD';
+    // Default to the user's base currency for new accounts so an INR budget
+    // doesn't seed every new account as USD.
+    final defaultCurrency =
+        context.read<AuthBloc>().state.user?.baseCurrency ?? 'USD';
+    _selectedCurrency = widget.account?.currency ?? defaultCurrency;
     _isOnBudget =
         widget.account?.isOnBudget ?? defaultIsOnBudget(_selectedType);
 

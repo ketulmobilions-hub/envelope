@@ -93,10 +93,7 @@ class TransactionListTile extends StatelessWidget {
             if (isForeign)
               Text(
                 '≈ ${formatCents(
-                  transaction.baseCurrencyAmount != 0
-                      ? transaction.baseCurrencyAmount
-                      : (transaction.amount * transaction.exchangeRate)
-                          .round(),
+                  effectiveBaseCurrencyAmount(transaction),
                   symbol: baseSymbol,
                 )}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
