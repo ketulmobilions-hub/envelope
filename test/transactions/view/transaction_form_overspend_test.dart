@@ -127,6 +127,7 @@ void main() {
               transactionRepository: transactionRepo,
               accountRepository: accountRepo,
               envelopeRepository: envelopeRepo,
+              budgetRepository: budgetRepo,
               budgetId: 'budget-1',
               userId: 'user-1',
               budgetPeriodId: budgetPeriodId,

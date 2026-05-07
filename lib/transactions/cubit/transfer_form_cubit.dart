@@ -52,9 +52,31 @@ class TransferFormCubit extends Cubit<TransferFormState> {
     required int amountCents,
     required DateTime date,
   }) async {
+    if (state.accounts.isEmpty) {
+      emit(
+        state.copyWith(
+          status: TransferFormStatus.failure,
+          errorMessage: 'Accounts not loaded yet. Please retry.',
+        ),
+      );
+      return;
+    }
     emit(state.copyWith(status: TransferFormStatus.submitting));
     try {
       final transferPairId = const Uuid().v4();
+      final fromAccount = state.accounts
+          .where((a) => a.id == fromAccountId)
+          .firstOrNull;
+      final toAccount = state.accounts
+          .where((a) => a.id == toAccountId)
+          .firstOrNull;
+      final fromCurrency = fromAccount?.currency ?? 'USD';
+      final toCurrency = toAccount?.currency ?? 'USD';
+      // Each leg snapshots its own account's displayFxRate so the
+      // base_currency_amount is correct per leg, even for cross-currency
+      // transfers (e.g. USD → INR via Wise).
+      final fromRate = fromAccount?.displayFxRate ?? 1.0;
+      final toRate = toAccount?.displayFxRate ?? 1.0;
 
       // Create outgoing transaction (from account — negative amount).
       await _transactionRepository.createTransaction(
@@ -62,7 +84,8 @@ class TransferFormCubit extends Cubit<TransferFormState> {
         accountId: fromAccountId,
         type: 'transfer',
         amount: -amountCents,
-        currency: 'USD',
+        currency: fromCurrency,
+        exchangeRate: fromRate,
         date: date,
         createdBy: userId,
         transferPairId: transferPairId,
@@ -74,7 +97,8 @@ class TransferFormCubit extends Cubit<TransferFormState> {
         accountId: toAccountId,
         type: 'transfer',
         amount: amountCents,
-        currency: 'USD',
+        currency: toCurrency,
+        exchangeRate: toRate,
         date: date,
         createdBy: userId,
         transferPairId: transferPairId,
@@ -89,9 +113,6 @@ class TransferFormCubit extends Cubit<TransferFormState> {
 
       // When paying a CC bill, refresh allocations so BudgetBloc recomputes
       // CC Payment available from the new transaction in local storage.
-      final toAccount = state.accounts
-          .where((a) => a.id == toAccountId)
-          .firstOrNull;
       if (toAccount != null &&
           isCreditCard(toAccount.type) &&
           _envelopeRepository != null &&

@@ -1,4 +1,5 @@
 import 'package:account_repository/account_repository.dart';
+import 'package:auth_repository/auth_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/app/routes/routes.dart';
 import 'package:envelope/auth/auth.dart';
@@ -27,6 +28,7 @@ class OnboardingPage extends StatelessWidget {
         envelopeRepository: context.read<EnvelopeRepository>(),
         accountRepository: context.read<AccountRepository>(),
         budgetRepository: context.read<BudgetRepository>(),
+        authRepository: context.read<AuthRepository>(),
         userId: user!.id,
         now: context.read<AppClock>().now,
       ),

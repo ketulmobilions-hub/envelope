@@ -1,9 +1,12 @@
 import 'package:account_repository/account_repository.dart';
 import 'package:envelope/accounts/cubit/cubit.dart';
 import 'package:envelope/accounts/widgets/widgets.dart';
+import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/onboarding/data/currencies.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/shared/widgets/app_option_picker.dart';
+import 'package:envelope/shared/widgets/currency_picker_sheet.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -29,6 +32,7 @@ class _AccountFormPageState extends State<AccountFormPage> {
   late final TextEditingController _nameController;
   late final TextEditingController _balanceController;
   late final TextEditingController _creditLimitController;
+  late final TextEditingController _fxRateController;
   late String _selectedType;
   late String _selectedCurrency;
   late bool _isOnBudget;
@@ -54,8 +58,17 @@ class _AccountFormPageState extends State<AccountFormPage> {
           : '',
     );
     _creditLimitController = TextEditingController();
+    _fxRateController = TextEditingController(
+      text: widget.account != null
+          ? widget.account!.displayFxRate.toString()
+          : '1.0',
+    );
     _selectedType = widget.account?.type ?? _accountTypes.first;
-    _selectedCurrency = widget.account?.currency ?? 'USD';
+    // Default to the user's base currency for new accounts so an INR budget
+    // doesn't seed every new account as USD.
+    final defaultCurrency =
+        context.read<AuthBloc>().state.user?.baseCurrency ?? 'USD';
+    _selectedCurrency = widget.account?.currency ?? defaultCurrency;
     _isOnBudget =
         widget.account?.isOnBudget ?? defaultIsOnBudget(_selectedType);
 
@@ -69,13 +82,19 @@ class _AccountFormPageState extends State<AccountFormPage> {
     _nameController.dispose();
     _balanceController.dispose();
     _creditLimitController.dispose();
+    _fxRateController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final symbol = currencySymbol(context);
+    final baseCurrency =
+        context.watch<AuthBloc>().state.user?.baseCurrency ?? 'USD';
+    final symbol = currencySymbolFromCode(_selectedCurrency);
+    final baseSymbol = currencySymbolFromCode(baseCurrency);
+    final isForeign = _selectedCurrency != baseCurrency;
+    final maxAmountLabel = '${symbol}999,999,999.99';
 
     return BlocListener<AccountFormCubit, AccountFormState>(
       listener: (context, state) {
@@ -142,6 +161,47 @@ class _AccountFormPageState extends State<AccountFormPage> {
                     itemLabel: (type) => _typeDisplayName(type, l10n),
                   ),
                   const SizedBox(height: 16),
+                  _CurrencyPickerTile(
+                    selectedCode: _selectedCurrency,
+                    enabled: !_isEditing,
+                    onChanged: (code) => setState(() {
+                      _selectedCurrency = code;
+                      if (code == baseCurrency) {
+                        _fxRateController.text = '1.0';
+                      }
+                    }),
+                  ),
+                  if (isForeign) ...[
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _fxRateController,
+                      decoration: InputDecoration(
+                        labelText: l10n.accountsDisplayFxRateLabel,
+                        helperText: l10n.accountsDisplayFxRateHelper(
+                          _selectedCurrency,
+                          baseSymbol,
+                          baseCurrency,
+                        ),
+                        prefixIcon: const Icon(Icons.currency_exchange),
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'^\d*\.?\d{0,6}'),
+                        ),
+                      ],
+                      validator: (value) {
+                        final parsed = double.tryParse(value?.trim() ?? '');
+                        if (parsed == null || parsed <= 0) {
+                          return l10n.accountsDisplayFxRateInvalid;
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                  const SizedBox(height: 16),
                   TextFormField(
                     controller: _balanceController,
                     decoration: InputDecoration(
@@ -164,7 +224,7 @@ class _AccountFormPageState extends State<AccountFormPage> {
                     validator: (value) {
                       final parsed = double.tryParse(value?.trim() ?? '');
                       if (parsed != null && parsed.abs() > maxDollarAmount) {
-                        return l10n.accountsBalanceTooLarge;
+                        return l10n.accountsBalanceTooLarge(maxAmountLabel);
                       }
                       return null;
                     },
@@ -190,7 +250,9 @@ class _AccountFormPageState extends State<AccountFormPage> {
                         if (value == null || value.trim().isEmpty) return null;
                         final parsed = double.tryParse(value.trim());
                         if (parsed != null && parsed > maxDollarAmount) {
-                          return l10n.accountsBalanceTooLarge;
+                          return l10n.accountsCreditLimitTooLarge(
+                            maxAmountLabel,
+                          );
                         }
                         return null;
                       },
@@ -249,11 +311,13 @@ class _AccountFormPageState extends State<AccountFormPage> {
       creditLimitCents = parseCents(_creditLimitController.text);
     }
 
+    final fxRate = double.tryParse(_fxRateController.text.trim()) ?? 1.0;
     context.read<AccountFormCubit>().submit(
       name: _nameController.text.trim(),
       type: _selectedType,
       balanceCents: balanceCents,
       currency: _selectedCurrency,
+      displayFxRate: fxRate,
       isOnBudget: _isOnBudget,
       creditLimitCents: creditLimitCents,
     );
@@ -261,4 +325,50 @@ class _AccountFormPageState extends State<AccountFormPage> {
 
   String _typeDisplayName(String type, AppLocalizations l10n) =>
       localizedAccountType(type, l10n);
+}
+
+class _CurrencyPickerTile extends StatelessWidget {
+  const _CurrencyPickerTile({
+    required this.selectedCode,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  final String selectedCode;
+  final bool enabled;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final selected = supportedCurrencies.firstWhere(
+      (c) => c.code == selectedCode,
+      orElse: () => supportedCurrencies.first,
+    );
+    return InkWell(
+      onTap: enabled
+          ? () async {
+              final code = await showModalBottomSheet<String>(
+                context: context,
+                isScrollControlled: true,
+                builder: (_) =>
+                    CurrencyPickerSheet(initialCode: selectedCode),
+              );
+              if (code != null) onChanged(code);
+            }
+          : null,
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: l10n.accountsCurrencyLabel,
+          prefixIcon: const Icon(Icons.attach_money_outlined),
+          enabled: enabled,
+          suffixIcon: enabled ? const Icon(Icons.arrow_drop_down) : null,
+          helperText: enabled ? null : l10n.accountsCurrencyEditingDisabled,
+        ),
+        child: Text(
+          '${selected.symbol} ${selected.code} - ${selected.name}',
+        ),
+      ),
+    );
+  }
 }

@@ -30,6 +30,8 @@ mixin _$TransactionDto {
   DateTime get updatedAt;
   @JsonKey(name: 'exchange_rate')
   double get exchangeRate;
+  @JsonKey(name: 'base_currency_amount')
+  int get baseCurrencyAmount;
   @JsonKey(name: 'is_reconciled')
   bool get isReconciled;
   @JsonKey(name: 'envelope_id')
@@ -77,6 +79,8 @@ mixin _$TransactionDto {
                 other.updatedAt == updatedAt) &&
             (identical(other.exchangeRate, exchangeRate) ||
                 other.exchangeRate == exchangeRate) &&
+            (identical(other.baseCurrencyAmount, baseCurrencyAmount) ||
+                other.baseCurrencyAmount == baseCurrencyAmount) &&
             (identical(other.isReconciled, isReconciled) ||
                 other.isReconciled == isReconciled) &&
             (identical(other.envelopeId, envelopeId) ||
@@ -104,6 +108,7 @@ mixin _$TransactionDto {
     createdAt,
     updatedAt,
     exchangeRate,
+    baseCurrencyAmount,
     isReconciled,
     envelopeId,
     payee,
@@ -114,7 +119,7 @@ mixin _$TransactionDto {
 
   @override
   String toString() {
-    return 'TransactionDto(id: $id, budgetId: $budgetId, accountId: $accountId, type: $type, amount: $amount, currency: $currency, date: $date, createdBy: $createdBy, createdAt: $createdAt, updatedAt: $updatedAt, exchangeRate: $exchangeRate, isReconciled: $isReconciled, envelopeId: $envelopeId, payee: $payee, notes: $notes, recurringRuleId: $recurringRuleId, transferPairId: $transferPairId)';
+    return 'TransactionDto(id: $id, budgetId: $budgetId, accountId: $accountId, type: $type, amount: $amount, currency: $currency, date: $date, createdBy: $createdBy, createdAt: $createdAt, updatedAt: $updatedAt, exchangeRate: $exchangeRate, baseCurrencyAmount: $baseCurrencyAmount, isReconciled: $isReconciled, envelopeId: $envelopeId, payee: $payee, notes: $notes, recurringRuleId: $recurringRuleId, transferPairId: $transferPairId)';
   }
 }
 
@@ -137,6 +142,7 @@ abstract mixin class $TransactionDtoCopyWith<$Res> {
     @JsonKey(name: 'created_at') DateTime createdAt,
     @JsonKey(name: 'updated_at') DateTime updatedAt,
     @JsonKey(name: 'exchange_rate') double exchangeRate,
+    @JsonKey(name: 'base_currency_amount') int baseCurrencyAmount,
     @JsonKey(name: 'is_reconciled') bool isReconciled,
     @JsonKey(name: 'envelope_id') String? envelopeId,
     String? payee,
@@ -170,6 +176,7 @@ class _$TransactionDtoCopyWithImpl<$Res>
     Object? createdAt = null,
     Object? updatedAt = null,
     Object? exchangeRate = null,
+    Object? baseCurrencyAmount = null,
     Object? isReconciled = null,
     Object? envelopeId = freezed,
     Object? payee = freezed,
@@ -223,6 +230,10 @@ class _$TransactionDtoCopyWithImpl<$Res>
             ? _self.exchangeRate
             : exchangeRate // ignore: cast_nullable_to_non_nullable
                   as double,
+        baseCurrencyAmount: null == baseCurrencyAmount
+            ? _self.baseCurrencyAmount
+            : baseCurrencyAmount // ignore: cast_nullable_to_non_nullable
+                  as int,
         isReconciled: null == isReconciled
             ? _self.isReconciled
             : isReconciled // ignore: cast_nullable_to_non_nullable
@@ -357,6 +368,7 @@ extension TransactionDtoPatterns on TransactionDto {
       @JsonKey(name: 'created_at') DateTime createdAt,
       @JsonKey(name: 'updated_at') DateTime updatedAt,
       @JsonKey(name: 'exchange_rate') double exchangeRate,
+      @JsonKey(name: 'base_currency_amount') int baseCurrencyAmount,
       @JsonKey(name: 'is_reconciled') bool isReconciled,
       @JsonKey(name: 'envelope_id') String? envelopeId,
       String? payee,
@@ -382,6 +394,7 @@ extension TransactionDtoPatterns on TransactionDto {
           _that.createdAt,
           _that.updatedAt,
           _that.exchangeRate,
+          _that.baseCurrencyAmount,
           _that.isReconciled,
           _that.envelopeId,
           _that.payee,
@@ -421,6 +434,7 @@ extension TransactionDtoPatterns on TransactionDto {
       @JsonKey(name: 'created_at') DateTime createdAt,
       @JsonKey(name: 'updated_at') DateTime updatedAt,
       @JsonKey(name: 'exchange_rate') double exchangeRate,
+      @JsonKey(name: 'base_currency_amount') int baseCurrencyAmount,
       @JsonKey(name: 'is_reconciled') bool isReconciled,
       @JsonKey(name: 'envelope_id') String? envelopeId,
       String? payee,
@@ -445,6 +459,7 @@ extension TransactionDtoPatterns on TransactionDto {
           _that.createdAt,
           _that.updatedAt,
           _that.exchangeRate,
+          _that.baseCurrencyAmount,
           _that.isReconciled,
           _that.envelopeId,
           _that.payee,
@@ -483,6 +498,7 @@ extension TransactionDtoPatterns on TransactionDto {
       @JsonKey(name: 'created_at') DateTime createdAt,
       @JsonKey(name: 'updated_at') DateTime updatedAt,
       @JsonKey(name: 'exchange_rate') double exchangeRate,
+      @JsonKey(name: 'base_currency_amount') int baseCurrencyAmount,
       @JsonKey(name: 'is_reconciled') bool isReconciled,
       @JsonKey(name: 'envelope_id') String? envelopeId,
       String? payee,
@@ -507,6 +523,7 @@ extension TransactionDtoPatterns on TransactionDto {
           _that.createdAt,
           _that.updatedAt,
           _that.exchangeRate,
+          _that.baseCurrencyAmount,
           _that.isReconciled,
           _that.envelopeId,
           _that.payee,
@@ -535,6 +552,7 @@ class _TransactionDto implements TransactionDto {
     @JsonKey(name: 'created_at') required this.createdAt,
     @JsonKey(name: 'updated_at') required this.updatedAt,
     @JsonKey(name: 'exchange_rate') this.exchangeRate = 1.0,
+    @JsonKey(name: 'base_currency_amount') this.baseCurrencyAmount = 0,
     @JsonKey(name: 'is_reconciled') this.isReconciled = false,
     @JsonKey(name: 'envelope_id') this.envelopeId,
     this.payee,
@@ -573,6 +591,9 @@ class _TransactionDto implements TransactionDto {
   @override
   @JsonKey(name: 'exchange_rate')
   final double exchangeRate;
+  @override
+  @JsonKey(name: 'base_currency_amount')
+  final int baseCurrencyAmount;
   @override
   @JsonKey(name: 'is_reconciled')
   final bool isReconciled;
@@ -626,6 +647,8 @@ class _TransactionDto implements TransactionDto {
                 other.updatedAt == updatedAt) &&
             (identical(other.exchangeRate, exchangeRate) ||
                 other.exchangeRate == exchangeRate) &&
+            (identical(other.baseCurrencyAmount, baseCurrencyAmount) ||
+                other.baseCurrencyAmount == baseCurrencyAmount) &&
             (identical(other.isReconciled, isReconciled) ||
                 other.isReconciled == isReconciled) &&
             (identical(other.envelopeId, envelopeId) ||
@@ -653,6 +676,7 @@ class _TransactionDto implements TransactionDto {
     createdAt,
     updatedAt,
     exchangeRate,
+    baseCurrencyAmount,
     isReconciled,
     envelopeId,
     payee,
@@ -663,7 +687,7 @@ class _TransactionDto implements TransactionDto {
 
   @override
   String toString() {
-    return 'TransactionDto(id: $id, budgetId: $budgetId, accountId: $accountId, type: $type, amount: $amount, currency: $currency, date: $date, createdBy: $createdBy, createdAt: $createdAt, updatedAt: $updatedAt, exchangeRate: $exchangeRate, isReconciled: $isReconciled, envelopeId: $envelopeId, payee: $payee, notes: $notes, recurringRuleId: $recurringRuleId, transferPairId: $transferPairId)';
+    return 'TransactionDto(id: $id, budgetId: $budgetId, accountId: $accountId, type: $type, amount: $amount, currency: $currency, date: $date, createdBy: $createdBy, createdAt: $createdAt, updatedAt: $updatedAt, exchangeRate: $exchangeRate, baseCurrencyAmount: $baseCurrencyAmount, isReconciled: $isReconciled, envelopeId: $envelopeId, payee: $payee, notes: $notes, recurringRuleId: $recurringRuleId, transferPairId: $transferPairId)';
   }
 }
 
@@ -688,6 +712,7 @@ abstract mixin class _$TransactionDtoCopyWith<$Res>
     @JsonKey(name: 'created_at') DateTime createdAt,
     @JsonKey(name: 'updated_at') DateTime updatedAt,
     @JsonKey(name: 'exchange_rate') double exchangeRate,
+    @JsonKey(name: 'base_currency_amount') int baseCurrencyAmount,
     @JsonKey(name: 'is_reconciled') bool isReconciled,
     @JsonKey(name: 'envelope_id') String? envelopeId,
     String? payee,
@@ -721,6 +746,7 @@ class __$TransactionDtoCopyWithImpl<$Res>
     Object? createdAt = null,
     Object? updatedAt = null,
     Object? exchangeRate = null,
+    Object? baseCurrencyAmount = null,
     Object? isReconciled = null,
     Object? envelopeId = freezed,
     Object? payee = freezed,
@@ -774,6 +800,10 @@ class __$TransactionDtoCopyWithImpl<$Res>
             ? _self.exchangeRate
             : exchangeRate // ignore: cast_nullable_to_non_nullable
                   as double,
+        baseCurrencyAmount: null == baseCurrencyAmount
+            ? _self.baseCurrencyAmount
+            : baseCurrencyAmount // ignore: cast_nullable_to_non_nullable
+                  as int,
         isReconciled: null == isReconciled
             ? _self.isReconciled
             : isReconciled // ignore: cast_nullable_to_non_nullable

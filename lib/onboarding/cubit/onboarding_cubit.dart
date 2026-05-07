@@ -1,4 +1,5 @@
 import 'package:account_repository/account_repository.dart';
+import 'package:auth_repository/auth_repository.dart';
 import 'package:bloc/bloc.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/accounts/utils/cc_payments_group.dart';
@@ -22,12 +23,14 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     required EnvelopeRepository envelopeRepository,
     required AccountRepository accountRepository,
     required BudgetRepository budgetRepository,
+    required AuthRepository authRepository,
     required String userId,
     DateTime Function()? now,
   }) : _prefs = sharedPreferences,
        _envelopeRepository = envelopeRepository,
        _accountRepository = accountRepository,
        _budgetRepository = budgetRepository,
+       _authRepository = authRepository,
        _userId = userId,
        _now = now ?? DateTime.now,
        super(const OnboardingState());
@@ -36,6 +39,7 @@ class OnboardingCubit extends Cubit<OnboardingState> {
   final EnvelopeRepository _envelopeRepository;
   final AccountRepository _accountRepository;
   final BudgetRepository _budgetRepository;
+  final AuthRepository _authRepository;
   final String _userId;
   final DateTime Function() _now;
 
@@ -197,6 +201,10 @@ class OnboardingCubit extends Cubit<OnboardingState> {
   Future<void> completeOnboarding() async {
     emit(state.copyWith(status: OnboardingStatus.submitting));
     try {
+      // Persist the selected base currency on the user profile so the rest
+      // of the app (settings, formatters reading AuthBloc) reflects it.
+      await _authRepository.updateProfile(baseCurrency: state.baseCurrency);
+
       // Create the budget first — RLS policies require a budget row to exist
       // before accounts/envelopes can reference it.
       final budget = await _budgetRepository.createBudget(

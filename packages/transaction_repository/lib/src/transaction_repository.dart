@@ -63,6 +63,11 @@ class TransactionRepository {
   }) async {
     _beginLocalWrite();
     try {
+      // baseCurrencyAmount = amount × exchangeRate, rounded to int cents.
+      // The server trigger trg_transactions_base_currency_amount recomputes
+      // this on insert/update and is the source of truth; the client value
+      // is sent only so the local cache can stay in sync before the server
+      // round-trips back.
       final dto = TransactionDto(
         id: '',
         budgetId: budgetId,
@@ -76,6 +81,7 @@ class TransactionRepository {
         updatedAt: DateTime.now(),
         envelopeId: envelopeId,
         exchangeRate: exchangeRate,
+        baseCurrencyAmount: (amount * exchangeRate).round(),
         payee: payee,
         notes: notes,
         recurringRuleId: recurringRuleId,
@@ -164,7 +170,13 @@ class TransactionRepository {
   Future<void> updateTransaction(Transaction transaction) async {
     _beginLocalWrite();
     try {
-      final dto = _mapTransactionToDto(transaction);
+      // Recompute baseCurrencyAmount client-side; server trigger overwrites.
+      final dto = _mapTransactionToDto(
+        transaction.copyWith(
+          baseCurrencyAmount:
+              (transaction.amount * transaction.exchangeRate).round(),
+        ),
+      );
       final updated = await _apiClient.transactions.updateTransaction(dto);
       await _cacheTransaction(updated);
       _endLocalWrite();
@@ -194,10 +206,16 @@ class TransactionRepository {
   }
 
   /// Restores a soft-deleted transaction by clearing `deleted_at`.
+  ///
+  /// Re-caches the row locally so callers don't depend on the realtime push
+  /// to surface the restored transaction (offline / unsubscribed clients
+  /// would otherwise see optimistic balance bumps with no row).
   Future<void> restoreTransaction(String id) async {
     _beginLocalWrite();
     try {
       await _apiClient.transactions.restoreTransaction(id);
+      final dto = await _apiClient.transactions.getTransaction(id);
+      await _cacheTransaction(dto);
     } on EnvelopeApiException catch (e) {
       _endLocalWrite();
       throw TransactionException('Failed to restore transaction', error: e);
@@ -344,6 +362,7 @@ class TransactionRepository {
     required String currency,
     required String frequency,
     required DateTime startDate,
+    double exchangeRate = 1.0,
     String? envelopeId,
     String? payee,
     String? notes,
@@ -360,6 +379,7 @@ class TransactionRepository {
         type: type,
         amount: amount,
         currency: currency,
+        exchangeRate: exchangeRate,
         frequency: frequency,
         startDate: startDate,
         nextOccurrence: startDate,
@@ -802,6 +822,7 @@ class TransactionRepository {
       updatedAt: dto.updatedAt,
       envelopeId: dto.envelopeId,
       exchangeRate: dto.exchangeRate,
+      baseCurrencyAmount: dto.baseCurrencyAmount,
       payee: dto.payee,
       notes: dto.notes,
       isReconciled: dto.isReconciled,
@@ -824,6 +845,7 @@ class TransactionRepository {
       updatedAt: row.updatedAt,
       envelopeId: row.envelopeId,
       exchangeRate: row.exchangeRate,
+      baseCurrencyAmount: row.baseCurrencyAmount,
       payee: row.payee,
       notes: row.notes,
       isReconciled: row.isReconciled,
@@ -846,6 +868,7 @@ class TransactionRepository {
       updatedAt: transaction.updatedAt,
       envelopeId: transaction.envelopeId,
       exchangeRate: transaction.exchangeRate,
+      baseCurrencyAmount: transaction.baseCurrencyAmount,
       payee: transaction.payee,
       notes: transaction.notes,
       isReconciled: transaction.isReconciled,
@@ -884,6 +907,7 @@ class TransactionRepository {
       type: dto.type,
       amount: dto.amount,
       currency: dto.currency,
+      exchangeRate: dto.exchangeRate,
       frequency: dto.frequency,
       startDate: dto.startDate,
       nextOccurrence: dto.nextOccurrence,
@@ -907,6 +931,7 @@ class TransactionRepository {
       type: row.type,
       amount: row.amount,
       currency: row.currency,
+      exchangeRate: row.exchangeRate,
       frequency: row.frequency,
       startDate: row.startDate,
       nextOccurrence: row.nextOccurrence,
@@ -930,6 +955,7 @@ class TransactionRepository {
       type: rule.type,
       amount: rule.amount,
       currency: rule.currency,
+      exchangeRate: rule.exchangeRate,
       frequency: rule.frequency,
       startDate: rule.startDate,
       nextOccurrence: rule.nextOccurrence,
@@ -1015,6 +1041,7 @@ class TransactionRepository {
       updatedAt: dto.updatedAt,
       envelopeId: Value(dto.envelopeId),
       exchangeRate: Value(dto.exchangeRate),
+      baseCurrencyAmount: Value(dto.baseCurrencyAmount),
       payee: Value(dto.payee),
       notes: Value(dto.notes),
       isReconciled: Value(dto.isReconciled),
@@ -1051,6 +1078,7 @@ class TransactionRepository {
       type: dto.type,
       amount: dto.amount,
       currency: dto.currency,
+      exchangeRate: Value(dto.exchangeRate),
       frequency: dto.frequency,
       startDate: dto.startDate,
       nextOccurrence: dto.nextOccurrence,

@@ -81,10 +81,14 @@ final class DashboardState extends Equatable {
 
   final bool hasRemoteUpdate;
 
-  /// Sum of non-archived account balances.
-  int get totalBalance => accounts
-      .where((a) => !a.isArchived)
-      .fold(0, (sum, a) => sum + a.currentBalance);
+  /// Sum of non-archived account balances, converted to the budget's base
+  /// currency via each account's `displayFxRate`. For accounts whose currency
+  /// matches the budget base, the rate defaults to 1.0 and conversion is a
+  /// no-op.
+  int get totalBalance => accounts.where((a) => !a.isArchived).fold(
+    0,
+    (sum, a) => sum + (a.currentBalance * a.displayFxRate).round(),
+  );
 
   /// Envelope summaries paired with their allocations and group names.
   List<EnvelopeSummary> get envelopeSummaries {

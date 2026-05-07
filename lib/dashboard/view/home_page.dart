@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/app/routes/app_router.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/dashboard/bloc/bloc.dart';
@@ -11,6 +12,7 @@ import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/widgets/confirm_delete_dialog.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/sync/sync.dart';
+import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -46,6 +48,8 @@ class HomePage extends StatelessWidget {
           create: (_) {
             final cubit = RecurringCheckCubit(
               transactionRepository: context.read<TransactionRepository>(),
+              budgetRepository: context.read<BudgetRepository>(),
+              envelopeRepository: context.read<EnvelopeRepository>(),
               budgetId: budgetId,
               userId: userId,
               nowProvider: context.read<AppClock>().now,

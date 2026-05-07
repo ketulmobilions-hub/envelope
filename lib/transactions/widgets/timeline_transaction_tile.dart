@@ -7,10 +7,13 @@ import 'package:transaction_repository/transaction_repository.dart';
 
 /// A timeline-styled transaction tile with vertical line and circle bullet.
 ///
-/// Keeps swipe-to-dismiss behavior from [TransactionListTile].
+/// [baseCurrency] is the budget's base ISO 4217 code. The parent
+/// (`TransactionDateGroup`) reads it once from [AuthBloc] and forwards it,
+/// so tiles don't each subscribe to auth state.
 class TimelineTransactionTile extends StatelessWidget {
   const TimelineTransactionTile({
     required this.transaction,
+    required this.baseCurrency,
     this.isLast = false,
     this.transferLabel,
     this.envelopeName,
@@ -22,6 +25,7 @@ class TimelineTransactionTile extends StatelessWidget {
   });
 
   final Transaction transaction;
+  final String baseCurrency;
   final bool isLast;
   final String? transferLabel;
   final String? envelopeName;
@@ -34,7 +38,10 @@ class TimelineTransactionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final symbol = currencySymbol(context);
+    final effectiveBase = baseCurrency;
+    final txSymbol = currencySymbolFromCode(transaction.currency);
+    final baseSymbol = currencySymbolFromCode(effectiveBase);
+    final isForeign = transaction.currency != effectiveBase;
     final typeColor = colorForTransactionType(transaction.type, colorScheme);
     final l10n = context.l10n;
 
@@ -191,12 +198,28 @@ class TimelineTransactionTile extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        _formattedAmount(symbol),
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          color: typeColor,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _formattedAmount(txSymbol),
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: typeColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          if (isForeign)
+                            Text(
+                              '≈ ${formatCents(
+                                effectiveBaseCurrencyAmount(transaction),
+                                symbol: baseSymbol,
+                              )}',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.outline,
+                              ),
+                            ),
+                        ],
                       ),
                     ],
                   ),

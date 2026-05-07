@@ -733,11 +733,15 @@ class EnvelopeRepository {
   /// matching [envelopeId] + the budget period that contains [date] in
   /// [budgetId]. No API call is made — this is an optimistic update to give
   /// instant UI feedback after an expense transaction is created.
+  ///
+  /// [baseCurrencyAmount] must already be expressed in the budget's base
+  /// currency (i.e. `transaction.amount * transaction.exchangeRate`), so the
+  /// running spent total stays in a single currency.
   Future<void> incrementLocalSpentAmount({
     required String envelopeId,
     required String budgetId,
     required DateTime date,
-    required int amount,
+    required int baseCurrencyAmount,
   }) async {
     try {
       final periods = await _localDatabase.budgetsDao.getPeriodsByBudgetId(
@@ -770,7 +774,7 @@ class EnvelopeRepository {
           envelopeId: Value(alloc.envelopeId),
           budgetPeriodId: Value(alloc.budgetPeriodId),
           allocatedAmount: Value(alloc.allocatedAmount),
-          spentAmount: Value(alloc.spentAmount + amount),
+          spentAmount: Value(alloc.spentAmount + baseCurrencyAmount),
           rolloverAmount: Value(alloc.rolloverAmount),
           createdAt: Value(alloc.createdAt),
         ),

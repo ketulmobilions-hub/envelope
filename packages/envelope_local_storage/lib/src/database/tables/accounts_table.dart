@@ -10,6 +10,8 @@ class Accounts extends Table {
   IntColumn get currentBalance =>
       integer().named('current_balance').withDefault(const Constant(0))();
   TextColumn get currency => text()();
+  RealColumn get displayFxRate =>
+      real().named('display_fx_rate').withDefault(const Constant(1))();
   BoolColumn get isArchived =>
       boolean().named('is_archived').withDefault(const Constant(false))();
   BoolColumn get isOnBudget =>

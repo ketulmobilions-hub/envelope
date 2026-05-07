@@ -18,6 +18,7 @@ abstract class Transaction with _$Transaction {
     required DateTime updatedAt,
     String? envelopeId,
     @Default(1.0) double exchangeRate,
+    @Default(0) int baseCurrencyAmount,
     String? payee,
     String? notes,
     @Default(false) bool isReconciled,

@@ -1,4 +1,5 @@
 import 'package:account_repository/account_repository.dart';
+import 'package:auth_repository/auth_repository.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/onboarding/cubit/cubit.dart';
@@ -13,12 +14,15 @@ class MockAccountRepository extends Mock implements AccountRepository {}
 
 class MockBudgetRepository extends Mock implements BudgetRepository {}
 
+class MockAuthRepository extends Mock implements AuthRepository {}
+
 void main() {
   group('OnboardingCubit', () {
     late SharedPreferences prefs;
     late MockEnvelopeRepository envelopeRepository;
     late MockAccountRepository accountRepository;
     late MockBudgetRepository budgetRepository;
+    late MockAuthRepository authRepository;
 
     const testUserId = 'test-user-id';
     const testBudgetId = 'test-budget-id';
@@ -29,6 +33,12 @@ void main() {
       envelopeRepository = MockEnvelopeRepository();
       accountRepository = MockAccountRepository();
       budgetRepository = MockBudgetRepository();
+      authRepository = MockAuthRepository();
+      when(
+        () => authRepository.updateProfile(
+          baseCurrency: any(named: 'baseCurrency'),
+        ),
+      ).thenAnswer((_) async {});
     });
 
     OnboardingCubit buildCubit() => OnboardingCubit(
@@ -36,6 +46,7 @@ void main() {
       envelopeRepository: envelopeRepository,
       accountRepository: accountRepository,
       budgetRepository: budgetRepository,
+      authRepository: authRepository,
       userId: testUserId,
     );
 

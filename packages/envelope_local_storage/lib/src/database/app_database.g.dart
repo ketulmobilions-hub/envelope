@@ -2153,6 +2153,18 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _displayFxRateMeta = const VerificationMeta(
+    'displayFxRate',
+  );
+  @override
+  late final GeneratedColumn<double> displayFxRate = GeneratedColumn<double>(
+    'display_fx_rate',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
   static const VerificationMeta _isArchivedMeta = const VerificationMeta(
     'isArchived',
   );
@@ -2214,6 +2226,7 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     startingBalance,
     currentBalance,
     currency,
+    displayFxRate,
     isArchived,
     isOnBudget,
     createdAt,
@@ -2286,6 +2299,15 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     } else if (isInserting) {
       context.missing(_currencyMeta);
     }
+    if (data.containsKey('display_fx_rate')) {
+      context.handle(
+        _displayFxRateMeta,
+        displayFxRate.isAcceptableOrUnknown(
+          data['display_fx_rate']!,
+          _displayFxRateMeta,
+        ),
+      );
+    }
     if (data.containsKey('is_archived')) {
       context.handle(
         _isArchivedMeta,
@@ -2354,6 +2376,10 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         DriftSqlType.string,
         data['${effectivePrefix}currency'],
       )!,
+      displayFxRate: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}display_fx_rate'],
+      )!,
       isArchived: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_archived'],
@@ -2387,6 +2413,7 @@ class Account extends DataClass implements Insertable<Account> {
   final int startingBalance;
   final int currentBalance;
   final String currency;
+  final double displayFxRate;
   final bool isArchived;
   final bool isOnBudget;
   final DateTime createdAt;
@@ -2399,6 +2426,7 @@ class Account extends DataClass implements Insertable<Account> {
     required this.startingBalance,
     required this.currentBalance,
     required this.currency,
+    required this.displayFxRate,
     required this.isArchived,
     required this.isOnBudget,
     required this.createdAt,
@@ -2414,6 +2442,7 @@ class Account extends DataClass implements Insertable<Account> {
     map['starting_balance'] = Variable<int>(startingBalance);
     map['current_balance'] = Variable<int>(currentBalance);
     map['currency'] = Variable<String>(currency);
+    map['display_fx_rate'] = Variable<double>(displayFxRate);
     map['is_archived'] = Variable<bool>(isArchived);
     map['is_on_budget'] = Variable<bool>(isOnBudget);
     map['created_at'] = Variable<DateTime>(createdAt);
@@ -2430,6 +2459,7 @@ class Account extends DataClass implements Insertable<Account> {
       startingBalance: Value(startingBalance),
       currentBalance: Value(currentBalance),
       currency: Value(currency),
+      displayFxRate: Value(displayFxRate),
       isArchived: Value(isArchived),
       isOnBudget: Value(isOnBudget),
       createdAt: Value(createdAt),
@@ -2450,6 +2480,7 @@ class Account extends DataClass implements Insertable<Account> {
       startingBalance: serializer.fromJson<int>(json['startingBalance']),
       currentBalance: serializer.fromJson<int>(json['currentBalance']),
       currency: serializer.fromJson<String>(json['currency']),
+      displayFxRate: serializer.fromJson<double>(json['displayFxRate']),
       isArchived: serializer.fromJson<bool>(json['isArchived']),
       isOnBudget: serializer.fromJson<bool>(json['isOnBudget']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
@@ -2467,6 +2498,7 @@ class Account extends DataClass implements Insertable<Account> {
       'startingBalance': serializer.toJson<int>(startingBalance),
       'currentBalance': serializer.toJson<int>(currentBalance),
       'currency': serializer.toJson<String>(currency),
+      'displayFxRate': serializer.toJson<double>(displayFxRate),
       'isArchived': serializer.toJson<bool>(isArchived),
       'isOnBudget': serializer.toJson<bool>(isOnBudget),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -2482,6 +2514,7 @@ class Account extends DataClass implements Insertable<Account> {
     int? startingBalance,
     int? currentBalance,
     String? currency,
+    double? displayFxRate,
     bool? isArchived,
     bool? isOnBudget,
     DateTime? createdAt,
@@ -2494,6 +2527,7 @@ class Account extends DataClass implements Insertable<Account> {
     startingBalance: startingBalance ?? this.startingBalance,
     currentBalance: currentBalance ?? this.currentBalance,
     currency: currency ?? this.currency,
+    displayFxRate: displayFxRate ?? this.displayFxRate,
     isArchived: isArchived ?? this.isArchived,
     isOnBudget: isOnBudget ?? this.isOnBudget,
     createdAt: createdAt ?? this.createdAt,
@@ -2512,6 +2546,9 @@ class Account extends DataClass implements Insertable<Account> {
           ? data.currentBalance.value
           : this.currentBalance,
       currency: data.currency.present ? data.currency.value : this.currency,
+      displayFxRate: data.displayFxRate.present
+          ? data.displayFxRate.value
+          : this.displayFxRate,
       isArchived: data.isArchived.present
           ? data.isArchived.value
           : this.isArchived,
@@ -2533,6 +2570,7 @@ class Account extends DataClass implements Insertable<Account> {
           ..write('startingBalance: $startingBalance, ')
           ..write('currentBalance: $currentBalance, ')
           ..write('currency: $currency, ')
+          ..write('displayFxRate: $displayFxRate, ')
           ..write('isArchived: $isArchived, ')
           ..write('isOnBudget: $isOnBudget, ')
           ..write('createdAt: $createdAt, ')
@@ -2550,6 +2588,7 @@ class Account extends DataClass implements Insertable<Account> {
     startingBalance,
     currentBalance,
     currency,
+    displayFxRate,
     isArchived,
     isOnBudget,
     createdAt,
@@ -2566,6 +2605,7 @@ class Account extends DataClass implements Insertable<Account> {
           other.startingBalance == this.startingBalance &&
           other.currentBalance == this.currentBalance &&
           other.currency == this.currency &&
+          other.displayFxRate == this.displayFxRate &&
           other.isArchived == this.isArchived &&
           other.isOnBudget == this.isOnBudget &&
           other.createdAt == this.createdAt &&
@@ -2580,6 +2620,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
   final Value<int> startingBalance;
   final Value<int> currentBalance;
   final Value<String> currency;
+  final Value<double> displayFxRate;
   final Value<bool> isArchived;
   final Value<bool> isOnBudget;
   final Value<DateTime> createdAt;
@@ -2593,6 +2634,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     this.startingBalance = const Value.absent(),
     this.currentBalance = const Value.absent(),
     this.currency = const Value.absent(),
+    this.displayFxRate = const Value.absent(),
     this.isArchived = const Value.absent(),
     this.isOnBudget = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -2607,6 +2649,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     this.startingBalance = const Value.absent(),
     this.currentBalance = const Value.absent(),
     required String currency,
+    this.displayFxRate = const Value.absent(),
     this.isArchived = const Value.absent(),
     this.isOnBudget = const Value.absent(),
     required DateTime createdAt,
@@ -2627,6 +2670,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Expression<int>? startingBalance,
     Expression<int>? currentBalance,
     Expression<String>? currency,
+    Expression<double>? displayFxRate,
     Expression<bool>? isArchived,
     Expression<bool>? isOnBudget,
     Expression<DateTime>? createdAt,
@@ -2641,6 +2685,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       if (startingBalance != null) 'starting_balance': startingBalance,
       if (currentBalance != null) 'current_balance': currentBalance,
       if (currency != null) 'currency': currency,
+      if (displayFxRate != null) 'display_fx_rate': displayFxRate,
       if (isArchived != null) 'is_archived': isArchived,
       if (isOnBudget != null) 'is_on_budget': isOnBudget,
       if (createdAt != null) 'created_at': createdAt,
@@ -2657,6 +2702,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Value<int>? startingBalance,
     Value<int>? currentBalance,
     Value<String>? currency,
+    Value<double>? displayFxRate,
     Value<bool>? isArchived,
     Value<bool>? isOnBudget,
     Value<DateTime>? createdAt,
@@ -2671,6 +2717,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       startingBalance: startingBalance ?? this.startingBalance,
       currentBalance: currentBalance ?? this.currentBalance,
       currency: currency ?? this.currency,
+      displayFxRate: displayFxRate ?? this.displayFxRate,
       isArchived: isArchived ?? this.isArchived,
       isOnBudget: isOnBudget ?? this.isOnBudget,
       createdAt: createdAt ?? this.createdAt,
@@ -2703,6 +2750,9 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     if (currency.present) {
       map['currency'] = Variable<String>(currency.value);
     }
+    if (displayFxRate.present) {
+      map['display_fx_rate'] = Variable<double>(displayFxRate.value);
+    }
     if (isArchived.present) {
       map['is_archived'] = Variable<bool>(isArchived.value);
     }
@@ -2731,6 +2781,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
           ..write('startingBalance: $startingBalance, ')
           ..write('currentBalance: $currentBalance, ')
           ..write('currency: $currency, ')
+          ..write('displayFxRate: $displayFxRate, ')
           ..write('isArchived: $isArchived, ')
           ..write('isOnBudget: $isOnBudget, ')
           ..write('createdAt: $createdAt, ')
@@ -4395,6 +4446,17 @@ class $TransactionsTable extends Transactions
     requiredDuringInsert: false,
     defaultValue: const Constant(1),
   );
+  static const VerificationMeta _baseCurrencyAmountMeta =
+      const VerificationMeta('baseCurrencyAmount');
+  @override
+  late final GeneratedColumn<int> baseCurrencyAmount = GeneratedColumn<int>(
+    'base_currency_amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _payeeMeta = const VerificationMeta('payee');
   @override
   late final GeneratedColumn<String> payee = GeneratedColumn<String>(
@@ -4513,6 +4575,7 @@ class $TransactionsTable extends Transactions
     amount,
     currency,
     exchangeRate,
+    baseCurrencyAmount,
     payee,
     notes,
     date,
@@ -4593,6 +4656,15 @@ class $TransactionsTable extends Transactions
         exchangeRate.isAcceptableOrUnknown(
           data['exchange_rate']!,
           _exchangeRateMeta,
+        ),
+      );
+    }
+    if (data.containsKey('base_currency_amount')) {
+      context.handle(
+        _baseCurrencyAmountMeta,
+        baseCurrencyAmount.isAcceptableOrUnknown(
+          data['base_currency_amount']!,
+          _baseCurrencyAmountMeta,
         ),
       );
     }
@@ -4714,6 +4786,10 @@ class $TransactionsTable extends Transactions
         DriftSqlType.double,
         data['${effectivePrefix}exchange_rate'],
       )!,
+      baseCurrencyAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}base_currency_amount'],
+      )!,
       payee: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}payee'],
@@ -4772,6 +4848,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   final int amount;
   final String currency;
   final double exchangeRate;
+  final int baseCurrencyAmount;
   final String? payee;
   final String? notes;
   final DateTime date;
@@ -4791,6 +4868,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     required this.amount,
     required this.currency,
     required this.exchangeRate,
+    required this.baseCurrencyAmount,
     this.payee,
     this.notes,
     required this.date,
@@ -4815,6 +4893,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     map['amount'] = Variable<int>(amount);
     map['currency'] = Variable<String>(currency);
     map['exchange_rate'] = Variable<double>(exchangeRate);
+    map['base_currency_amount'] = Variable<int>(baseCurrencyAmount);
     if (!nullToAbsent || payee != null) {
       map['payee'] = Variable<String>(payee);
     }
@@ -4850,6 +4929,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       amount: Value(amount),
       currency: Value(currency),
       exchangeRate: Value(exchangeRate),
+      baseCurrencyAmount: Value(baseCurrencyAmount),
       payee: payee == null && nullToAbsent
           ? const Value.absent()
           : Value(payee),
@@ -4887,6 +4967,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       amount: serializer.fromJson<int>(json['amount']),
       currency: serializer.fromJson<String>(json['currency']),
       exchangeRate: serializer.fromJson<double>(json['exchangeRate']),
+      baseCurrencyAmount: serializer.fromJson<int>(json['baseCurrencyAmount']),
       payee: serializer.fromJson<String?>(json['payee']),
       notes: serializer.fromJson<String?>(json['notes']),
       date: serializer.fromJson<DateTime>(json['date']),
@@ -4911,6 +4992,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'amount': serializer.toJson<int>(amount),
       'currency': serializer.toJson<String>(currency),
       'exchangeRate': serializer.toJson<double>(exchangeRate),
+      'baseCurrencyAmount': serializer.toJson<int>(baseCurrencyAmount),
       'payee': serializer.toJson<String?>(payee),
       'notes': serializer.toJson<String?>(notes),
       'date': serializer.toJson<DateTime>(date),
@@ -4933,6 +5015,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     int? amount,
     String? currency,
     double? exchangeRate,
+    int? baseCurrencyAmount,
     Value<String?> payee = const Value.absent(),
     Value<String?> notes = const Value.absent(),
     DateTime? date,
@@ -4952,6 +5035,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     amount: amount ?? this.amount,
     currency: currency ?? this.currency,
     exchangeRate: exchangeRate ?? this.exchangeRate,
+    baseCurrencyAmount: baseCurrencyAmount ?? this.baseCurrencyAmount,
     payee: payee.present ? payee.value : this.payee,
     notes: notes.present ? notes.value : this.notes,
     date: date ?? this.date,
@@ -4981,6 +5065,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       exchangeRate: data.exchangeRate.present
           ? data.exchangeRate.value
           : this.exchangeRate,
+      baseCurrencyAmount: data.baseCurrencyAmount.present
+          ? data.baseCurrencyAmount.value
+          : this.baseCurrencyAmount,
       payee: data.payee.present ? data.payee.value : this.payee,
       notes: data.notes.present ? data.notes.value : this.notes,
       date: data.date.present ? data.date.value : this.date,
@@ -5011,6 +5098,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('amount: $amount, ')
           ..write('currency: $currency, ')
           ..write('exchangeRate: $exchangeRate, ')
+          ..write('baseCurrencyAmount: $baseCurrencyAmount, ')
           ..write('payee: $payee, ')
           ..write('notes: $notes, ')
           ..write('date: $date, ')
@@ -5035,6 +5123,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     amount,
     currency,
     exchangeRate,
+    baseCurrencyAmount,
     payee,
     notes,
     date,
@@ -5058,6 +5147,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.amount == this.amount &&
           other.currency == this.currency &&
           other.exchangeRate == this.exchangeRate &&
+          other.baseCurrencyAmount == this.baseCurrencyAmount &&
           other.payee == this.payee &&
           other.notes == this.notes &&
           other.date == this.date &&
@@ -5079,6 +5169,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<int> amount;
   final Value<String> currency;
   final Value<double> exchangeRate;
+  final Value<int> baseCurrencyAmount;
   final Value<String?> payee;
   final Value<String?> notes;
   final Value<DateTime> date;
@@ -5099,6 +5190,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.amount = const Value.absent(),
     this.currency = const Value.absent(),
     this.exchangeRate = const Value.absent(),
+    this.baseCurrencyAmount = const Value.absent(),
     this.payee = const Value.absent(),
     this.notes = const Value.absent(),
     this.date = const Value.absent(),
@@ -5120,6 +5212,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     required int amount,
     required String currency,
     this.exchangeRate = const Value.absent(),
+    this.baseCurrencyAmount = const Value.absent(),
     this.payee = const Value.absent(),
     this.notes = const Value.absent(),
     required DateTime date,
@@ -5150,6 +5243,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<int>? amount,
     Expression<String>? currency,
     Expression<double>? exchangeRate,
+    Expression<int>? baseCurrencyAmount,
     Expression<String>? payee,
     Expression<String>? notes,
     Expression<DateTime>? date,
@@ -5171,6 +5265,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (amount != null) 'amount': amount,
       if (currency != null) 'currency': currency,
       if (exchangeRate != null) 'exchange_rate': exchangeRate,
+      if (baseCurrencyAmount != null)
+        'base_currency_amount': baseCurrencyAmount,
       if (payee != null) 'payee': payee,
       if (notes != null) 'notes': notes,
       if (date != null) 'date': date,
@@ -5194,6 +5290,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Value<int>? amount,
     Value<String>? currency,
     Value<double>? exchangeRate,
+    Value<int>? baseCurrencyAmount,
     Value<String?>? payee,
     Value<String?>? notes,
     Value<DateTime>? date,
@@ -5215,6 +5312,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       amount: amount ?? this.amount,
       currency: currency ?? this.currency,
       exchangeRate: exchangeRate ?? this.exchangeRate,
+      baseCurrencyAmount: baseCurrencyAmount ?? this.baseCurrencyAmount,
       payee: payee ?? this.payee,
       notes: notes ?? this.notes,
       date: date ?? this.date,
@@ -5255,6 +5353,9 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     }
     if (exchangeRate.present) {
       map['exchange_rate'] = Variable<double>(exchangeRate.value);
+    }
+    if (baseCurrencyAmount.present) {
+      map['base_currency_amount'] = Variable<int>(baseCurrencyAmount.value);
     }
     if (payee.present) {
       map['payee'] = Variable<String>(payee.value);
@@ -5303,6 +5404,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
           ..write('amount: $amount, ')
           ..write('currency: $currency, ')
           ..write('exchangeRate: $exchangeRate, ')
+          ..write('baseCurrencyAmount: $baseCurrencyAmount, ')
           ..write('payee: $payee, ')
           ..write('notes: $notes, ')
           ..write('date: $date, ')
@@ -6186,6 +6288,18 @@ class $RecurringRulesTable extends RecurringRules
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _exchangeRateMeta = const VerificationMeta(
+    'exchangeRate',
+  );
+  @override
+  late final GeneratedColumn<double> exchangeRate = GeneratedColumn<double>(
+    'exchange_rate',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
   static const VerificationMeta _payeeMeta = const VerificationMeta('payee');
   @override
   late final GeneratedColumn<String> payee = GeneratedColumn<String>(
@@ -6321,6 +6435,7 @@ class $RecurringRulesTable extends RecurringRules
     type,
     amount,
     currency,
+    exchangeRate,
     payee,
     notes,
     frequency,
@@ -6395,6 +6510,15 @@ class $RecurringRulesTable extends RecurringRules
       );
     } else if (isInserting) {
       context.missing(_currencyMeta);
+    }
+    if (data.containsKey('exchange_rate')) {
+      context.handle(
+        _exchangeRateMeta,
+        exchangeRate.isAcceptableOrUnknown(
+          data['exchange_rate']!,
+          _exchangeRateMeta,
+        ),
+      );
     }
     if (data.containsKey('payee')) {
       context.handle(
@@ -6513,6 +6637,10 @@ class $RecurringRulesTable extends RecurringRules
         DriftSqlType.string,
         data['${effectivePrefix}currency'],
       )!,
+      exchangeRate: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}exchange_rate'],
+      )!,
       payee: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}payee'],
@@ -6574,6 +6702,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
   final String type;
   final int amount;
   final String currency;
+  final double exchangeRate;
   final String? payee;
   final String? notes;
   final String frequency;
@@ -6593,6 +6722,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     required this.type,
     required this.amount,
     required this.currency,
+    required this.exchangeRate,
     this.payee,
     this.notes,
     required this.frequency,
@@ -6617,6 +6747,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     map['type'] = Variable<String>(type);
     map['amount'] = Variable<int>(amount);
     map['currency'] = Variable<String>(currency);
+    map['exchange_rate'] = Variable<double>(exchangeRate);
     if (!nullToAbsent || payee != null) {
       map['payee'] = Variable<String>(payee);
     }
@@ -6652,6 +6783,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
       type: Value(type),
       amount: Value(amount),
       currency: Value(currency),
+      exchangeRate: Value(exchangeRate),
       payee: payee == null && nullToAbsent
           ? const Value.absent()
           : Value(payee),
@@ -6689,6 +6821,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
       type: serializer.fromJson<String>(json['type']),
       amount: serializer.fromJson<int>(json['amount']),
       currency: serializer.fromJson<String>(json['currency']),
+      exchangeRate: serializer.fromJson<double>(json['exchangeRate']),
       payee: serializer.fromJson<String?>(json['payee']),
       notes: serializer.fromJson<String?>(json['notes']),
       frequency: serializer.fromJson<String>(json['frequency']),
@@ -6713,6 +6846,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
       'type': serializer.toJson<String>(type),
       'amount': serializer.toJson<int>(amount),
       'currency': serializer.toJson<String>(currency),
+      'exchangeRate': serializer.toJson<double>(exchangeRate),
       'payee': serializer.toJson<String?>(payee),
       'notes': serializer.toJson<String?>(notes),
       'frequency': serializer.toJson<String>(frequency),
@@ -6735,6 +6869,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     String? type,
     int? amount,
     String? currency,
+    double? exchangeRate,
     Value<String?> payee = const Value.absent(),
     Value<String?> notes = const Value.absent(),
     String? frequency,
@@ -6754,6 +6889,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     type: type ?? this.type,
     amount: amount ?? this.amount,
     currency: currency ?? this.currency,
+    exchangeRate: exchangeRate ?? this.exchangeRate,
     payee: payee.present ? payee.value : this.payee,
     notes: notes.present ? notes.value : this.notes,
     frequency: frequency ?? this.frequency,
@@ -6779,6 +6915,9 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
       type: data.type.present ? data.type.value : this.type,
       amount: data.amount.present ? data.amount.value : this.amount,
       currency: data.currency.present ? data.currency.value : this.currency,
+      exchangeRate: data.exchangeRate.present
+          ? data.exchangeRate.value
+          : this.exchangeRate,
       payee: data.payee.present ? data.payee.value : this.payee,
       notes: data.notes.present ? data.notes.value : this.notes,
       frequency: data.frequency.present ? data.frequency.value : this.frequency,
@@ -6809,6 +6948,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
           ..write('type: $type, ')
           ..write('amount: $amount, ')
           ..write('currency: $currency, ')
+          ..write('exchangeRate: $exchangeRate, ')
           ..write('payee: $payee, ')
           ..write('notes: $notes, ')
           ..write('frequency: $frequency, ')
@@ -6833,6 +6973,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     type,
     amount,
     currency,
+    exchangeRate,
     payee,
     notes,
     frequency,
@@ -6856,6 +6997,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
           other.type == this.type &&
           other.amount == this.amount &&
           other.currency == this.currency &&
+          other.exchangeRate == this.exchangeRate &&
           other.payee == this.payee &&
           other.notes == this.notes &&
           other.frequency == this.frequency &&
@@ -6877,6 +7019,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
   final Value<String> type;
   final Value<int> amount;
   final Value<String> currency;
+  final Value<double> exchangeRate;
   final Value<String?> payee;
   final Value<String?> notes;
   final Value<String> frequency;
@@ -6897,6 +7040,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
     this.type = const Value.absent(),
     this.amount = const Value.absent(),
     this.currency = const Value.absent(),
+    this.exchangeRate = const Value.absent(),
     this.payee = const Value.absent(),
     this.notes = const Value.absent(),
     this.frequency = const Value.absent(),
@@ -6918,6 +7062,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
     required String type,
     required int amount,
     required String currency,
+    this.exchangeRate = const Value.absent(),
     this.payee = const Value.absent(),
     this.notes = const Value.absent(),
     required String frequency,
@@ -6948,6 +7093,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
     Expression<String>? type,
     Expression<int>? amount,
     Expression<String>? currency,
+    Expression<double>? exchangeRate,
     Expression<String>? payee,
     Expression<String>? notes,
     Expression<String>? frequency,
@@ -6969,6 +7115,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
       if (type != null) 'type': type,
       if (amount != null) 'amount': amount,
       if (currency != null) 'currency': currency,
+      if (exchangeRate != null) 'exchange_rate': exchangeRate,
       if (payee != null) 'payee': payee,
       if (notes != null) 'notes': notes,
       if (frequency != null) 'frequency': frequency,
@@ -6992,6 +7139,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
     Value<String>? type,
     Value<int>? amount,
     Value<String>? currency,
+    Value<double>? exchangeRate,
     Value<String?>? payee,
     Value<String?>? notes,
     Value<String>? frequency,
@@ -7013,6 +7161,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
       type: type ?? this.type,
       amount: amount ?? this.amount,
       currency: currency ?? this.currency,
+      exchangeRate: exchangeRate ?? this.exchangeRate,
       payee: payee ?? this.payee,
       notes: notes ?? this.notes,
       frequency: frequency ?? this.frequency,
@@ -7051,6 +7200,9 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
     }
     if (currency.present) {
       map['currency'] = Variable<String>(currency.value);
+    }
+    if (exchangeRate.present) {
+      map['exchange_rate'] = Variable<double>(exchangeRate.value);
     }
     if (payee.present) {
       map['payee'] = Variable<String>(payee.value);
@@ -7101,6 +7253,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
           ..write('type: $type, ')
           ..write('amount: $amount, ')
           ..write('currency: $currency, ')
+          ..write('exchangeRate: $exchangeRate, ')
           ..write('payee: $payee, ')
           ..write('notes: $notes, ')
           ..write('frequency: $frequency, ')
@@ -13576,6 +13729,7 @@ typedef $$AccountsTableCreateCompanionBuilder =
       Value<int> startingBalance,
       Value<int> currentBalance,
       required String currency,
+      Value<double> displayFxRate,
       Value<bool> isArchived,
       Value<bool> isOnBudget,
       required DateTime createdAt,
@@ -13591,6 +13745,7 @@ typedef $$AccountsTableUpdateCompanionBuilder =
       Value<int> startingBalance,
       Value<int> currentBalance,
       Value<String> currency,
+      Value<double> displayFxRate,
       Value<bool> isArchived,
       Value<bool> isOnBudget,
       Value<DateTime> createdAt,
@@ -13639,6 +13794,11 @@ class $$AccountsTableFilterComposer
 
   ColumnFilters<String> get currency => $composableBuilder(
     column: $table.currency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get displayFxRate => $composableBuilder(
+    column: $table.displayFxRate,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13707,6 +13867,11 @@ class $$AccountsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get displayFxRate => $composableBuilder(
+    column: $table.displayFxRate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isArchived => $composableBuilder(
     column: $table.isArchived,
     builder: (column) => ColumnOrderings(column),
@@ -13762,6 +13927,11 @@ class $$AccountsTableAnnotationComposer
   GeneratedColumn<String> get currency =>
       $composableBuilder(column: $table.currency, builder: (column) => column);
 
+  GeneratedColumn<double> get displayFxRate => $composableBuilder(
+    column: $table.displayFxRate,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get isArchived => $composableBuilder(
     column: $table.isArchived,
     builder: (column) => column,
@@ -13814,6 +13984,7 @@ class $$AccountsTableTableManager
                 Value<int> startingBalance = const Value.absent(),
                 Value<int> currentBalance = const Value.absent(),
                 Value<String> currency = const Value.absent(),
+                Value<double> displayFxRate = const Value.absent(),
                 Value<bool> isArchived = const Value.absent(),
                 Value<bool> isOnBudget = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -13827,6 +13998,7 @@ class $$AccountsTableTableManager
                 startingBalance: startingBalance,
                 currentBalance: currentBalance,
                 currency: currency,
+                displayFxRate: displayFxRate,
                 isArchived: isArchived,
                 isOnBudget: isOnBudget,
                 createdAt: createdAt,
@@ -13842,6 +14014,7 @@ class $$AccountsTableTableManager
                 Value<int> startingBalance = const Value.absent(),
                 Value<int> currentBalance = const Value.absent(),
                 required String currency,
+                Value<double> displayFxRate = const Value.absent(),
                 Value<bool> isArchived = const Value.absent(),
                 Value<bool> isOnBudget = const Value.absent(),
                 required DateTime createdAt,
@@ -13855,6 +14028,7 @@ class $$AccountsTableTableManager
                 startingBalance: startingBalance,
                 currentBalance: currentBalance,
                 currency: currency,
+                displayFxRate: displayFxRate,
                 isArchived: isArchived,
                 isOnBudget: isOnBudget,
                 createdAt: createdAt,
@@ -14694,6 +14868,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       required int amount,
       required String currency,
       Value<double> exchangeRate,
+      Value<int> baseCurrencyAmount,
       Value<String?> payee,
       Value<String?> notes,
       required DateTime date,
@@ -14716,6 +14891,7 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<int> amount,
       Value<String> currency,
       Value<double> exchangeRate,
+      Value<int> baseCurrencyAmount,
       Value<String?> payee,
       Value<String?> notes,
       Value<DateTime> date,
@@ -14775,6 +14951,11 @@ class $$TransactionsTableFilterComposer
 
   ColumnFilters<double> get exchangeRate => $composableBuilder(
     column: $table.exchangeRate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get baseCurrencyAmount => $composableBuilder(
+    column: $table.baseCurrencyAmount,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -14878,6 +15059,11 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get baseCurrencyAmount => $composableBuilder(
+    column: $table.baseCurrencyAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get payee => $composableBuilder(
     column: $table.payee,
     builder: (column) => ColumnOrderings(column),
@@ -14966,6 +15152,11 @@ class $$TransactionsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get baseCurrencyAmount => $composableBuilder(
+    column: $table.baseCurrencyAmount,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get payee =>
       $composableBuilder(column: $table.payee, builder: (column) => column);
 
@@ -15042,6 +15233,7 @@ class $$TransactionsTableTableManager
                 Value<int> amount = const Value.absent(),
                 Value<String> currency = const Value.absent(),
                 Value<double> exchangeRate = const Value.absent(),
+                Value<int> baseCurrencyAmount = const Value.absent(),
                 Value<String?> payee = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<DateTime> date = const Value.absent(),
@@ -15062,6 +15254,7 @@ class $$TransactionsTableTableManager
                 amount: amount,
                 currency: currency,
                 exchangeRate: exchangeRate,
+                baseCurrencyAmount: baseCurrencyAmount,
                 payee: payee,
                 notes: notes,
                 date: date,
@@ -15084,6 +15277,7 @@ class $$TransactionsTableTableManager
                 required int amount,
                 required String currency,
                 Value<double> exchangeRate = const Value.absent(),
+                Value<int> baseCurrencyAmount = const Value.absent(),
                 Value<String?> payee = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 required DateTime date,
@@ -15104,6 +15298,7 @@ class $$TransactionsTableTableManager
                 amount: amount,
                 currency: currency,
                 exchangeRate: exchangeRate,
+                baseCurrencyAmount: baseCurrencyAmount,
                 payee: payee,
                 notes: notes,
                 date: date,
@@ -15653,6 +15848,7 @@ typedef $$RecurringRulesTableCreateCompanionBuilder =
       required String type,
       required int amount,
       required String currency,
+      Value<double> exchangeRate,
       Value<String?> payee,
       Value<String?> notes,
       required String frequency,
@@ -15675,6 +15871,7 @@ typedef $$RecurringRulesTableUpdateCompanionBuilder =
       Value<String> type,
       Value<int> amount,
       Value<String> currency,
+      Value<double> exchangeRate,
       Value<String?> payee,
       Value<String?> notes,
       Value<String> frequency,
@@ -15730,6 +15927,11 @@ class $$RecurringRulesTableFilterComposer
 
   ColumnFilters<String> get currency => $composableBuilder(
     column: $table.currency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get exchangeRate => $composableBuilder(
+    column: $table.exchangeRate,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -15833,6 +16035,11 @@ class $$RecurringRulesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get exchangeRate => $composableBuilder(
+    column: $table.exchangeRate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get payee => $composableBuilder(
     column: $table.payee,
     builder: (column) => ColumnOrderings(column),
@@ -15921,6 +16128,11 @@ class $$RecurringRulesTableAnnotationComposer
   GeneratedColumn<String> get currency =>
       $composableBuilder(column: $table.currency, builder: (column) => column);
 
+  GeneratedColumn<double> get exchangeRate => $composableBuilder(
+    column: $table.exchangeRate,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get payee =>
       $composableBuilder(column: $table.payee, builder: (column) => column);
 
@@ -16001,6 +16213,7 @@ class $$RecurringRulesTableTableManager
                 Value<String> type = const Value.absent(),
                 Value<int> amount = const Value.absent(),
                 Value<String> currency = const Value.absent(),
+                Value<double> exchangeRate = const Value.absent(),
                 Value<String?> payee = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<String> frequency = const Value.absent(),
@@ -16021,6 +16234,7 @@ class $$RecurringRulesTableTableManager
                 type: type,
                 amount: amount,
                 currency: currency,
+                exchangeRate: exchangeRate,
                 payee: payee,
                 notes: notes,
                 frequency: frequency,
@@ -16043,6 +16257,7 @@ class $$RecurringRulesTableTableManager
                 required String type,
                 required int amount,
                 required String currency,
+                Value<double> exchangeRate = const Value.absent(),
                 Value<String?> payee = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 required String frequency,
@@ -16063,6 +16278,7 @@ class $$RecurringRulesTableTableManager
                 type: type,
                 amount: amount,
                 currency: currency,
+                exchangeRate: exchangeRate,
                 payee: payee,
                 notes: notes,
                 frequency: frequency,
