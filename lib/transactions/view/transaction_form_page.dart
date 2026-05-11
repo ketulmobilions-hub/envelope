@@ -5,6 +5,7 @@ import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/data/currencies.dart';
+import 'package:envelope/shared/feature_flags.dart';
 import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/shared/widgets/app_option_picker.dart';
@@ -241,7 +242,8 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                                   // overrode it explicitly. Also seed
                                   // displayFxRate from the selected account
                                   // for foreign currencies.
-                                  if (!_currencyManuallySet) {
+                                  if (kMultiCurrencyEnabled &&
+                                      !_currencyManuallySet) {
                                     _selectedCurrency = a.currency;
                                     _fxRateController.text =
                                         a.displayFxRate.toString();
@@ -312,17 +314,18 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
                             const SizedBox(height: 8),
 
                             // Currency override + FX rate (foreign tx).
-                            _CurrencyOverrideTile(
-                              code: txCurrency,
-                              onChanged: (code) => setState(() {
-                                _selectedCurrency = code;
-                                _currencyManuallySet = true;
-                                if (code == baseCurrency) {
-                                  _fxRateController.text = '1.0';
-                                }
-                              }),
-                            ),
-                            if (isForeign) ...[
+                            if (kMultiCurrencyEnabled)
+                              _CurrencyOverrideTile(
+                                code: txCurrency,
+                                onChanged: (code) => setState(() {
+                                  _selectedCurrency = code;
+                                  _currencyManuallySet = true;
+                                  if (code == baseCurrency) {
+                                    _fxRateController.text = '1.0';
+                                  }
+                                }),
+                              ),
+                            if (kMultiCurrencyEnabled && isForeign) ...[
                               const SizedBox(height: 12),
                               TextFormField(
                                 controller: _fxRateController,
@@ -597,8 +600,15 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final amountCents = parseCents(_amountController.text) ?? 0;
-    final rate =
-        double.tryParse(_fxRateController.text.trim()) ?? 1.0;
+    final baseCurrency =
+        context.read<AuthBloc>().state.user?.baseCurrency ?? 'USD';
+    // Force base currency + rate 1.0 when multi-currency is hidden, so a
+    // legacy foreign account cannot produce a wrong baseCurrencyAmount.
+    final rate = kMultiCurrencyEnabled
+        ? (double.tryParse(_fxRateController.text.trim()) ?? 1.0)
+        : 1.0;
+    final currencyOverride =
+        kMultiCurrencyEnabled ? _selectedCurrency : baseCurrency;
 
     context.read<TransactionFormCubit>().submit(
       type: _selectedType,
@@ -612,7 +622,7 @@ class _TransactionFormPageState extends State<TransactionFormPage> {
       splits: _splits,
       selectedTagIds: _selectedTagIds,
       isRecurring: _isRecurring,
-      currencyOverride: _selectedCurrency,
+      currencyOverride: currencyOverride,
       exchangeRate: rate,
     );
   }
