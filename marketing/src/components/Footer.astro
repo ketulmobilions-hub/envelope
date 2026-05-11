@@ -1,0 +1,38 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="border-t border-cream-dark/60 bg-cream-dark/30 mt-24">
+  <div class="max-w-6xl mx-auto px-6 py-12 grid md:grid-cols-4 gap-8 text-sm">
+    <div class="md:col-span-2">
+      <div class="flex items-center gap-2 font-bold text-brown text-lg mb-3">
+        <img src="/logo.svg" alt="" width="24" height="24" />
+        <span>Envelope</span>
+      </div>
+      <p class="text-muted max-w-sm">
+        Zero-based budgeting for people who want to know where every dollar goes.
+      </p>
+    </div>
+    <div>
+      <h3 class="font-semibold text-brown mb-3">Product</h3>
+      <ul class="space-y-2 text-charcoal/80">
+        <li><a href="/" class="hover:text-terracotta">Features</a></li>
+        <li><a href="/pricing" class="hover:text-terracotta">Pricing</a></li>
+        <li><a href="/blog" class="hover:text-terracotta">Blog</a></li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="font-semibold text-brown mb-3">Legal</h3>
+      <ul class="space-y-2 text-charcoal/80">
+        <li><a href="/privacy" class="hover:text-terracotta">Privacy</a></li>
+        <li><a href="/terms" class="hover:text-terracotta">Terms</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="border-t border-cream-dark/60">
+    <div class="max-w-6xl mx-auto px-6 py-6 text-xs text-muted flex justify-between">
+      <span>© {year} Envelope. All rights reserved.</span>
+      <span>Made with care.</span>
+    </div>
+  </div>
+</footer>

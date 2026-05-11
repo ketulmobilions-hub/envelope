@@ -1,0 +1,113 @@
+---
+interface Props {
+  variant?: "light" | "dark";
+  compact?: boolean;
+  centered?: boolean;
+}
+const { variant = "light", compact = false, centered = false } = Astro.props;
+
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? "";
+const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? "";
+
+const inputBase = "flex-1 min-w-0 px-4 py-3 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-terracotta";
+const inputStyle = variant === "dark"
+  ? "bg-cream/10 text-cream placeholder-cream/50 border border-cream/20"
+  : "bg-white text-charcoal placeholder-muted border border-cream-dark";
+
+const btnBase = "px-5 py-3 rounded-full font-semibold text-sm transition-colors whitespace-nowrap";
+const btnStyle = "bg-terracotta text-white hover:bg-terracotta-dark disabled:opacity-60 disabled:cursor-not-allowed";
+
+const noteStyle = variant === "dark" ? "text-cream/60" : "text-muted";
+---
+
+<form
+  class="waitlist-form w-full"
+  data-supabase-url={supabaseUrl}
+  data-supabase-key={supabaseAnonKey}
+  novalidate
+>
+  <div class={`flex ${compact ? "flex-col sm:flex-row" : "flex-col sm:flex-row"} gap-2 max-w-md ${centered ? "mx-auto" : ""}`}>
+    <input
+      type="email"
+      name="email"
+      required
+      placeholder="you@example.com"
+      autocomplete="email"
+      class={`${inputBase} ${inputStyle}`}
+      aria-label="Email address"
+    />
+    <button type="submit" class={`${btnBase} ${btnStyle}`}>
+      Join waitlist
+    </button>
+  </div>
+  <p class={`waitlist-message text-xs mt-3 ${noteStyle} ${centered ? "text-center" : ""}`} role="status" aria-live="polite">
+    No spam. We'll email you when Envelope launches on iOS and Android.
+  </p>
+</form>
+
+<script>
+  document.querySelectorAll<HTMLFormElement>(".waitlist-form").forEach((form) => {
+    const message = form.querySelector<HTMLParagraphElement>(".waitlist-message");
+    const input = form.querySelector<HTMLInputElement>("input[name='email']");
+    const button = form.querySelector<HTMLButtonElement>("button[type='submit']");
+    const supabaseUrl = form.dataset.supabaseUrl;
+    const supabaseKey = form.dataset.supabaseKey;
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!input || !button || !message) return;
+
+      const email = input.value.trim().toLowerCase();
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        message.textContent = "Enter a valid email address.";
+        return;
+      }
+
+      if (!supabaseUrl || !supabaseKey) {
+        message.textContent = "Waitlist isn't connected yet. Please email hello@envelope.app.";
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Adding…";
+
+      try {
+        const res = await fetch(`${supabaseUrl}/rest/v1/waitlist`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: supabaseKey,
+            Authorization: `Bearer ${supabaseKey}`,
+            Prefer: "return=minimal",
+          },
+          body: JSON.stringify({
+            email,
+            source: window.location.pathname,
+            user_agent: navigator.userAgent,
+          }),
+        });
+
+        if (res.status === 409 || (res.status === 400 && (await res.clone().text()).includes("idx_waitlist_email_lower"))) {
+          form.reset();
+          message.textContent = "You're already on the list. We'll be in touch.";
+          button.textContent = "Joined ✓";
+          return;
+        }
+
+        if (!res.ok) {
+          const body = await res.text();
+          throw new Error(`status ${res.status}: ${body}`);
+        }
+
+        form.reset();
+        message.textContent = "You're on the list. We'll email you at launch.";
+        button.textContent = "Joined ✓";
+      } catch (err) {
+        console.error("waitlist signup failed", err);
+        message.textContent = "Something went wrong. Try again in a moment.";
+        button.disabled = false;
+        button.textContent = "Join waitlist";
+      }
+    });
+  });
+</script>

@@ -1,0 +1,25 @@
+---
+const path = Astro.url.pathname;
+const isActive = (p: string) =>
+  p === "/" ? path === "/" : path.startsWith(p);
+---
+
+<header class="border-b border-cream-dark/60 bg-cream/80 backdrop-blur sticky top-0 z-50">
+  <nav class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+    <a href="/" class="flex items-center gap-2 font-bold text-brown text-lg">
+      <img src="/logo.svg" alt="" width="28" height="28" />
+      <span>Envelope</span>
+    </a>
+    <div class="hidden md:flex items-center gap-8 text-sm font-medium">
+      <a href="/" class={isActive("/") && path === "/" ? "text-terracotta" : "text-charcoal hover:text-terracotta"}>Home</a>
+      <a href="/pricing" class={isActive("/pricing") ? "text-terracotta" : "text-charcoal hover:text-terracotta"}>Pricing</a>
+      <a href="/blog" class={isActive("/blog") ? "text-terracotta" : "text-charcoal hover:text-terracotta"}>Blog</a>
+    </div>
+    <a
+      href="/#waitlist"
+      class="bg-terracotta text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-terracotta-dark transition-colors"
+    >
+      Join waitlist
+    </a>
+  </nav>
+</header>
