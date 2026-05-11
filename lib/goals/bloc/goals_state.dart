@@ -31,8 +31,12 @@ final class GoalsState extends Equatable {
     return grouped;
   }
 
-  /// Non-completed goals.
-  List<Goal> get activeGoals => goals.where((g) => !g.isCompleted).toList();
+  /// Non-completed goals, sorted by [Goal.sortOrder] (id tiebreaker).
+  List<Goal> get activeGoals =>
+      goals.where((g) => !g.isCompleted).toList()..sort((a, b) {
+        final byOrder = a.sortOrder.compareTo(b.sortOrder);
+        return byOrder != 0 ? byOrder : a.id.compareTo(b.id);
+      });
 
   /// Completed goals.
   List<Goal> get completedGoals => goals.where((g) => g.isCompleted).toList();

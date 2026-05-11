@@ -24,6 +24,7 @@ _Goal _$GoalFromJson(Map<String, dynamic> json) => _Goal(
   isCompleted: json['isCompleted'] as bool? ?? false,
   aprBps: (json['aprBps'] as num?)?.toInt(),
   minPaymentCents: (json['minPaymentCents'] as num?)?.toInt(),
+  sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
 );
 
 Map<String, dynamic> _$GoalToJson(_Goal instance) => <String, dynamic>{
@@ -42,4 +43,5 @@ Map<String, dynamic> _$GoalToJson(_Goal instance) => <String, dynamic>{
   'isCompleted': instance.isCompleted,
   'aprBps': instance.aprBps,
   'minPaymentCents': instance.minPaymentCents,
+  'sortOrder': instance.sortOrder,
 };

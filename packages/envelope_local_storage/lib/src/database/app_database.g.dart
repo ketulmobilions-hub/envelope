@@ -8616,6 +8616,18 @@ class $GoalsTable extends Goals with TableInfo<$GoalsTable, Goal> {
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -8653,6 +8665,7 @@ class $GoalsTable extends Goals with TableInfo<$GoalsTable, Goal> {
     isCompleted,
     aprBps,
     minPaymentCents,
+    sortOrder,
     createdAt,
     updatedAt,
   ];
@@ -8766,6 +8779,12 @@ class $GoalsTable extends Goals with TableInfo<$GoalsTable, Goal> {
         ),
       );
     }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -8843,6 +8862,10 @@ class $GoalsTable extends Goals with TableInfo<$GoalsTable, Goal> {
         DriftSqlType.int,
         data['${effectivePrefix}min_payment_cents'],
       ),
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -8874,6 +8897,7 @@ class Goal extends DataClass implements Insertable<Goal> {
   final bool isCompleted;
   final int? aprBps;
   final int? minPaymentCents;
+  final int sortOrder;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Goal({
@@ -8890,6 +8914,7 @@ class Goal extends DataClass implements Insertable<Goal> {
     required this.isCompleted,
     this.aprBps,
     this.minPaymentCents,
+    required this.sortOrder,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -8923,6 +8948,7 @@ class Goal extends DataClass implements Insertable<Goal> {
     if (!nullToAbsent || minPaymentCents != null) {
       map['min_payment_cents'] = Variable<int>(minPaymentCents);
     }
+    map['sort_order'] = Variable<int>(sortOrder);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -8957,6 +8983,7 @@ class Goal extends DataClass implements Insertable<Goal> {
       minPaymentCents: minPaymentCents == null && nullToAbsent
           ? const Value.absent()
           : Value(minPaymentCents),
+      sortOrder: Value(sortOrder),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -8983,6 +9010,7 @@ class Goal extends DataClass implements Insertable<Goal> {
       isCompleted: serializer.fromJson<bool>(json['isCompleted']),
       aprBps: serializer.fromJson<int?>(json['aprBps']),
       minPaymentCents: serializer.fromJson<int?>(json['minPaymentCents']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -9004,6 +9032,7 @@ class Goal extends DataClass implements Insertable<Goal> {
       'isCompleted': serializer.toJson<bool>(isCompleted),
       'aprBps': serializer.toJson<int?>(aprBps),
       'minPaymentCents': serializer.toJson<int?>(minPaymentCents),
+      'sortOrder': serializer.toJson<int>(sortOrder),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -9023,6 +9052,7 @@ class Goal extends DataClass implements Insertable<Goal> {
     bool? isCompleted,
     Value<int?> aprBps = const Value.absent(),
     Value<int?> minPaymentCents = const Value.absent(),
+    int? sortOrder,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => Goal(
@@ -9043,6 +9073,7 @@ class Goal extends DataClass implements Insertable<Goal> {
     minPaymentCents: minPaymentCents.present
         ? minPaymentCents.value
         : this.minPaymentCents,
+    sortOrder: sortOrder ?? this.sortOrder,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -9075,6 +9106,7 @@ class Goal extends DataClass implements Insertable<Goal> {
       minPaymentCents: data.minPaymentCents.present
           ? data.minPaymentCents.value
           : this.minPaymentCents,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -9096,6 +9128,7 @@ class Goal extends DataClass implements Insertable<Goal> {
           ..write('isCompleted: $isCompleted, ')
           ..write('aprBps: $aprBps, ')
           ..write('minPaymentCents: $minPaymentCents, ')
+          ..write('sortOrder: $sortOrder, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -9117,6 +9150,7 @@ class Goal extends DataClass implements Insertable<Goal> {
     isCompleted,
     aprBps,
     minPaymentCents,
+    sortOrder,
     createdAt,
     updatedAt,
   );
@@ -9137,6 +9171,7 @@ class Goal extends DataClass implements Insertable<Goal> {
           other.isCompleted == this.isCompleted &&
           other.aprBps == this.aprBps &&
           other.minPaymentCents == this.minPaymentCents &&
+          other.sortOrder == this.sortOrder &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -9155,6 +9190,7 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
   final Value<bool> isCompleted;
   final Value<int?> aprBps;
   final Value<int?> minPaymentCents;
+  final Value<int> sortOrder;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -9172,6 +9208,7 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
     this.isCompleted = const Value.absent(),
     this.aprBps = const Value.absent(),
     this.minPaymentCents = const Value.absent(),
+    this.sortOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -9190,6 +9227,7 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
     this.isCompleted = const Value.absent(),
     this.aprBps = const Value.absent(),
     this.minPaymentCents = const Value.absent(),
+    this.sortOrder = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
@@ -9213,6 +9251,7 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
     Expression<bool>? isCompleted,
     Expression<int>? aprBps,
     Expression<int>? minPaymentCents,
+    Expression<int>? sortOrder,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -9232,6 +9271,7 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
       if (isCompleted != null) 'is_completed': isCompleted,
       if (aprBps != null) 'apr_bps': aprBps,
       if (minPaymentCents != null) 'min_payment_cents': minPaymentCents,
+      if (sortOrder != null) 'sort_order': sortOrder,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -9252,6 +9292,7 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
     Value<bool>? isCompleted,
     Value<int?>? aprBps,
     Value<int?>? minPaymentCents,
+    Value<int>? sortOrder,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
@@ -9270,6 +9311,7 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
       isCompleted: isCompleted ?? this.isCompleted,
       aprBps: aprBps ?? this.aprBps,
       minPaymentCents: minPaymentCents ?? this.minPaymentCents,
+      sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -9318,6 +9360,9 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
     if (minPaymentCents.present) {
       map['min_payment_cents'] = Variable<int>(minPaymentCents.value);
     }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -9346,6 +9391,7 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
           ..write('isCompleted: $isCompleted, ')
           ..write('aprBps: $aprBps, ')
           ..write('minPaymentCents: $minPaymentCents, ')
+          ..write('sortOrder: $sortOrder, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -17120,6 +17166,7 @@ typedef $$GoalsTableCreateCompanionBuilder =
       Value<bool> isCompleted,
       Value<int?> aprBps,
       Value<int?> minPaymentCents,
+      Value<int> sortOrder,
       required DateTime createdAt,
       required DateTime updatedAt,
       Value<int> rowid,
@@ -17139,6 +17186,7 @@ typedef $$GoalsTableUpdateCompanionBuilder =
       Value<bool> isCompleted,
       Value<int?> aprBps,
       Value<int?> minPaymentCents,
+      Value<int> sortOrder,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
@@ -17214,6 +17262,11 @@ class $$GoalsTableFilterComposer extends Composer<_$AppDatabase, $GoalsTable> {
 
   ColumnFilters<int> get minPaymentCents => $composableBuilder(
     column: $table.minPaymentCents,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -17302,6 +17355,11 @@ class $$GoalsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -17375,6 +17433,9 @@ class $$GoalsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -17423,6 +17484,7 @@ class $$GoalsTableTableManager
                 Value<bool> isCompleted = const Value.absent(),
                 Value<int?> aprBps = const Value.absent(),
                 Value<int?> minPaymentCents = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -17440,6 +17502,7 @@ class $$GoalsTableTableManager
                 isCompleted: isCompleted,
                 aprBps: aprBps,
                 minPaymentCents: minPaymentCents,
+                sortOrder: sortOrder,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -17459,6 +17522,7 @@ class $$GoalsTableTableManager
                 Value<bool> isCompleted = const Value.absent(),
                 Value<int?> aprBps = const Value.absent(),
                 Value<int?> minPaymentCents = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -17476,6 +17540,7 @@ class $$GoalsTableTableManager
                 isCompleted: isCompleted,
                 aprBps: aprBps,
                 minPaymentCents: minPaymentCents,
+                sortOrder: sortOrder,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,

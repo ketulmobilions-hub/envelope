@@ -824,6 +824,46 @@
     "@goalsMinPaymentInvalid": {
         "description": "Validation message for the minimum-payment field on the debt-payoff goal form"
     },
+    "autoAssignButton": "Auto-assign",
+    "@autoAssignButton": {
+        "description": "Button label that triggers auto-assignment of Ready-to-Assign across goals"
+    },
+    "autoAssignPreviewTitle": "Auto-assign preview",
+    "@autoAssignPreviewTitle": {
+        "description": "Title of the confirmation dialog showing the planned distribution"
+    },
+    "autoAssignPreviewBody": "{count, plural, =1{Allocate {total} across 1 goal in this order?} other{Allocate {total} across {count} goals in this order?}}",
+    "@autoAssignPreviewBody": {
+        "description": "Confirmation dialog body summarizing the auto-assign distribution",
+        "placeholders": {
+            "count": {"type": "int"},
+            "total": {"type": "String", "example": "$125.00"}
+        }
+    },
+    "autoAssignConfirm": "Apply",
+    "@autoAssignConfirm": {
+        "description": "Confirm-button label on the auto-assign preview dialog"
+    },
+    "autoAssignSuccess": "Auto-assign applied",
+    "@autoAssignSuccess": {
+        "description": "Snackbar after auto-assign applies successfully"
+    },
+    "autoAssignFailure": "Auto-assign could not finish",
+    "@autoAssignFailure": {
+        "description": "Snackbar after auto-assign fails to apply some actions"
+    },
+    "autoAssignNoTargets": "No goals need funding this month",
+    "@autoAssignNoTargets": {
+        "description": "Snackbar when no active goal has an unmet monthly need"
+    },
+    "autoAssignInsufficientRta": "Nothing left to assign",
+    "@autoAssignInsufficientRta": {
+        "description": "Snackbar when Ready-to-Assign is zero or negative"
+    },
+    "goalsReorderHint": "Drag goals to set funding priority",
+    "@goalsReorderHint": {
+        "description": "Hint shown above the reorderable active-goals list"
+    },
     "budgetSaveAllocations": "Save",
     "@budgetSaveAllocations": {
         "description": "AppBar action button to save locally-edited allocations"
