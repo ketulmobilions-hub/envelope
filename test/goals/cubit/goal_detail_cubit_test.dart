@@ -120,6 +120,75 @@ void main() {
       },
     );
 
+    test('debt_payoff goal exposes payoff schedule from APR + payment', () {
+      // $5,000 @ 18% APR, $150/mo monthlyContribution → ~47 months.
+      final goal = Goal(
+        id: 'goal-debt',
+        budgetId: budgetId,
+        type: 'debt_payoff',
+        name: 'Card',
+        targetAmount: 500000,
+        monthlyContribution: 15000,
+        aprBps: 1800,
+        createdAt: now,
+        updatedAt: now,
+      );
+      when(
+        () => goalRepository.watchContributions('goal-debt'),
+      ).thenAnswer((_) => Stream.value(const <GoalContribution>[]));
+      when(
+        () => goalRepository.refreshContributions('goal-debt'),
+      ).thenAnswer((_) async {});
+
+      final cubit = build(goal: goal);
+
+      expect(cubit.state.payoffSchedule, isNotNull);
+      expect(cubit.state.payoffSchedule!.infinite, false);
+      expect(
+        cubit.state.payoffSchedule!.monthsToPayoff,
+        inInclusiveRange(46, 48),
+      );
+      cubit.close();
+    });
+
+    test('debt_payoff without APR exposes no payoff schedule', () {
+      final goal = Goal(
+        id: 'goal-debt',
+        budgetId: budgetId,
+        type: 'debt_payoff',
+        name: 'Card',
+        targetAmount: 500000,
+        monthlyContribution: 15000,
+        createdAt: now,
+        updatedAt: now,
+      );
+      when(
+        () => goalRepository.watchContributions('goal-debt'),
+      ).thenAnswer((_) => Stream.value(const <GoalContribution>[]));
+      when(
+        () => goalRepository.refreshContributions('goal-debt'),
+      ).thenAnswer((_) async {});
+
+      final cubit = build(goal: goal);
+
+      expect(cubit.state.payoffSchedule, isNull);
+      cubit.close();
+    });
+
+    test('non-debt goals never expose a payoff schedule', () {
+      when(
+        () => goalRepository.watchContributions('goal-1'),
+      ).thenAnswer((_) => Stream.value(const <GoalContribution>[]));
+      when(
+        () => goalRepository.refreshContributions('goal-1'),
+      ).thenAnswer((_) async {});
+
+      final cubit = build(goal: goalWith());
+
+      expect(cubit.state.payoffSchedule, isNull);
+      cubit.close();
+    });
+
     blocTest<GoalDetailCubit, GoalDetailState>(
       'linked goal sets linkedEnvelopeName from envelopes stream',
       build: () {

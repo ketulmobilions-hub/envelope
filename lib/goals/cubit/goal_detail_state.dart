@@ -17,6 +17,7 @@ final class GoalDetailState extends Equatable {
     this.errorMessage,
     this.computedCurrentAmount,
     this.linkedEnvelopeName,
+    this.payoffSchedule,
   });
 
   final Goal goal;
@@ -31,6 +32,10 @@ final class GoalDetailState extends Equatable {
   /// Name of the linked envelope, if any.
   final String? linkedEnvelopeName;
 
+  /// Projected payoff schedule for `debt_payoff` goals with APR set.
+  /// Null when not applicable (other goal types, missing APR / min payment).
+  final DebtPayoffSchedule? payoffSchedule;
+
   /// Effective current amount for UI rendering.
   int get effectiveCurrentAmount =>
       computedCurrentAmount ?? goal.currentAmount;
@@ -42,6 +47,7 @@ final class GoalDetailState extends Equatable {
     Object? errorMessage = _sentinel,
     Object? computedCurrentAmount = _sentinel,
     Object? linkedEnvelopeName = _sentinel,
+    Object? payoffSchedule = _sentinel,
   }) {
     return GoalDetailState(
       goal: goal ?? this.goal,
@@ -56,6 +62,9 @@ final class GoalDetailState extends Equatable {
       linkedEnvelopeName: linkedEnvelopeName == _sentinel
           ? this.linkedEnvelopeName
           : linkedEnvelopeName as String?,
+      payoffSchedule: payoffSchedule == _sentinel
+          ? this.payoffSchedule
+          : payoffSchedule as DebtPayoffSchedule?,
     );
   }
 
@@ -69,5 +78,6 @@ final class GoalDetailState extends Equatable {
     errorMessage,
     computedCurrentAmount,
     linkedEnvelopeName,
+    payoffSchedule,
   ];
 }

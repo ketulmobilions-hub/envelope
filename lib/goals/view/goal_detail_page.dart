@@ -127,6 +127,13 @@ class GoalDetailPage extends StatelessWidget {
                   ),
                 ),
               ),
+              if (state.payoffSchedule != null) ...[
+                const SizedBox(height: 16),
+                _PayoffScheduleCard(
+                  schedule: state.payoffSchedule!,
+                  symbol: symbol,
+                ),
+              ],
               const SizedBox(height: 16),
               // Info card.
               Card(
@@ -557,5 +564,88 @@ class _InfoRow extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _PayoffScheduleCard extends StatelessWidget {
+  const _PayoffScheduleCard({required this.schedule, required this.symbol});
+
+  final DebtPayoffSchedule schedule;
+  final String symbol;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.goalsPayoffSchedule,
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 8),
+            if (schedule.infinite)
+              Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: scheme.error),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      l10n.goalsPayoffInfinite,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: scheme.error,
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            else ...[
+              _InfoRow(
+                label: l10n.goalsPayoffSchedule,
+                value: l10n.goalsPayoffMonths(schedule.monthsToPayoff),
+              ),
+              if (schedule.payoffDate != null) ...[
+                const Divider(),
+                _InfoRow(
+                  label: l10n.goalsPayoffDate,
+                  value: _formatPayoffDate(schedule.payoffDate!),
+                ),
+              ],
+              const Divider(),
+              _InfoRow(
+                label: l10n.goalsTotalInterest,
+                value: formatCents(
+                  schedule.totalInterestCents,
+                  symbol: symbol,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  static String _formatPayoffDate(DateTime date) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${months[date.month - 1]} ${date.year}';
   }
 }

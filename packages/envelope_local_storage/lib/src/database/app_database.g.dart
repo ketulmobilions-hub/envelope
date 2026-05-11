@@ -8596,6 +8596,26 @@ class $GoalsTable extends Goals with TableInfo<$GoalsTable, Goal> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _aprBpsMeta = const VerificationMeta('aprBps');
+  @override
+  late final GeneratedColumn<int> aprBps = GeneratedColumn<int>(
+    'apr_bps',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _minPaymentCentsMeta = const VerificationMeta(
+    'minPaymentCents',
+  );
+  @override
+  late final GeneratedColumn<int> minPaymentCents = GeneratedColumn<int>(
+    'min_payment_cents',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -8631,6 +8651,8 @@ class $GoalsTable extends Goals with TableInfo<$GoalsTable, Goal> {
     monthlyContribution,
     currentAmount,
     isCompleted,
+    aprBps,
+    minPaymentCents,
     createdAt,
     updatedAt,
   ];
@@ -8729,6 +8751,21 @@ class $GoalsTable extends Goals with TableInfo<$GoalsTable, Goal> {
         ),
       );
     }
+    if (data.containsKey('apr_bps')) {
+      context.handle(
+        _aprBpsMeta,
+        aprBps.isAcceptableOrUnknown(data['apr_bps']!, _aprBpsMeta),
+      );
+    }
+    if (data.containsKey('min_payment_cents')) {
+      context.handle(
+        _minPaymentCentsMeta,
+        minPaymentCents.isAcceptableOrUnknown(
+          data['min_payment_cents']!,
+          _minPaymentCentsMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -8798,6 +8835,14 @@ class $GoalsTable extends Goals with TableInfo<$GoalsTable, Goal> {
         DriftSqlType.bool,
         data['${effectivePrefix}is_completed'],
       )!,
+      aprBps: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}apr_bps'],
+      ),
+      minPaymentCents: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}min_payment_cents'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -8827,6 +8872,8 @@ class Goal extends DataClass implements Insertable<Goal> {
   final int? monthlyContribution;
   final int currentAmount;
   final bool isCompleted;
+  final int? aprBps;
+  final int? minPaymentCents;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Goal({
@@ -8841,6 +8888,8 @@ class Goal extends DataClass implements Insertable<Goal> {
     this.monthlyContribution,
     required this.currentAmount,
     required this.isCompleted,
+    this.aprBps,
+    this.minPaymentCents,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -8868,6 +8917,12 @@ class Goal extends DataClass implements Insertable<Goal> {
     }
     map['current_amount'] = Variable<int>(currentAmount);
     map['is_completed'] = Variable<bool>(isCompleted);
+    if (!nullToAbsent || aprBps != null) {
+      map['apr_bps'] = Variable<int>(aprBps);
+    }
+    if (!nullToAbsent || minPaymentCents != null) {
+      map['min_payment_cents'] = Variable<int>(minPaymentCents);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -8896,6 +8951,12 @@ class Goal extends DataClass implements Insertable<Goal> {
           : Value(monthlyContribution),
       currentAmount: Value(currentAmount),
       isCompleted: Value(isCompleted),
+      aprBps: aprBps == null && nullToAbsent
+          ? const Value.absent()
+          : Value(aprBps),
+      minPaymentCents: minPaymentCents == null && nullToAbsent
+          ? const Value.absent()
+          : Value(minPaymentCents),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -8920,6 +8981,8 @@ class Goal extends DataClass implements Insertable<Goal> {
       ),
       currentAmount: serializer.fromJson<int>(json['currentAmount']),
       isCompleted: serializer.fromJson<bool>(json['isCompleted']),
+      aprBps: serializer.fromJson<int?>(json['aprBps']),
+      minPaymentCents: serializer.fromJson<int?>(json['minPaymentCents']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -8939,6 +9002,8 @@ class Goal extends DataClass implements Insertable<Goal> {
       'monthlyContribution': serializer.toJson<int?>(monthlyContribution),
       'currentAmount': serializer.toJson<int>(currentAmount),
       'isCompleted': serializer.toJson<bool>(isCompleted),
+      'aprBps': serializer.toJson<int?>(aprBps),
+      'minPaymentCents': serializer.toJson<int?>(minPaymentCents),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -8956,6 +9021,8 @@ class Goal extends DataClass implements Insertable<Goal> {
     Value<int?> monthlyContribution = const Value.absent(),
     int? currentAmount,
     bool? isCompleted,
+    Value<int?> aprBps = const Value.absent(),
+    Value<int?> minPaymentCents = const Value.absent(),
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => Goal(
@@ -8972,6 +9039,10 @@ class Goal extends DataClass implements Insertable<Goal> {
         : this.monthlyContribution,
     currentAmount: currentAmount ?? this.currentAmount,
     isCompleted: isCompleted ?? this.isCompleted,
+    aprBps: aprBps.present ? aprBps.value : this.aprBps,
+    minPaymentCents: minPaymentCents.present
+        ? minPaymentCents.value
+        : this.minPaymentCents,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -9000,6 +9071,10 @@ class Goal extends DataClass implements Insertable<Goal> {
       isCompleted: data.isCompleted.present
           ? data.isCompleted.value
           : this.isCompleted,
+      aprBps: data.aprBps.present ? data.aprBps.value : this.aprBps,
+      minPaymentCents: data.minPaymentCents.present
+          ? data.minPaymentCents.value
+          : this.minPaymentCents,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -9019,6 +9094,8 @@ class Goal extends DataClass implements Insertable<Goal> {
           ..write('monthlyContribution: $monthlyContribution, ')
           ..write('currentAmount: $currentAmount, ')
           ..write('isCompleted: $isCompleted, ')
+          ..write('aprBps: $aprBps, ')
+          ..write('minPaymentCents: $minPaymentCents, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -9038,6 +9115,8 @@ class Goal extends DataClass implements Insertable<Goal> {
     monthlyContribution,
     currentAmount,
     isCompleted,
+    aprBps,
+    minPaymentCents,
     createdAt,
     updatedAt,
   );
@@ -9056,6 +9135,8 @@ class Goal extends DataClass implements Insertable<Goal> {
           other.monthlyContribution == this.monthlyContribution &&
           other.currentAmount == this.currentAmount &&
           other.isCompleted == this.isCompleted &&
+          other.aprBps == this.aprBps &&
+          other.minPaymentCents == this.minPaymentCents &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -9072,6 +9153,8 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
   final Value<int?> monthlyContribution;
   final Value<int> currentAmount;
   final Value<bool> isCompleted;
+  final Value<int?> aprBps;
+  final Value<int?> minPaymentCents;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -9087,6 +9170,8 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
     this.monthlyContribution = const Value.absent(),
     this.currentAmount = const Value.absent(),
     this.isCompleted = const Value.absent(),
+    this.aprBps = const Value.absent(),
+    this.minPaymentCents = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -9103,6 +9188,8 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
     this.monthlyContribution = const Value.absent(),
     this.currentAmount = const Value.absent(),
     this.isCompleted = const Value.absent(),
+    this.aprBps = const Value.absent(),
+    this.minPaymentCents = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
@@ -9124,6 +9211,8 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
     Expression<int>? monthlyContribution,
     Expression<int>? currentAmount,
     Expression<bool>? isCompleted,
+    Expression<int>? aprBps,
+    Expression<int>? minPaymentCents,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -9141,6 +9230,8 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
         'monthly_contribution': monthlyContribution,
       if (currentAmount != null) 'current_amount': currentAmount,
       if (isCompleted != null) 'is_completed': isCompleted,
+      if (aprBps != null) 'apr_bps': aprBps,
+      if (minPaymentCents != null) 'min_payment_cents': minPaymentCents,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -9159,6 +9250,8 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
     Value<int?>? monthlyContribution,
     Value<int>? currentAmount,
     Value<bool>? isCompleted,
+    Value<int?>? aprBps,
+    Value<int?>? minPaymentCents,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
@@ -9175,6 +9268,8 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
       monthlyContribution: monthlyContribution ?? this.monthlyContribution,
       currentAmount: currentAmount ?? this.currentAmount,
       isCompleted: isCompleted ?? this.isCompleted,
+      aprBps: aprBps ?? this.aprBps,
+      minPaymentCents: minPaymentCents ?? this.minPaymentCents,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -9217,6 +9312,12 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
     if (isCompleted.present) {
       map['is_completed'] = Variable<bool>(isCompleted.value);
     }
+    if (aprBps.present) {
+      map['apr_bps'] = Variable<int>(aprBps.value);
+    }
+    if (minPaymentCents.present) {
+      map['min_payment_cents'] = Variable<int>(minPaymentCents.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -9243,6 +9344,8 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
           ..write('monthlyContribution: $monthlyContribution, ')
           ..write('currentAmount: $currentAmount, ')
           ..write('isCompleted: $isCompleted, ')
+          ..write('aprBps: $aprBps, ')
+          ..write('minPaymentCents: $minPaymentCents, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -17015,6 +17118,8 @@ typedef $$GoalsTableCreateCompanionBuilder =
       Value<int?> monthlyContribution,
       Value<int> currentAmount,
       Value<bool> isCompleted,
+      Value<int?> aprBps,
+      Value<int?> minPaymentCents,
       required DateTime createdAt,
       required DateTime updatedAt,
       Value<int> rowid,
@@ -17032,6 +17137,8 @@ typedef $$GoalsTableUpdateCompanionBuilder =
       Value<int?> monthlyContribution,
       Value<int> currentAmount,
       Value<bool> isCompleted,
+      Value<int?> aprBps,
+      Value<int?> minPaymentCents,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
@@ -17097,6 +17204,16 @@ class $$GoalsTableFilterComposer extends Composer<_$AppDatabase, $GoalsTable> {
 
   ColumnFilters<bool> get isCompleted => $composableBuilder(
     column: $table.isCompleted,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get aprBps => $composableBuilder(
+    column: $table.aprBps,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get minPaymentCents => $composableBuilder(
+    column: $table.minPaymentCents,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -17175,6 +17292,16 @@ class $$GoalsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get aprBps => $composableBuilder(
+    column: $table.aprBps,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get minPaymentCents => $composableBuilder(
+    column: $table.minPaymentCents,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -17240,6 +17367,14 @@ class $$GoalsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get aprBps =>
+      $composableBuilder(column: $table.aprBps, builder: (column) => column);
+
+  GeneratedColumn<int> get minPaymentCents => $composableBuilder(
+    column: $table.minPaymentCents,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -17286,6 +17421,8 @@ class $$GoalsTableTableManager
                 Value<int?> monthlyContribution = const Value.absent(),
                 Value<int> currentAmount = const Value.absent(),
                 Value<bool> isCompleted = const Value.absent(),
+                Value<int?> aprBps = const Value.absent(),
+                Value<int?> minPaymentCents = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -17301,6 +17438,8 @@ class $$GoalsTableTableManager
                 monthlyContribution: monthlyContribution,
                 currentAmount: currentAmount,
                 isCompleted: isCompleted,
+                aprBps: aprBps,
+                minPaymentCents: minPaymentCents,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -17318,6 +17457,8 @@ class $$GoalsTableTableManager
                 Value<int?> monthlyContribution = const Value.absent(),
                 Value<int> currentAmount = const Value.absent(),
                 Value<bool> isCompleted = const Value.absent(),
+                Value<int?> aprBps = const Value.absent(),
+                Value<int?> minPaymentCents = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -17333,6 +17474,8 @@ class $$GoalsTableTableManager
                 monthlyContribution: monthlyContribution,
                 currentAmount: currentAmount,
                 isCompleted: isCompleted,
+                aprBps: aprBps,
+                minPaymentCents: minPaymentCents,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
