@@ -1,5 +1,6 @@
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/shared/services/funding_status_service.dart';
+import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:goal_repository/goal_repository.dart';
 
@@ -203,6 +204,166 @@ void main() {
         targetDate: DateTime(2025, 1, 1),
       );
       expect(service.neededThisPeriodForGoal(g), 90000);
+    });
+  });
+
+  group('FundingStatusService.classifyEnvelope', () {
+    final service = FundingStatusService(clock: fixedNow);
+
+    EnvelopeAllocation alloc({
+      int allocated = 0,
+      int spent = 0,
+      int rollover = 0,
+    }) => EnvelopeAllocation(
+      id: 'alloc-1',
+      envelopeId: 'env-1',
+      budgetPeriodId: period.id,
+      allocatedAmount: allocated,
+      spentAmount: spent,
+      rolloverAmount: rollover,
+      createdAt: now,
+    );
+
+    test('returns noTarget when no active linked goals', () {
+      expect(
+        service.classifyEnvelope(allocatedCents: 0, linkedGoals: const []),
+        FundingStatus.noTarget,
+      );
+    });
+
+    test('returns underfunded when allocated < target', () {
+      final g = goal(
+        targetAmount: 90000,
+        targetDate: DateTime(2026, 12, 1),
+      );
+      expect(
+        service.classifyEnvelope(allocatedCents: 5000, linkedGoals: [g]),
+        FundingStatus.underfunded,
+      );
+    });
+
+    test('returns fullyFunded when allocated >= target', () {
+      final g = goal(
+        targetAmount: 90000,
+        targetDate: DateTime(2026, 12, 1),
+      );
+      expect(
+        service.classifyEnvelope(allocatedCents: 10000, linkedGoals: [g]),
+        FundingStatus.fullyFunded,
+      );
+    });
+
+    test('returns overspent when spent exceeds allocated + rollover', () {
+      final g = goal(
+        targetAmount: 90000,
+        targetDate: DateTime(2026, 12, 1),
+      );
+      expect(
+        service.classifyEnvelope(
+          allocatedCents: 10000,
+          linkedGoals: [g],
+          allocation: alloc(allocated: 10000, spent: 12000),
+        ),
+        FundingStatus.overspent,
+      );
+    });
+
+    test('overspent takes precedence over fullyFunded', () {
+      final g = goal(
+        targetAmount: 90000,
+        targetDate: DateTime(2026, 12, 1),
+      );
+      // allocated=15000 exceeds the $100/mo target, but spent=20000 means the
+      // envelope is in the red — overspent wins.
+      expect(
+        service.classifyEnvelope(
+          allocatedCents: 15000,
+          linkedGoals: [g],
+          allocation: alloc(allocated: 15000, spent: 20000),
+        ),
+        FundingStatus.overspent,
+      );
+    });
+
+    test('rollover credits offset overspending', () {
+      final g = goal(
+        targetAmount: 90000,
+        targetDate: DateTime(2026, 12, 1),
+      );
+      // spent (12000) <= allocated (10000) + rollover (5000) → not overspent.
+      expect(
+        service.classifyEnvelope(
+          allocatedCents: 10000,
+          linkedGoals: [g],
+          allocation: alloc(allocated: 10000, spent: 12000, rollover: 5000),
+        ),
+        FundingStatus.fullyFunded,
+      );
+    });
+
+    test('rollover does not promote underfunded to fullyFunded', () {
+      final g = goal(
+        targetAmount: 90000,
+        targetDate: DateTime(2026, 12, 1),
+      );
+      // allocated (5000) < target (10000): underfunded, even though rollover
+      // would absorb any overspend.
+      expect(
+        service.classifyEnvelope(
+          allocatedCents: 5000,
+          linkedGoals: [g],
+          allocation: alloc(allocated: 5000, spent: 3000, rollover: 5000),
+        ),
+        FundingStatus.underfunded,
+      );
+    });
+  });
+
+  group('FundingStatusService.classifyGoal', () {
+    final service = FundingStatusService(clock: fixedNow);
+
+    test('returns noTarget for completed goals', () {
+      final g = goal(
+        targetAmount: 50000,
+        targetDate: DateTime(2026, 12, 1),
+        isCompleted: true,
+      );
+      expect(service.classifyGoal(g), FundingStatus.noTarget);
+    });
+
+    test('returns underfunded with no contributions in period', () {
+      final g = goal(
+        targetAmount: 90000,
+        targetDate: DateTime(2026, 12, 1),
+      );
+      expect(
+        service.classifyGoal(g, period: period),
+        FundingStatus.underfunded,
+      );
+    });
+
+    test('returns fullyFunded when in-period contributions cover target', () {
+      final g = goal(
+        id: 'goal-x',
+        targetAmount: 90000,
+        targetDate: DateTime(2026, 12, 1),
+      );
+      final contributions = [
+        GoalContribution(
+          id: 'c1',
+          goalId: 'goal-x',
+          amountCents: 15000,
+          createdAt: DateTime(2026, 3, 10),
+        ),
+      ];
+      expect(
+        service.classifyGoal(
+          g,
+          contributions: contributions,
+          period: period,
+        ),
+        FundingStatus.fullyFunded,
+      );
     });
   });
 }

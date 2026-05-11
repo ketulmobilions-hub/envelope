@@ -3,7 +3,7 @@ import 'package:envelope/budget/bloc/bloc.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/shared/services/funding_status_service.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
-import 'package:envelope/shared/widgets/needed_badge.dart';
+import 'package:envelope/shared/widgets/funding_status_badge.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -95,9 +95,15 @@ class _AllocationRowState extends State<AllocationRow> {
         budgetState.localAllocations[widget.envelope.id] ??
         allocation?.allocatedAmount ??
         0;
-    final neededCents = const FundingStatusService().neededThisPeriod(
+    const fundingService = FundingStatusService();
+    final neededCents = fundingService.neededThisPeriod(
       allocatedCents: effectiveAllocated,
       linkedGoals: linkedGoals,
+    );
+    final fundingStatus = fundingService.classifyEnvelope(
+      allocatedCents: effectiveAllocated,
+      linkedGoals: linkedGoals,
+      allocation: allocation,
     );
 
     return Padding(
@@ -117,9 +123,13 @@ class _AllocationRowState extends State<AllocationRow> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (neededCents > 0) ...[
+                    if (fundingStatus != FundingStatus.noTarget) ...[
                       const SizedBox(width: 8),
-                      NeededBadge(amountCents: neededCents, symbol: symbol),
+                      FundingStatusBadge(
+                        status: fundingStatus,
+                        amountCents: neededCents,
+                        symbol: symbol,
+                      ),
                     ],
                   ],
                 ),
