@@ -766,6 +766,22 @@
             }
         }
     },
+    "fundingStatusFunded": "Funded",
+    "@fundingStatusFunded": {
+        "description": "Short chip label when an envelope or goal is fully funded for the current period"
+    },
+    "fundingStatusFundedTooltip": "Fully funded this month",
+    "@fundingStatusFundedTooltip": {
+        "description": "Accessible tooltip / long form for the fully-funded chip"
+    },
+    "fundingStatusOverspent": "Overspent",
+    "@fundingStatusOverspent": {
+        "description": "Short chip label when spending exceeds the envelope's allocation plus rollover"
+    },
+    "fundingStatusOverspentTooltip": "Spent more than allocated this period",
+    "@fundingStatusOverspentTooltip": {
+        "description": "Accessible tooltip / long form for the overspent chip"
+    },
     "budgetSaveAllocations": "Save",
     "@budgetSaveAllocations": {
         "description": "AppBar action button to save locally-edited allocations"

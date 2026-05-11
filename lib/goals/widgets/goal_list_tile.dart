@@ -2,8 +2,9 @@ import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/goals/widgets/goal_helpers.dart';
 import 'package:envelope/goals/widgets/goal_progress_bar.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/services/funding_status_service.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
-import 'package:envelope/shared/widgets/needed_badge.dart';
+import 'package:envelope/shared/widgets/funding_status_badge.dart';
 import 'package:flutter/material.dart';
 import 'package:goal_repository/goal_repository.dart';
 
@@ -44,6 +45,7 @@ class GoalListTile extends StatelessWidget {
             goal,
             overrideCurrentAmount: effectiveAmount,
           );
+    final fundingStatus = _statusForGoal(goal, neededCents: neededCents);
 
     return ListTile(
       leading: CircleAvatar(
@@ -71,9 +73,13 @@ class GoalListTile extends StatelessWidget {
                   : null,
             ),
           ),
-          if (neededCents > 0) ...[
+          if (fundingStatus != FundingStatus.noTarget) ...[
             const SizedBox(width: 8),
-            NeededBadge(amountCents: neededCents, symbol: symbol),
+            FundingStatusBadge(
+              status: fundingStatus,
+              amountCents: neededCents,
+              symbol: symbol,
+            ),
           ],
         ],
       ),
@@ -130,5 +136,20 @@ class GoalListTile extends StatelessWidget {
       ),
       onTap: onTap,
     );
+  }
+
+  /// Maps a goal's monthly shortfall to a [FundingStatus].
+  ///
+  /// Completed goals and goals without an active monthly target render no
+  /// badge. Underfunded goals show the shortfall amount; goals whose monthly
+  /// target is already met render as fully funded.
+  static FundingStatus _statusForGoal(Goal goal, {required int neededCents}) {
+    if (goal.isCompleted) return FundingStatus.noTarget;
+    if (neededCents > 0) return FundingStatus.underfunded;
+    // No shortfall: either there is no monthly target at all (e.g. unbounded
+    // savings goal without a date) or the goal is already fully funded for
+    // the period. Distinguish the two using the underlying monthly amount.
+    final monthly = monthlyContributionNeeded(goal);
+    return monthly > 0 ? FundingStatus.fullyFunded : FundingStatus.noTarget;
   }
 }
