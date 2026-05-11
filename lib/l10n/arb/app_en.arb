@@ -782,6 +782,48 @@
     "@fundingStatusOverspentTooltip": {
         "description": "Accessible tooltip / long form for the overspent chip"
     },
+    "goalsAprLabel": "APR (%)",
+    "@goalsAprLabel": {
+        "description": "Form-field label for the annual percentage rate on a debt-payoff goal"
+    },
+    "goalsMinPaymentLabel": "Minimum monthly payment",
+    "@goalsMinPaymentLabel": {
+        "description": "Form-field label for the lender-required minimum monthly payment"
+    },
+    "goalsPayoffSchedule": "Payoff schedule",
+    "@goalsPayoffSchedule": {
+        "description": "Section heading on the goal detail page that shows the projected debt payoff"
+    },
+    "goalsPayoffMonths": "{count, plural, =1{1 month} other{{count} months}}",
+    "@goalsPayoffMonths": {
+        "description": "Months remaining until debt is paid off",
+        "placeholders": {
+            "count": {
+                "type": "int",
+                "example": "47"
+            }
+        }
+    },
+    "goalsPayoffDate": "Payoff date",
+    "@goalsPayoffDate": {
+        "description": "Row label for the projected payoff date"
+    },
+    "goalsTotalInterest": "Total interest",
+    "@goalsTotalInterest": {
+        "description": "Row label for the total interest paid over the schedule"
+    },
+    "goalsPayoffInfinite": "At this payment, the balance never pays off",
+    "@goalsPayoffInfinite": {
+        "description": "Warning shown when the monthly payment does not exceed the monthly interest charge"
+    },
+    "goalsAprInvalid": "Enter a value between 0 and 100",
+    "@goalsAprInvalid": {
+        "description": "Validation message for the APR field on the debt-payoff goal form"
+    },
+    "goalsMinPaymentInvalid": "Enter an amount greater than zero",
+    "@goalsMinPaymentInvalid": {
+        "description": "Validation message for the minimum-payment field on the debt-payoff goal form"
+    },
     "budgetSaveAllocations": "Save",
     "@budgetSaveAllocations": {
         "description": "AppBar action button to save locally-edited allocations"

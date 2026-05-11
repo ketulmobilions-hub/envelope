@@ -15,6 +15,9 @@ class Goals extends Table {
       integer().named('current_amount').withDefault(const Constant(0))();
   BoolColumn get isCompleted =>
       boolean().named('is_completed').withDefault(const Constant(false))();
+  IntColumn get aprBps => integer().named('apr_bps').nullable()();
+  IntColumn get minPaymentCents =>
+      integer().named('min_payment_cents').nullable()();
   DateTimeColumn get createdAt => dateTime().named('created_at')();
   DateTimeColumn get updatedAt => dateTime().named('updated_at')();
 

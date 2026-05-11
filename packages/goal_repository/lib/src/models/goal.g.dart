@@ -22,6 +22,8 @@ _Goal _$GoalFromJson(Map<String, dynamic> json) => _Goal(
   monthlyContribution: (json['monthlyContribution'] as num?)?.toInt(),
   currentAmount: (json['currentAmount'] as num?)?.toInt() ?? 0,
   isCompleted: json['isCompleted'] as bool? ?? false,
+  aprBps: (json['aprBps'] as num?)?.toInt(),
+  minPaymentCents: (json['minPaymentCents'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$GoalToJson(_Goal instance) => <String, dynamic>{
@@ -38,4 +40,6 @@ Map<String, dynamic> _$GoalToJson(_Goal instance) => <String, dynamic>{
   'monthlyContribution': instance.monthlyContribution,
   'currentAmount': instance.currentAmount,
   'isCompleted': instance.isCompleted,
+  'aprBps': instance.aprBps,
+  'minPaymentCents': instance.minPaymentCents,
 };

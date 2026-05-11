@@ -32,6 +32,8 @@ class _GoalFormPageState extends State<GoalFormPage> {
   late final TextEditingController _nameController;
   late final TextEditingController _targetAmountController;
   late final TextEditingController _monthlyContributionController;
+  late final TextEditingController _aprController;
+  late final TextEditingController _minPaymentController;
   late String _selectedType;
   DateTime? _targetDate;
 
@@ -57,6 +59,16 @@ class _GoalFormPageState extends State<GoalFormPage> {
           ? (widget.goal!.monthlyContribution! / 100).toStringAsFixed(2)
           : '',
     );
+    _aprController = TextEditingController(
+      text: widget.goal?.aprBps != null
+          ? (widget.goal!.aprBps! / 100).toStringAsFixed(2)
+          : '',
+    );
+    _minPaymentController = TextEditingController(
+      text: widget.goal?.minPaymentCents != null
+          ? (widget.goal!.minPaymentCents! / 100).toStringAsFixed(2)
+          : '',
+    );
     _selectedType = widget.goal?.type ?? _goalTypes.first;
     _targetDate = widget.goal?.targetDate;
   }
@@ -66,6 +78,8 @@ class _GoalFormPageState extends State<GoalFormPage> {
     _nameController.dispose();
     _targetAmountController.dispose();
     _monthlyContributionController.dispose();
+    _aprController.dispose();
+    _minPaymentController.dispose();
     super.dispose();
   }
 
@@ -213,6 +227,58 @@ class _GoalFormPageState extends State<GoalFormPage> {
                     ),
                     const SizedBox(height: 16),
                   ],
+                  if (_selectedType == 'debt_payoff') ...[
+                    TextFormField(
+                      controller: _aprController,
+                      decoration: InputDecoration(
+                        labelText: l10n.goalsAprLabel,
+                        prefixIcon: const Icon(Icons.percent_outlined),
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'^\d*\.?\d{0,2}'),
+                        ),
+                      ],
+                      textInputAction: TextInputAction.next,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) return null;
+                        final parsed = double.tryParse(value);
+                        if (parsed == null || parsed < 0 || parsed > 100) {
+                          return l10n.goalsAprInvalid;
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _minPaymentController,
+                      decoration: InputDecoration(
+                        labelText: l10n.goalsMinPaymentLabel,
+                        prefixText: symbol,
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'^\d*\.?\d{0,2}'),
+                        ),
+                      ],
+                      textInputAction: TextInputAction.done,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) return null;
+                        final cents = parseCents(value);
+                        if (cents == null || cents <= 0) {
+                          return l10n.goalsMinPaymentInvalid;
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   const SizedBox(height: 16),
                   BlocBuilder<GoalFormCubit, GoalFormState>(
                     buildWhen: (prev, curr) => prev.status != curr.status,
@@ -253,12 +319,22 @@ class _GoalFormPageState extends State<GoalFormPage> {
       _monthlyContributionController.text,
     );
 
+    int? aprBps;
+    int? minPaymentCents;
+    if (_selectedType == 'debt_payoff') {
+      final aprPercent = double.tryParse(_aprController.text.trim());
+      if (aprPercent != null) aprBps = (aprPercent * 100).round();
+      minPaymentCents = parseCents(_minPaymentController.text);
+    }
+
     context.read<GoalFormCubit>().submit(
       name: _nameController.text.trim(),
       type: _selectedType,
       targetAmount: targetAmountCents,
       targetDate: _targetDate,
       monthlyContribution: monthlyContributionCents,
+      aprBps: aprBps,
+      minPaymentCents: minPaymentCents,
     );
   }
 }

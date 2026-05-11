@@ -41,6 +41,8 @@ class GoalFormCubit extends Cubit<GoalFormState> {
     int? targetAmount,
     DateTime? targetDate,
     int? monthlyContribution,
+    int? aprBps,
+    int? minPaymentCents,
   }) async {
     emit(state.copyWith(status: GoalFormStatus.submitting));
     try {
@@ -52,6 +54,8 @@ class GoalFormCubit extends Cubit<GoalFormState> {
           targetAmount: targetAmount,
           targetDate: targetDate,
           monthlyContribution: monthlyContribution,
+          aprBps: aprBps,
+          minPaymentCents: minPaymentCents,
           updatedAt: DateTime.now(),
         );
         await _goalRepository.updateGoal(updated);
@@ -64,6 +68,8 @@ class GoalFormCubit extends Cubit<GoalFormState> {
           targetAmount: targetAmount,
           targetDate: targetDate,
           monthlyContribution: monthlyContribution,
+          aprBps: aprBps,
+          minPaymentCents: minPaymentCents,
         );
       }
       emit(state.copyWith(status: GoalFormStatus.success));

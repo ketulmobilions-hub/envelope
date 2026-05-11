@@ -31,6 +31,8 @@ class GoalRepository {
     int? targetAmount,
     DateTime? targetDate,
     int? monthlyContribution,
+    int? aprBps,
+    int? minPaymentCents,
   }) async {
     try {
       final dto = GoalDto(
@@ -43,6 +45,8 @@ class GoalRepository {
         targetAmount: targetAmount,
         targetDate: targetDate,
         monthlyContribution: monthlyContribution,
+        aprBps: aprBps,
+        minPaymentCents: minPaymentCents,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -262,6 +266,8 @@ class GoalRepository {
       monthlyContribution: dto.monthlyContribution,
       currentAmount: dto.currentAmount,
       isCompleted: dto.isCompleted,
+      aprBps: dto.aprBps,
+      minPaymentCents: dto.minPaymentCents,
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
     );
@@ -280,6 +286,8 @@ class GoalRepository {
       monthlyContribution: row.monthlyContribution,
       currentAmount: row.currentAmount,
       isCompleted: row.isCompleted,
+      aprBps: row.aprBps,
+      minPaymentCents: row.minPaymentCents,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     );
@@ -298,6 +306,8 @@ class GoalRepository {
       monthlyContribution: goal.monthlyContribution,
       currentAmount: goal.currentAmount,
       isCompleted: goal.isCompleted,
+      aprBps: goal.aprBps,
+      minPaymentCents: goal.minPaymentCents,
       createdAt: goal.createdAt,
       updatedAt: goal.updatedAt,
     );
@@ -320,6 +330,8 @@ class GoalRepository {
       monthlyContribution: Value(dto.monthlyContribution),
       currentAmount: Value(dto.currentAmount),
       isCompleted: Value(dto.isCompleted),
+      aprBps: Value(dto.aprBps),
+      minPaymentCents: Value(dto.minPaymentCents),
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
     );

@@ -15,10 +15,21 @@ class GoalDetailCubit extends Cubit<GoalDetailState> {
     required EnvelopeRepository envelopeRepository,
     required TransactionRepository transactionRepository,
     required Goal goal,
+    DebtPayoffCalculator payoffCalculator = const DebtPayoffCalculator(),
   }) : _goalRepository = goalRepository,
        _envelopeRepository = envelopeRepository,
        _transactionRepository = transactionRepository,
-       super(GoalDetailState(goal: goal)) {
+       _payoffCalculator = payoffCalculator,
+       super(
+         GoalDetailState(
+           goal: goal,
+           payoffSchedule: _projectPayoff(
+             goal,
+             goal.currentAmount,
+             payoffCalculator,
+           ),
+         ),
+       ) {
     if (goal.envelopeId == null) {
       _contributionsSubscription = _goalRepository
           .watchContributions(goal.id)
@@ -35,6 +46,32 @@ class GoalDetailCubit extends Cubit<GoalDetailState> {
   final GoalRepository _goalRepository;
   final EnvelopeRepository _envelopeRepository;
   final TransactionRepository _transactionRepository;
+  final DebtPayoffCalculator _payoffCalculator;
+
+  /// Computes a [DebtPayoffSchedule] for `debt_payoff` goals when APR and a
+  /// monthly payment are both available. Prefers `monthlyContribution` and
+  /// falls back to `minPaymentCents`. [effectiveCurrentAmount] is the
+  /// possibly-derived current amount the rest of the UI is rendering, so the
+  /// schedule stays in sync with the progress card on envelope-linked goals.
+  static DebtPayoffSchedule? _projectPayoff(
+    Goal goal,
+    int effectiveCurrentAmount,
+    DebtPayoffCalculator calculator,
+  ) {
+    if (goal.type != 'debt_payoff') return null;
+    final apr = goal.aprBps;
+    if (apr == null) return null;
+    final balance = (goal.targetAmount ?? 0) - effectiveCurrentAmount;
+    if (balance <= 0) return null;
+    final monthly = goal.monthlyContribution ?? 0;
+    final payment = monthly > 0 ? monthly : goal.minPaymentCents;
+    if (payment == null || payment <= 0) return null;
+    return calculator.compute(
+      balanceCents: balance,
+      aprBps: apr,
+      monthlyPaymentCents: payment,
+    );
+  }
 
   StreamSubscription<List<GoalContribution>>? _contributionsSubscription;
   StreamSubscription<List<Envelope>>? _envelopesSubscription;
@@ -80,16 +117,32 @@ class GoalDetailCubit extends Cubit<GoalDetailState> {
       envelopeAllocations: _envelopeAllocations,
       envelopeTransactions: _envelopeTransactions,
     );
-    emit(state.copyWith(computedCurrentAmount: amount));
+    emit(
+      state.copyWith(
+        computedCurrentAmount: amount,
+        payoffSchedule: _projectPayoff(state.goal, amount, _payoffCalculator),
+      ),
+    );
   }
 
   Future<void> refresh() async {
     try {
       final updated = await _goalRepository.getGoal(state.goal.id);
-      emit(state.copyWith(goal: updated));
+      _emitWithGoal(updated);
     } on GoalException {
       // Keep current data if refresh fails.
     }
+  }
+
+  void _emitWithGoal(Goal goal, {GoalDetailStatus? status}) {
+    final effective = state.computedCurrentAmount ?? goal.currentAmount;
+    emit(
+      state.copyWith(
+        goal: goal,
+        status: status,
+        payoffSchedule: _projectPayoff(goal, effective, _payoffCalculator),
+      ),
+    );
   }
 
   Future<void> toggleComplete() async {
@@ -101,12 +154,7 @@ class GoalDetailCubit extends Cubit<GoalDetailState> {
         await _goalRepository.completeGoal(state.goal.id);
       }
       final refreshed = await _goalRepository.getGoal(state.goal.id);
-      emit(
-        state.copyWith(
-          status: GoalDetailStatus.completed,
-          goal: refreshed,
-        ),
-      );
+      _emitWithGoal(refreshed, status: GoalDetailStatus.completed);
     } on GoalException catch (e) {
       emit(
         state.copyWith(
@@ -126,12 +174,7 @@ class GoalDetailCubit extends Cubit<GoalDetailState> {
         amountCents: amountCents,
       );
       final refreshed = await _goalRepository.getGoal(state.goal.id);
-      emit(
-        state.copyWith(
-          status: GoalDetailStatus.contributed,
-          goal: refreshed,
-        ),
-      );
+      _emitWithGoal(refreshed, status: GoalDetailStatus.contributed);
     } on GoalException catch (e) {
       emit(
         state.copyWith(
@@ -148,7 +191,7 @@ class GoalDetailCubit extends Cubit<GoalDetailState> {
     try {
       await _goalRepository.removeContribution(contribution);
       final refreshed = await _goalRepository.getGoal(state.goal.id);
-      emit(state.copyWith(status: GoalDetailStatus.idle, goal: refreshed));
+      _emitWithGoal(refreshed, status: GoalDetailStatus.idle);
     } on GoalException catch (e) {
       emit(
         state.copyWith(
