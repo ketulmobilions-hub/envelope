@@ -24,6 +24,7 @@ _GoalDto _$GoalDtoFromJson(Map<String, dynamic> json) => _GoalDto(
   monthlyContribution: (json['monthly_contribution'] as num?)?.toInt(),
   aprBps: (json['apr_bps'] as num?)?.toInt(),
   minPaymentCents: (json['min_payment_cents'] as num?)?.toInt(),
+  sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
 );
 
 Map<String, dynamic> _$GoalDtoToJson(_GoalDto instance) => <String, dynamic>{
@@ -42,4 +43,5 @@ Map<String, dynamic> _$GoalDtoToJson(_GoalDto instance) => <String, dynamic>{
   'monthly_contribution': instance.monthlyContribution,
   'apr_bps': instance.aprBps,
   'min_payment_cents': instance.minPaymentCents,
+  'sort_order': instance.sortOrder,
 };

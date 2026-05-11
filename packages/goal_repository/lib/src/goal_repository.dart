@@ -103,6 +103,30 @@ class GoalRepository {
     }
   }
 
+  /// Reorders goals by assigning each id its index in [orderedIds] as the
+  /// new `sortOrder`. Ids not present in the input retain their existing
+  /// order; callers should pass a complete list of active goal ids.
+  ///
+  /// Updates are pushed sequentially. On the first failure the loop aborts
+  /// and rethrows as a [GoalException]; goals already updated keep their
+  /// new sortOrder (partial-apply semantics).
+  Future<void> reorderGoals(List<String> orderedIds) async {
+    try {
+      for (var i = 0; i < orderedIds.length; i++) {
+        final id = orderedIds[i];
+        final current = await getGoal(id);
+        if (current.sortOrder == i) continue;
+        await updateGoal(
+          current.copyWith(sortOrder: i, updatedAt: DateTime.now()),
+        );
+      }
+    } on GoalException {
+      rethrow;
+    } on EnvelopeApiException catch (e) {
+      throw GoalException('Failed to reorder goals', error: e);
+    }
+  }
+
   /// Deletes a goal by its [id].
   ///
   /// Removes from the API first. Local cache removal is best-effort.
@@ -268,6 +292,7 @@ class GoalRepository {
       isCompleted: dto.isCompleted,
       aprBps: dto.aprBps,
       minPaymentCents: dto.minPaymentCents,
+      sortOrder: dto.sortOrder,
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
     );
@@ -288,6 +313,7 @@ class GoalRepository {
       isCompleted: row.isCompleted,
       aprBps: row.aprBps,
       minPaymentCents: row.minPaymentCents,
+      sortOrder: row.sortOrder,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     );
@@ -308,6 +334,7 @@ class GoalRepository {
       isCompleted: goal.isCompleted,
       aprBps: goal.aprBps,
       minPaymentCents: goal.minPaymentCents,
+      sortOrder: goal.sortOrder,
       createdAt: goal.createdAt,
       updatedAt: goal.updatedAt,
     );
@@ -332,6 +359,7 @@ class GoalRepository {
       isCompleted: Value(dto.isCompleted),
       aprBps: Value(dto.aprBps),
       minPaymentCents: Value(dto.minPaymentCents),
+      sortOrder: Value(dto.sortOrder),
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
     );

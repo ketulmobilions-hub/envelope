@@ -22,6 +22,7 @@ abstract class GoalDto with _$GoalDto {
     @JsonKey(name: 'monthly_contribution') int? monthlyContribution,
     @JsonKey(name: 'apr_bps') int? aprBps,
     @JsonKey(name: 'min_payment_cents') int? minPaymentCents,
+    @JsonKey(name: 'sort_order') @Default(0) int sortOrder,
   }) = _GoalDto;
 
   factory GoalDto.fromJson(Map<String, dynamic> json) =>

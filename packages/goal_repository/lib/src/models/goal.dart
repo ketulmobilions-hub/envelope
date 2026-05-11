@@ -27,6 +27,10 @@ abstract class Goal with _$Goal {
     /// Lender-required minimum monthly payment in cents.
     /// Only meaningful for `debt_payoff` goals; null for other types.
     int? minPaymentCents,
+
+    /// User-defined priority order used by auto-assign to distribute the
+    /// Ready-to-Assign pool. Lower values are funded first; ties break by id.
+    @Default(0) int sortOrder,
   }) = _Goal;
 
   factory Goal.fromJson(Map<String, dynamic> json) => _$GoalFromJson(json);

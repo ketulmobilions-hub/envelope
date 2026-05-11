@@ -65,6 +65,7 @@ void main() {
     monthlyContribution: 5000,
     currentAmount: 25000,
     isCompleted: false,
+    sortOrder: 0,
     createdAt: now,
     updatedAt: now,
   );
@@ -260,6 +261,74 @@ void main() {
       });
     });
 
+    group('reorderGoals', () {
+      storage.Goal localGoal({required String id, required int sortOrder}) =>
+          storage.Goal(
+            id: id,
+            budgetId: 'budget-1',
+            type: 'savings_target',
+            name: 'Goal $id',
+            envelopeId: null,
+            accountId: null,
+            targetAmount: 100000,
+            targetDate: null,
+            monthlyContribution: null,
+            currentAmount: 0,
+            isCompleted: false,
+            sortOrder: sortOrder,
+            createdAt: now,
+            updatedAt: now,
+          );
+
+      test('issues an update per id that needs renumbering', () async {
+        when(
+          () => goalsDao.getGoal('a'),
+        ).thenAnswer((_) async => localGoal(id: 'a', sortOrder: 5));
+        when(
+          () => goalsDao.getGoal('b'),
+        ).thenAnswer((_) async => localGoal(id: 'b', sortOrder: 3));
+        when(
+          () => goalsApiClient.updateGoal(any()),
+        ).thenAnswer((invocation) async {
+          return invocation.positionalArguments.first as GoalDto;
+        });
+        when(
+          () => goalsDao.insertGoal(any(), mode: any(named: 'mode')),
+        ).thenAnswer((_) async => 1);
+
+        await repository.reorderGoals(['a', 'b']);
+
+        verify(() => goalsApiClient.updateGoal(any())).called(2);
+      });
+
+      test('skips updates when sortOrder already matches index', () async {
+        when(
+          () => goalsDao.getGoal('a'),
+        ).thenAnswer((_) async => localGoal(id: 'a', sortOrder: 0));
+        when(
+          () => goalsDao.getGoal('b'),
+        ).thenAnswer((_) async => localGoal(id: 'b', sortOrder: 1));
+
+        await repository.reorderGoals(['a', 'b']);
+
+        verifyNever(() => goalsApiClient.updateGoal(any()));
+      });
+
+      test('rethrows GoalException on first failure', () async {
+        when(
+          () => goalsDao.getGoal('a'),
+        ).thenAnswer((_) async => localGoal(id: 'a', sortOrder: 5));
+        when(
+          () => goalsApiClient.updateGoal(any()),
+        ).thenThrow(const EnvelopeApiException('boom'));
+
+        expect(
+          () => repository.reorderGoals(['a', 'b']),
+          throwsA(isA<GoalException>()),
+        );
+      });
+    });
+
     group('deleteGoal', () {
       test('deletes from API and local storage', () async {
         when(
@@ -349,6 +418,7 @@ void main() {
           monthlyContribution: 5000,
           currentAmount: 25000,
           isCompleted: true,
+          sortOrder: 0,
           createdAt: now,
           updatedAt: now,
         );

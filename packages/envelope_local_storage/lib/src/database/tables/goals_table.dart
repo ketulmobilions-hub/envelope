@@ -18,6 +18,8 @@ class Goals extends Table {
   IntColumn get aprBps => integer().named('apr_bps').nullable()();
   IntColumn get minPaymentCents =>
       integer().named('min_payment_cents').nullable()();
+  IntColumn get sortOrder =>
+      integer().named('sort_order').withDefault(const Constant(0))();
   DateTimeColumn get createdAt => dateTime().named('created_at')();
   DateTimeColumn get updatedAt => dateTime().named('updated_at')();
 

@@ -50,7 +50,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   /// Deletes all rows from every table. Used for account deletion / GDPR.
   Future<void> clearAllTables() async {
@@ -135,6 +135,9 @@ class AppDatabase extends _$AppDatabase {
       if (from < 14) {
         await m.addColumn(goals, goals.aprBps);
         await m.addColumn(goals, goals.minPaymentCents);
+      }
+      if (from < 15) {
+        await m.addColumn(goals, goals.sortOrder);
       }
     },
   );
