@@ -34,7 +34,18 @@ double goalProgress(Goal goal, {int? overrideCurrentAmount}) {
 }
 
 /// Returns the monthly contribution needed (in cents) to reach target by date.
-int monthlyContributionNeeded(Goal goal, {int? overrideCurrentAmount}) {
+///
+/// For `monthly_contribution` goals the recurring `monthlyContribution` value
+/// IS the per-period target — there is no target balance.
+int monthlyContributionNeeded(
+  Goal goal, {
+  int? overrideCurrentAmount,
+  DateTime Function()? clock,
+}) {
+  if (goal.type == 'monthly_contribution') {
+    return goal.monthlyContribution ?? 0;
+  }
+
   final target = goal.targetAmount;
   if (target == null || target <= 0) return 0;
 
@@ -45,7 +56,7 @@ int monthlyContributionNeeded(Goal goal, {int? overrideCurrentAmount}) {
   final targetDate = goal.targetDate;
   if (targetDate == null) return remaining;
 
-  final now = DateTime.now();
+  final now = (clock ?? DateTime.now)();
   final months =
       (targetDate.year - now.year) * 12 + targetDate.month - now.month;
   if (months <= 0) return remaining;

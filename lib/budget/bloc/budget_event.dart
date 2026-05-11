@@ -67,6 +67,18 @@ final class _TemplatesUpdated extends BudgetEvent {
   List<Object?> get props => [templates, generation];
 }
 
+/// Internal event when the goals stream emits. Drives the "needed this month"
+/// chip on envelope rows by exposing each envelope's linked goals.
+final class _GoalsUpdated extends BudgetEvent {
+  const _GoalsUpdated(this.goals, this.generation);
+
+  final List<Goal> goals;
+  final int generation;
+
+  @override
+  List<Object?> get props => [goals, generation];
+}
+
 /// Internal event when any stream errors.
 final class _BudgetStreamError extends BudgetEvent {
   const _BudgetStreamError();

@@ -3,17 +3,21 @@ import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/budget/bloc/bloc.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:goal_repository/goal_repository.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockBudgetRepository extends Mock implements BudgetRepository {}
 
 class MockEnvelopeRepository extends Mock implements EnvelopeRepository {}
 
+class MockGoalRepository extends Mock implements GoalRepository {}
+
 class FakeEnvelopeAllocation extends Fake implements EnvelopeAllocation {}
 
 void main() {
   late MockBudgetRepository budgetRepository;
   late MockEnvelopeRepository envelopeRepository;
+  late MockGoalRepository goalRepository;
 
   final now = DateTime(2026, 3, 13);
 
@@ -69,6 +73,7 @@ void main() {
   setUp(() {
     budgetRepository = MockBudgetRepository();
     envelopeRepository = MockEnvelopeRepository();
+    goalRepository = MockGoalRepository();
   });
 
   void stubHappyPath() {
@@ -106,12 +111,22 @@ void main() {
     when(
       () => budgetRepository.calculateReadyToAssign('period-1'),
     ).thenAnswer((_) async => 50000);
+    when(
+      () => goalRepository.watchGoals('budget-1'),
+    ).thenAnswer((_) => Stream.value(const <Goal>[]));
+    when(
+      () => goalRepository.refreshGoals('budget-1'),
+    ).thenAnswer((_) async {});
   }
 
+  // Inject a fixed clock so the bloc does not fall back to wall-clock time
+  // and trigger `ensureCurrentPeriod` against the fixture period.
   BudgetBloc buildBloc() => BudgetBloc(
     budgetRepository: budgetRepository,
     envelopeRepository: envelopeRepository,
+    goalRepository: goalRepository,
     budgetId: 'budget-1',
+    now: () => now,
   );
 
   group('BudgetBloc', () {
@@ -148,6 +163,56 @@ void main() {
           verify(
             () => budgetRepository.refreshAllocationTemplates('budget-1'),
           ).called(1);
+          verify(() => goalRepository.refreshGoals('budget-1')).called(1);
+        },
+      );
+
+      blocTest<BudgetBloc, BudgetState>(
+        'populates goals and goalsByEnvelope from goal stream',
+        setUp: () {
+          stubHappyPath();
+          final linkedGoal = Goal(
+            id: 'goal-1',
+            budgetId: 'budget-1',
+            type: 'monthly_contribution',
+            name: 'Rent',
+            envelopeId: 'env-1',
+            monthlyContribution: 50000,
+            createdAt: now,
+            updatedAt: now,
+          );
+          final unlinkedGoal = Goal(
+            id: 'goal-2',
+            budgetId: 'budget-1',
+            type: 'savings_target',
+            name: 'Emergency Fund',
+            targetAmount: 100000,
+            createdAt: now,
+            updatedAt: now,
+          );
+          final completedLinked = Goal(
+            id: 'goal-3',
+            budgetId: 'budget-1',
+            type: 'savings_target',
+            name: 'Done',
+            envelopeId: 'env-2',
+            isCompleted: true,
+            createdAt: now,
+            updatedAt: now,
+          );
+          when(() => goalRepository.watchGoals('budget-1')).thenAnswer(
+            (_) => Stream.value([linkedGoal, unlinkedGoal, completedLinked]),
+          );
+        },
+        build: buildBloc,
+        act: (bloc) => bloc.add(const BudgetStarted()),
+        verify: (bloc) {
+          expect(bloc.state.goals, hasLength(3));
+          // Only the active linked goal is keyed under env-1; completed and
+          // unlinked goals are excluded.
+          expect(bloc.state.goalsByEnvelope.keys.toList(), ['env-1']);
+          expect(bloc.state.goalsByEnvelope['env-1'], hasLength(1));
+          expect(bloc.state.goalsByEnvelope['env-1']!.first.id, 'goal-1');
         },
       );
 

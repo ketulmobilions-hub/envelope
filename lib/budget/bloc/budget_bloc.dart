@@ -4,6 +4,7 @@ import 'package:bloc/bloc.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
+import 'package:goal_repository/goal_repository.dart';
 
 part 'budget_event.dart';
 part 'budget_state.dart';
@@ -12,10 +13,12 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
   BudgetBloc({
     required BudgetRepository budgetRepository,
     required EnvelopeRepository envelopeRepository,
+    required GoalRepository goalRepository,
     required String budgetId,
     DateTime Function()? now,
   }) : _budgetRepository = budgetRepository,
        _envelopeRepository = envelopeRepository,
+       _goalRepository = goalRepository,
        _budgetId = budgetId,
        _now = now ?? DateTime.now,
        super(BudgetState()) {
@@ -25,6 +28,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     on<_CategoryGroupsUpdated>(_onCategoryGroupsUpdated);
     on<_EnvelopesUpdated>(_onEnvelopesUpdated);
     on<_TemplatesUpdated>(_onTemplatesUpdated);
+    on<_GoalsUpdated>(_onGoalsUpdated);
     on<_BudgetStreamError>(_onStreamError);
     on<BudgetRefreshRequested>(_onRefreshRequested);
     on<BudgetPreviousPeriodRequested>(_onPreviousPeriod);
@@ -41,6 +45,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
 
   final BudgetRepository _budgetRepository;
   final EnvelopeRepository _envelopeRepository;
+  final GoalRepository _goalRepository;
   final String _budgetId;
   final DateTime Function() _now;
 
@@ -49,6 +54,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
   StreamSubscription<List<CategoryGroup>>? _groupsSubscription;
   StreamSubscription<List<Envelope>>? _envelopesSubscription;
   StreamSubscription<List<AllocationTemplate>>? _templatesSubscription;
+  StreamSubscription<List<Goal>>? _goalsSubscription;
 
   // Incremented on each BudgetStarted to discard stale events from prior
   // budget-level subscriptions.
@@ -96,6 +102,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
       _groupsSubscription?.cancel() ?? Future<void>.value(),
       _envelopesSubscription?.cancel() ?? Future<void>.value(),
       _templatesSubscription?.cancel() ?? Future<void>.value(),
+      _goalsSubscription?.cancel() ?? Future<void>.value(),
     ]);
 
     final gen = _generation;
@@ -128,18 +135,36 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
           onError: (Object _) => add(const _BudgetStreamError()),
         );
 
+    _goalsSubscription = _goalRepository
+        .watchGoals(_budgetId)
+        .listen(
+          (goals) => add(_GoalsUpdated(goals, gen)),
+          onError: (Object _) => add(const _BudgetStreamError()),
+        );
+
     try {
       await Future.wait([
         _budgetRepository.refreshBudgetPeriods(_budgetId),
         _envelopeRepository.refreshCategoryGroups(_budgetId),
         _envelopeRepository.refreshEnvelopes(_budgetId),
         _budgetRepository.refreshAllocationTemplates(_budgetId),
+        _goalRepository.refreshGoals(_budgetId),
       ]);
     } on BudgetException {
       // Local watch will still show cached data.
     } on EnvelopeException {
       // Local watch will still show cached data.
+    } on GoalException {
+      // Local watch will still show cached data.
     }
+  }
+
+  void _onGoalsUpdated(
+    _GoalsUpdated event,
+    Emitter<BudgetState> emit,
+  ) {
+    if (event.generation != _generation) return;
+    emit(state.copyWith(goals: event.goals));
   }
 
   Future<void> _onPeriodsUpdated(
@@ -336,6 +361,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
         _envelopeRepository.refreshCategoryGroups(_budgetId),
         _envelopeRepository.refreshEnvelopes(_budgetId),
         _budgetRepository.refreshAllocationTemplates(_budgetId),
+        _goalRepository.refreshGoals(_budgetId),
       ];
       if (state.selectedPeriod != null) {
         futures.add(
@@ -346,6 +372,8 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     } on BudgetException {
       emit(state.copyWith(status: BudgetStatus.loaded));
     } on EnvelopeException {
+      emit(state.copyWith(status: BudgetStatus.loaded));
+    } on GoalException {
       emit(state.copyWith(status: BudgetStatus.loaded));
     }
   }
@@ -609,6 +637,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     await _groupsSubscription?.cancel();
     await _envelopesSubscription?.cancel();
     await _templatesSubscription?.cancel();
+    await _goalsSubscription?.cancel();
     return super.close();
   }
 }
