@@ -1,0 +1,43 @@
+---
+import FeatureCard from "./FeatureCard.astro";
+---
+
+<section class="bg-white border-y border-cream-dark/60">
+  <div class="max-w-6xl mx-auto px-6 py-20">
+    <div class="max-w-2xl mb-12">
+      <h2 class="text-3xl md:text-4xl font-bold text-brown">Built for real budgeting.</h2>
+      <p class="mt-3 text-charcoal/75">
+        Every feature is designed around one idea — you decide where your money goes before you spend it.
+      </p>
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <FeatureCard title="Envelopes" icon="✉️">
+        Allocate income into spending categories. Watch each envelope drain in real time.
+      </FeatureCard>
+      <FeatureCard title="Accounts" icon="🏦">
+        Track bank accounts, credit cards, and cash. Multi-currency supported.
+      </FeatureCard>
+      <FeatureCard title="Transactions" icon="📒">
+        Log spending fast. Categorize, split, and search every entry.
+      </FeatureCard>
+      <FeatureCard title="Goals" icon="🎯">
+        Save for a trip or pay off debt — with APR-aware projections and interest tracking.
+      </FeatureCard>
+      <FeatureCard title="Shared budgets" icon="👥">
+        Budget with a partner or household. Everyone sees the same envelopes.
+      </FeatureCard>
+      <FeatureCard title="Recurring" icon="🔁">
+        Set rent, salary, subscriptions on schedule. They post themselves.
+      </FeatureCard>
+      <FeatureCard title="Reports" icon="📊">
+        See where money went by category, by month, and by trend.
+      </FeatureCard>
+      <FeatureCard title="Sync" icon="☁️">
+        Encrypted cloud sync across iOS, Android, and the web.
+      </FeatureCard>
+      <FeatureCard title="Reminders" icon="🔔">
+        Get nudges when an envelope is low or a bill is due.
+      </FeatureCard>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,40 @@
+---
+interface Props {
+  name: string;
+  price: string;
+  cadence?: string;
+  features: string[];
+  cta: string;
+  href: string;
+  featured?: boolean;
+}
+const { name, price, cadence, features, cta, href, featured = false } = Astro.props;
+---
+
+<div class={`rounded-3xl p-8 border ${featured ? "bg-brown text-cream border-brown shadow-xl" : "bg-white border-cream-dark/60"}`}>
+  <h3 class={`text-sm font-semibold uppercase tracking-wider mb-2 ${featured ? "text-terracotta" : "text-muted"}`}>
+    {name}
+  </h3>
+  <div class="flex items-baseline gap-1 mb-1">
+    <span class={`text-5xl font-bold ${featured ? "text-cream" : "text-brown"}`}>{price}</span>
+    {cadence && <span class={`text-sm ${featured ? "text-cream/70" : "text-muted"}`}>/{cadence}</span>}
+  </div>
+  <ul class={`mt-6 space-y-2 text-sm ${featured ? "text-cream/90" : "text-charcoal/80"}`}>
+    {features.map((f) => (
+      <li class="flex items-start gap-2">
+        <span class={featured ? "text-terracotta" : "text-income"}>✓</span>
+        <span>{f}</span>
+      </li>
+    ))}
+  </ul>
+  <a
+    href={href}
+    class={`mt-8 block text-center px-5 py-3 rounded-full font-semibold text-sm transition-colors ${
+      featured
+        ? "bg-terracotta text-white hover:bg-terracotta-dark"
+        : "bg-cream text-brown hover:bg-cream-dark"
+    }`}
+  >
+    {cta}
+  </a>
+</div>
