@@ -5,11 +5,12 @@ import 'package:envelope/app/routes/app_router.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/notifications/notifications.dart';
-import 'package:envelope/shared/services/app_clock.dart';
-import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
-import 'package:envelope/shared/widgets/currency_picker_sheet.dart';
 import 'package:envelope/settings/cubit/cubit.dart';
+import 'package:envelope/shared/feature_flags.dart';
+import 'package:envelope/shared/services/app_clock.dart';
+import 'package:envelope/shared/widgets/currency_picker_sheet.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope_api_client/envelope_api_client.dart';
 import 'package:envelope_local_storage/envelope_local_storage.dart' hide User;
 import 'package:flutter/foundation.dart';
@@ -100,12 +101,13 @@ class _SettingsView extends StatelessWidget {
                     ),
                     const Divider(),
                     _SectionHeader(title: l10n.settingsPreferences),
-                    ListTile(
-                      leading: const Icon(Icons.currency_exchange),
-                      title: Text(l10n.settingsBaseCurrency),
-                      subtitle: Text(user.baseCurrency),
-                      onTap: () => _showCurrencyPicker(context, user),
-                    ),
+                    if (kMultiCurrencyEnabled)
+                      ListTile(
+                        leading: const Icon(Icons.currency_exchange),
+                        title: Text(l10n.settingsBaseCurrency),
+                        subtitle: Text(user.baseCurrency),
+                        onTap: () => _showCurrencyPicker(context, user),
+                      ),
                     _ThemeSelector(currentMode: user.themeMode),
                     ListTile(
                       leading: const Icon(Icons.notifications_outlined),

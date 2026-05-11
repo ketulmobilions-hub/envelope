@@ -4,6 +4,7 @@ import 'package:envelope/accounts/widgets/widgets.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/data/currencies.dart';
+import 'package:envelope/shared/feature_flags.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/shared/widgets/app_option_picker.dart';
 import 'package:envelope/shared/widgets/currency_picker_sheet.dart';
@@ -161,17 +162,18 @@ class _AccountFormPageState extends State<AccountFormPage> {
                     itemLabel: (type) => _typeDisplayName(type, l10n),
                   ),
                   const SizedBox(height: 16),
-                  _CurrencyPickerTile(
-                    selectedCode: _selectedCurrency,
-                    enabled: !_isEditing,
-                    onChanged: (code) => setState(() {
-                      _selectedCurrency = code;
-                      if (code == baseCurrency) {
-                        _fxRateController.text = '1.0';
-                      }
-                    }),
-                  ),
-                  if (isForeign) ...[
+                  if (kMultiCurrencyEnabled)
+                    _CurrencyPickerTile(
+                      selectedCode: _selectedCurrency,
+                      enabled: !_isEditing,
+                      onChanged: (code) => setState(() {
+                        _selectedCurrency = code;
+                        if (code == baseCurrency) {
+                          _fxRateController.text = '1.0';
+                        }
+                      }),
+                    ),
+                  if (kMultiCurrencyEnabled && isForeign) ...[
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _fxRateController,
@@ -311,12 +313,20 @@ class _AccountFormPageState extends State<AccountFormPage> {
       creditLimitCents = parseCents(_creditLimitController.text);
     }
 
-    final fxRate = double.tryParse(_fxRateController.text.trim()) ?? 1.0;
+    final baseCurrency =
+        context.read<AuthBloc>().state.user?.baseCurrency ?? 'USD';
+    // Force base currency + rate 1.0 when multi-currency is hidden, so a
+    // legacy foreign account cannot persist a stale FX rate on edit.
+    final currency =
+        kMultiCurrencyEnabled ? _selectedCurrency : baseCurrency;
+    final fxRate = kMultiCurrencyEnabled
+        ? (double.tryParse(_fxRateController.text.trim()) ?? 1.0)
+        : 1.0;
     context.read<AccountFormCubit>().submit(
       name: _nameController.text.trim(),
       type: _selectedType,
       balanceCents: balanceCents,
-      currency: _selectedCurrency,
+      currency: currency,
       displayFxRate: fxRate,
       isOnBudget: _isOnBudget,
       creditLimitCents: creditLimitCents,
