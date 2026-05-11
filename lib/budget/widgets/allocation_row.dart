@@ -1,11 +1,14 @@
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/budget/bloc/bloc.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/services/funding_status_service.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
+import 'package:envelope/shared/widgets/needed_badge.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:goal_repository/goal_repository.dart';
 
 /// A single envelope row in the allocation list.
 ///
@@ -83,6 +86,20 @@ class _AllocationRowState extends State<AllocationRow> {
             ? EnvelopeRepository.calculateRollover(allocation)
             : 0);
 
+    final budgetState = context.watch<BudgetBloc>().state;
+    final linkedGoals =
+        budgetState.goalsByEnvelope[widget.envelope.id] ?? const <Goal>[];
+    // Prefer any unsaved local edit so the chip reflects what the user is
+    // typing without waiting for AllocationsSaveRequested to round-trip.
+    final effectiveAllocated =
+        budgetState.localAllocations[widget.envelope.id] ??
+        allocation?.allocatedAmount ??
+        0;
+    final neededCents = const FundingStatusService().neededThisPeriod(
+      allocatedCents: effectiveAllocated,
+      linkedGoals: linkedGoals,
+    );
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Row(
@@ -91,9 +108,20 @@ class _AllocationRowState extends State<AllocationRow> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  widget.envelope.name,
-                  style: Theme.of(context).textTheme.bodyMedium,
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        widget.envelope.name,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (neededCents > 0) ...[
+                      const SizedBox(width: 8),
+                      NeededBadge(amountCents: neededCents, symbol: symbol),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 2),
                 Text.rich(

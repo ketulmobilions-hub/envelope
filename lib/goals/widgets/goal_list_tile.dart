@@ -3,6 +3,7 @@ import 'package:envelope/goals/widgets/goal_helpers.dart';
 import 'package:envelope/goals/widgets/goal_progress_bar.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
+import 'package:envelope/shared/widgets/needed_badge.dart';
 import 'package:flutter/material.dart';
 import 'package:goal_repository/goal_repository.dart';
 
@@ -37,6 +38,12 @@ class GoalListTile extends StatelessWidget {
       goal,
       overrideCurrentAmount: effectiveAmount,
     );
+    final neededCents = goal.isCompleted
+        ? 0
+        : monthlyContributionNeeded(
+            goal,
+            overrideCurrentAmount: effectiveAmount,
+          );
 
     return ListTile(
       leading: CircleAvatar(
@@ -50,14 +57,25 @@ class GoalListTile extends StatelessWidget {
               : Theme.of(context).colorScheme.onPrimaryContainer,
         ),
       ),
-      title: Text(
-        goal.name,
-        style: goal.isCompleted
-            ? TextStyle(
-                color: Theme.of(context).colorScheme.outline,
-                decoration: TextDecoration.lineThrough,
-              )
-            : null,
+      title: Row(
+        children: [
+          Flexible(
+            child: Text(
+              goal.name,
+              overflow: TextOverflow.ellipsis,
+              style: goal.isCompleted
+                  ? TextStyle(
+                      color: Theme.of(context).colorScheme.outline,
+                      decoration: TextDecoration.lineThrough,
+                    )
+                  : null,
+            ),
+          ),
+          if (neededCents > 0) ...[
+            const SizedBox(width: 8),
+            NeededBadge(amountCents: neededCents, symbol: symbol),
+          ],
+        ],
       ),
       subtitle: goal.targetAmount != null
           ? Column(

@@ -746,6 +746,26 @@
     "@budgetAvailableLabel": {
         "description": "Label for the available amount"
     },
+    "budgetNeededThisMonth": "Needed this month: {amount}",
+    "@budgetNeededThisMonth": {
+        "description": "Accessible label for the funding-shortfall chip on envelope rows and goal tiles",
+        "placeholders": {
+            "amount": {
+                "type": "String",
+                "example": "$120.00"
+            }
+        }
+    },
+    "budgetNeededShort": "Need {amount}",
+    "@budgetNeededShort": {
+        "description": "Short chip label for the funding-shortfall badge",
+        "placeholders": {
+            "amount": {
+                "type": "String",
+                "example": "$120.00"
+            }
+        }
+    },
     "budgetSaveAllocations": "Save",
     "@budgetSaveAllocations": {
         "description": "AppBar action button to save locally-edited allocations"
