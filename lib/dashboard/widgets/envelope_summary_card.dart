@@ -6,6 +6,7 @@ import 'package:envelope/accounts/widgets/account_helpers.dart';
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/dashboard/bloc/bloc.dart';
+import 'package:envelope/dashboard/widgets/allocate_envelope_sheet.dart';
 import 'package:envelope/envelopes/cubit/cubit.dart';
 import 'package:envelope/envelopes/view/envelope_detail_page.dart';
 import 'package:envelope/envelopes/widgets/envelope_card.dart';
@@ -287,13 +288,16 @@ class _CategoryGroupSection extends StatelessWidget {
                         color: AppColors.fromHex(s.envelope.color),
                         heroTag: 'envelope_${s.envelope.id}',
                         onTap: () => _openDetail(context, s),
-                        onAllocate: linkedId != null
+                        onEditTap: linkedId != null
                             ? null
-                            : (cents) {
-                                context.read<DashboardBloc>().add(
-                                  QuickAllocationRequested(
+                            : () {
+                                unawaited(
+                                  showAllocateEnvelopeSheet(
+                                    context,
                                     envelopeId: s.envelope.id,
-                                    amount: cents,
+                                    envelopeName: s.envelope.name,
+                                    currentAllocatedCents:
+                                        s.allocation?.allocatedAmount ?? 0,
                                   ),
                                 );
                               },

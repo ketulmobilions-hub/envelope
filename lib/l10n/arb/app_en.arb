@@ -1848,6 +1848,48 @@
     "@quickAllocateCancel": {
         "description": "Cancel button in quick allocate dialog"
     },
+    "allocateSheetCurrentlyAllocated": "Currently allocated: {amount}",
+    "@allocateSheetCurrentlyAllocated": {
+        "description": "Info line in allocate sheet showing current allocation",
+        "placeholders": {
+            "amount": {
+                "type": "String",
+                "example": "$100.00"
+            }
+        }
+    },
+    "allocateSheetReadyToAssign": "Ready to assign: {amount}",
+    "@allocateSheetReadyToAssign": {
+        "description": "Info line in allocate sheet showing unallocated pool",
+        "placeholders": {
+            "amount": {
+                "type": "String",
+                "example": "$250.00"
+            }
+        }
+    },
+    "allocateSheetModeAdd": "Add",
+    "@allocateSheetModeAdd": {
+        "description": "Segmented button label: add delta to existing allocation"
+    },
+    "allocateSheetModeSet": "Set to",
+    "@allocateSheetModeSet": {
+        "description": "Segmented button label: set allocation to absolute amount"
+    },
+    "allocateSheetNewAllocation": "New allocation: {amount}",
+    "@allocateSheetNewAllocation": {
+        "description": "Live preview of resulting allocation amount",
+        "placeholders": {
+            "amount": {
+                "type": "String",
+                "example": "$200.00"
+            }
+        }
+    },
+    "allocateSheetOverAllocated": "Exceeds Ready to Assign",
+    "@allocateSheetOverAllocated": {
+        "description": "Warning when the new allocation delta exceeds the unallocated pool"
+    },
     "dashboardErrorAllocation": "Failed to save allocation",
     "@dashboardErrorAllocation": {
         "description": "Error message when quick allocation fails"
