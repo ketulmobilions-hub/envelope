@@ -4,10 +4,9 @@ import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 /// A card widget that overlays envelope info on an envelope-shaped background.
-class EnvelopeCard extends StatefulWidget {
+class EnvelopeCard extends StatelessWidget {
   const EnvelopeCard({
     required this.name,
     required this.availableCents,
@@ -19,7 +18,7 @@ class EnvelopeCard extends StatefulWidget {
     this.color,
     this.heroTag,
     this.onTap,
-    this.onAllocate,
+    this.onEditTap,
     this.onFixOverspend,
     this.onPay,
     super.key,
@@ -40,8 +39,9 @@ class EnvelopeCard extends StatefulWidget {
   final String? heroTag;
   final VoidCallback? onTap;
 
-  /// Called when the user submits a new allocation amount (in cents).
-  final ValueChanged<int>? onAllocate;
+  /// Called when the user taps the allocated amount / edit icon.
+  /// Typically opens the allocate bottom sheet.
+  final VoidCallback? onEditTap;
 
   /// Called when the user taps "Fix Overspend" on an overspent card.
   final VoidCallback? onFixOverspend;
@@ -50,70 +50,12 @@ class EnvelopeCard extends StatefulWidget {
   final VoidCallback? onPay;
 
   @override
-  State<EnvelopeCard> createState() => _EnvelopeCardState();
-}
-
-class _EnvelopeCardState extends State<EnvelopeCard> {
-  bool _isEditing = false;
-  late final TextEditingController _controller;
-  late final FocusNode _focusNode;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController();
-    _focusNode = FocusNode();
-    _focusNode.addListener(_onFocusChange);
-  }
-
-  @override
-  void dispose() {
-    _focusNode
-      ..removeListener(_onFocusChange)
-      ..dispose();
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _enterEditMode() {
-    if (widget.onAllocate == null) return;
-    setState(() {
-      _isEditing = true;
-      final dollars = widget.allocatedCents > 0
-          ? (widget.allocatedCents / 100).toStringAsFixed(2)
-          : '';
-      _controller
-        ..text = dollars
-        ..selection = TextSelection(
-          baseOffset: 0,
-          extentOffset: dollars.length,
-        );
-    });
-    _focusNode.requestFocus();
-  }
-
-  void _onFocusChange() {
-    if (!_focusNode.hasFocus && _isEditing) {
-      _submitEditing();
-    }
-  }
-
-  void _submitEditing() {
-    final text = _controller.text.trim();
-    final cents = parseCents(text);
-    if (cents != null && cents >= 0) {
-      widget.onAllocate?.call(cents);
-    }
-    setState(() => _isEditing = false);
-  }
-
-  @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final symbol = currencySymbol(context);
-    final fillColor = widget.isOverspent
+    final fillColor = isOverspent
         ? AppColors.expense
-        : (widget.color ?? AppColors.primary);
+        : (color ?? AppColors.primary);
     final textColor = AppColors.onPrimary.withValues(alpha: 0.9);
 
     Widget card = SizedBox(
@@ -127,11 +69,10 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
               ),
             ),
           ),
-          // Full-card tap target for navigation / dismiss editing.
           Positioned.fill(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: _isEditing ? () => _focusNode.unfocus() : widget.onTap,
+              onTap: onTap,
             ),
           ),
           Padding(
@@ -144,8 +85,6 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Upper area — passes taps through to full-card
-                // detector above.
                 Expanded(
                   child: IgnorePointer(
                     child: SizedBox.expand(
@@ -153,7 +92,7 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            widget.name.toUpperCase(),
+                            name.toUpperCase(),
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -164,18 +103,18 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           const Spacer(),
-                          if (widget.primaryLabel != null) ...[
+                          if (primaryLabel != null) ...[
                             Text(
-                              widget.primaryLabel!,
+                              primaryLabel!,
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: textColor,
                               ),
                             ),
-                            if (widget.limitLabel != null)
+                            if (limitLabel != null)
                               Text(
-                                widget.limitLabel!,
+                                limitLabel!,
                                 style: TextStyle(
                                   fontSize: 10,
                                   color: textColor.withValues(alpha: 0.7),
@@ -184,7 +123,7 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
                           ] else
                             Text(
                               formatCents(
-                                widget.availableCents,
+                                availableCents,
                                 symbol: symbol,
                               ),
                               style: TextStyle(
@@ -205,12 +144,10 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
                   color: textColor.withValues(alpha: 0.3),
                 ),
                 const SizedBox(height: 4),
-                // Bottom area — "Pay" for CC envelopes, "Fix Overspend"
-                // when overspent, inline allocation editing otherwise.
-                if (widget.onPay != null)
+                if (onPay != null)
                   GestureDetector(
                     behavior: HitTestBehavior.opaque,
-                    onTap: widget.onPay,
+                    onTap: onPay,
                     child: Row(
                       children: [
                         Icon(
@@ -230,10 +167,10 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
                       ],
                     ),
                   )
-                else if (widget.isOverspent && widget.onFixOverspend != null)
+                else if (isOverspent && onFixOverspend != null)
                   GestureDetector(
                     behavior: HitTestBehavior.opaque,
-                    onTap: widget.onFixOverspend,
+                    onTap: onFixOverspend,
                     child: Row(
                       children: [
                         Icon(
@@ -256,84 +193,35 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
                 else
                   GestureDetector(
                     behavior: HitTestBehavior.opaque,
-                    onTap: _isEditing ? null : _enterEditMode,
-                    child: _isEditing
-                        ? SizedBox(
-                            height: 20,
-                            child: TextField(
-                              controller: _controller,
-                              focusNode: _focusNode,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
+                    onTap: onEditTap,
+                    child: Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            l10n.envelopeCardOfAllocated(
+                              formatCents(
+                                allocatedCents,
+                                symbol: symbol,
                               ),
-                              cursorColor: Colors.white,
-                              cursorWidth: 1.5,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
-                              textInputAction: TextInputAction.done,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.allow(
-                                  RegExp(r'^\d*\.?\d{0,2}'),
-                                ),
-                              ],
-                              decoration: InputDecoration(
-                                prefixText: symbol,
-                                prefixStyle: const TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                border: InputBorder.none,
-                                enabledBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: Colors.white.withValues(alpha: 0.6),
-                                  ),
-                                ),
-                                focusedBorder: const UnderlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                contentPadding: const EdgeInsets.only(
-                                  bottom: 4,
-                                ),
-                                isDense: true,
-                              ),
-                              onSubmitted: (_) => _submitEditing(),
                             ),
-                          )
-                        : Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  l10n.envelopeCardOfAllocated(
-                                    formatCents(
-                                      widget.allocatedCents,
-                                      symbol: symbol,
-                                    ),
-                                  ),
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: textColor,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              if (widget.onAllocate != null)
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 4),
-                                  child: Icon(
-                                    Icons.edit_outlined,
-                                    size: 10,
-                                    color: textColor,
-                                  ),
-                                ),
-                            ],
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: textColor,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
+                        ),
+                        if (onEditTap != null)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: Icon(
+                              Icons.edit_outlined,
+                              size: 10,
+                              color: textColor,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
               ],
             ),
@@ -342,9 +230,9 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
       ),
     );
 
-    if (widget.heroTag != null) {
+    if (heroTag != null) {
       card = Hero(
-        tag: widget.heroTag!,
+        tag: heroTag!,
         flightShuttleBuilder:
             (
               _,
@@ -377,15 +265,8 @@ class _EnvelopeCardState extends State<EnvelopeCard> {
     }
 
     return Semantics(
-      label: widget.onAllocate != null ? 'Tap allocated amount to edit' : null,
-      child: _isEditing
-          ? TapRegion(
-              onTapOutside: (_) {
-                _focusNode.unfocus();
-              },
-              child: card,
-            )
-          : card,
+      label: onEditTap != null ? 'Edit envelope allocation' : null,
+      child: card,
     );
   }
 }
