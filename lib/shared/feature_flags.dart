@@ -7,3 +7,11 @@
 const kMultiCurrencyEnabled = bool.fromEnvironment(
   'ENABLE_MULTI_CURRENCY',
 );
+
+/// Toggle the drag-to-allocate scrubber bar under each budget allocation row.
+///
+/// Build with `--dart-define=ENABLE_ALLOCATION_SCRUBBER=false` to disable.
+const kAllocationScrubberEnabled = bool.fromEnvironment(
+  'ENABLE_ALLOCATION_SCRUBBER',
+  defaultValue: true,
+);
