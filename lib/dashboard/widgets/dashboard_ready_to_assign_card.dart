@@ -1,6 +1,6 @@
-import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
+import 'package:envelope/shared/widgets/animated_cents.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
@@ -58,8 +58,9 @@ class DashboardReadyToAssignCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  formatCents(readyToAssign, symbol: symbol),
+                AnimatedCents(
+                  cents: readyToAssign,
+                  symbol: symbol,
                   style: Theme.of(context).textTheme.displaySmall?.copyWith(
                     color: color,
                     fontWeight: FontWeight.bold,

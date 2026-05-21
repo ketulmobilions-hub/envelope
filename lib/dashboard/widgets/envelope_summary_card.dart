@@ -14,6 +14,7 @@ import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
 import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
+import 'package:envelope/shared/widgets/animated_cents.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:envelope/transactions/widgets/cc_pay_bottom_sheet.dart';
 import 'package:envelope/transactions/widgets/cover_overspend_dialog.dart';
@@ -194,15 +195,18 @@ class _CategoryGroupSection extends StatelessWidget {
                   ),
                 ),
               ),
-              Text(
-                formatCents(totalAvailable, symbol: symbol),
+              AnimatedCents(
+                cents: totalAvailable,
+                symbol: symbol,
                 style: theme.textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: availColor,
                 ),
               ),
-              Text(
-                '/${formatCents(totalAllocated, symbol: symbol)}',
+              AnimatedCents(
+                cents: totalAllocated,
+                symbol: symbol,
+                prefix: '/',
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: AppColors.secondaryText,
                 ),

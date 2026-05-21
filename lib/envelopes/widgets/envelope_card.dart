@@ -2,6 +2,7 @@ import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/envelopes/widgets/envelope_shape_painter.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
+import 'package:envelope/shared/widgets/animated_cents.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
@@ -121,11 +122,9 @@ class EnvelopeCard extends StatelessWidget {
                                 ),
                               ),
                           ] else
-                            Text(
-                              formatCents(
-                                availableCents,
-                                symbol: symbol,
-                              ),
+                            AnimatedCents(
+                              cents: availableCents,
+                              symbol: symbol,
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
