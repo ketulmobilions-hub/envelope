@@ -6,7 +6,7 @@ import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/transactions/bloc/bloc.dart';
 import 'package:envelope/transactions/cubit/cubit.dart';
-import 'package:envelope/transactions/view/transaction_form_page.dart';
+import 'package:envelope/transactions/view/transaction_form_entry.dart';
 import 'package:envelope/transactions/view/transaction_search_page.dart';
 import 'package:envelope/transactions/widgets/widgets.dart';
 import 'package:envelope_repository/envelope_repository.dart';
@@ -130,7 +130,7 @@ class TransactionsView extends StatelessWidget {
             budgetPeriodId: periodId,
             now: appClock.now,
           ),
-          child: const TransactionFormPage(),
+          child: const TransactionFormEntry(),
         ),
       ),
     );
@@ -251,7 +251,7 @@ class _TransactionsList extends StatelessWidget {
             transaction: transaction,
             now: appClock.now,
           ),
-          child: TransactionFormPage(transaction: transaction),
+          child: TransactionFormEntry(transaction: transaction),
         ),
       ),
     );

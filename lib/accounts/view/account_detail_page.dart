@@ -10,7 +10,7 @@ import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/transactions/bloc/bloc.dart';
 import 'package:envelope/transactions/cubit/cubit.dart';
-import 'package:envelope/transactions/view/transaction_form_page.dart';
+import 'package:envelope/transactions/view/transaction_form_entry.dart';
 import 'package:envelope/transactions/widgets/widgets.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
@@ -403,7 +403,7 @@ class _AccountTransactionsList extends StatelessWidget {
             transaction: transaction,
             now: appClock.now,
           ),
-          child: TransactionFormPage(transaction: transaction),
+          child: TransactionFormEntry(transaction: transaction),
         ),
       ),
     );

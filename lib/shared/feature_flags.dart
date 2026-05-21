@@ -8,6 +8,18 @@ const kMultiCurrencyEnabled = bool.fromEnvironment(
   'ENABLE_MULTI_CURRENCY',
 );
 
+/// Toggle the sentence-style add-transaction page on/off.
+///
+/// `true`  → renders the new fill-in-the-blank `SentenceTransactionFormPage`.
+/// `false` → renders the original `TransactionFormPage`.
+///
+/// Build with `--dart-define=USE_SENTENCE_TRANSACTION_FORM=false` to opt out
+/// without editing this file.
+const kSentenceTransactionForm = bool.fromEnvironment(
+  'USE_SENTENCE_TRANSACTION_FORM',
+  defaultValue: false,
+);
+
 /// Toggle the drag-to-allocate scrubber bar under each budget allocation row.
 ///
 /// Build with `--dart-define=ENABLE_ALLOCATION_SCRUBBER=false` to disable.

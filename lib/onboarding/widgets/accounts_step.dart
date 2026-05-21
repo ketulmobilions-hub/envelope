@@ -212,7 +212,7 @@ class _AddAccountSheetState extends State<_AddAccountSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final symbol = currencySymbol(context);
+    final symbol = currencySymbolFromCode(widget.baseCurrency);
     final isCC = isCreditCard(_selectedType);
 
     return Padding(

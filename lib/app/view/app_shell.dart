@@ -10,7 +10,7 @@ import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/widgets/debug_clock_banner.dart';
 import 'package:flutter/foundation.dart';
 import 'package:envelope/transactions/cubit/cubit.dart';
-import 'package:envelope/transactions/view/transaction_form_page.dart';
+import 'package:envelope/transactions/view/transaction_form_entry.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -149,7 +149,7 @@ class _AppShellState extends State<AppShell>
               userId: user.id,
               now: appClock.now,
             ),
-            child: const TransactionFormPage(),
+            child: const TransactionFormEntry(),
           ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return SlideTransition(
