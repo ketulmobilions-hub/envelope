@@ -1,13 +1,17 @@
 import 'package:account_repository/account_repository.dart';
 import 'package:bloc_test/bloc_test.dart';
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/accounts/bloc/bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockAccountRepository extends Mock implements AccountRepository {}
 
+class MockBudgetRepository extends Mock implements BudgetRepository {}
+
 void main() {
   late MockAccountRepository accountRepository;
+  late MockBudgetRepository budgetRepository;
 
   final now = DateTime(2024);
   final testAccounts = [
@@ -37,6 +41,13 @@ void main() {
 
   setUp(() {
     accountRepository = MockAccountRepository();
+    budgetRepository = MockBudgetRepository();
+    when(
+      () => budgetRepository.addIncomeToCurrentPeriod(
+        budgetId: any(named: 'budgetId'),
+        amount: any(named: 'amount'),
+      ),
+    ).thenAnswer((_) async {});
   });
 
   group('AccountsBloc', () {
@@ -51,6 +62,7 @@ void main() {
         ).thenAnswer((_) async {});
         return AccountsBloc(
           accountRepository: accountRepository,
+          budgetRepository: budgetRepository,
           budgetId: 'budget-1',
         );
       },
@@ -79,6 +91,7 @@ void main() {
         ).thenThrow(const AccountException('Network error'));
         return AccountsBloc(
           accountRepository: accountRepository,
+          budgetRepository: budgetRepository,
           budgetId: 'budget-1',
         );
       },
@@ -101,6 +114,7 @@ void main() {
         ).thenAnswer((_) async {});
         return AccountsBloc(
           accountRepository: accountRepository,
+          budgetRepository: budgetRepository,
           budgetId: 'budget-1',
         );
       },
@@ -119,6 +133,7 @@ void main() {
         ).thenAnswer((_) async {});
         return AccountsBloc(
           accountRepository: accountRepository,
+          budgetRepository: budgetRepository,
           budgetId: 'budget-1',
         );
       },
@@ -140,6 +155,7 @@ void main() {
         ).thenThrow(const AccountException('Failed'));
         return AccountsBloc(
           accountRepository: accountRepository,
+          budgetRepository: budgetRepository,
           budgetId: 'budget-1',
         );
       },
@@ -161,16 +177,25 @@ void main() {
         ).thenThrow(const AccountException('Failed'));
         return AccountsBloc(
           accountRepository: accountRepository,
+          budgetRepository: budgetRepository,
           budgetId: 'budget-1',
         );
       },
+      seed: () => AccountsState(
+        status: AccountsStatus.loaded,
+        accounts: testAccounts,
+      ),
       act: (bloc) => bloc.add(const AccountDeleted('acc-1')),
       expect: () => [
-        const AccountsState(
+        AccountsState(
           status: AccountsStatus.error,
           error: AccountsError.deleteFailed,
+          accounts: testAccounts,
         ),
-        const AccountsState(status: AccountsStatus.loaded),
+        AccountsState(
+          status: AccountsStatus.loaded,
+          accounts: testAccounts,
+        ),
       ],
     );
 
@@ -182,9 +207,14 @@ void main() {
         ).thenAnswer((_) async {});
         return AccountsBloc(
           accountRepository: accountRepository,
+          budgetRepository: budgetRepository,
           budgetId: 'budget-1',
         );
       },
+      seed: () => AccountsState(
+        status: AccountsStatus.loaded,
+        accounts: testAccounts,
+      ),
       act: (bloc) => bloc.add(const AccountDeleted('acc-1')),
       verify: (_) {
         verify(() => accountRepository.deleteAccount('acc-1')).called(1);
@@ -199,6 +229,7 @@ void main() {
         ).thenAnswer((_) async {});
         return AccountsBloc(
           accountRepository: accountRepository,
+          budgetRepository: budgetRepository,
           budgetId: 'budget-1',
         );
       },

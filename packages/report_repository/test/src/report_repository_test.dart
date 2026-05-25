@@ -560,6 +560,7 @@ void main() {
           endDate: DateTime(2024, 6, 30),
           totalIncome: 300000,
           totalAllocated: 250000,
+          carriedRta: 0,
           isClosed: false,
           createdAt: now,
         ),
@@ -692,7 +693,7 @@ void main() {
       );
 
       when(
-        () => reportsDao.insertNetWorthSnapshot(any()),
+        () => reportsDao.upsertNetWorthSnapshot(any()),
       ).thenAnswer((_) async => 1);
 
       final result = await repository.getNetWorthHistory('budget-1');
@@ -701,7 +702,7 @@ void main() {
       expect(result.first.netWorth, 400000);
       expect(result.first.assets, 500000);
       verify(
-        () => reportsDao.insertNetWorthSnapshot(any()),
+        () => reportsDao.upsertNetWorthSnapshot(any()),
       ).called(1);
     });
 
@@ -829,7 +830,8 @@ void main() {
             createdAt: now,
             updatedAt: now,
           ),
-          // Off-budget — should be ignored
+          // Off-budget account — still counts toward net worth.
+          // isOnBudget only controls the "Ready to Assign" pool, not wealth.
           storage.Account(
             id: 'acc-4',
             budgetId: 'budget-1',
@@ -856,24 +858,26 @@ void main() {
       });
 
       when(
-        () => reportsDao.insertNetWorthSnapshot(any()),
+        () => reportsDao.upsertNetWorthSnapshot(any()),
       ).thenAnswer((_) async => 1);
 
       await repository.recordNetWorthSnapshot(
         budgetId: 'budget-1',
       );
 
-      // assets = 300000 + 500000 = 800000
+      // Net worth includes ALL accounts regardless of isOnBudget.
+      // assets = 300000 (Checking) + 500000 (Savings) + 10000 (off-budget Cash)
+      //        = 810000
       // liabilities = |-50000| = 50000
-      // netWorth = 800000 - 50000 = 750000
-      expect(capturedDto.assets, 800000);
+      // netWorth = 810000 - 50000 = 760000
+      expect(capturedDto.assets, 810000);
       expect(capturedDto.liabilities, 50000);
-      expect(capturedDto.netWorth, 750000);
+      expect(capturedDto.netWorth, 760000);
       // Placeholder ID — API will replace it
       expect(capturedDto.id, 'pending');
 
       verify(
-        () => reportsDao.insertNetWorthSnapshot(any()),
+        () => reportsDao.upsertNetWorthSnapshot(any()),
       ).called(1);
     });
 

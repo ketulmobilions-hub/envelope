@@ -7,6 +7,7 @@ import 'package:envelope/auth/auth.dart';
 import 'package:envelope/dashboard/dashboard.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/onboarding.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/splash/splash.dart';
 import 'package:envelope/sync/bloc/bloc.dart';
 import 'package:envelope_repository/envelope_repository.dart';
@@ -15,7 +16,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sharing_repository/sharing_repository.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 
 class MockAuthBloc extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
@@ -33,6 +36,8 @@ class MockBudgetRepository extends Mock implements BudgetRepository {}
 
 class MockEnvelopeRepository extends Mock implements EnvelopeRepository {}
 
+class MockSharingRepository extends Mock implements SharingRepository {}
+
 void main() {
   group('AppRouter', () {
     late MockAuthBloc authBloc;
@@ -42,6 +47,7 @@ void main() {
     late MockAccountRepository accountRepository;
     late MockBudgetRepository budgetRepository;
     late MockEnvelopeRepository envelopeRepository;
+    late MockSharingRepository sharingRepository;
     late GoRouter router;
 
     late SharedPreferences prefs;
@@ -54,6 +60,7 @@ void main() {
       accountRepository = MockAccountRepository();
       budgetRepository = MockBudgetRepository();
       envelopeRepository = MockEnvelopeRepository();
+      sharingRepository = MockSharingRepository();
       when(() => syncBloc.state).thenReturn(const SyncBlocState());
       when(
         () => transactionRepository.watchRecurringRules(any()),
@@ -93,8 +100,19 @@ void main() {
       when(
         () => envelopeRepository.refreshCategoryGroups(any()),
       ).thenAnswer((_) async {});
+      when(
+        () => sharingRepository.subscribeToBudgetChanges(any()),
+      ).thenReturn(null);
+      when(() => accountRepository.onRemoteChange)
+          .thenAnswer((_) => const Stream<void>.empty());
+      when(() => budgetRepository.onRemoteChange)
+          .thenAnswer((_) => const Stream<void>.empty());
+      when(() => envelopeRepository.onRemoteChange)
+          .thenAnswer((_) => const Stream<void>.empty());
+      when(() => transactionRepository.onRemoteChange)
+          .thenAnswer((_) => const Stream<void>.empty());
       SharedPreferences.setMockInitialValues(
-        {'onboarding_complete': true},
+        {'session_resolved': true, 'active_budget_id': 'budget-1'},
       );
       prefs = await SharedPreferences.getInstance();
     });
@@ -102,6 +120,7 @@ void main() {
     Widget buildApp() {
       return MultiRepositoryProvider(
         providers: [
+          ChangeNotifierProvider<AppClock>.value(value: AppClock(prefs)),
           RepositoryProvider<SharedPreferences>.value(value: prefs),
           RepositoryProvider<AuthRepository>.value(value: authRepository),
           RepositoryProvider<TransactionRepository>.value(
@@ -115,6 +134,9 @@ void main() {
           ),
           RepositoryProvider<EnvelopeRepository>.value(
             value: envelopeRepository,
+          ),
+          RepositoryProvider<SharingRepository>.value(
+            value: sharingRepository,
           ),
         ],
         child: MultiBlocProvider(
@@ -138,6 +160,7 @@ void main() {
         router = createRouter(
           authBloc: authBloc,
           sharedPreferences: prefs,
+          refreshNotifier: RouterRefreshNotifier(authBloc),
         );
         await tester.pumpWidget(buildApp());
         await tester.pump();
@@ -154,6 +177,7 @@ void main() {
         router = createRouter(
           authBloc: authBloc,
           sharedPreferences: prefs,
+          refreshNotifier: RouterRefreshNotifier(authBloc),
         );
         await tester.pumpWidget(buildApp());
         await tester.pumpAndSettle();
@@ -178,6 +202,7 @@ void main() {
         router = createRouter(
           authBloc: authBloc,
           sharedPreferences: prefs,
+          refreshNotifier: RouterRefreshNotifier(authBloc),
         );
         await tester.pumpWidget(buildApp());
         await tester.pumpAndSettle();
@@ -188,7 +213,7 @@ void main() {
     testWidgets(
       'redirects to onboarding when authenticated but not onboarded',
       (tester) async {
-        SharedPreferences.setMockInitialValues({});
+        SharedPreferences.setMockInitialValues({'session_resolved': true});
         prefs = await SharedPreferences.getInstance();
         when(() => authBloc.state).thenReturn(
           AuthState.authenticated(
@@ -204,6 +229,7 @@ void main() {
         router = createRouter(
           authBloc: authBloc,
           sharedPreferences: prefs,
+          refreshNotifier: RouterRefreshNotifier(authBloc),
         );
         await tester.pumpWidget(buildApp());
         await tester.pumpAndSettle();

@@ -1556,6 +1556,24 @@
     "@dashboardReadyToAssign": {
         "description": "Label for the ready to assign amount on the dashboard"
     },
+    "dashboardRtaCarriedPositive": "Includes {amount} carried from last period",
+    "@dashboardRtaCarriedPositive": {
+        "description": "Subtitle on the Ready to Assign card when a positive balance was carried forward",
+        "placeholders": {
+            "amount": {
+                "type": "String"
+            }
+        }
+    },
+    "dashboardRtaCarriedNegative": "{amount} deducted: overspend or over-assignment last period",
+    "@dashboardRtaCarriedNegative": {
+        "description": "Subtitle on the Ready to Assign card when last period's overspend/over-assignment reduced the carried balance",
+        "placeholders": {
+            "amount": {
+                "type": "String"
+            }
+        }
+    },
     "dashboardTotalBalance": "Total Balance",
     "@dashboardTotalBalance": {
         "description": "Label for total balance across all accounts"

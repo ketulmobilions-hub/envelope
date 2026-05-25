@@ -1,13 +1,22 @@
+import 'package:auth_repository/auth_repository.dart';
+import 'package:bloc_test/bloc_test.dart';
 import 'package:budget_repository/budget_repository.dart';
+import 'package:envelope/auth/auth.dart';
+import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/theme/theme.dart';
 import 'package:envelope/transactions/widgets/cover_overspend_dialog.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import '../../helpers/pump_app.dart';
-
 class MockBudgetRepository extends Mock implements BudgetRepository {}
+
+class MockEnvelopeRepository extends Mock implements EnvelopeRepository {}
+
+class _MockAuthBloc extends MockBloc<AuthEvent, AuthState>
+    implements AuthBloc {}
 
 void main() {
   final now = DateTime(2026, 3, 17);
@@ -48,32 +57,69 @@ void main() {
   ];
 
   late MockBudgetRepository budgetRepository;
+  late MockEnvelopeRepository envelopeRepository;
+  late AuthBloc authBloc;
+
+  setUpAll(() {
+    registerFallbackValue(overspentAllocation);
+  });
 
   setUp(() {
     budgetRepository = MockBudgetRepository();
+    envelopeRepository = MockEnvelopeRepository();
+    authBloc = _MockAuthBloc();
+    when(
+      () => envelopeRepository.updateAllocation(any()),
+    ).thenAnswer((_) async {});
+    when(() => authBloc.state).thenReturn(
+      AuthState.authenticated(
+        User(
+          id: 'u1',
+          email: 't@t.com',
+          displayName: 'T',
+          createdAt: now,
+          updatedAt: now,
+        ),
+      ),
+    );
   });
 
-  Widget buildSubject({
+  // Pumps a MaterialApp with AuthBloc provided above the (root) navigator so
+  // the dialog — shown via showDialog on the root navigator — can resolve it.
+  Future<void> pumpDialog(
+    WidgetTester tester, {
     required void Function(bool?) onResult,
     List<EnvelopeAllocation>? allocations,
   }) {
-    return Scaffold(
-      body: Builder(
-        builder: (context) => ElevatedButton(
-          onPressed: () async {
-            final result = await showCoverOverspendDialog(
-              context,
-              budgetRepository: budgetRepository,
-              allocations:
-                  allocations ?? [overspentAllocation, sourceAllocation],
-              envelopes: envelopes,
-              overspentAllocation: overspentAllocation,
-              overspentEnvelopeName: 'Groceries',
-              deficitCents: 5000,
-            );
-            onResult(result);
-          },
-          child: const Text('Open'),
+    return tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        builder: (context, child) => BlocProvider<AuthBloc>.value(
+          value: authBloc,
+          child: child ?? const SizedBox.shrink(),
+        ),
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () async {
+                final result = await showCoverOverspendDialog(
+                  context,
+                  budgetRepository: budgetRepository,
+                  envelopeRepository: envelopeRepository,
+                  allocations:
+                      allocations ?? [overspentAllocation, sourceAllocation],
+                  envelopes: envelopes,
+                  overspentAllocation: overspentAllocation,
+                  overspentEnvelopeName: 'Groceries',
+                  deficitCents: 5000,
+                );
+                onResult(result);
+              },
+              child: const Text('Open'),
+            ),
+          ),
         ),
       ),
     );
@@ -81,7 +127,7 @@ void main() {
 
   group('showCoverOverspendDialog', () {
     testWidgets('shows locked destination envelope', (tester) async {
-      await tester.pumpApp(buildSubject(onResult: (_) {}));
+      await pumpDialog(tester, onResult: (_) {});
       await tester.tap(find.text('Open'));
       await tester.pumpAndSettle();
 
@@ -93,13 +139,17 @@ void main() {
     testWidgets(
       'shows source dropdown with available balance',
       (tester) async {
-        await tester.pumpApp(buildSubject(onResult: (_) {}));
+        await pumpDialog(tester, onResult: (_) {});
         await tester.tap(find.text('Open'));
         await tester.pumpAndSettle();
 
         // Tap the dropdown to reveal items.
         await tester.tap(
-          find.byType(DropdownButtonFormField<EnvelopeAllocation>),
+          find.byWidgetPredicate(
+            (w) => w.runtimeType
+                .toString()
+                .startsWith('DropdownButtonFormField'),
+          ),
         );
         await tester.pumpAndSettle();
 
@@ -112,7 +162,7 @@ void main() {
     );
 
     testWidgets('pre-fills amount with deficit', (tester) async {
-      await tester.pumpApp(buildSubject(onResult: (_) {}));
+      await pumpDialog(tester, onResult: (_) {});
       await tester.tap(find.text('Open'));
       await tester.pumpAndSettle();
 
@@ -123,11 +173,10 @@ void main() {
     testWidgets(
       'shows no-source message when no envelopes have funds',
       (tester) async {
-        await tester.pumpApp(
-          buildSubject(
-            onResult: (_) {},
-            allocations: [overspentAllocation],
-          ),
+        await pumpDialog(
+          tester,
+          onResult: (_) {},
+          allocations: [overspentAllocation],
         );
         await tester.tap(find.text('Open'));
         await tester.pumpAndSettle();
@@ -151,15 +200,17 @@ void main() {
         ).thenAnswer((_) async {});
 
         bool? result;
-        await tester.pumpApp(
-          buildSubject(onResult: (r) => result = r),
-        );
+        await pumpDialog(tester, onResult: (r) => result = r);
         await tester.tap(find.text('Open'));
         await tester.pumpAndSettle();
 
         // Select source envelope from dropdown.
         await tester.tap(
-          find.byType(DropdownButtonFormField<EnvelopeAllocation>),
+          find.byWidgetPredicate(
+            (w) => w.runtimeType
+                .toString()
+                .startsWith('DropdownButtonFormField'),
+          ),
         );
         await tester.pumpAndSettle();
         // Tap the Entertainment item in the dropdown overlay.

@@ -75,6 +75,7 @@ void main() {
         return RecurringBloc(
           transactionRepository: transactionRepository,
           budgetId: 'budget-1',
+          userId: 'user-1',
         );
       },
       act: (bloc) => bloc.add(const RecurringStarted()),
@@ -128,6 +129,7 @@ void main() {
         return RecurringBloc(
           transactionRepository: transactionRepository,
           budgetId: 'budget-1',
+          userId: 'user-1',
         );
       },
       act: (bloc) => bloc.add(const RecurringStarted()),
@@ -167,6 +169,7 @@ void main() {
         return RecurringBloc(
           transactionRepository: transactionRepository,
           budgetId: 'budget-1',
+          userId: 'user-1',
         );
       },
       act: (bloc) => bloc.add(const RecurringStarted()),
@@ -216,6 +219,7 @@ void main() {
       build: () => RecurringBloc(
         transactionRepository: transactionRepository,
         budgetId: 'budget-1',
+        userId: 'user-1',
       ),
       act: (bloc) async {
         bloc.add(const RecurringRuleDeleted('rule-1'));
@@ -264,6 +268,7 @@ void main() {
       build: () => RecurringBloc(
         transactionRepository: transactionRepository,
         budgetId: 'budget-1',
+        userId: 'user-1',
       ),
       act: (bloc) {
         bloc
@@ -305,6 +310,7 @@ void main() {
       build: () => RecurringBloc(
         transactionRepository: transactionRepository,
         budgetId: 'budget-1',
+        userId: 'user-1',
       ),
       act: (bloc) async {
         bloc.add(const BillReminderDeleted('bill-1'));
@@ -345,6 +351,7 @@ void main() {
       build: () => RecurringBloc(
         transactionRepository: transactionRepository,
         budgetId: 'budget-1',
+        userId: 'user-1',
       ),
       act: (bloc) => bloc.add(const RecurringRuleDeleted('rule-1')),
       expect: () => [

@@ -13,6 +13,7 @@ abstract class BudgetPeriod with _$BudgetPeriod {
     required DateTime createdAt,
     @Default(0) int totalIncome,
     @Default(0) int totalAllocated,
+    @Default(0) int carriedRta,
     @Default(false) bool isClosed,
   }) = _BudgetPeriod;
 

@@ -20,6 +20,7 @@ mixin _$BudgetPeriod {
   DateTime get createdAt;
   int get totalIncome;
   int get totalAllocated;
+  int get carriedRta;
   bool get isClosed;
 
   /// Create a copy of BudgetPeriod
@@ -52,6 +53,8 @@ mixin _$BudgetPeriod {
                 other.totalIncome == totalIncome) &&
             (identical(other.totalAllocated, totalAllocated) ||
                 other.totalAllocated == totalAllocated) &&
+            (identical(other.carriedRta, carriedRta) ||
+                other.carriedRta == carriedRta) &&
             (identical(other.isClosed, isClosed) ||
                 other.isClosed == isClosed));
   }
@@ -67,12 +70,13 @@ mixin _$BudgetPeriod {
     createdAt,
     totalIncome,
     totalAllocated,
+    carriedRta,
     isClosed,
   );
 
   @override
   String toString() {
-    return 'BudgetPeriod(id: $id, budgetId: $budgetId, startDate: $startDate, endDate: $endDate, createdAt: $createdAt, totalIncome: $totalIncome, totalAllocated: $totalAllocated, isClosed: $isClosed)';
+    return 'BudgetPeriod(id: $id, budgetId: $budgetId, startDate: $startDate, endDate: $endDate, createdAt: $createdAt, totalIncome: $totalIncome, totalAllocated: $totalAllocated, carriedRta: $carriedRta, isClosed: $isClosed)';
   }
 }
 
@@ -91,6 +95,7 @@ abstract mixin class $BudgetPeriodCopyWith<$Res> {
     DateTime createdAt,
     int totalIncome,
     int totalAllocated,
+    int carriedRta,
     bool isClosed,
   });
 }
@@ -114,6 +119,7 @@ class _$BudgetPeriodCopyWithImpl<$Res> implements $BudgetPeriodCopyWith<$Res> {
     Object? createdAt = null,
     Object? totalIncome = null,
     Object? totalAllocated = null,
+    Object? carriedRta = null,
     Object? isClosed = null,
   }) {
     return _then(
@@ -145,6 +151,10 @@ class _$BudgetPeriodCopyWithImpl<$Res> implements $BudgetPeriodCopyWith<$Res> {
         totalAllocated: null == totalAllocated
             ? _self.totalAllocated
             : totalAllocated // ignore: cast_nullable_to_non_nullable
+                  as int,
+        carriedRta: null == carriedRta
+            ? _self.carriedRta
+            : carriedRta // ignore: cast_nullable_to_non_nullable
                   as int,
         isClosed: null == isClosed
             ? _self.isClosed
@@ -256,6 +266,7 @@ extension BudgetPeriodPatterns on BudgetPeriod {
       DateTime createdAt,
       int totalIncome,
       int totalAllocated,
+      int carriedRta,
       bool isClosed,
     )?
     $default, {
@@ -272,6 +283,7 @@ extension BudgetPeriodPatterns on BudgetPeriod {
           _that.createdAt,
           _that.totalIncome,
           _that.totalAllocated,
+          _that.carriedRta,
           _that.isClosed,
         );
       case _:
@@ -302,6 +314,7 @@ extension BudgetPeriodPatterns on BudgetPeriod {
       DateTime createdAt,
       int totalIncome,
       int totalAllocated,
+      int carriedRta,
       bool isClosed,
     )
     $default,
@@ -317,6 +330,7 @@ extension BudgetPeriodPatterns on BudgetPeriod {
           _that.createdAt,
           _that.totalIncome,
           _that.totalAllocated,
+          _that.carriedRta,
           _that.isClosed,
         );
       case _:
@@ -346,6 +360,7 @@ extension BudgetPeriodPatterns on BudgetPeriod {
       DateTime createdAt,
       int totalIncome,
       int totalAllocated,
+      int carriedRta,
       bool isClosed,
     )?
     $default,
@@ -361,6 +376,7 @@ extension BudgetPeriodPatterns on BudgetPeriod {
           _that.createdAt,
           _that.totalIncome,
           _that.totalAllocated,
+          _that.carriedRta,
           _that.isClosed,
         );
       case _:
@@ -380,6 +396,7 @@ class _BudgetPeriod implements BudgetPeriod {
     required this.createdAt,
     this.totalIncome = 0,
     this.totalAllocated = 0,
+    this.carriedRta = 0,
     this.isClosed = false,
   });
   factory _BudgetPeriod.fromJson(Map<String, dynamic> json) =>
@@ -401,6 +418,9 @@ class _BudgetPeriod implements BudgetPeriod {
   @override
   @JsonKey()
   final int totalAllocated;
+  @override
+  @JsonKey()
+  final int carriedRta;
   @override
   @JsonKey()
   final bool isClosed;
@@ -435,6 +455,8 @@ class _BudgetPeriod implements BudgetPeriod {
                 other.totalIncome == totalIncome) &&
             (identical(other.totalAllocated, totalAllocated) ||
                 other.totalAllocated == totalAllocated) &&
+            (identical(other.carriedRta, carriedRta) ||
+                other.carriedRta == carriedRta) &&
             (identical(other.isClosed, isClosed) ||
                 other.isClosed == isClosed));
   }
@@ -450,12 +472,13 @@ class _BudgetPeriod implements BudgetPeriod {
     createdAt,
     totalIncome,
     totalAllocated,
+    carriedRta,
     isClosed,
   );
 
   @override
   String toString() {
-    return 'BudgetPeriod(id: $id, budgetId: $budgetId, startDate: $startDate, endDate: $endDate, createdAt: $createdAt, totalIncome: $totalIncome, totalAllocated: $totalAllocated, isClosed: $isClosed)';
+    return 'BudgetPeriod(id: $id, budgetId: $budgetId, startDate: $startDate, endDate: $endDate, createdAt: $createdAt, totalIncome: $totalIncome, totalAllocated: $totalAllocated, carriedRta: $carriedRta, isClosed: $isClosed)';
   }
 }
 
@@ -476,6 +499,7 @@ abstract mixin class _$BudgetPeriodCopyWith<$Res>
     DateTime createdAt,
     int totalIncome,
     int totalAllocated,
+    int carriedRta,
     bool isClosed,
   });
 }
@@ -500,6 +524,7 @@ class __$BudgetPeriodCopyWithImpl<$Res>
     Object? createdAt = null,
     Object? totalIncome = null,
     Object? totalAllocated = null,
+    Object? carriedRta = null,
     Object? isClosed = null,
   }) {
     return _then(
@@ -531,6 +556,10 @@ class __$BudgetPeriodCopyWithImpl<$Res>
         totalAllocated: null == totalAllocated
             ? _self.totalAllocated
             : totalAllocated // ignore: cast_nullable_to_non_nullable
+                  as int,
+        carriedRta: null == carriedRta
+            ? _self.carriedRta
+            : carriedRta // ignore: cast_nullable_to_non_nullable
                   as int,
         isClosed: null == isClosed
             ? _self.isClosed

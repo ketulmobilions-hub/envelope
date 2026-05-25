@@ -158,6 +158,7 @@ void main() {
     endDate: DateTime(2024, 1, 31),
     totalIncome: 500000,
     totalAllocated: 300000,
+    carriedRta: 0,
     isClosed: false,
     createdAt: now,
   );
@@ -237,6 +238,12 @@ void main() {
     when(() => apiClient.envelopes).thenReturn(envelopesApiClient);
     when(() => localDatabase.budgetsDao).thenReturn(budgetsDao);
     when(() => localDatabase.envelopesDao).thenReturn(envelopesDao);
+
+    // Default: no allocations. Individual tests override with value-specific
+    // stubs as needed (registered later, so they take precedence).
+    when(
+      () => envelopesDao.getAllocationsByPeriodId(any()),
+    ).thenAnswer((_) async => <storage.EnvelopeAllocation>[]);
 
     repository = BudgetRepository(
       apiClient: apiClient,
@@ -694,6 +701,89 @@ void main() {
         );
       });
 
+      test('carries signed leftover RTA forward to the new period', () async {
+        when(
+          () => budgetsDao.getBudget('budget-1'),
+        ).thenAnswer((_) async => testLocalBudget);
+        when(
+          () => budgetsDao.getPeriodsByBudgetId('budget-1'),
+        ).thenAnswer(
+          (_) async => [testLocalBudgetPeriod.copyWith(carriedRta: 10000)],
+        );
+        // Fully-spent envelope: nothing to roll into the next period.
+        when(
+          () => envelopesDao.getAllocationsByPeriodId('period-1'),
+        ).thenAnswer(
+          (_) async => [
+            testLocalAllocation.copyWith(
+              allocatedAmount: 300000,
+              spentAmount: 300000,
+              rolloverAmount: 0,
+            ),
+          ],
+        );
+        BudgetPeriodDto? captured;
+        when(() => budgetsApiClient.createBudgetPeriod(any())).thenAnswer((
+          inv,
+        ) async {
+          captured = inv.positionalArguments.first as BudgetPeriodDto;
+          return captured!.copyWith(id: 'period-2');
+        });
+        when(
+          () => budgetsDao.insertBudgetPeriod(any(), mode: any(named: 'mode')),
+        ).thenAnswer((_) async => 1);
+
+        await repository.autoCreateNextPeriod('budget-1');
+
+        // income(500000) + carried(10000) - allocated(300000) = 210000.
+        expect(captured?.carriedRta, equals(210000));
+      });
+
+      test(
+        'deducts uncovered overspend from the new period carriedRta',
+        () async {
+          when(
+            () => budgetsDao.getBudget('budget-1'),
+          ).thenAnswer((_) async => testLocalBudget);
+          when(
+            () => budgetsDao.getPeriodsByBudgetId('budget-1'),
+          ).thenAnswer((_) async => [testLocalBudgetPeriod]);
+          // Overspent envelope: spent 150000 against 100000 allocated.
+          when(
+            () => envelopesDao.getAllocationsByPeriodId('period-1'),
+          ).thenAnswer(
+            (_) async => [
+              testLocalAllocation.copyWith(
+                allocatedAmount: 100000,
+                spentAmount: 150000,
+                rolloverAmount: 0,
+              ),
+            ],
+          );
+          BudgetPeriodDto? captured;
+          when(() => budgetsApiClient.createBudgetPeriod(any())).thenAnswer((
+            inv,
+          ) async {
+            captured = inv.positionalArguments.first as BudgetPeriodDto;
+            return captured!.copyWith(id: 'period-2');
+          });
+          when(
+            () =>
+                budgetsDao.insertBudgetPeriod(any(), mode: any(named: 'mode')),
+          ).thenAnswer((_) async => 1);
+
+          await repository.autoCreateNextPeriod('budget-1');
+
+          // signedRta = 500000 + 0 - 100000 = 400000;
+          // uncovered overspend = 50000 → carriedRta = 350000.
+          expect(captured?.carriedRta, equals(350000));
+          // Overspent envelope must NOT carry a negative rollover forward.
+          verifyNever(
+            () => envelopesApiClient.createEnvelopeAllocation(any()),
+          );
+        },
+      );
+
       test('creates first period when no periods exist', () async {
         when(
           () => budgetsDao.getBudget('budget-1'),
@@ -739,6 +829,7 @@ void main() {
           endDate: DateTime(2024, 1, 7),
           totalIncome: 0,
           totalAllocated: 0,
+          carriedRta: 0,
           isClosed: false,
           createdAt: now,
         );
@@ -789,6 +880,7 @@ void main() {
           endDate: DateTime(2024, 1, 30),
           totalIncome: 0,
           totalAllocated: 0,
+          carriedRta: 0,
           isClosed: false,
           createdAt: now,
         );
@@ -825,7 +917,9 @@ void main() {
     // Budget-Level Allocation Operations
     // -----------------------------------------------------------------
     group('calculateReadyToAssign', () {
-      test('computes totalIncome - totalAllocated + rollovers', () async {
+      test(
+        'computes totalIncome + carriedRta - sum(allocated), '
+        'excluding rollover', () async {
         when(
           () => budgetsDao.getBudgetPeriod('period-1'),
         ).thenAnswer((_) async => testLocalBudgetPeriod);
@@ -835,8 +929,27 @@ void main() {
 
         final result = await repository.calculateReadyToAssign('period-1');
 
-        // 500000 - 300000 + 5000 = 205000
-        expect(result, equals(205000));
+        // totalIncome(500000) + carriedRta(0) - allocated(100000) = 400000.
+        // rolloverAmount(5000) is intentionally excluded to avoid
+        // double-counting money that stays inside the envelope.
+        expect(result, equals(400000));
+      });
+
+      test('includes carriedRta carried forward from previous period',
+          () async {
+        when(
+          () => budgetsDao.getBudgetPeriod('period-1'),
+        ).thenAnswer(
+          (_) async => testLocalBudgetPeriod.copyWith(carriedRta: 50000),
+        );
+        when(
+          () => envelopesDao.getAllocationsByPeriodId('period-1'),
+        ).thenAnswer((_) async => [testLocalAllocation]);
+
+        final result = await repository.calculateReadyToAssign('period-1');
+
+        // 500000 + 50000 - 100000 = 450000.
+        expect(result, equals(450000));
       });
 
       test('throws BudgetException when period not found', () async {
@@ -1715,6 +1828,7 @@ void main() {
             endDate: DateTime(2023, 12, 31),
             totalIncome: 400000,
             totalAllocated: 200000,
+            carriedRta: 0,
             isClosed: true,
             createdAt: now,
           );
