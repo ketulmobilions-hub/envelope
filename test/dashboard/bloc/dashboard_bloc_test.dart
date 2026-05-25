@@ -35,6 +35,15 @@ void main() {
     createdAt: now,
   );
 
+  // Older period for period-navigation tests (May 2024, before `now`).
+  final mayPeriod = BudgetPeriod(
+    id: 'period-may',
+    budgetId: budgetId,
+    startDate: DateTime(2024, 5),
+    endDate: DateTime(2024, 5, 31),
+    createdAt: now,
+  );
+
   final accounts = [
     Account(
       id: 'acc-1',
@@ -208,6 +217,91 @@ void main() {
   group('DashboardBloc', () {
     test('initial state is correct', () {
       expect(buildBloc().state, const DashboardState());
+    });
+
+    group('period navigation', () {
+      blocTest<DashboardBloc, DashboardState>(
+        'auto-selects current period and exposes all periods',
+        setUp: () {
+          when(
+            () => budgetRepository.watchBudgetPeriods(any()),
+          ).thenAnswer((_) => Stream.value([mayPeriod, period]));
+        },
+        build: buildBloc,
+        act: (bloc) => bloc.add(const DashboardStarted()),
+        wait: const Duration(milliseconds: 100),
+        verify: (bloc) {
+          expect(bloc.state.selectedPeriod?.id, 'period-1');
+          expect(bloc.state.periods.length, 2);
+          expect(bloc.state.hasPreviousPeriod, isTrue);
+          expect(bloc.state.hasNextPeriod, isFalse);
+        },
+      );
+
+      blocTest<DashboardBloc, DashboardState>(
+        'DashboardPreviousPeriodRequested selects the older period and '
+        'rebinds allocations',
+        setUp: () {
+          when(
+            () => budgetRepository.watchBudgetPeriods(any()),
+          ).thenAnswer((_) => Stream.value([mayPeriod, period]));
+        },
+        build: buildBloc,
+        act: (bloc) async {
+          bloc.add(const DashboardStarted());
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+          bloc.add(const DashboardPreviousPeriodRequested());
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+        },
+        verify: (bloc) {
+          expect(bloc.state.selectedPeriod?.id, 'period-may');
+          expect(bloc.state.hasNextPeriod, isTrue);
+          verify(
+            () => envelopeRepository.refreshAllocations('period-may'),
+          ).called(1);
+        },
+      );
+
+      blocTest<DashboardBloc, DashboardState>(
+        'DashboardNextPeriodRequested returns to the newer period',
+        setUp: () {
+          when(
+            () => budgetRepository.watchBudgetPeriods(any()),
+          ).thenAnswer((_) => Stream.value([mayPeriod, period]));
+        },
+        build: buildBloc,
+        act: (bloc) async {
+          bloc.add(const DashboardStarted());
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+          bloc.add(const DashboardPreviousPeriodRequested());
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+          bloc.add(const DashboardNextPeriodRequested());
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+        },
+        verify: (bloc) {
+          expect(bloc.state.selectedPeriod?.id, 'period-1');
+        },
+      );
+
+      blocTest<DashboardBloc, DashboardState>(
+        'next is a no-op at the newest period',
+        setUp: () {
+          when(
+            () => budgetRepository.watchBudgetPeriods(any()),
+          ).thenAnswer((_) => Stream.value([mayPeriod, period]));
+        },
+        build: buildBloc,
+        act: (bloc) async {
+          bloc.add(const DashboardStarted());
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+          // Already on the newest (Jun); next should do nothing.
+          bloc.add(const DashboardNextPeriodRequested());
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+        },
+        verify: (bloc) {
+          expect(bloc.state.selectedPeriod?.id, 'period-1');
+        },
+      );
     });
 
     blocTest<DashboardBloc, DashboardState>(

@@ -50,6 +50,7 @@ final class DashboardState extends Equatable {
     this.status = DashboardStatus.initial,
     this.error,
     this.selectedPeriod,
+    this.periods = const [],
     this.readyToAssign = 0,
     this.accounts = const [],
     this.envelopes = const [],
@@ -64,7 +65,27 @@ final class DashboardState extends Equatable {
   final DashboardStatus status;
   final DashboardError? error;
   final BudgetPeriod? selectedPeriod;
+
+  /// All budget periods (unsorted as received). Use [sortedPeriods] for
+  /// chronological order and the period-navigation getters.
+  final List<BudgetPeriod> periods;
   final int readyToAssign;
+
+  /// Periods sorted oldest-first, for previous/next navigation.
+  List<BudgetPeriod> get sortedPeriods =>
+      [...periods]..sort((a, b) => a.startDate.compareTo(b.startDate));
+
+  int get _selectedIndex =>
+      sortedPeriods.indexWhere((p) => p.id == selectedPeriod?.id);
+
+  /// Whether an older period exists to navigate back to.
+  bool get hasPreviousPeriod => _selectedIndex > 0;
+
+  /// Whether a newer period exists to navigate forward to.
+  bool get hasNextPeriod {
+    final idx = _selectedIndex;
+    return idx >= 0 && idx < sortedPeriods.length - 1;
+  }
   final List<Account> accounts;
   final List<Envelope> envelopes;
   final List<CategoryGroup> categoryGroups;
@@ -142,6 +163,7 @@ final class DashboardState extends Equatable {
     DashboardStatus? status,
     Object? error = _sentinel,
     Object? selectedPeriod = _sentinel,
+    List<BudgetPeriod>? periods,
     int? readyToAssign,
     List<Account>? accounts,
     List<Envelope>? envelopes,
@@ -158,6 +180,7 @@ final class DashboardState extends Equatable {
       selectedPeriod: selectedPeriod == _sentinel
           ? this.selectedPeriod
           : selectedPeriod as BudgetPeriod?,
+      periods: periods ?? this.periods,
       readyToAssign: readyToAssign ?? this.readyToAssign,
       accounts: accounts ?? this.accounts,
       envelopes: envelopes ?? this.envelopes,
@@ -177,6 +200,7 @@ final class DashboardState extends Equatable {
     status,
     error,
     selectedPeriod,
+    periods,
     readyToAssign,
     accounts,
     envelopes,

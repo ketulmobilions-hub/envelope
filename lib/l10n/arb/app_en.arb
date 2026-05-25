@@ -1556,6 +1556,14 @@
     "@dashboardReadyToAssign": {
         "description": "Label for the ready to assign amount on the dashboard"
     },
+    "dashboardPreviousPeriod": "Previous period",
+    "@dashboardPreviousPeriod": {
+        "description": "Tooltip for the previous-period chevron on the Ready to Assign card"
+    },
+    "dashboardNextPeriod": "Next period",
+    "@dashboardNextPeriod": {
+        "description": "Tooltip for the next-period chevron on the Ready to Assign card"
+    },
     "dashboardRtaCarriedPositive": "Includes {amount} carried from last period",
     "@dashboardRtaCarriedPositive": {
         "description": "Subtitle on the Ready to Assign card when a positive balance was carried forward",
