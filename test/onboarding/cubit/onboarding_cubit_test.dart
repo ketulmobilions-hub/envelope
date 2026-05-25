@@ -126,6 +126,19 @@ void main() {
                 'error',
                 OnboardingError.accountRequired,
               ),
+          // Production emits a transient failure then resets to initial
+          // (keeping the error) so the UI can react to a one-shot error.
+          isA<OnboardingState>()
+              .having(
+                (s) => s.status,
+                'status',
+                OnboardingStatus.initial,
+              )
+              .having(
+                (s) => s.error,
+                'error',
+                OnboardingError.accountRequired,
+              ),
         ],
       );
 
@@ -173,6 +186,19 @@ void main() {
                 (s) => s.status,
                 'status',
                 OnboardingStatus.failure,
+              )
+              .having(
+                (s) => s.error,
+                'error',
+                OnboardingError.envelopeRequired,
+              ),
+          // Production emits a transient failure then resets to initial
+          // (keeping the error) so the UI can react to a one-shot error.
+          isA<OnboardingState>()
+              .having(
+                (s) => s.status,
+                'status',
+                OnboardingStatus.initial,
               )
               .having(
                 (s) => s.error,
@@ -575,7 +601,8 @@ void main() {
               name: 'Groceries',
             ),
           ).called(1);
-          expect(prefs.getBool('onboarding_complete'), isTrue);
+          // Onboarding completion is now tracked by persisting the active
+          // budget id (used by isOnboardingComplete), not a boolean flag.
           expect(prefs.getString('active_budget_id'), testBudgetId);
         },
       );
@@ -1084,7 +1111,8 @@ void main() {
       });
 
       test('returns true when flag is set', () async {
-        await prefs.setBool('onboarding_complete', true);
+        // Completion is now derived from a persisted active budget id.
+        await prefs.setString(activeBudgetIdKey, testBudgetId);
         final result = OnboardingCubit.isOnboardingComplete(prefs);
         expect(result, isTrue);
       });

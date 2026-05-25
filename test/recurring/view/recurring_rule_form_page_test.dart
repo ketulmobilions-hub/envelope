@@ -1,12 +1,16 @@
 import 'package:account_repository/account_repository.dart';
+import 'package:auth_repository/auth_repository.dart';
+import 'package:bloc_test/bloc_test.dart';
+import 'package:envelope/auth/auth.dart';
+import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/recurring/view/recurring_rule_form_page.dart';
+import 'package:envelope/theme/theme.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:transaction_repository/transaction_repository.dart';
-
-import '../../helpers/helpers.dart';
 
 class MockTransactionRepository extends Mock implements TransactionRepository {}
 
@@ -14,10 +18,14 @@ class MockAccountRepository extends Mock implements AccountRepository {}
 
 class MockEnvelopeRepository extends Mock implements EnvelopeRepository {}
 
+class _MockAuthBloc extends MockBloc<AuthEvent, AuthState>
+    implements AuthBloc {}
+
 void main() {
   late MockTransactionRepository transactionRepository;
   late MockAccountRepository accountRepository;
   late MockEnvelopeRepository envelopeRepository;
+  late AuthBloc authBloc;
 
   final now = DateTime(2024);
   final testAccounts = [
@@ -38,6 +46,7 @@ void main() {
     transactionRepository = MockTransactionRepository();
     accountRepository = MockAccountRepository();
     envelopeRepository = MockEnvelopeRepository();
+    authBloc = _MockAuthBloc();
 
     when(
       () => accountRepository.watchAccounts('budget-1'),
@@ -45,11 +54,41 @@ void main() {
     when(
       () => envelopeRepository.watchEnvelopes('budget-1'),
     ).thenAnswer((_) => Stream.value([]));
+    when(() => authBloc.state).thenReturn(
+      AuthState.authenticated(
+        User(
+          id: 'u1',
+          email: 't@t.com',
+          displayName: 'T',
+          createdAt: now,
+          updatedAt: now,
+        ),
+      ),
+    );
   });
+
+  // Pumps the form inside a MaterialApp that provides AuthBloc above the
+  // (root) navigator, so AppOptionPicker's root-navigator bottom sheets can
+  // resolve it on rebuild. currencySymbol() reads AuthBloc via context.watch.
+  Future<void> pumpForm(WidgetTester tester, Widget page) {
+    return tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        builder: (context, child) => BlocProvider<AuthBloc>.value(
+          value: authBloc,
+          child: child ?? const SizedBox.shrink(),
+        ),
+        home: page,
+      ),
+    );
+  }
 
   group('RecurringRuleFormPage', () {
     testWidgets('renders create form', (tester) async {
-      await tester.pumpApp(
+      await pumpForm(
+        tester,
         RecurringRuleFormPage(
           transactionRepository: transactionRepository,
           accountRepository: accountRepository,
@@ -65,7 +104,8 @@ void main() {
     });
 
     testWidgets('renders edit form', (tester) async {
-      await tester.pumpApp(
+      await pumpForm(
+        tester,
         RecurringRuleFormPage(
           transactionRepository: transactionRepository,
           accountRepository: accountRepository,
@@ -96,7 +136,8 @@ void main() {
     testWidgets('shows custom frequency fields when custom selected', (
       tester,
     ) async {
-      await tester.pumpApp(
+      await pumpForm(
+        tester,
         RecurringRuleFormPage(
           transactionRepository: transactionRepository,
           accountRepository: accountRepository,
@@ -106,14 +147,42 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Find frequency dropdown and open it.
-      final frequencyDropdown = find.byType(DropdownButtonFormField<String>);
-      // There should be account dropdown + frequency dropdown at minimum.
-      expect(frequencyDropdown, findsWidgets);
+      // Custom-frequency fields are hidden until 'custom' is selected.
+      expect(find.text('Every'), findsNothing);
+
+      // Scroll the frequency picker into view, then open it (an
+      // AppOptionPicker triggered by tapping its label).
+      final scrollable = find.byType(Scrollable).first;
+      await tester.scrollUntilVisible(
+        find.text('Frequency'),
+        200,
+        scrollable: scrollable,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Frequency'));
+      await tester.pumpAndSettle();
+
+      // 'Custom' is the last option in the bottom-sheet list and may be below
+      // the fold of the (lazily built) list, so scroll it into view first.
+      await tester.scrollUntilVisible(
+        find.text('Custom'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.pumpAndSettle();
+
+      // Select 'Custom' from the bottom-sheet list.
+      await tester.tap(find.text('Custom').last);
+      await tester.pumpAndSettle();
+
+      // The custom interval field ('Every') and unit dropdown now appear.
+      expect(find.text('Every'), findsOneWidget);
+      expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
     });
 
     testWidgets('validates required fields', (tester) async {
-      await tester.pumpApp(
+      await pumpForm(
+        tester,
         RecurringRuleFormPage(
           transactionRepository: transactionRepository,
           accountRepository: accountRepository,
@@ -140,7 +209,8 @@ void main() {
     });
 
     testWidgets('shows auto-post toggle', (tester) async {
-      await tester.pumpApp(
+      await pumpForm(
+        tester,
         RecurringRuleFormPage(
           transactionRepository: transactionRepository,
           accountRepository: accountRepository,
@@ -187,7 +257,8 @@ void main() {
         ),
       );
 
-      await tester.pumpApp(
+      await pumpForm(
+        tester,
         RecurringRuleFormPage(
           transactionRepository: transactionRepository,
           accountRepository: accountRepository,

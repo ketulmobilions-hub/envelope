@@ -45,7 +45,7 @@ void main() {
           child: const Scaffold(body: CurrencyStep()),
         ),
       );
-      expect(find.text('USD - US Dollar'), findsOneWidget);
+      expect(find.text(r'USD - US Dollar ($)'), findsOneWidget);
     });
 
     testWidgets('selectCurrency called on radio tap', (tester) async {

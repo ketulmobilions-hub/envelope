@@ -1,4 +1,6 @@
+import 'package:auth_repository/auth_repository.dart';
 import 'package:bloc_test/bloc_test.dart';
+import 'package:envelope/auth/auth.dart';
 import 'package:envelope/budget/bloc/bloc.dart';
 import 'package:envelope/budget/widgets/allocation_row.dart';
 import 'package:envelope_repository/envelope_repository.dart';
@@ -12,8 +14,12 @@ import '../../helpers/pump_app.dart';
 class MockBudgetBloc extends MockBloc<BudgetEvent, BudgetState>
     implements BudgetBloc {}
 
+class MockAuthBloc extends MockBloc<AuthEvent, AuthState>
+    implements AuthBloc {}
+
 void main() {
   late MockBudgetBloc budgetBloc;
+  late MockAuthBloc authBloc;
 
   final now = DateTime(2026, 3, 13);
 
@@ -31,11 +37,27 @@ void main() {
     when(
       () => budgetBloc.stream,
     ).thenAnswer((_) => Stream.value(BudgetState()));
+
+    authBloc = MockAuthBloc();
+    when(() => authBloc.state).thenReturn(
+      AuthState.authenticated(
+        User(
+          id: 'u1',
+          email: 't@t.com',
+          displayName: 'T',
+          createdAt: now,
+          updatedAt: now,
+        ),
+      ),
+    );
   });
 
   Widget buildSubject({EnvelopeAllocation? allocation}) {
-    return BlocProvider<BudgetBloc>.value(
-      value: budgetBloc,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<BudgetBloc>.value(value: budgetBloc),
+        BlocProvider<AuthBloc>.value(value: authBloc),
+      ],
       child: Scaffold(
         body: AllocationRow(
           key: ValueKey(testEnvelope.id),

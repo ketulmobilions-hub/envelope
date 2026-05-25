@@ -65,6 +65,9 @@ void main() {
     ).thenAnswer((_) => Stream.value(<CategoryGroup>[]));
     when(() => transactionRepo.getTags(any())).thenAnswer((_) async => <Tag>[]);
     when(
+      () => transactionRepo.getTransactionTemplates(any()),
+    ).thenAnswer((_) async => <TransactionTemplate>[]);
+    when(
       () => budgetRepo.addIncomeToCurrentPeriod(
         budgetId: any(named: 'budgetId'),
         amount: any(named: 'amount'),
