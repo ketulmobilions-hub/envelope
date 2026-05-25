@@ -139,6 +139,12 @@ void main() {
       () => budgetRepository.refreshBudgetPeriods(any()),
     ).thenAnswer((_) async {});
     when(
+      () => budgetRepository.ensureCurrentPeriod(
+        any(),
+        asOf: any(named: 'asOf'),
+      ),
+    ).thenAnswer((_) async {});
+    when(
       () => accountRepository.watchAccounts(any()),
     ).thenAnswer((_) => Stream.value(accounts));
     when(
@@ -170,6 +176,20 @@ void main() {
     when(
       () => transactionRepository.refreshTransactions(any()),
     ).thenAnswer((_) async {});
+
+    // DashboardBloc merges these remote-change streams on start.
+    when(
+      () => budgetRepository.onRemoteChange,
+    ).thenAnswer((_) => const Stream<void>.empty());
+    when(
+      () => accountRepository.onRemoteChange,
+    ).thenAnswer((_) => const Stream<void>.empty());
+    when(
+      () => envelopeRepository.onRemoteChange,
+    ).thenAnswer((_) => const Stream<void>.empty());
+    when(
+      () => transactionRepository.onRemoteChange,
+    ).thenAnswer((_) => const Stream<void>.empty());
   });
 
   DashboardBloc buildBloc() => DashboardBloc(
@@ -178,6 +198,11 @@ void main() {
     envelopeRepository: envelopeRepository,
     transactionRepository: transactionRepository,
     budgetId: budgetId,
+    // Inject a fixed clock so the fixture period (Jun 2024) is treated as the
+    // current period. Without this, real DateTime.now() is after the period's
+    // end date, so the bloc calls ensureCurrentPeriod and returns early
+    // without selecting a period, computing RTA, or loading allocations.
+    now: () => now,
   );
 
   group('DashboardBloc', () {

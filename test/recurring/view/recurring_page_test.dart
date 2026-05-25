@@ -1,10 +1,15 @@
+import 'package:auth_repository/auth_repository.dart';
 import 'package:bloc_test/bloc_test.dart';
+import 'package:envelope/auth/auth.dart';
 import 'package:envelope/recurring/bloc/bloc.dart';
 import 'package:envelope/recurring/view/recurring_page.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 
 import '../../helpers/helpers.dart';
@@ -12,8 +17,13 @@ import '../../helpers/helpers.dart';
 class _MockRecurringBloc extends MockBloc<RecurringEvent, RecurringState>
     implements RecurringBloc {}
 
+class _MockAuthBloc extends MockBloc<AuthEvent, AuthState>
+    implements AuthBloc {}
+
 void main() {
   late RecurringBloc recurringBloc;
+  late AuthBloc authBloc;
+  late AppClock appClock;
 
   final now = DateTime(2024);
   final testRules = [
@@ -44,9 +54,39 @@ void main() {
     ),
   ];
 
-  setUp(() {
+  setUp(() async {
     recurringBloc = _MockRecurringBloc();
+    authBloc = _MockAuthBloc();
+
+    when(() => authBloc.state).thenReturn(
+      AuthState.authenticated(
+        User(
+          id: 'user-1',
+          email: 'test@test.com',
+          displayName: 'Test',
+          createdAt: now,
+          updatedAt: now,
+        ),
+      ),
+    );
+
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    appClock = AppClock(prefs);
   });
+
+  Widget buildSubject({int initialTab = 0}) {
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<RecurringBloc>.value(value: recurringBloc),
+        BlocProvider<AuthBloc>.value(value: authBloc),
+      ],
+      child: ChangeNotifierProvider<AppClock>.value(
+        value: appClock,
+        child: RecurringView(budgetId: 'budget-1', initialTab: initialTab),
+      ),
+    );
+  }
 
   group('RecurringView', () {
     testWidgets('shows loading indicator when status is loading', (
@@ -57,10 +97,7 @@ void main() {
       );
 
       await tester.pumpApp(
-        BlocProvider<RecurringBloc>.value(
-          value: recurringBloc,
-          child: const RecurringView(budgetId: 'budget-1'),
-        ),
+        buildSubject(),
       );
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
@@ -72,10 +109,7 @@ void main() {
       );
 
       await tester.pumpApp(
-        BlocProvider<RecurringBloc>.value(
-          value: recurringBloc,
-          child: const RecurringView(budgetId: 'budget-1'),
-        ),
+        buildSubject(),
       );
 
       expect(find.text('Recurring'), findsOneWidget);
@@ -88,10 +122,7 @@ void main() {
       );
 
       await tester.pumpApp(
-        BlocProvider<RecurringBloc>.value(
-          value: recurringBloc,
-          child: const RecurringView(budgetId: 'budget-1'),
-        ),
+        buildSubject(),
       );
 
       expect(find.text('No recurring transactions'), findsOneWidget);
@@ -106,10 +137,7 @@ void main() {
       );
 
       await tester.pumpApp(
-        BlocProvider<RecurringBloc>.value(
-          value: recurringBloc,
-          child: const RecurringView(budgetId: 'budget-1'),
-        ),
+        buildSubject(),
       );
 
       expect(find.text('Netflix'), findsOneWidget);
@@ -124,10 +152,7 @@ void main() {
       );
 
       await tester.pumpApp(
-        BlocProvider<RecurringBloc>.value(
-          value: recurringBloc,
-          child: const RecurringView(budgetId: 'budget-1'),
-        ),
+        buildSubject(),
       );
 
       // Tap the Bills tab.
@@ -143,10 +168,7 @@ void main() {
       );
 
       await tester.pumpApp(
-        BlocProvider<RecurringBloc>.value(
-          value: recurringBloc,
-          child: const RecurringView(budgetId: 'budget-1'),
-        ),
+        buildSubject(),
       );
 
       expect(find.byType(FloatingActionButton), findsOneWidget);
@@ -161,10 +183,7 @@ void main() {
       );
 
       await tester.pumpApp(
-        BlocProvider<RecurringBloc>.value(
-          value: recurringBloc,
-          child: const RecurringView(budgetId: 'budget-1'),
-        ),
+        buildSubject(),
       );
 
       // Swipe to delete (endToStart).
@@ -178,9 +197,14 @@ void main() {
       verify(
         () => recurringBloc.add(const RecurringRuleDeleted('rule-1')),
       ).called(1);
+
+      // Drain the undo snackbar's 5s dismissal timer before the test ends.
+      await tester.pump(const Duration(seconds: 5));
     });
 
-    testWidgets('dispatches pause toggle on long press', (tester) async {
+    testWidgets('dispatches pause toggle when pause button tapped', (
+      tester,
+    ) async {
       when(() => recurringBloc.state).thenReturn(
         RecurringState(
           status: RecurringStatus.loaded,
@@ -189,13 +213,11 @@ void main() {
       );
 
       await tester.pumpApp(
-        BlocProvider<RecurringBloc>.value(
-          value: recurringBloc,
-          child: const RecurringView(budgetId: 'budget-1'),
-        ),
+        buildSubject(),
       );
 
-      await tester.longPress(find.text('Netflix'));
+      // Pause/resume is a visible IconButton (tooltip "Pause").
+      await tester.tap(find.byTooltip('Pause'));
       await tester.pumpAndSettle();
 
       verify(
@@ -214,10 +236,7 @@ void main() {
       );
 
       await tester.pumpApp(
-        BlocProvider<RecurringBloc>.value(
-          value: recurringBloc,
-          child: const RecurringView(budgetId: 'budget-1'),
-        ),
+        buildSubject(),
       );
 
       // Switch to Bills tab.
@@ -238,6 +257,9 @@ void main() {
       verify(
         () => recurringBloc.add(const BillReminderDeleted('bill-1')),
       ).called(1);
+
+      // Drain the undo snackbar's 5s dismissal timer before the test ends.
+      await tester.pump(const Duration(seconds: 5));
     });
 
     testWidgets('shows error snackbar', (tester) async {
@@ -258,10 +280,7 @@ void main() {
       );
 
       await tester.pumpApp(
-        BlocProvider<RecurringBloc>.value(
-          value: recurringBloc,
-          child: const RecurringView(budgetId: 'budget-1'),
-        ),
+        buildSubject(),
       );
       await tester.pump();
 
