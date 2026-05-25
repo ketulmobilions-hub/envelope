@@ -20,5 +20,6 @@ export 'sync_metadata_table.dart';
 export 'tags_table.dart';
 export 'transaction_splits_table.dart';
 export 'transaction_tags_table.dart';
+export 'transaction_templates_table.dart';
 export 'transactions_table.dart';
 export 'users_table.dart';

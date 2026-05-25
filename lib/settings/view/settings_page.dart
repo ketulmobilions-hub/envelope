@@ -125,6 +125,12 @@ class _SettingsView extends StatelessWidget {
                         ),
                       ),
                     ),
+                    ListTile(
+                      leading: const Icon(Icons.bookmarks_outlined),
+                      title: Text(l10n.settingsTemplates),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.go(AppRoutes.templates),
+                    ),
                     const Divider(),
                     _SectionHeader(title: l10n.settingsData),
                     ListTile(

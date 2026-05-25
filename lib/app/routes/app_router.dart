@@ -14,6 +14,7 @@ import 'package:envelope/settings/settings.dart';
 import 'package:envelope/shared_budget/shared_budget.dart';
 import 'package:envelope/shared_budget/view/redeem_invite_page.dart';
 import 'package:envelope/splash/splash.dart';
+import 'package:envelope/templates/templates.dart';
 import 'package:envelope/transactions/transactions.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -36,6 +37,7 @@ abstract final class AppRoutes {
   static const String reports = '/reports';
   static const String sharedBudget = '/sharedBudget';
   static const String settings = '/settings';
+  static const String templates = '/settings/templates';
   static const String redeemInvite = '/invite';
 }
 
@@ -216,6 +218,11 @@ GoRouter createRouter({
             name: AppRoutes.settings,
             path: AppRoutes.settings,
             builder: (context, state) => const SettingsPage(),
+          ),
+          GoRoute(
+            name: AppRoutes.templates,
+            path: AppRoutes.templates,
+            builder: (context, state) => const TemplatesPage(),
           ),
         ],
       ),

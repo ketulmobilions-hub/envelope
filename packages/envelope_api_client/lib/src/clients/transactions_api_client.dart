@@ -250,4 +250,76 @@ class TransactionsApiClient {
       throw EnvelopeApiException.fromPostgrestException(error);
     }
   }
+
+  // --- Transaction Templates ---
+
+  /// Fetches all non-deleted transaction templates for a budget.
+  Future<List<TransactionTemplateDto>> getTransactionTemplates(
+    String budgetId,
+  ) async {
+    try {
+      final response = await _supabaseClient
+          .from('transaction_templates')
+          .select()
+          .eq('budget_id', budgetId)
+          .isFilter('deleted_at', null)
+          .order('sort_order')
+          .order('name');
+      return response.map(TransactionTemplateDto.fromJson).toList();
+    } catch (error) {
+      throw EnvelopeApiException.fromPostgrestException(error);
+    }
+  }
+
+  /// Creates a new transaction template.
+  Future<TransactionTemplateDto> createTransactionTemplate(
+    TransactionTemplateDto template,
+  ) async {
+    try {
+      final json = template.toJson()..remove('id');
+      final response = await _supabaseClient
+          .from('transaction_templates')
+          .insert(json)
+          .select()
+          .single();
+      return TransactionTemplateDto.fromJson(response);
+    } catch (error) {
+      throw EnvelopeApiException.fromPostgrestException(error);
+    }
+  }
+
+  /// Updates an existing transaction template.
+  Future<TransactionTemplateDto> updateTransactionTemplate(
+    TransactionTemplateDto template,
+  ) async {
+    try {
+      final json = template.toJson()
+        ..remove('id')
+        ..remove('created_at');
+      final response = await _supabaseClient
+          .from('transaction_templates')
+          .update(json)
+          .eq('id', template.id)
+          .select()
+          .single();
+      return TransactionTemplateDto.fromJson(response);
+    } catch (error) {
+      throw EnvelopeApiException.fromPostgrestException(error);
+    }
+  }
+
+  /// Soft-deletes a transaction template by [id].
+  Future<void> deleteTransactionTemplate(String id) async {
+    try {
+      await _supabaseClient
+          .from('transaction_templates')
+          .update({
+            'deleted_at': DateTime.now().toUtc().toIso8601String(),
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', id);
+    } catch (error) {
+      throw EnvelopeApiException.fromPostgrestException(error);
+    }
+  }
 }

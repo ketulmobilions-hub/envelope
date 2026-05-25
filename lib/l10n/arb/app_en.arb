@@ -1114,6 +1114,29 @@
     "@transactionsCreateButton": {
         "description": "Button to create a new transaction"
     },
+    "templatesEmpty": "No templates yet. Save one from the More section after creating a transaction.",
+    "@templatesEmpty": {
+        "description": "Shown when the template picker has no entries"
+    },
+    "templatesTitle": "Templates",
+    "@templatesTitle": {
+        "description": "Title for the Templates management page"
+    },
+    "templatesDelete": "Delete template",
+    "@templatesDelete": {
+        "description": "Confirm delete dialog title for a template"
+    },
+    "templatesDeleteConfirm": "Delete \"{name}\"? This cannot be undone.",
+    "@templatesDeleteConfirm": {
+        "description": "Body of the delete-template confirmation dialog",
+        "placeholders": {
+            "name": {"type": "String"}
+        }
+    },
+    "settingsTemplates": "Transaction templates",
+    "@settingsTemplates": {
+        "description": "Settings list tile linking to the Templates management page"
+    },
     "transactionsSaveButton": "Save Changes",
     "@transactionsSaveButton": {
         "description": "Button to save transaction edits"
