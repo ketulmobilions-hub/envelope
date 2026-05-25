@@ -86,7 +86,7 @@ void main() {
         budgetId: 'budget-1',
         userId: 'user-1',
       ),
-      act: (cubit) => cubit.check(),
+      act: (cubit) => cubit.check(now: now),
       expect: () => [
         const RecurringCheckState(isChecking: true),
         const RecurringCheckState(),
@@ -99,7 +99,7 @@ void main() {
             type: 'expense',
             amount: 5000,
             currency: 'USD',
-            date: any(named: 'date'),
+            date: pastDate,
             createdBy: 'user-1',
             envelopeId: null,
             payee: 'Netflix',
@@ -279,7 +279,7 @@ void main() {
         budgetId: 'budget-1',
         userId: 'user-1',
       ),
-      act: (cubit) => cubit.check(),
+      act: (cubit) => cubit.check(now: now),
       expect: () => [
         const RecurringCheckState(isChecking: true),
         const RecurringCheckState(),
@@ -355,7 +355,7 @@ void main() {
         budgetId: 'budget-1',
         userId: 'user-1',
       ),
-      act: (cubit) => cubit.check(),
+      act: (cubit) => cubit.check(now: DateTime(2025, 2, 5)),
       verify: (_) {
         final captured = verify(
           () => transactionRepository.updateRecurringRule(captureAny()),
@@ -431,7 +431,7 @@ void main() {
         budgetId: 'budget-1',
         userId: 'user-1',
       ),
-      act: (cubit) => cubit.check(),
+      act: (cubit) => cubit.check(now: DateTime(2024, 2, 5)),
       verify: (_) {
         final captured = verify(
           () => transactionRepository.updateRecurringRule(captureAny()),
@@ -484,6 +484,512 @@ void main() {
             )
             .having((s) => s.isChecking, 'isChecking', false),
       ],
+    );
+
+    blocTest<RecurringCheckCubit, RecurringCheckState>(
+      'posts at rule.nextOccurrence, not effectiveNow',
+      setUp: () {
+        final apr5 = DateTime(2026, 4, 5);
+        when(
+          () => transactionRepository.watchRecurringRules('budget-1'),
+        ).thenAnswer(
+          (_) => Stream.value([
+            RecurringRule(
+              id: 'rule-date',
+              budgetId: 'budget-1',
+              accountId: 'acc-1',
+              type: 'expense',
+              amount: 2000,
+              currency: 'USD',
+              frequency: 'monthly',
+              startDate: apr5,
+              nextOccurrence: apr5,
+              createdAt: apr5,
+              autoPost: true,
+            ),
+          ]),
+        );
+        when(
+          () => transactionRepository.watchBillReminders('budget-1'),
+        ).thenAnswer((_) => Stream.value([]));
+        when(
+          () => transactionRepository.createTransaction(
+            budgetId: any(named: 'budgetId'),
+            accountId: any(named: 'accountId'),
+            type: any(named: 'type'),
+            amount: any(named: 'amount'),
+            currency: any(named: 'currency'),
+            date: any(named: 'date'),
+            createdBy: any(named: 'createdBy'),
+            envelopeId: any(named: 'envelopeId'),
+            payee: any(named: 'payee'),
+            notes: any(named: 'notes'),
+            recurringRuleId: any(named: 'recurringRuleId'),
+          ),
+        ).thenAnswer(
+          (_) async => Transaction(
+            id: 'txn-d',
+            budgetId: 'budget-1',
+            accountId: 'acc-1',
+            type: 'expense',
+            amount: 2000,
+            currency: 'USD',
+            date: apr5,
+            createdBy: 'user-1',
+            createdAt: apr5,
+            updatedAt: apr5,
+          ),
+        );
+        when(
+          () => transactionRepository.updateRecurringRule(any()),
+        ).thenAnswer((_) async {});
+      },
+      build: () => RecurringCheckCubit(
+        transactionRepository: transactionRepository,
+        budgetId: 'budget-1',
+        userId: 'user-1',
+      ),
+      // effectiveNow well after nextOccurrence, but still inside the first
+      // cycle's window so only one occurrence is posted.
+      act: (cubit) => cubit.check(now: DateTime(2026, 4, 25)),
+      verify: (_) {
+        verify(
+          () => transactionRepository.createTransaction(
+            budgetId: 'budget-1',
+            accountId: 'acc-1',
+            type: 'expense',
+            amount: 2000,
+            currency: 'USD',
+            date: DateTime(2026, 4, 5),
+            createdBy: 'user-1',
+            envelopeId: null,
+            payee: null,
+            notes: null,
+            recurringRuleId: 'rule-date',
+          ),
+        ).called(1);
+      },
+    );
+
+    blocTest<RecurringCheckCubit, RecurringCheckState>(
+      'catches up multiple missed monthly occurrences in one check',
+      setUp: () {
+        final apr5 = DateTime(2026, 4, 5);
+        when(
+          () => transactionRepository.watchRecurringRules('budget-1'),
+        ).thenAnswer(
+          (_) => Stream.value([
+            RecurringRule(
+              id: 'rule-catchup',
+              budgetId: 'budget-1',
+              accountId: 'acc-1',
+              type: 'expense',
+              amount: 2000,
+              currency: 'USD',
+              frequency: 'monthly',
+              startDate: apr5,
+              nextOccurrence: apr5,
+              createdAt: apr5,
+              autoPost: true,
+            ),
+          ]),
+        );
+        when(
+          () => transactionRepository.watchBillReminders('budget-1'),
+        ).thenAnswer((_) => Stream.value([]));
+        when(
+          () => transactionRepository.createTransaction(
+            budgetId: any(named: 'budgetId'),
+            accountId: any(named: 'accountId'),
+            type: any(named: 'type'),
+            amount: any(named: 'amount'),
+            currency: any(named: 'currency'),
+            date: any(named: 'date'),
+            createdBy: any(named: 'createdBy'),
+            envelopeId: any(named: 'envelopeId'),
+            payee: any(named: 'payee'),
+            notes: any(named: 'notes'),
+            recurringRuleId: any(named: 'recurringRuleId'),
+          ),
+        ).thenAnswer(
+          (invocation) async => Transaction(
+            id: 'txn-${invocation.namedArguments[#date]}',
+            budgetId: 'budget-1',
+            accountId: 'acc-1',
+            type: 'expense',
+            amount: 2000,
+            currency: 'USD',
+            date: invocation.namedArguments[#date] as DateTime,
+            createdBy: 'user-1',
+            createdAt: apr5,
+            updatedAt: apr5,
+          ),
+        );
+        when(
+          () => transactionRepository.updateRecurringRule(any()),
+        ).thenAnswer((_) async {});
+      },
+      build: () => RecurringCheckCubit(
+        transactionRepository: transactionRepository,
+        budgetId: 'budget-1',
+        userId: 'user-1',
+      ),
+      // Today = May 25. Apr 5 and May 5 are due; Jun 5 is not.
+      act: (cubit) => cubit.check(now: DateTime(2026, 5, 25)),
+      verify: (_) {
+        final captured = verify(
+          () => transactionRepository.createTransaction(
+            budgetId: any(named: 'budgetId'),
+            accountId: any(named: 'accountId'),
+            type: any(named: 'type'),
+            amount: any(named: 'amount'),
+            currency: any(named: 'currency'),
+            date: captureAny(named: 'date'),
+            createdBy: any(named: 'createdBy'),
+            envelopeId: any(named: 'envelopeId'),
+            payee: any(named: 'payee'),
+            notes: any(named: 'notes'),
+            recurringRuleId: any(named: 'recurringRuleId'),
+          ),
+        ).captured;
+        expect(captured, hasLength(2));
+        expect(captured[0], DateTime(2026, 4, 5));
+        expect(captured[1], DateTime(2026, 5, 5));
+        // Incremental cursor persistence — one update per posted cycle so
+        // partial progress survives a mid-loop failure.
+        final updateCaptured = verify(
+          () => transactionRepository.updateRecurringRule(captureAny()),
+        ).captured;
+        expect(updateCaptured, hasLength(2));
+        expect(
+          (updateCaptured[0] as RecurringRule).nextOccurrence,
+          DateTime(2026, 5, 5),
+        );
+        expect(
+          (updateCaptured.last as RecurringRule).nextOccurrence,
+          DateTime(2026, 6, 5),
+        );
+      },
+    );
+
+    blocTest<RecurringCheckCubit, RecurringCheckState>(
+      'manual-confirm rule lands in pendingRules once and does not advance',
+      setUp: () {
+        final apr5 = DateTime(2026, 4, 5);
+        when(
+          () => transactionRepository.watchRecurringRules('budget-1'),
+        ).thenAnswer(
+          (_) => Stream.value([
+            RecurringRule(
+              id: 'rule-manual',
+              budgetId: 'budget-1',
+              accountId: 'acc-1',
+              type: 'expense',
+              amount: 2000,
+              currency: 'USD',
+              frequency: 'monthly',
+              startDate: apr5,
+              nextOccurrence: apr5,
+              createdAt: apr5,
+            ),
+          ]),
+        );
+        when(
+          () => transactionRepository.watchBillReminders('budget-1'),
+        ).thenAnswer((_) => Stream.value([]));
+      },
+      build: () => RecurringCheckCubit(
+        transactionRepository: transactionRepository,
+        budgetId: 'budget-1',
+        userId: 'user-1',
+      ),
+      act: (cubit) => cubit.check(now: DateTime(2026, 5, 25)),
+      expect: () => [
+        const RecurringCheckState(isChecking: true),
+        isA<RecurringCheckState>()
+            .having((s) => s.pendingRules, 'pendingRules', hasLength(1))
+            .having((s) => s.isChecking, 'isChecking', false),
+      ],
+      verify: (_) {
+        verifyNever(
+          () => transactionRepository.createTransaction(
+            budgetId: any(named: 'budgetId'),
+            accountId: any(named: 'accountId'),
+            type: any(named: 'type'),
+            amount: any(named: 'amount'),
+            currency: any(named: 'currency'),
+            date: any(named: 'date'),
+            createdBy: any(named: 'createdBy'),
+            envelopeId: any(named: 'envelopeId'),
+            payee: any(named: 'payee'),
+            notes: any(named: 'notes'),
+            recurringRuleId: any(named: 'recurringRuleId'),
+          ),
+        );
+        verifyNever(
+          () => transactionRepository.updateRecurringRule(any()),
+        );
+      },
+    );
+
+    blocTest<RecurringCheckCubit, RecurringCheckState>(
+      'endDate clamps the catch-up loop',
+      setUp: () {
+        final apr5 = DateTime(2026, 4, 5);
+        when(
+          () => transactionRepository.watchRecurringRules('budget-1'),
+        ).thenAnswer(
+          (_) => Stream.value([
+            RecurringRule(
+              id: 'rule-end',
+              budgetId: 'budget-1',
+              accountId: 'acc-1',
+              type: 'expense',
+              amount: 2000,
+              currency: 'USD',
+              frequency: 'monthly',
+              startDate: apr5,
+              nextOccurrence: apr5,
+              createdAt: apr5,
+              autoPost: true,
+              endDate: DateTime(2026, 4, 20),
+            ),
+          ]),
+        );
+        when(
+          () => transactionRepository.watchBillReminders('budget-1'),
+        ).thenAnswer((_) => Stream.value([]));
+        when(
+          () => transactionRepository.createTransaction(
+            budgetId: any(named: 'budgetId'),
+            accountId: any(named: 'accountId'),
+            type: any(named: 'type'),
+            amount: any(named: 'amount'),
+            currency: any(named: 'currency'),
+            date: any(named: 'date'),
+            createdBy: any(named: 'createdBy'),
+            envelopeId: any(named: 'envelopeId'),
+            payee: any(named: 'payee'),
+            notes: any(named: 'notes'),
+            recurringRuleId: any(named: 'recurringRuleId'),
+          ),
+        ).thenAnswer(
+          (invocation) async => Transaction(
+            id: 'txn-end',
+            budgetId: 'budget-1',
+            accountId: 'acc-1',
+            type: 'expense',
+            amount: 2000,
+            currency: 'USD',
+            date: invocation.namedArguments[#date] as DateTime,
+            createdBy: 'user-1',
+            createdAt: apr5,
+            updatedAt: apr5,
+          ),
+        );
+        when(
+          () => transactionRepository.updateRecurringRule(any()),
+        ).thenAnswer((_) async {});
+      },
+      build: () => RecurringCheckCubit(
+        transactionRepository: transactionRepository,
+        budgetId: 'budget-1',
+        userId: 'user-1',
+      ),
+      act: (cubit) => cubit.check(now: DateTime(2026, 6, 25)),
+      verify: (_) {
+        final captured = verify(
+          () => transactionRepository.createTransaction(
+            budgetId: any(named: 'budgetId'),
+            accountId: any(named: 'accountId'),
+            type: any(named: 'type'),
+            amount: any(named: 'amount'),
+            currency: any(named: 'currency'),
+            date: captureAny(named: 'date'),
+            createdBy: any(named: 'createdBy'),
+            envelopeId: any(named: 'envelopeId'),
+            payee: any(named: 'payee'),
+            notes: any(named: 'notes'),
+            recurringRuleId: any(named: 'recurringRuleId'),
+          ),
+        ).captured;
+        // Only Apr 5 — May 5 is past endDate (Apr 20).
+        expect(captured, [DateTime(2026, 4, 5)]);
+      },
+    );
+
+    blocTest<RecurringCheckCubit, RecurringCheckState>(
+      'clamps customInterval <= 0 to 1 instead of looping forever',
+      setUp: () {
+        final apr5 = DateTime(2026, 4, 5);
+        when(
+          () => transactionRepository.watchRecurringRules('budget-1'),
+        ).thenAnswer(
+          (_) => Stream.value([
+            RecurringRule(
+              id: 'rule-zero',
+              budgetId: 'budget-1',
+              accountId: 'acc-1',
+              type: 'expense',
+              amount: 2000,
+              currency: 'USD',
+              frequency: 'custom',
+              customInterval: 0,
+              customUnit: 'days',
+              startDate: apr5,
+              nextOccurrence: apr5,
+              createdAt: apr5,
+              autoPost: true,
+            ),
+          ]),
+        );
+        when(
+          () => transactionRepository.watchBillReminders('budget-1'),
+        ).thenAnswer((_) => Stream.value([]));
+        when(
+          () => transactionRepository.createTransaction(
+            budgetId: any(named: 'budgetId'),
+            accountId: any(named: 'accountId'),
+            type: any(named: 'type'),
+            amount: any(named: 'amount'),
+            currency: any(named: 'currency'),
+            date: any(named: 'date'),
+            createdBy: any(named: 'createdBy'),
+            envelopeId: any(named: 'envelopeId'),
+            payee: any(named: 'payee'),
+            notes: any(named: 'notes'),
+            recurringRuleId: any(named: 'recurringRuleId'),
+          ),
+        ).thenAnswer(
+          (invocation) async => Transaction(
+            id: 'txn-z',
+            budgetId: 'budget-1',
+            accountId: 'acc-1',
+            type: 'expense',
+            amount: 2000,
+            currency: 'USD',
+            date: invocation.namedArguments[#date] as DateTime,
+            createdBy: 'user-1',
+            createdAt: apr5,
+            updatedAt: apr5,
+          ),
+        );
+        when(
+          () => transactionRepository.updateRecurringRule(any()),
+        ).thenAnswer((_) async {});
+      },
+      build: () => RecurringCheckCubit(
+        transactionRepository: transactionRepository,
+        budgetId: 'budget-1',
+        userId: 'user-1',
+      ),
+      act: (cubit) => cubit.check(now: DateTime(2026, 4, 7)),
+      verify: (_) {
+        // 3 daily posts: Apr 5, 6, 7 (clamp interval to 1).
+        verify(
+          () => transactionRepository.createTransaction(
+            budgetId: any(named: 'budgetId'),
+            accountId: any(named: 'accountId'),
+            type: any(named: 'type'),
+            amount: any(named: 'amount'),
+            currency: any(named: 'currency'),
+            date: any(named: 'date'),
+            createdBy: any(named: 'createdBy'),
+            envelopeId: any(named: 'envelopeId'),
+            payee: any(named: 'payee'),
+            notes: any(named: 'notes'),
+            recurringRuleId: any(named: 'recurringRuleId'),
+          ),
+        ).called(3);
+      },
+    );
+
+    blocTest<RecurringCheckCubit, RecurringCheckState>(
+      'aborts catch-up when cursor persistence fails',
+      setUp: () {
+        final apr5 = DateTime(2026, 4, 5);
+        when(
+          () => transactionRepository.watchRecurringRules('budget-1'),
+        ).thenAnswer(
+          (_) => Stream.value([
+            RecurringRule(
+              id: 'rule-persist',
+              budgetId: 'budget-1',
+              accountId: 'acc-1',
+              type: 'expense',
+              amount: 2000,
+              currency: 'USD',
+              frequency: 'monthly',
+              startDate: apr5,
+              nextOccurrence: apr5,
+              createdAt: apr5,
+              autoPost: true,
+            ),
+          ]),
+        );
+        when(
+          () => transactionRepository.watchBillReminders('budget-1'),
+        ).thenAnswer((_) => Stream.value([]));
+        when(
+          () => transactionRepository.createTransaction(
+            budgetId: any(named: 'budgetId'),
+            accountId: any(named: 'accountId'),
+            type: any(named: 'type'),
+            amount: any(named: 'amount'),
+            currency: any(named: 'currency'),
+            date: any(named: 'date'),
+            createdBy: any(named: 'createdBy'),
+            envelopeId: any(named: 'envelopeId'),
+            payee: any(named: 'payee'),
+            notes: any(named: 'notes'),
+            recurringRuleId: any(named: 'recurringRuleId'),
+          ),
+        ).thenAnswer(
+          (invocation) async => Transaction(
+            id: 'txn-p',
+            budgetId: 'budget-1',
+            accountId: 'acc-1',
+            type: 'expense',
+            amount: 2000,
+            currency: 'USD',
+            date: invocation.namedArguments[#date] as DateTime,
+            createdBy: 'user-1',
+            createdAt: apr5,
+            updatedAt: apr5,
+          ),
+        );
+        when(
+          () => transactionRepository.updateRecurringRule(any()),
+        ).thenThrow(const TransactionException('persist failed'));
+      },
+      build: () => RecurringCheckCubit(
+        transactionRepository: transactionRepository,
+        budgetId: 'budget-1',
+        userId: 'user-1',
+      ),
+      act: (cubit) => cubit.check(now: DateTime(2026, 5, 25)),
+      verify: (_) {
+        // First create succeeds, then updateRecurringRule throws — loop
+        // aborts before a second create attempt.
+        verify(
+          () => transactionRepository.createTransaction(
+            budgetId: any(named: 'budgetId'),
+            accountId: any(named: 'accountId'),
+            type: any(named: 'type'),
+            amount: any(named: 'amount'),
+            currency: any(named: 'currency'),
+            date: any(named: 'date'),
+            createdBy: any(named: 'createdBy'),
+            envelopeId: any(named: 'envelopeId'),
+            payee: any(named: 'payee'),
+            notes: any(named: 'notes'),
+            recurringRuleId: any(named: 'recurringRuleId'),
+          ),
+        ).called(1);
+        verify(
+          () => transactionRepository.updateRecurringRule(any()),
+        ).called(1);
+      },
     );
 
     blocTest<RecurringCheckCubit, RecurringCheckState>(

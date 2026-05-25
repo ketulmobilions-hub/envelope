@@ -14,18 +14,12 @@ class EnvelopeDetailCubit extends Cubit<EnvelopeDetailState> {
     required TransactionRepository transactionRepository,
     required BudgetRepository budgetRepository,
     required Envelope envelope,
-    EnvelopeAllocation? allocation,
     DateTime Function()? now,
   }) : _envelopeRepository = envelopeRepository,
        _transactionRepository = transactionRepository,
        _budgetRepository = budgetRepository,
        _now = now ?? DateTime.now,
-       super(
-         EnvelopeDetailState(
-           envelope: envelope,
-           allocation: allocation,
-         ),
-       ) {
+       super(EnvelopeDetailState(envelope: envelope)) {
     _transactionSubscription = transactionRepository
         .watchTransactions(
           budgetId: envelope.budgetId,
@@ -33,46 +27,29 @@ class EnvelopeDetailCubit extends Cubit<EnvelopeDetailState> {
           envelopeId: envelope.linkedAccountId == null ? envelope.id : null,
         )
         .listen((txns) {
-          if (_initialTransactionsLoaded && _currentPeriodId != null) {
-            unawaited(_refreshAllocations());
-          }
-          _initialTransactionsLoaded = true;
+          if (isClosed) return;
           emit(state.copyWith(transactions: txns));
+        });
+
+    _allocationsSubscription = _envelopeRepository
+        .watchAllocationsForEnvelope(envelope.id)
+        .listen((allocations) {
+          if (isClosed) return;
+          emit(state.copyWith(allocations: allocations));
         });
 
     _periodsSubscription = _budgetRepository
         .watchBudgetPeriods(envelope.budgetId)
         .listen((periods) {
-          final sortedPeriods = [...periods]
-            ..sort((a, b) => a.startDate.compareTo(b.startDate));
-
-          BudgetPeriod? selected;
-          if (sortedPeriods.isNotEmpty) {
-            final now = _now();
-            selected = sortedPeriods.firstWhere(
-              (p) =>
-                  !p.isClosed &&
-                  !p.startDate.isAfter(now) &&
-                  !p.endDate.isBefore(now),
-              orElse: () =>
-                  sortedPeriods.where((p) => !p.isClosed).lastOrNull ??
-                  sortedPeriods.last,
-            );
-          }
-
-          if (selected != null && _currentPeriodId != selected.id) {
-            _currentPeriodId = selected.id;
-            _allocationsSubscription?.cancel();
-            _allocationsSubscription = _envelopeRepository
-                .watchAllocations(selected.id)
-                .listen((allocations) {
-                  final alloc = allocations
-                      .where((a) => a.envelopeId == envelope.id)
-                      .firstOrNull;
-                  emit(state.copyWith(allocation: alloc));
-                });
-          }
+          if (isClosed) return;
+          emit(
+            state.copyWith(
+              periods: periods,
+              currentPeriodId: _selectCurrentPeriodId(periods),
+            ),
+          );
         });
+
     unawaited(_refreshTransactions());
   }
 
@@ -83,24 +60,30 @@ class EnvelopeDetailCubit extends Cubit<EnvelopeDetailState> {
   StreamSubscription<List<Transaction>>? _transactionSubscription;
   StreamSubscription<List<BudgetPeriod>>? _periodsSubscription;
   StreamSubscription<List<EnvelopeAllocation>>? _allocationsSubscription;
-  String? _currentPeriodId;
-  bool _initialTransactionsLoaded = false;
+
+  String? _selectCurrentPeriodId(List<BudgetPeriod> periods) {
+    if (periods.isEmpty) return null;
+    final now = _now();
+    final containing = BudgetRepository.periodForDate<BudgetPeriod>(
+      now,
+      periods,
+      startDate: (p) => p.startDate,
+      endDate: (p) => p.endDate,
+    );
+    if (containing != null) return containing.id;
+    // Fallback mirrors the previous behavior: latest non-closed period, or
+    // the most recent period overall.
+    final sorted = [...periods]
+      ..sort((a, b) => a.startDate.compareTo(b.startDate));
+    final openFallback = sorted.where((p) => !p.isClosed).lastOrNull;
+    return (openFallback ?? sorted.last).id;
+  }
 
   Future<void> _refreshTransactions() async {
     try {
       await _transactionRepository.refreshTransactions(state.envelope.budgetId);
     } on TransactionException {
       // Keep showing whatever is cached if refresh fails.
-    }
-  }
-
-  Future<void> _refreshAllocations() async {
-    final periodId = _currentPeriodId;
-    if (periodId == null) return;
-    try {
-      await _envelopeRepository.refreshAllocations(periodId);
-    } on EnvelopeException {
-      // Keep cached data if refresh fails.
     }
   }
 

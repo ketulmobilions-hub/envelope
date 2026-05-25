@@ -1,216 +1,298 @@
 # UX Improvement Suggestions — Envelope
 
-These suggestions are grounded in the current codebase. Each one is practical to implement and designed to make the experience feel more alive, personal, and effortless.
+Grounded in the current codebase. Each item names the existing files it builds on, the smallest viable scope, and a measurable success signal. Items are ordered for delivery in the "Implementation Order" section at the bottom — not by section number.
 
 ---
 
 ## 1. Floating Quick-Add Transaction Bubble
 
-**Problem:** Adding a transaction requires tapping the nav bar button and filling a full form. It's the #1 action in any budgeting app and costs too many taps.
+**Problem:** Adding a transaction takes too many taps — nav bar → full form page. Highest-frequency action in any budgeting app.
 
-**Idea:** A persistent floating action button that, when tapped, slides up a compact bottom sheet with only the 4 essentials: type chip, amount (big and centered), account, and envelope. Full form is accessible via "More options". This covers 80% of transactions in under 5 seconds.
+**Idea:** Persistent FAB → bottom sheet with 4 fields: type chip, amount (big, centered, autofocused), account, envelope. "More options" expands the rest. Covers ~80% of transactions in under 5s.
 
-**Why it works:** The transaction form already exists. The compact version is just a stripped-down entry point — same cubit, same submit logic, just a modal bottom sheet instead of a full page.
+**Build on:** `lib/transactions/cubit/transaction_form_cubit.dart`, `lib/transactions/view/transaction_form_page.dart`. Same cubit, new compact view.
+
+**Success signal:** Median time from FAB tap → transaction saved < 6s.
 
 ---
 
 ## 2. Dashboard "Budget Pulse" Card
 
-**Problem:** The dashboard shows raw numbers (ready-to-assign, envelopes, accounts) but gives no sense of how the user is *doing* this month at a glance.
+**Problem:** Dashboard shows raw numbers (ready-to-assign, envelopes, accounts). No glanceable read on how the month is going.
 
-**Idea:** A hero card at the top of the dashboard that shows a single, glanceable "budget health" summary. Not a score — something more human:
-- 🟢 "You're on track. 12 days left, $340 to spare."
-- 🟡 "A little tight. 3 envelopes are running low."
+**Idea:** Hero card with one human sentence:
+- 🟢 "On track. 12 days left, $340 to spare."
+- 🟡 "A little tight. 3 envelopes running low."
 - 🔴 "Overspent in 2 places. Ready to assign can help."
 
-Tap it to go directly to the relevant page (budget or cover-overspend flow).
+Tap → relevant page (budget or cover-overspend flow).
 
-**Why it works:** Users currently have to mentally process multiple numbers to understand their standing. This collapses it into one sentence.
+**Build on:** `lib/dashboard/widgets/`. Derive state from existing dashboard bloc — no new data.
+
+**Success signal:** Card tap-through > 20% of dashboard sessions.
 
 ---
 
-## 3. Animated Amount Transitions on the Dashboard
+## 3. Animated Amount Transitions
 
-**Problem:** When balances update (after a transaction, sync, etc.), the numbers just swap silently. The interface feels static.
+**Problem:** Balances swap silently after a transaction or sync. Feels static.
 
-**Idea:** When a monetary value changes on the dashboard, animate it — the number counts up or down smoothly (like an odometer). The Ready to Assign card would feel especially satisfying: as you allocate money, you watch it tick down toward zero.
+**Idea:** Odometer-style count animation on the Ready to Assign card and envelope tiles when their value changes. ~400ms with easing.
 
-**Why it works:** The animations are purely cosmetic — no logic changes. But they make the financial data feel *real* and *alive*, which builds trust and habit.
+**Build on:** `dashboard_ready_to_assign_card.dart`, `envelope_summary_card.dart`, `envelope_list_tile.dart`. Wrap the existing `Text` with an `AnimatedSwitcher` + `TweenAnimationBuilder<int>`. Pure cosmetic.
+
+**Success signal:** No perf regression on dashboard frame budget.
 
 ---
 
 ## 4. Envelope Spending Momentum Arrows
 
-**Problem:** An envelope showing "$120 available" tells you where you are, not where you're headed.
+**Problem:** "$120 available" tells you where you are, not where you're headed.
 
-**Idea:** On envelope cards and the dashboard summary, show a small directional indicator next to the available amount:
-- ↑ Trending under budget (pace is good for remaining days)
-- → Tracking right on budget
-- ↓ Trending over budget (at this pace, you'll run out before month end)
+**Idea:** Small directional indicator next to available amount:
+- ↑ Trending under budget
+- → On pace
+- ↓ Trending over
 
-Calculate it from: `spent_so_far / days_elapsed * total_days` vs `allocated`.
+Formula: `(spent_so_far / days_elapsed) * total_days` vs `allocated`. Threshold ±5% for the flat arrow.
 
-**Why it works:** This is unique in budgeting apps. It turns a snapshot into a forecast. Actionable before it's a problem.
+**Build on:** `envelope_card.dart`, `envelope_summary_card.dart`. Period dates already available from budget bloc.
+
+**Depends on:** None. Pairs well with #9 (spark line).
+
+**Success signal:** Users investigate envelopes with ↓ arrows at 2× the rate of others (tap-through tracking).
 
 ---
 
 ## 5. Envelope Color + Icon System
 
-**Problem:** All envelopes have a color dot, but they look nearly identical in the list. There's no visual personality.
+**Problem:** All envelopes look near-identical in lists. Color dot alone forces label-reading every time.
 
-**Idea:** Let users pick both a color and an icon (food 🍔, transport 🚗, entertainment 🎬, etc.) for each envelope. Show the icon inside a colored circle on list tiles, detail pages, and the transaction form dropdown.
+**Idea:** Icon + color circle per envelope. Show on list tiles, detail page, transaction form dropdown.
 
-**Why it works:** Icons make envelopes scannable at a glance — especially when opening the envelope dropdown while adding a transaction. The current color-only approach requires reading the label every time.
+**Build on:** `EnvelopeDto` already has `color`. **New work:** add `icon` field (string key) to `EnvelopeDto`, migration, and `IconPicker` widget on envelope create/edit. Use a curated set (~40 icons) to avoid bloating bundle.
+
+**Depends on:** Schema migration. Co-ordinate with sync layer.
+
+**Success signal:** > 60% of envelopes created post-launch have a non-default icon.
 
 ---
 
 ## 6. "Assign All" One-Tap on Ready to Assign
 
-**Problem:** When the user has money to assign, they have to navigate to the budget page and manually fill in amounts per envelope.
+**Problem:** With money to assign, user must navigate to budget page and fill in amounts per envelope.
 
-**Idea:** Long-pressing (or tapping a secondary button on) the Ready to Assign card shows a quick-assign bottom sheet:
-- A list of envelopes with their typical (last-period) allocations
-- A "Fill all to last period" shortcut that pre-fills every envelope to its previous allocation amount
-- The user just taps Confirm
+**Idea:** Long-press (or secondary button on) the Ready to Assign card opens a quick-assign sheet:
+- List of envelopes with last-period allocations
+- "Fill all to last period" pre-fills every row
+- Confirm
 
-**Why it works:** The `duplicatePreviousPeriod` logic already exists in the budget bloc. This surfaces it in the most natural place: right on the card that shows you have money waiting.
+**Build on:** `dashboard_ready_to_assign_card.dart`, `lib/budget/bloc/` already has `duplicatePreviousPeriod`. Surface it on the dashboard.
+
+**Success signal:** > 30% of new periods are allocated via this path within 14 days of launch.
 
 ---
 
 ## 7. Visual Budget Allocation — Drag-to-Allocate
 
-**Problem:** Allocating money to envelopes is a spreadsheet-like experience: you tap a text field, type a number, move to next. Feels like work.
+**Problem:** Allocation page = spreadsheet typing. Feels like work.
 
-**Idea:** In the budget page, each envelope row gets a thin swipeable bar (like a scrubber) below the text field. Swipe right to increase allocation, left to decrease. The Ready to Assign amount updates in real time as you drag. Tapping the field still opens the keyboard for precise input.
+**Idea:** Thin scrubber bar under each envelope row. Drag right/left to nudge allocation; Ready to Assign updates live. Tap field for precise input.
 
-**Why it works:** The allocation logic is already reactive. The drag is just an additional input method that makes rough budgeting feel fluid and satisfying.
+**Build on:** `lib/budget/view/`. Allocation logic already reactive — drag is just an input method.
+
+**Risk:** Accidental drags. Mitigation: require an initial vertical resistance threshold before the bar activates.
+
+**Success signal:** Drag used in > 25% of allocation sessions after 30 days.
 
 ---
 
 ## 8. Transaction Form — Payee Autocomplete from History
 
-**Problem:** The payee field is a plain text input. Users re-type "Starbucks" 40 times a year.
+**Problem:** Payee field is a plain text input. Users re-type "Starbucks" 40 times a year.
 
-**Idea:** As the user types in the payee field, show suggestions from previously used payees (queried from the transaction repository). Selecting a suggestion also pre-fills the envelope and amount from the last matching transaction.
+**Idea:** Suggestions from prior payees as the user types. Selecting a suggestion pre-fills envelope and amount from the last matching transaction. User can clear or override.
 
-**Why it works:** The data is already in the database. This is a pure UX layer — a `Autocomplete` widget wrapping the existing `TextFormField`, feeding from a repository query.
+**Build on:** `transaction_form_page.dart` + `transaction_form_cubit.dart`. New repository query: `distinctPayees(budgetId)` + `lastTransactionForPayee(payee)`. Wrap existing `TextFormField` in `Autocomplete`.
+
+**Success signal:** > 40% of transactions submitted use an autocompleted payee.
 
 ---
 
 ## 9. Envelope Detail — Spending Spark Line
 
-**Problem:** The envelope detail page shows a list of transactions but no visual spending pattern.
+**Problem:** Detail page is a flat transaction list. No visual pattern.
 
-**Idea:** At the top of the envelope detail page, show a small spark line (tiny line chart) of daily spending for the current period. A horizontal dashed line marks the daily "budget pace" (allocation / days in period). Peaks above the line jump out immediately.
+**Idea:** ~40px spark line at top of `envelope_detail_page.dart` — daily spend across the current period with a dashed reference line at `allocation / days_in_period`.
 
-**Why it works:** A 40px tall mini-chart communicates an entire month's pattern in one glance. No new data is needed — just a visual layer on top of existing transactions.
+**Build on:** Existing transactions list for the envelope. Use `fl_chart` (already in pubspec) or a minimal `CustomPainter`.
+
+**Depends on:** None.
+
+**Success signal:** Detail-page scroll-past rate decreases (spark line read above the fold).
 
 ---
 
-## 10. Month Heatmap on the Transactions Page
+## 10. Month Heatmap on Transactions Page
 
-**Problem:** The transaction list is a chronological scroll with date headers. Finding patterns ("I always overspend on weekends") requires memory.
+**Problem:** Chronological scroll. Patterns ("weekend overspend") invisible.
 
-**Idea:** Add a compact calendar heatmap view toggle on the transactions page (alongside the existing filter bar). Each day is a small colored square — intensity based on how much was spent that day. Tap a day to scroll the list to that date.
+**Idea:** Toggle between list and a compact calendar heatmap. Each day is a colored square — intensity = spend. Tap a day → scrolls list to that date.
 
-**Why it works:** Heatmaps are visually striking and reveal patterns that lists never can. This is the kind of feature that makes users say "wow, I never noticed that."
+**Build on:** `transactions_page.dart`. Reuse existing filter bar slot for the toggle.
+
+**Risk:** Heatmap needs aggregation by day across visible filter set. Cache per filter hash.
+
+**Success signal:** Toggle used at least once by > 25% of MAU.
 
 ---
 
 ## 11. Bill Reminder — "Paid This Month" Tracking
 
-**Problem:** After paying a bill via the Pay form, the bill reminder stays in the list looking exactly the same. There's no sense of completion.
+**Problem:** After paying a bill, the reminder stays in the list with no change. No sense of completion.
 
-**Idea:** After a bill is paid, mark it with a "Paid" badge (green checkmark) for the rest of the current billing cycle. It moves to the bottom of the list. At the start of the next cycle, the badge clears automatically.
+**Idea:** "Paid" badge on the reminder for the rest of the current billing cycle. Move to bottom. Auto-clears at next cycle.
 
-**Why it works:** Without this, the list is meaningless after paying — users don't know what's done and what isn't. The data model needs a `lastPaidDate` field on `BillReminder`, and the UI just compares it to the current billing period.
+**Build on:** `BillReminderDto` in `packages/envelope_api_client/lib/src/models/bill_reminder_dto.dart`. **New work:** add `last_paid_date` column + DTO field, expose in repository. UI compares it to the current cycle window derived from `dueDay` + `frequency`.
 
----
+**Depends on:** Schema migration on `bill_reminders` table. Coordinate with sync (Supabase).
 
-## 12. Overspend Recovery — Guided Flow Instead of Dialog
-
-**Problem:** The "cover overspend" dialog drops users into a standalone screen with a dropdown. If they don't understand envelopes, they don't know what to do.
-
-**Idea:** Replace the dialog with a bottom sheet that shows:
-1. A brief explanation: "You spent $12 more than your Food envelope had."
-2. Visual cards for each funding source (Ready to Assign first, then other envelopes with available funds), showing the available amount
-3. A large "Use this" button per card — one tap covers the overspend
-
-**Why it works:** The current flow requires understanding what "covering" means. The new flow shows options visually and makes the action obvious. The existing cover logic (`showCoverOverspendDialog`) can be replaced with this bottom sheet.
+**Success signal:** Reduced "is this bill paid?" support questions; less than 5% of paid bills marked paid manually within the same cycle (i.e., system catches them automatically when posted via Pay form).
 
 ---
 
-## 13. Onboarding — Skip to Pre-Built Budget Templates
+## 12. Overspend Recovery — Guided Bottom Sheet
 
-**Problem:** The onboarding wizard asks new users to create category groups and envelopes from scratch. Most users don't know where to start.
+**Problem:** `cover_overspend_dialog.dart` drops the user on a dropdown. If "covering" is unfamiliar, the screen is opaque.
 
-**Idea:** On the envelope setup step, offer 3-4 pre-built budget templates:
+**Idea:** Replace dialog with a bottom sheet:
+1. One-sentence explanation: "Food envelope is $12 short."
+2. Cards per funding source (Ready to Assign first, then envelopes with available funds), each with available amount and a single "Use this" button.
+3. Tap → cover, dismiss.
+
+**Build on:** `lib/transactions/widgets/cover_overspend_dialog.dart`. Logic stays; presentation changes.
+
+**Success signal:** Time-to-cover under 10s; first-time users complete the flow without backing out.
+
+---
+
+## 13. Onboarding — Pre-Built Budget Templates
+
+**Problem:** Wizard asks new users to create category groups and envelopes from scratch. Hardest part of budgeting is knowing *what* to budget.
+
+**Idea:** On the envelope setup step, offer templates:
 - **Essentials:** Rent, Food, Transport, Utilities, Savings
 - **Young Professional:** Coffee, Dining, Subscriptions, Gym, Travel, Savings
 - **Family:** Groceries, Kids, School, Healthcare, Entertainment, Savings
 - **Custom:** Start from scratch
 
-User picks a template → envelopes pre-populate. They can delete, rename, or add more. The onboarding step becomes 2 taps instead of 10.
+Pick → envelopes pre-populated, editable.
 
-**Why it works:** Reduces onboarding friction dramatically. The hardest part for new budgeters is knowing *what* to budget. Templates answer that.
+**Build on:** `lib/onboarding/`. Template = static map of `{groupName: [envelopeName, defaultIcon, defaultColor]}`.
+
+**Depends on:** #5 (icon system) if templates ship with icons. Otherwise color-only.
+
+**Success signal:** Onboarding completion rate +10pp; median time on envelope step -50%.
 
 ---
 
-## 14. Home Page — Adaptive Layout Based on Time of Month
+## 14. Home — Adaptive Layout by Time of Month
 
-**Problem:** The dashboard looks the same on day 1 of a month (user needs to allocate) as it does on day 25 (user needs to track spending).
+**Problem:** Dashboard looks identical on day 1 (need to allocate) and day 25 (need to track spend).
 
-**Idea:** Subtle but meaningful card ordering based on context:
-- **Early in period (days 1-5):** Ready to Assign card is prominent and pulsing if money is unallocated. "Time to budget!" nudge.
-- **Mid period (days 6-20):** Envelope spending cards take priority. Momentum arrows are front and center.
-- **Late in period (days 21+):** Recent transactions + overspent envelopes highlighted. "How's your month going?" summary.
+**Idea:** Re-order existing cards conditionally:
+- **Days 1–5:** Ready to Assign card prominent + nudge if unallocated funds exist.
+- **Days 6–20:** Envelope spending cards rise; momentum arrows visible.
+- **Days 21+:** Recent transactions + overspent envelopes highlighted.
 - **Bill due within 3 days:** Bills banner auto-expands.
 
-**Why it works:** A budgeting app should feel like it knows where you are in your financial month. This requires no new data — just re-ordering existing cards and showing/hiding call-outs conditionally.
+**Build on:** Dashboard composition. No new data — pure layout logic keyed off `DateTime.now()` vs current period.
+
+**Depends on:** #2 (Budget Pulse) shares the same dashboard real estate — decide ordering between them.
+
+**Success signal:** Increased dashboard dwell time without increased nav-back rate.
 
 ---
 
 ## 15. Satisfying Micro-Interactions
 
-**Problem:** The app does its job but doesn't reward good behavior. Budgeting feels like a chore.
+**Problem:** App works but doesn't reward use. Budgeting is emotionally taxing.
 
-**Ideas (small, high-impact):**
-- **Haptic feedback** when an allocation is saved, a transaction is submitted, or an envelope hits zero (budget fully used).
-- **Confetti burst** (small, tasteful) when all money is assigned (Ready to Assign = $0).
-- **"Envelope full" visual** — when an envelope's spending bar hits 100%, it locks with a gentle animation.
-- **Streak counter** — "You've logged transactions for 7 days in a row."
+**Ideas (small, individually shippable):**
+- Haptic on allocation save, transaction submit, envelope hits zero (`HapticFeedback.lightImpact`).
+- Tasteful confetti when Ready to Assign hits $0 (gated to once per period to avoid annoyance).
+- "Envelope full" lock animation at 100% spend.
+- Streak counter: "Logged transactions for 7 days in a row."
 
-**Why it works:** These are tiny moments that make users *feel* something. Budgeting is emotionally hard. Small celebrations make it rewarding rather than punishing.
+**Build on:** Flutter `HapticFeedback` + a small particle package. Streak = a `DateTime?` field on user settings + derived count.
 
----
+**Risk:** Over-rewarding. Each micro-interaction lands behind a feature flag so we can A/B and pull individually.
 
-## 16. Goals — Link to Envelope with Progress Sync
-
-**Problem:** Goals and envelopes are separate. A user saving for a vacation creates a goal AND might have a "Vacation" envelope — but they're not connected.
-
-**Idea:** When creating a goal, allow linking it to an envelope. The goal's progress automatically reflects the envelope's accumulated balance. The goal detail page shows the envelope's allocation history as a contribution timeline.
-
-**Why it works:** Goals are motivation; envelopes are mechanics. Connecting them makes the system coherent and turns abstract saving into tangible progress.
+**Success signal:** D7 retention +2pp on cohorts exposed to micro-interactions.
 
 ---
 
-## Priority Order (Effort vs. Impact)
+## 16. Goals — Auto-Sync Progress from Linked Envelope
 
-| # | Suggestion | Effort | Impact |
-|---|-----------|--------|--------|
-| 2 | Budget Pulse card | Low | High |
-| 3 | Animated amount transitions | Low | High |
-| 6 | "Assign All" one-tap | Low | High |
-| 8 | Payee autocomplete | Low | High |
-| 11 | Bill "Paid" badge | Medium | High |
-| 5 | Envelope icon system | Medium | High |
-| 13 | Onboarding templates | Medium | High |
-| 15 | Micro-interactions | Low | Medium |
-| 1 | Quick-add bottom sheet | Medium | Medium |
-| 4 | Momentum arrows | Medium | Medium |
-| 9 | Spark line on envelope | Medium | Medium |
-| 12 | Guided overspend flow | Medium | Medium |
-| 14 | Adaptive home layout | Medium | Medium |
-| 7 | Drag-to-allocate | High | Medium |
-| 10 | Month heatmap | High | Medium |
-| 16 | Goals ↔ envelope link | High | Medium |
+**Problem:** Goals exist independently from envelopes. A "Vacation" envelope and a "Vacation" goal are two parallel ledgers.
+
+**Idea:** When a goal is linked to an envelope, `currentAmount` is computed from the envelope's accumulated balance instead of being manually maintained. Goal detail shows allocation history as a contribution timeline.
+
+**Build on:** `GoalDto` **already has `envelopeId`** (`packages/envelope_api_client/lib/src/models/goal_dto.dart:18`). The schema is in place. **New work:** repository read path that prefers envelope-derived progress when `envelopeId != null`; UI to set the link on goal create/edit.
+
+**Depends on:** None — schema ready.
+
+**Success signal:** > 30% of new goals created with an envelope link.
+
+---
+
+## Implementation Order
+
+Grouped into shippable sprints. Within a sprint, items can ship in any order — they don't depend on each other.
+
+### Sprint 1 — Quick wins, low risk, no schema change
+- **#3** Animated amounts
+- **#6** Assign All on Ready to Assign
+- **#8** Payee autocomplete
+- **#12** Guided overspend bottom sheet
+- **#15** Micro-interactions (behind flags)
+
+### Sprint 2 — Higher impact, still no schema change
+- **#2** Budget Pulse card
+- **#4** Momentum arrows
+- **#9** Spark line on envelope detail
+- **#14** Adaptive home layout
+- **#16** Goal ↔ envelope auto-sync (schema already in place)
+
+### Sprint 3 — Requires schema migration
+- **#5** Envelope icon field
+- **#11** Bill `last_paid_date` field
+- **#13** Onboarding templates (uses #5 icons)
+
+### Sprint 4 — Larger UI investments
+- **#1** Quick-add bottom sheet
+- **#7** Drag-to-allocate
+- **#10** Month heatmap
+
+---
+
+## Priority Reference
+
+| # | Suggestion | Effort | Impact | Notes |
+|---|-----------|--------|--------|-------|
+| 3 | Animated amounts | Low | High | Cosmetic, pure win |
+| 6 | Assign All | Low | High | Reuses existing bloc method |
+| 8 | Payee autocomplete | Low | High | Add 2 repo queries |
+| 12 | Guided overspend | Low | High | Dialog → bottom sheet swap |
+| 2 | Budget Pulse | Low | High | Derived state only |
+| 16 | Goal↔envelope sync | Low | High | Schema ready, UI + read path |
+| 15 | Micro-interactions | Low | Medium | Ship behind flags |
+| 4 | Momentum arrows | Medium | High | Forecast adds real value |
+| 9 | Spark line | Medium | Medium | `fl_chart` already available |
+| 11 | Bill "Paid" badge | Medium | High | Needs migration |
+| 5 | Envelope icons | Medium | High | Needs migration + picker |
+| 13 | Onboarding templates | Medium | High | Friction killer |
+| 14 | Adaptive home | Medium | Medium | Coordinate with #2 |
+| 1 | Quick-add sheet | Medium | High | Reuses form cubit |
+| 7 | Drag-to-allocate | High | Medium | Gesture tuning risk |
+| 10 | Month heatmap | High | Medium | Aggregation + UI work |

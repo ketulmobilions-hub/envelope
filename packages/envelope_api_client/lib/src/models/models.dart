@@ -21,4 +21,5 @@ export 'sync_metadata_dto.dart';
 export 'tag_dto.dart';
 export 'transaction_dto.dart';
 export 'transaction_split_dto.dart';
+export 'transaction_template_dto.dart';
 export 'user_dto.dart';

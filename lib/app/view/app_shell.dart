@@ -1,23 +1,22 @@
 import 'dart:async';
 
-import 'package:account_repository/account_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/app/routes/app_router.dart';
+import 'package:envelope/app/view/quick_add_speed_dial.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
 import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/widgets/debug_clock_banner.dart';
+import 'package:envelope/transactions/view/quick_add_transaction_sheet.dart';
+import 'package:envelope/transactions/view/transfer_form_sheet.dart';
 import 'package:flutter/foundation.dart';
-import 'package:envelope/transactions/cubit/cubit.dart';
-import 'package:envelope/transactions/view/transaction_form_page.dart';
-import 'package:envelope_repository/envelope_repository.dart';
+import 'package:transaction_repository/transaction_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:transaction_repository/transaction_repository.dart';
 
 /// Breakpoint for switching between bottom nav and side rail.
 const double _wideBreakpoint = 900;
@@ -39,15 +38,12 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell>
     with SingleTickerProviderStateMixin {
-  /// Tab index 2 is the "add transaction" action, not a route.
-  static const int _addTransactionIndex = 2;
-
-  static const List<String?> _tabs = [
+  static const List<String> _tabs = [
     '/home',
     '/transactions',
-    null, // placeholder for add transaction button
     '/accounts',
     '/goals',
+    '/reports',
   ];
 
   late final AnimationController _controller;
@@ -93,19 +89,13 @@ class _AppShellState extends State<AppShell>
   int _selectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     for (var i = 0; i < _tabs.length; i++) {
-      final tab = _tabs[i];
-      if (tab != null && location.startsWith(tab)) return i;
+      if (location.startsWith(_tabs[i])) return i;
     }
     return 0;
   }
 
   void _onDestinationSelected(BuildContext context, int index) {
-    if (index == _addTransactionIndex) {
-      unawaited(_openAddTransaction(context));
-      return;
-    }
     final route = _tabs[index];
-    if (route == null) return;
 
     ScaffoldMessenger.of(context).clearSnackBars();
 
@@ -118,7 +108,11 @@ class _AppShellState extends State<AppShell>
     context.go('$route?budgetId=$budgetId');
   }
 
-  Future<void> _openAddTransaction(BuildContext context) async {
+  Future<void> _openAddTransaction(
+    BuildContext context, {
+    String? initialType,
+    TransactionTemplate? initialTemplate,
+  }) async {
     final authState = context.read<AuthBloc>().state;
     final user = authState.user;
     if (user == null) return;
@@ -135,36 +129,54 @@ class _AppShellState extends State<AppShell>
 
     if (!context.mounted) return;
 
-    unawaited(
-      Navigator.of(context).push<bool>(
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => BlocProvider(
-            create: (_) => TransactionFormCubit(
-              transactionRepository: context.read<TransactionRepository>(),
-              accountRepository: context.read<AccountRepository>(),
-              envelopeRepository: context.read<EnvelopeRepository>(),
-              budgetRepository: context.read<BudgetRepository>(),
-              budgetId: budgetId,
-              budgetPeriodId: periodId,
-              userId: user.id,
-              now: appClock.now,
-            ),
-            child: const TransactionFormPage(),
-          ),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return SlideTransition(
-              position:
-                  Tween<Offset>(
-                    begin: const Offset(0, 1),
-                    end: Offset.zero,
-                  ).animate(
-                    CurvedAnimation(parent: animation, curve: Curves.easeInOut),
-                  ),
-              child: child,
-            );
-          },
-        ),
-      ),
+    await showTransactionFormSheet(
+      context,
+      budgetId: budgetId,
+      budgetPeriodId: periodId,
+      userId: user.id,
+      initialType: initialType,
+      initialTemplate: initialTemplate,
+    );
+  }
+
+  Future<void> _pickTemplateAndOpen(BuildContext context) async {
+    final baseCurrency =
+        context.read<AuthBloc>().state.user?.baseCurrency ?? 'USD';
+    final budgetId =
+        context.read<SharedPreferences>().getString(activeBudgetIdKey) ?? '';
+    final templates = await context
+        .read<TransactionRepository>()
+        .getTransactionTemplates(budgetId);
+    if (!context.mounted) return;
+    final picked = await showTemplatePickerSheet(
+      context,
+      templates: templates,
+      baseCurrency: baseCurrency,
+    );
+    if (picked == null || !context.mounted) return;
+    await _openAddTransaction(context, initialTemplate: picked);
+  }
+
+  Future<void> _openTransfer(BuildContext context) async {
+    final authState = context.read<AuthBloc>().state;
+    final user = authState.user;
+    if (user == null) return;
+
+    final budgetId =
+        context.read<SharedPreferences>().getString(activeBudgetIdKey) ?? '';
+    final appClock = context.read<AppClock>();
+    final periodId = await _getCurrentPeriodId(
+      context.read<BudgetRepository>(),
+      budgetId,
+      now: appClock.now(),
+    );
+
+    if (!context.mounted) return;
+    await showTransferFormSheet(
+      context,
+      budgetId: budgetId,
+      budgetPeriodId: periodId,
+      userId: user.id,
     );
   }
 
@@ -203,17 +215,17 @@ class _AppShellState extends State<AppShell>
         LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit2):
             const _NavigateTabIntent(1),
         LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit3):
-            const _NavigateTabIntent(3),
+            const _NavigateTabIntent(2),
         LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.digit4):
-            const _NavigateTabIntent(4),
+            const _NavigateTabIntent(3),
         LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.digit1):
             const _NavigateTabIntent(0),
         LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.digit2):
             const _NavigateTabIntent(1),
         LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.digit3):
-            const _NavigateTabIntent(3),
+            const _NavigateTabIntent(2),
         LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.digit4):
-            const _NavigateTabIntent(4),
+            const _NavigateTabIntent(3),
       },
       child: Actions(
         actions: <Type, Action<Intent>>{
@@ -255,6 +267,21 @@ class _AppShellState extends State<AppShell>
 
               return Scaffold(
                 body: animatedChild,
+                floatingActionButton: QuickAddSpeedDial(
+                  tooltip: l10n.transactionsAddTransaction,
+                  expenseLabel: l10n.transactionsTypeExpense,
+                  incomeLabel: l10n.transactionsTypeIncome,
+                  transferLabel: l10n.transactionsTypeTransfer,
+                  onExpense: () => unawaited(
+                    _openAddTransaction(context, initialType: 'expense'),
+                  ),
+                  onIncome: () => unawaited(
+                    _openAddTransaction(context, initialType: 'income'),
+                  ),
+                  onTransfer: () => unawaited(_openTransfer(context)),
+                  onLongPress: () =>
+                      unawaited(_pickTemplateAndOpen(context)),
+                ),
                 bottomNavigationBar: NavigationBar(
                   labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
                   selectedIndex: selectedIndex,
@@ -283,11 +310,6 @@ class _AppShellState extends State<AppShell>
         label: l10n.transactionsTitle,
       ),
       NavigationDestination(
-        icon: const Icon(Icons.add_circle_outline, size: 32),
-        selectedIcon: const Icon(Icons.add_circle, size: 32),
-        label: l10n.transactionsAddTransaction,
-      ),
-      NavigationDestination(
         icon: const Icon(Icons.account_balance_outlined),
         selectedIcon: const Icon(Icons.account_balance),
         label: l10n.accountsTitle,
@@ -296,6 +318,11 @@ class _AppShellState extends State<AppShell>
         icon: const Icon(Icons.flag_outlined),
         selectedIcon: const Icon(Icons.flag),
         label: l10n.goalsTitle,
+      ),
+      NavigationDestination(
+        icon: const Icon(Icons.bar_chart_outlined),
+        selectedIcon: const Icon(Icons.bar_chart),
+        label: l10n.reportsTitle,
       ),
     ];
   }
@@ -319,20 +346,12 @@ class _WideLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Map the 5-item tab list (with null at index 2) to NavigationRail
-    // destinations, skipping the add-transaction placeholder.
-    final railIndex = selectedIndex > 2 ? selectedIndex - 1 : selectedIndex;
-
     return Scaffold(
       body: Row(
         children: [
           NavigationRail(
-            selectedIndex: railIndex,
-            onDestinationSelected: (index) {
-              // Map rail index back to tab index (skip index 2).
-              final tabIndex = index >= 2 ? index + 1 : index;
-              onDestinationSelected(tabIndex);
-            },
+            selectedIndex: selectedIndex,
+            onDestinationSelected: onDestinationSelected,
             labelType: NavigationRailLabelType.all,
             leading: FloatingActionButton(
               onPressed: onAddTransaction,
@@ -358,6 +377,11 @@ class _WideLayout extends StatelessWidget {
                 icon: const Icon(Icons.flag_outlined),
                 selectedIcon: const Icon(Icons.flag),
                 label: Text(l10n.goalsTitle),
+              ),
+              NavigationRailDestination(
+                icon: const Icon(Icons.bar_chart_outlined),
+                selectedIcon: const Icon(Icons.bar_chart),
+                label: Text(l10n.reportsTitle),
               ),
             ],
           ),

@@ -47,12 +47,12 @@
 
 | # | Test Case | Steps | Expected |
 |---|---|---|---|
-| TC-S-01.1 | First-time onboarding (zero financial literacy) | Install app → sign up email → onboarding wizard → pick INR → add SBI savings (starting ₹15K), ICICI checking (₹0), HDFC CC (limit ₹50K, balance ₹5K) → accept default category groups (Bills, Food, Transport, Personal) → skip allocation | Budget created with 3 accounts, 1 DebtAccount with creditLimit, default envelopes seeded, CC Payment envelope auto-linked to HDFC, RTA = ₹15K (savings starting balance treated as starting income — verify documented behavior) |
-| TC-S-01.2 | First salary credit + save Allocation Template | Day 1 of month: log income ₹65K to ICICI → allocate Rent ₹0 (parents), Food ₹8K, Transport ₹4K, Personal ₹6K, Family Support ₹10K, Savings Goal ₹15K, Buffer ₹22K → save current allocation as "Monthly Plan" template | RTA drops to ₹15K after allocation (₹15K starting + ₹65K salary − ₹65K allocated; the ₹15K SBI starting balance remains unbudgeted as a passive cushion); AllocationTemplate persisted with 7 items; envelopes show allocated amounts; template re-applicable next month |
+| TC-S-01.1 | First-time onboarding (zero financial literacy) | Install app → sign up email → onboarding wizard → pick INR → add SBI savings (starting ₹15K), ICICI checking (₹0), HDFC CC (limit ₹50K, balance ₹5K) → accept default category groups (Bills, Food, Transport, Personal) → skip allocation | Budget created with 3 accounts, 1 DebtAccount with `creditLimit`, default envelopes seeded, CC Payment envelope auto-linked to HDFC. RTA = ₹15K — on-budget starting balance is pushed into `totalIncome` via `addIncomeToCurrentPeriod` (`lib/accounts/cubit/account_form_cubit.dart:88`), so it is budgetable income, not a passive cushion |
+| TC-S-01.2 | First salary credit + save Allocation Template | Day 1 of month: log income ₹65K to ICICI → allocate Rent ₹0 (parents), Food ₹8K, Transport ₹4K, Personal ₹6K, Family Support ₹10K, Savings Goal ₹15K, Buffer ₹22K → save current allocation as "Monthly Plan" template | After income: `totalIncome = ₹80K` (₹15K starting + ₹65K salary), allocations sum ₹65K, RTA = ₹15K. `AllocationTemplate` persisted with 7 `AllocationTemplateItem` rows storing **percentage** per envelope (not absolute amounts) — re-applying next month re-derives rupee amounts from then-current RTA |
 | TC-S-01.3 | UPI grocery run + immediate dashboard refresh | Open app at supermarket → add expense ₹2400 → account ICICI → envelope Food → payee "More Hypermarket" → save → return to dashboard | Per recent commit `04222e4`, spentAmount increments optimistically before sync confirms; Food envelope shows ₹5600 available; ICICI balance drops |
 | TC-S-01.4 | First CC swipe + understand CC Payment envelope | At restaurant: add expense ₹1200 → account HDFC CC → envelope Food → save → open dashboard CC Payment envelope | Food envelope drops by ₹1200 (allocation deducts); HDFC CC account balance increases to ₹6200 owed; CC Payment envelope shows ₹1200 needed; RTA unchanged (no double-deduction per `1e52944`) |
 | TC-S-01.5 | Forgot to log expenses, bulk back-fill 5 days | Day 6: add 6 transactions back-dated to days 2–5 (groceries ₹450, auto ₹120, coffee ₹250 ×3, Zomato ₹680) | All 6 transactions accept past dates within current period; spentAmount aggregates correctly across envelopes; period totalIncome unchanged |
-| TC-S-01.6 | Refund / return — first encounter | Returns shirt to Myntra ₹1499 → user unsure how to log → adds income transaction "Myntra refund" to ICICI → categorizes against Personal envelope | Transaction type=income with envelopeId=Personal; envelope spentAmount decrements; flag UX confusion if behavior is unclear to a first-timer |
+| TC-S-01.6 | Refund / return — first encounter | Returns shirt to Myntra ₹1499 → user unsure how to log → adds income transaction "Myntra refund" to ICICI → categorizes against Personal envelope | Refund pattern: income transaction with `envelopeId = original expense envelope`. Envelope `spentAmount` decrements; ICICI balance increments. No dedicated refund UI in v1.0 — pattern works but is undocumented in-app; flag as UX gap for first-timers |
 | TC-S-01.7 | CC payment from savings (transfer) | End of month: pays ₹6200 from ICICI checking → CC HDFC payment as a transfer | Transfer transaction with transferPairId; ICICI balance −₹6200; HDFC CC account balance ₹0; CC Payment envelope drains to ₹0 |
 | TC-S-01.8 | First month-end dashboard review | Open Reports → spending by category → trend view | SpendingReport shows category totals; donut chart renders; user identifies biggest envelope (likely Food); experience reinforces continued use |
 
@@ -67,12 +67,12 @@
 | TC-S-02.1 | Shared budget setup + invite spouse | Priya creates "Iyer Household" budget → adds joint Kotak + 3 CCs → invites Karthik via email as Editor → Karthik accepts on his device | BudgetMember created; activity log entry "Karthik joined"; both can see same budget on respective devices via Supabase realtime |
 | TC-S-02.2 | Annual bills broken into monthly funding | Set up Goals: Life Insurance ₹35K target Aug 15, monthly ₹3K from Sep onward; Health Insurance ₹28K target Mar 1, monthly ₹2.5K; School Fee ₹1.2L target Apr 1, monthly ₹10K | 3 Goals created with targetDate + monthlyContribution; envelopes accumulate via monthly allocation; Goals view shows progress bars |
 | TC-S-02.3 | Quarterly bonus arrives — windfall allocation | Priya logs income ₹1.5L bonus → RTA spikes → allocates: ₹60K home loan prepay envelope, ₹45K daughter education FD (envelope dump → manual transfer to off-budget account), ₹30K vacation goal contribution, ₹15K spread across discretionary | RTA = 0 after allocation; Vacation goal currentAmount += ₹30K; envelopes reflect; activity log shows allocation changes |
-| TC-S-02.4 | Concurrent edit conflict — both editing dashboard | Priya allocates ₹2K to Dining at the same instant Karthik allocates ₹3K to the same envelope from his phone | Realtime sync resolves; final allocation reflects last-write or sum (verify documented behavior); activity log records both attempts; no data corruption |
+| TC-S-02.4 | Concurrent edit conflict — both editing dashboard | Priya allocates ₹2K to Dining at the same instant Karthik allocates ₹3K to the same envelope from his phone | Supabase Realtime resolves with **last-write-wins** semantics (no explicit conflict UI in v1.0). Final allocation reflects whichever write reached the server last (₹2K or ₹3K, not the sum). Activity log records both attempts; no data corruption |
 | TC-S-02.5 | Husband uses joint CC, wife sees in real-time | Karthik buys furniture ₹8K on HDFC Regalia (joint CC) → on his device, logs expense to Home envelope | Priya's dashboard updates within sync interval; Home envelope shows new spent; CC Payment envelope grows; collaborator snackbar shown to Priya (suppressed for Karthik) |
-| TC-S-02.6 | Bill reminder fires for life insurance premium | 7 days before Aug 15: app sends push notification "Life Insurance ₹35K due in 7 days" → Priya opens BillReminder → confirms Goal funded → marks paid | BillReminder triggers per reminderDaysBefore=7; Goal currentAmount ≥ targetAmount; payment transaction posted; Goal isCompleted=true |
+| TC-S-02.6 | Bill reminder fires for life insurance premium | 7 days before Aug 15: open app → in-app bill reminder surfaces "Life Insurance ₹35K due in 7 days" → Priya confirms Goal funded → marks paid | Detection via `RecurringCheckCubit._isBillUpcoming` (`reminderDaysBefore=7`) fires on app open. **Push delivery is not client-dispatched** — requires Supabase Edge Function / Cloud Function (verify backend cron shipped before relying on push). Goal `currentAmount ≥ targetAmount`; payment transaction posted; `isCompleted=true` |
 | TC-S-02.7 | Diwali festival overspend + move-money | Diwali month: Priya allocates ₹25K to Festival envelope but spends ₹38K (gifts ₹20K + clothes ₹12K + sweets ₹6K) → envelope goes negative ₹13K | Festival envelope shows red overspent state; Priya uses move-money to reallocate ₹13K from Vacation envelope; Festival back to ₹0; Vacation drops |
 | TC-S-02.8 | Maid + cook cash payments | Withdraws ₹20K from Kotak ATM → adds to "Cash" cash account → daily expenses ₹15K total to Maid Salary envelope across 30 entries | Cash account decrements per expense; reconciles to ₹5K end-of-month |
-| TC-S-02.9 | Year-end review with spouse | Both open Reports → BudgetVsActual for the year → SpendingReport top categories → NetWorthSnapshot trend | Charts render with full year data; both see same numbers via realtime; export PDF (within current capability — confirm export works) |
+| TC-S-02.9 | Year-end review with spouse | Both open Reports → BudgetVsActual for the year → SpendingReport top categories → NetWorthSnapshot trend | Charts render with full year data; both see same numbers via realtime. Export CSV/PDF via `lib/reports/view/export_report_page.dart` — platform impls stubbed in places, verify per platform (iOS/Android/Web) |
 
 ---
 
@@ -99,11 +99,11 @@
 | # | Test Case | Steps | Expected |
 |---|---|---|---|
 | TC-S-04.1 | Son sets up app remotely via shared budget | Arjun creates "Amma Budget" → invites Lakshmi as Editor → configures envelopes + accounts (SBI savings, cash) → Lakshmi installs on her phone, accepts | Both have access; activity log shows Arjun's setup actions; Lakshmi can edit |
-| TC-S-04.2 | Two recurring incomes on different days | Set up RecurringRule: Pension ₹35K on day 5 monthly autoPost=true; FD Interest ₹15K on day 15 monthly autoPost=true | On 5th + 15th, transactions auto-post (verify autoPost actually fires — flagged TODO area); RTA increments accordingly |
+| TC-S-04.2 | Two recurring incomes on different days | Set up RecurringRule: Pension ₹35K on day 5 monthly autoPost=true; FD Interest ₹15K on day 15 monthly autoPost=true | `autoPost` fires via `RecurringCheckCubit.check()` when the app is opened/foregrounded on or after the due date — **not a background scheduler**. Verify by launching app on/after day 5 and day 15. Transaction posts, `addIncomeToCurrentPeriod` increments RTA, `nextOccurrence` advances atomically |
 | TC-S-04.3 | Hospital bill with later insurance reimbursement | Day 10: ₹18K hospital bill expense to Healthcare envelope → Day 25: insurance reimburses ₹15K to SBI savings → log as income to Healthcare envelope | Healthcare spent shows ₹18K; reimbursement reduces spent by ₹15K (or shows as separate income); net Healthcare spent = ₹3K |
 | TC-S-04.4 | Festival gift from children abroad | Onam month: ₹50K transfer arrives from son in US → income to SBI savings → categorize as "Family Gift" envelope → allocate ₹30K Travel + ₹20K Buffer | RTA spikes; allocation flow works; Family Gift envelope shows allocated; activity log entry |
 | TC-S-04.5 | Daily cash spending discipline | Withdraws ₹5K from SBI to "Cash Jar" cash account → spends ₹100–₹500/day for 30 days for groceries, milk, vegetables | Each cash transaction reduces Cash account; reconciles to expected ~₹0 by month-end |
-| TC-S-04.6 | Senior-friendly UX — large text + simple flows | Open settings → enable larger text size (if supported) → confirm dashboard readability with reduced visual complexity | Settings persist across launches; UI scales (verify accessibility support is currently shipped or flag as launch gap) |
+| TC-S-04.6 | Senior-friendly UX — large text + simple flows | Open settings → look for larger text option; otherwise rely on OS-level text scaling (iOS Dynamic Type / Android font size) | **No in-app accessibility settings shipped in v1.0** — no Semantics overrides or explicit `textScaleFactor` handling found. App inherits whatever Material defaults provide for system text scaling. Flag as launch gap (senior-targeted UX) |
 | TC-S-04.7 | Net worth snapshot includes cash + savings | Open Reports → NetWorthSnapshot | Displays SBI balance + Cash account; if FD principal is manually entered as off-budget account starting balance, it's included; trend chart over 3 months |
 
 ---
@@ -112,9 +112,11 @@
 
 **Bio**: 42, owns small textile shop, married to Anika (38). Personal: ₹2L/mo owner draw. Shop revenue: ₹80K–₹3L variable. Cash-heavy. GST ₹45K quarterly. Shop EMI ₹35K. 2 CCs (one personal, one business). Anika manages household budget only — no access to shop.
 
+> ⚠️ **v1.0 BLOCKER for P-05**: Multi-budget per user is **NOT shipped in v1.0** — the app assumes a single active budget per session, with no budget-switcher UI. P-05 scenarios cannot run as written. Workarounds: (a) use two separate user accounts (one for personal, one for shop) and treat as two installs, or (b) collapse personal + shop into one budget using Tag-based separation. Mark all P-05 scenarios BLOCKED on the v1.0 launch matrix; promote to v1.1+ when multi-budget switching ships.
+
 | # | Test Case | Steps | Expected |
 |---|---|---|---|
-| TC-S-05.1 | Two separate budgets under one user | Create "Patel Personal" budget + "Vikram Shop" budget under same login | Both budgets exist independently; switching between budgets works (verify multi-budget UX); each has own RTA + envelopes |
+| TC-S-05.1 | Two separate budgets under one user | Create "Patel Personal" budget + "Vikram Shop" budget under same login | **BLOCKED in v1.0** — no multi-budget UI. Test once feature ships: both budgets exist independently; switcher in app shell; each has own RTA + envelopes |
 | TC-S-05.2 | Owner draw — manual inter-budget transfer | Shop budget: log expense ₹2L "Owner Draw" → switch to Personal budget → log income ₹2L "From Shop" | Two transactions; shop expense reduces shop RTA, personal income increases personal RTA; user manually keeps in sync (no auto inter-budget transfer) |
 | TC-S-05.3 | Mixed expense categorization via Tags | Vendor dinner ₹3K — log under Shop budget Marketing envelope with tag `personal-mix` | Tag system captures intent; reportable later via Tag filter for tax review |
 | TC-S-05.4 | Cash drawer reconciliation | Shop budget Cash account: ₹50K opening → 30 sales transactions ₹2K avg → 5 vendor cash payments ₹3K avg → end-of-week balance check | Cash account = ₹50K + ₹60K - ₹15K = ₹95K; user counts physical drawer ₹93K → adjustment transaction ₹2K to Reconciliation envelope |
@@ -136,7 +138,7 @@
 | TC-S-06.4 | CC milestone tracking via Tags | Axis Magnus needs ₹5L spend in 6 months for milestone → tag every Magnus expense with `magnus-milestone-2026` → Reports filter by tag | Tag persists on transactions; Reports filter sums tagged expenses; user sees ₹2.3L of ₹5L progress |
 | TC-S-06.5 | Vacation goal hit, plan trip | Vacation goal ₹3L hits Dec 2026 → Goal isCompleted=true → user creates Vacation Spend envelope and "withdraws" goal funds via move-money | Goal marked complete; new envelope or transfer via move-money; pre-funded ready to spend |
 | TC-S-06.6 | Disagreement workflow — Arjun overspends Dining | Arjun spends ₹6K dining out, envelope only had ₹4K → goes negative ₹2K → Tanvi sees in dashboard | Dining shows red −₹2K; Tanvi initiates move-money from "Personal Arjun" envelope ₹2K → Dining; activity log captures |
-| TC-S-06.7 | Concurrent same-envelope edit | Tanvi and Arjun simultaneously add expense to Groceries from different devices | Both transactions persist; envelope spent reflects sum; no race condition; verify SyncMetadata.pendingChangesCount drains |
+| TC-S-06.7 | Concurrent same-envelope edit | Tanvi and Arjun simultaneously add expense to Groceries from different devices | Both transactions persist (additive, no last-write contention — each is a distinct row); envelope `spentAmount` reflects sum; no race condition. Verify pending-sync count drains to 0 via the `getPendingSyncMetadata()` DAO query (no `pendingChangesCount` field on `SyncMetadata` — count is derived) |
 | TC-S-06.8 | Year-end report — savings rate calculation | Reports → BudgetVsActual + TrendReport full year | App computes total income vs total spent; displays surplus and savings rate; both view same data |
 
 ---
@@ -147,14 +149,14 @@
 
 | # | Test Case | Steps | Expected |
 |---|---|---|---|
-| TC-S-07.1 | Migration from Mint — manual setup | Mint export CSV in hand; app has no CSV import → Sarah manually creates accounts with current balances + transcribes last month's recurring transactions as RecurringRules | All accounts created; recurring rules for mortgage, car payment, utilities, Netflix, gym; user notes lack of CSV import as friction (flag for launch backlog per YNAB strategy doc) |
+| TC-S-07.1 | Migration from Mint — manual setup (or CSV import if shipped) | **Pre-check**: confirm whether CSV import has shipped (`MVP_RELEASE_STRATEGY.md` lists it as Week 0–1 pre-launch work — status as of 2026-05-18 must be re-verified). If shipped, run CSV import path; otherwise: Sarah manually creates accounts with current balances + transcribes last month's recurring transactions as RecurringRules | If CSV import shipped: importer parses Mint CSV, maps to accounts + envelopes + transactions. If not: all accounts created manually; recurring rules for mortgage, car payment, utilities, Netflix, gym; user notes lack of CSV import as friction |
 | TC-S-07.2 | Bi-weekly paycheck — recurring rule | RecurringRule: Income $4500 every 14 days starting Friday Apr 4 autoPost=true → next 26 occurrences computed | Rule created with frequency='bi-weekly'; nextOccurrence = Apr 18; income posts on Fridays |
 | TC-S-07.3 | "3-paycheck month" planning | In months Sarah gets 3 paychecks (twice yearly), RTA is +$4500 vs typical → allocate windfall: $2000 emergency fund, $1500 vacation, $1000 home repair | RTA correctly reflects extra paycheck; allocation lands; goals advance |
 | TC-S-07.4 | Husband's irregular income | Mark gets $3500 freelance → log to joint Chase as income → leave unallocated until next budget meeting | RTA increments; couple discusses allocation later; activity log shows Mark's income entry |
 | TC-S-07.5 | Costco split transaction | Costco purchase $340 → split: Groceries $220, Household $80, Personal Care $40 across 3 envelopes in one transaction | TransactionSplits stores 3 rows; each envelope's spent increments per split; total transaction = $340 |
 | TC-S-07.6 | Unexpected car repair drains envelope | Auto Maintenance had $400 → repair $1200 → envelope goes −$800 → move from Vacation envelope $800 | Auto Maintenance back to $0; Vacation reduces by $800; Goal "Vacation 2026" currentAmount adjusted (verify Goal-vs-envelope linkage behavior) |
-| TC-S-07.7 | Retail return reverses Clothing | Sarah returns $250 jacket → log as income transaction with envelopeId=Clothing | Clothing envelope spent decrements; Chase checking refunded; net impact correct |
-| TC-S-07.8 | Buffer-days / Cushion Score | Open Reports → look for buffer-days metric per YNAB strategy doc Section 4 | If shipped, displays days of expenses covered by current accounts; if not shipped, flag as launch gap |
+| TC-S-07.7 | Retail return reverses Clothing | Sarah returns $250 jacket → log as income transaction with envelopeId=Clothing | Refund pattern (see TC-S-01.6): Clothing envelope `spentAmount` decrements; Chase checking refunded; net impact correct |
+| TC-S-07.8 | Buffer-days / Cushion Score | Open Reports → look for buffer-days metric | **NOT shipped in v1.0** — confirmed deferred per `YNAB_COMPARISON_AND_LAUNCH_STRATEGY.md` §3.5. Document gap; do not run as a pass/fail test until v1.1 |
 
 ---
 
@@ -168,8 +170,8 @@
 | TC-S-08.2 | Avalanche payoff goals | Goal "CC Debt $0" target Dec 2026, monthlyContribution $400 (above min) → Goal "Student Loan $0" target Dec 2032, monthly $500 | Two Goals tied to debt accounts; payoff timeline visible; monthly extra above-minimum tracked |
 | TC-S-08.3 | Side gig income variable allocation | Uber payout $620 → income to Checking → all $620 allocated to CC Payoff envelope (extra above $400 baseline) | RTA spike of $620; envelope allocation; CC Goal currentAmount += contribution post-payment |
 | TC-S-08.4 | Roommate Venmo for rent | Bryan sends $600 via Venmo to Marcus checking → user logs as income against Rent envelope (negative-expense pattern) | Rent envelope effectively reduces by $600; total Rent paid out = $1200 - $600 = $600 net; flag if this UX is confusing for first-timers |
-| TC-S-08.5 | CC payment day | Day 28: pay $550 from Checking to Chase CC | Transfer transaction with transferPairId; CC account balance reduces; CC Payment envelope drains; verify if app auto-applies interest or requires manual entry |
-| TC-S-08.6 | Approaching CC limit during big purchase | Spends $400 emergency car tire on Chase CC (current $4000 of $5000 limit) → balance now $4400, available $600 | App displays available credit warning; user re-thinks; flag UX if no warning shown |
+| TC-S-08.5 | CC payment day | Day 28: pay $550 from Checking to Chase CC | Transfer transaction with `transferPairId`; CC account balance reduces; CC Payment envelope drains. **Interest accrual is manual** in v1.0 — user must log a separate expense transaction to capture monthly interest charges (no auto-accrual on DebtAccount) |
+| TC-S-08.6 | Approaching CC limit during big purchase | Spends $400 emergency car tire on Chase CC (current $4000 of $5000 limit) → balance now $4400, available $600 | Available-credit display shipped per commit `b3f3df1` (`lib/accounts/widgets/credit_card_float_warning.dart`). Dashboard CC card shows headroom = `creditLimit − outstanding`; warning surfaces when CC Payment envelope doesn't fully cover outstanding balance |
 | TC-S-08.7 | Debt payoff progress visualization | Open Goals view → CC Debt goal progress bar | Shows current $4000 → $0 timeline at $400/mo = ~10 months; visual progress; motivating |
 
 ---
@@ -183,7 +185,7 @@
 | TC-S-09.1 | Annual bills broken into monthly funding | Setup 5 Goals: Property Tax $4800 by Jan 31 ($400/mo), Home Ins $1400 by Mar ($120/mo), Auto Ins $1000 by Jul ($85/mo), Life Ins $300 by Sep ($25/mo), Christmas $1500 by Dec ($125/mo) | 5 Goals with proper schedules; envelopes accumulate monthly; dashboard shows progress bars |
 | TC-S-09.2 | Cash envelope literal withdrawal | Withdraws $400 from Checking → adds to "Cash" cash account → spends Mon $80, Tue $45, Wed $60, Thu $90, Fri $75 across week at grocery + farmers market | Cash account tracks each transaction; reconciles to $50 remaining end-of-week |
 | TC-S-09.3 | Kids' allowance recurring | RecurringRule: $20/wk to "Allowance Kid 1" envelope, $20/wk "Allowance Kid 2" envelope | Two recurring expenses; envelopes drain weekly; bill reminder if missed |
-| TC-S-09.4 | Property tax bill reminder fires | Jan 17 (14 days before Jan 31): push notification "Property tax $4800 due Jan 31" → Goal already at $4800 → Jennifer pays from Checking | BillReminder triggers per reminderDaysBefore=14; Goal currentAmount=targetAmount; payment posted; Goal isCompleted=true |
+| TC-S-09.4 | Property tax bill reminder fires | Jan 17 (14 days before Jan 31): open app → in-app reminder surfaces "Property tax $4800 due Jan 31" → Goal already at $4800 → Jennifer pays from Checking | Detection via `RecurringCheckCubit` at `reminderDaysBefore=14` fires on app open. Push delivery requires backend cron (verify separately). Goal `currentAmount=targetAmount`; payment posted; `isCompleted=true` |
 | TC-S-09.5 | Kid breaks tablet — unexpected $300 | No envelope for this → Jennifer creates "Misc Family" envelope on the fly → moves $300 from Vacation envelope (had $1800 saved of $3000 goal) | New envelope created; move-money executes; Vacation goal currentAmount drops by $300; user notes goal will hit later than July |
 | TC-S-09.6 | Husband's $5000 bonus arrives | Income $5000 → RTA jump → Jennifer allocates: $2000 Christmas top-up (early), $1500 emergency fund, $1000 home repair, $500 spread | RTA→0; Goals advance early; envelopes top up |
 | TC-S-09.7 | Costco bulk + split | Costco $480 → split Groceries $300, Household $100, Pharmacy $80 | TransactionSplits stored; envelopes update |
@@ -202,7 +204,7 @@
 | TC-S-10.3 | Big planned purchase routes to specific CC | $2400 home appliance → user picks Capital One Venture (currently $1100 spent of $4000 bonus target) → balance now $3500 | Transaction posts to CV account; CC Payment envelope grows; user closer to bonus |
 | TC-S-10.4 | Pay all 6 cards in full on same day | Bills day: 6 transfers from Checking to each CC paying full statement balance | 6 transactions same date; each CC Payment envelope drains; CC account balances → $0 |
 | TC-S-10.5 | Statement-cycle float window | Card closes Apr 5, due May 25 → user has $1800 spent on it → between Apr 5 and May 25, CC account balance = $1800 but CC Payment envelope already covers it | Verify CC Payment envelope tracks correctly across periods; available credit shows correct float; no double-counting |
-| TC-S-10.6 | Close CC after bonus earned | Bonus posted, user closes Discover → archive Account | Account isArchived=true; linked CC Payment envelope hidden from picker per soft-delete; historical data preserved; dashboard shows 5 active cards |
+| TC-S-10.6 | Close CC after bonus earned | Bonus posted, user closes Discover → archive Account | `Account.isArchived=true`; historical data preserved; dashboard shows 5 active cards. **Verify cascade**: does archiving the DebtAccount also archive its linked CC Payment envelope, or does the envelope linger in pickers? Flag if cascade not implemented |
 | TC-S-10.7 | Reports: total CC spend across all 6 | Reports → filter by accountType=CC OR sum across all DebtAccounts | Aggregate spend by card; tag-based bonus progress; net rewards earned (manual entry of pts→$$ if user wants) |
 
 ---
@@ -210,6 +212,8 @@
 ## P-11 — Maya Krishnan (cross-border remote worker)
 
 **Bio**: 27, Indian, remote SWE for SF startup. Salary $85K/yr paid monthly via Wise into NRE account ($7000/mo) → INR converted as needed. Travels EU/SEA quarterly. Holds: Wise USD account, NRE savings (USD), HDFC savings (INR), Revolut (EUR). Base currency INR.
+
+> ⚠️ **Build prerequisite for P-11**: Multi-currency UI is feature-flagged **OFF in default v1.0 builds** (commit `b5213af`, flag `kMultiCurrencyEnabled` in `lib/shared/feature_flags.dart`). Per-account currency picker, FX rate on transactions, and EUR/USD account types do not appear in the UI unless the build is started with `--dart-define=ENABLE_MULTI_CURRENCY=true`. Skip P-11 in the default v1.0 QA pass; run only on the multi-currency build, or defer entire persona to v1.1 launch matrix.
 
 | # | Test Case | Steps | Expected |
 |---|---|---|---|
@@ -228,14 +232,16 @@
 
 **Bio**: Daniel 35 finance $95K, Aisha 33 designer $60K. Married 2 months ago. Each had separate finances 3+ yrs. Want shared visibility on household expenses but keep individual discretionary private. Aisha has $18K student loan. Renting, no kids. Splitting bills proportionally (61% Daniel / 39% Aisha based on income).
 
+> ⚠️ **v1.0 caveat for P-12**: Multi-budget per user is **NOT shipped** (see P-05 caveat). The "three-budget" privacy model (Daniel personal + Aisha personal + shared Household) cannot be tested as written. Use the v1.0 fallback below; promote to full three-budget scenarios when multi-budget switching ships.
+
 | # | Test Case | Steps | Expected |
 |---|---|---|---|
-| TC-S-12.1 | Three-budget setup — Daniel personal + Aisha personal + shared Household | Daniel creates "Daniel Personal", Aisha creates "Aisha Personal", together they create "Brooks Household" → Household has rent, groceries, utilities, joint streaming | Three budgets exist; both have access only to Household + own personal; Aisha cannot see Daniel's personal budget |
+| TC-S-12.1 | Shared Household budget only (v1.0 fallback) | Daniel creates "Brooks Household" → invites Aisha as Editor → set up envelopes for rent, groceries, utilities, joint streaming, plus discretionary envelopes per person ("Daniel Personal", "Aisha Personal") within the same budget | One shared budget, both users co-edit. **Privacy caveat**: in-budget envelopes are visible to both members — discretionary spending is *not* hidden in v1.0. True private-budget split deferred until multi-budget ships. Document gap on launch matrix |
 | TC-S-12.2 | Proportional split contribution | Daniel funds Household $3050/mo (61%), Aisha funds $1950/mo (39%) → both log income transfers from individual checking to shared Joint Chase | Two recurring transfers monthly; Household RTA = $5000; activity log shows both contributions |
-| TC-S-12.3 | Aisha's student loan in personal budget only | Aisha personal: DebtAccount $18K, Goal $0 by 2030, monthly $300 | Daniel cannot see this in his views; Aisha tracks privately; not part of Household budget |
-| TC-S-12.4 | Daniel buys Aisha birthday gift secretly | Daniel personal: $200 expense to Personal envelope, NOT shared budget | Aisha never sees this in Household; her personal budget unaffected; gift hidden as expected (privacy works at budget boundary) |
+| TC-S-12.3 | Aisha's student loan tracking (v1.0 fallback) | Add DebtAccount $18K within the shared Household budget, Goal $0 by 2030, monthly $300 | DebtAccount + Goal track payoff. **v1.0 caveat**: Daniel sees this too (no per-account privacy). Mark as gap until multi-budget unlocks true privacy |
+| TC-S-12.4 | Daniel buys Aisha birthday gift "secretly" (v1.0 fallback) | Daniel logs $200 expense in shared Household → uses "Daniel Personal" envelope | **Privacy NOT enforced** in v1.0: Aisha can see the transaction in activity log + dashboard. Document gap; true secret-gift workflow blocked on multi-budget |
 | TC-S-12.5 | Joint emergency fund goal | Shared Household: Goal "Emergency Fund" $15K target Dec 2027, monthly $625 combined | Goal created in Household; both contribute via monthly funding; Goal currentAmount progresses |
-| TC-S-12.6 | Household grocery — split by who paid | Aisha pays $180 groceries on her CC → expense logged to Household Groceries envelope from Aisha account | Household envelope spent +$180; Aisha's CC tracks debt; later reconciliation: did Daniel owe Aisha proportional share? (Verify if Settle-Up flow exists; flag if not) |
+| TC-S-12.6 | Household grocery — split by who paid | Aisha pays $180 groceries on her CC → expense logged to Household Groceries envelope from Aisha account | Household envelope spent +$180; Aisha's CC tracks debt. **No Settle-Up flow shipped in v1.0** — per-transaction split-by-payer / proportional reconciliation must be done outside the app (Splitwise, manual Venmo). Document gap; do not gate launch on this |
 | TC-S-12.7 | Monthly review meeting | Both open Household budget Reports → BudgetVsActual + Goals progress | Both see same numbers via realtime sync; relationship-positive UX |
 | TC-S-12.8 | Same email signup confusion | Aisha attempts signup with shared email already on Daniel's account | Validation prevents duplicate; clear error; flag if unclear UX |
 
@@ -243,13 +249,13 @@
 
 ## Coverage Matrix
 
-Legend: ● = primary stress · ○ = touched · `·` = not applicable
+Legend: ● = primary stress · ○ = touched · `·` = not applicable · ⚠ = feature blocked/gated in v1.0 (see persona caveat)
 
 | Feature | P-01 | P-02 | P-03 | P-04 | P-05 | P-06 | P-07 | P-08 | P-09 | P-10 | P-11 | P-12 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Onboarding | ● | ○ | ○ | ● | ● | ○ | ● | ○ | ○ | ○ | ● | ● |
 | Multi-account | ○ | ● | ● | ○ | ● | ● | ● | ○ | ● | ● | ● | ● |
-| Multi-budget | · | · | · | · | ● | · | · | · | · | · | · | ● |
+| Multi-budget (BLOCKED v1.0) | · | · | · | · | ●⚠ | · | · | · | · | · | · | ●⚠ |
 | Envelopes / categories | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |
 | RTA / income flow | ● | ● | ● | ● | ● | ● | ● | ○ | ● | ○ | ● | ● |
 | Allocation Templates | ● | ○ | ● | · | · | · | · | · | · | · | · | · |
@@ -262,7 +268,7 @@ Legend: ● = primary stress · ○ = touched · `·` = not applicable
 | Goals (debt payoff) | · | · | · | · | · | · | · | ● | · | · | · | ● |
 | CC tracking + Payment envelope | ● | ● | · | · | ● | ● | ● | ● | · | ● | · | ○ |
 | CC limit / available credit | · | · | · | · | ● | · | · | ● | · | ● | · | · |
-| Multi-currency / FX | · | · | ● | · | · | · | · | · | · | · | ● | · |
+| Multi-currency / FX (FLAG-GATED) | · | · | ●⚠ | · | · | · | · | · | · | · | ●⚠ | · |
 | Cash account | · | ● | · | ● | ● | · | · | · | ● | · | ● | · |
 | Split transactions | · | · | · | · | · | · | ● | · | ● | · | · | · |
 | Tags | · | · | · | · | ● | ● | · | · | · | ● | · | · |
@@ -275,7 +281,9 @@ Legend: ● = primary stress · ○ = touched · `·` = not applicable
 | Reports — trends | ○ | ● | ● | · | · | ● | ○ | ● | ● | · | ● | · |
 | Reports — net worth | · | ● | · | ● | · | · | ● | ● | ○ | · | ● | · |
 | Reports — budget vs actual | · | ● | · | · | · | ● | ○ | · | ● | ○ | · | ● |
-| Notifications (push + email) | ○ | ● | · | · | · | · | ○ | · | ● | · | · | · |
+| Notifications — in-app reminders | ○ | ● | · | · | · | · | ○ | · | ● | · | · | · |
+| Notifications — push (server-side, verify) | · | ○ | · | · | · | · | · | · | ○ | · | · | · |
+| Notifications — email (v1.1, NOT shipped) | · | · | · | · | · | · | · | · | · | · | · | · |
 
 ---
 
@@ -284,12 +292,18 @@ Legend: ● = primary stress · ○ = touched · `·` = not applicable
 Real personas would naturally do these things; they are documented here so QA testers don't waste time and so product/launch backlog can capture demand:
 
 - **Investments / FD / MF / stocks / crypto / gold** — no per-asset model. Workaround per scenarios: off-budget Account with manually-updated balance. Affects Lakshmi (FDs), Priya (SIP/FD), Tanvi & Arjun (mutual funds), Sarah (401k), Maya (any).
-- **Bank sync (Plaid / OFX / account aggregation)** — manual entry only. Affects everyone but most painfully Sarah (Mint refugee), David (6 cards), Jennifer (multi-account family).
-- **CSV import / migration tooling** — no import. Affects Sarah's onboarding from Mint.
-- **Per-transaction settle-up between two users** — Daniel/Aisha proportional splits require manual reconciliation.
-- **Auto-interest accrual on DebtAccounts** — Marcus needs to manually log interest charges.
-- **Buffer days / Cushion Score / Age-of-Money equivalent** — per YNAB strategy doc Section 4, scoped for launch but verify shipped status.
-- **PDF / CSV export of reports** — stub exists, verify platform-specific implementations.
+- **Bank sync (Plaid / OFX / account aggregation)** — manual entry only, deferred to v1.2 (~90 days post-launch per `MVP_RELEASE_STRATEGY.md`). Affects everyone but most painfully Sarah (Mint refugee), David (6 cards), Jennifer (multi-account family).
+- **CSV import / migration tooling** — flagged for pre-launch (Week 0–1) but **ship status must be re-verified on 2026-05-18+**. Affects Sarah's onboarding from Mint.
+- **Multi-budget per user (budget switcher)** — single-budget per session in v1.0. Blocks P-05 entirely, partially blocks P-12 privacy model. No workaround inside one user account beyond Tag-based separation.
+- **Per-transaction settle-up between two users** — Daniel/Aisha proportional splits require manual reconciliation (Splitwise, Venmo).
+- **Auto-interest accrual on DebtAccounts** — Marcus needs to manually log interest charges; no scheduled APR application.
+- **Buffer days / Cushion Score / Age-of-Money equivalent** — **NOT in v1.0**, deferred to v1.1+ per YNAB strategy doc §3.5.
+- **Multi-currency UI** — built but feature-flagged OFF in v1.0 (commit `b5213af`, `--dart-define=ENABLE_MULTI_CURRENCY=true` to enable). Affects entire P-11; partially Rohan (USD invoices).
+- **Email notifications** — NOT shipped in v1.0, deferred to v1.1 per MVP strategy. Preferences toggle exists but no delivery path.
+- **Push notification dispatch** — FCM client wired (`lib/notifications/services/fcm_service.dart`), but server-side cron / Edge Function for bill reminders must be verified before relying on push in QA. Detection logic runs only on app open.
+- **In-app accessibility (large text / Semantics / Dynamic Type override)** — NOT shipped. App relies on OS-level scaling only. Senior-targeted UX gap.
+- **PDF / CSV export of reports** — UI exists at `lib/reports/view/export_report_page.dart`, platform-specific impls partially stubbed — verify per platform.
+- **Cascade archive (CC Payment envelope when DebtAccount archived)** — verify behavior; flag if envelope lingers in picker after CC account closed.
 
 If any of the above are actually shipped during QA execution, promote the corresponding scenario step from "flag if missing" to a passing assertion.
 

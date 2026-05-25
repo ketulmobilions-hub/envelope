@@ -88,12 +88,10 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
 
       for (final rule in rules) {
         if (rule.isPaused) continue;
-        final endDate = rule.endDate;
-        if (endDate != null && effectiveNow.isAfter(endDate)) continue;
 
         if (!rule.nextOccurrence.isAfter(effectiveNow)) {
           if (rule.autoPost) {
-            await _autoPostRule(rule, effectiveNow);
+            await _autoPostMissedOccurrences(rule, effectiveNow);
           } else {
             pendingRules.add(rule);
           }
@@ -114,13 +112,63 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
           isChecking: false,
         ),
       );
-    } on Exception {
+    } on Exception catch (e, stackTrace) {
+      addError(e, stackTrace);
       emit(state.copyWith(isChecking: false));
     }
   }
 
-  Future<void> _autoPostRule(RecurringRule rule, DateTime effectiveNow) async {
-    // Create the transaction first.
+  /// Posts every missed occurrence of [rule] from `rule.nextOccurrence` up to
+  /// and including [effectiveNow] (clamped by `rule.endDate`), persisting the
+  /// advanced cursor after each post.
+  ///
+  /// Per-iteration persistence: makes partial progress durable so that an
+  /// `updateRecurringRule` failure after N successful posts doesn't cause
+  /// those N transactions to be re-posted on the next `check()`.
+  Future<void> _autoPostMissedOccurrences(
+    RecurringRule rule,
+    DateTime effectiveNow,
+  ) async {
+    final endDate = rule.endDate;
+    var cursor = rule;
+    while (!cursor.nextOccurrence.isAfter(effectiveNow)) {
+      if (endDate != null && cursor.nextOccurrence.isAfter(endDate)) break;
+
+      final posted = await _autoPostOnce(cursor, cursor.nextOccurrence);
+      if (!posted) return;
+
+      final next = _calculateNextOccurrence(cursor);
+      // Defense against a misconfigured rule producing a non-advancing
+      // cursor (e.g. customInterval <= 0) — would otherwise spin forever
+      // re-posting the same date.
+      if (!next.isAfter(cursor.nextOccurrence)) {
+        addError(
+          StateError(
+            'Non-advancing recurring rule cursor for ${rule.id}; aborting '
+            'catch-up to prevent infinite loop.',
+          ),
+          StackTrace.current,
+        );
+        return;
+      }
+      cursor = cursor.copyWith(nextOccurrence: next);
+
+      try {
+        await _transactionRepository.updateRecurringRule(cursor);
+      } on TransactionException catch (e, stackTrace) {
+        // Posted transaction is durable; cursor isn't. Abort the loop so
+        // the next check() retries from the unchanged remote cursor — but
+        // this means the just-posted occurrence could be duplicated on
+        // the next run. Surface so observability catches it.
+        addError(e, stackTrace);
+        return;
+      }
+    }
+  }
+
+  /// Posts a single transaction for [rule] dated [postingDate]. Returns
+  /// `true` on success. Does NOT advance the rule's `nextOccurrence`.
+  Future<bool> _autoPostOnce(RecurringRule rule, DateTime postingDate) async {
     Transaction created;
     try {
       created = await _transactionRepository.createTransaction(
@@ -130,7 +178,7 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
         amount: rule.amount,
         currency: rule.currency,
         exchangeRate: rule.exchangeRate,
-        date: effectiveNow,
+        date: postingDate,
         createdBy: _userId,
         envelopeId: rule.envelopeId,
         payee: rule.payee,
@@ -138,30 +186,22 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
         recurringRuleId: rule.id,
       );
     } on TransactionException {
-      // Failed to create transaction; skip advancing nextOccurrence.
-      return;
+      return false;
     }
 
-    // Optimistic period totalIncome / envelope spent — mirror form-cubit
-    // submit so RTA + envelope cards reflect the auto-posted txn before
-    // the next refresh round-trip. `total_income` has no server-side trigger
-    // so without this the dashboard stays stale until a manual refresh.
-    //
-    // Awaited (not unawaited) because addIncomeToCurrentPeriod is a
-    // read-modify-write on the same period row — when multiple rules fire
-    // in the same `check()` invocation, concurrent unawaited calls would
-    // lose updates. Sequential awaits cost one local round-trip per rule.
-    //
-    // TODO: when recurring rules support splits, mirror the form-cubit
-    // split-loop here. Today recurring_rules has a single envelope_id.
+    // Optimistic local total_income / envelope spent. Awaited (not
+    // unawaited) because the underlying period/envelope row is a
+    // read-modify-write — concurrent calls from a multi-rule catch-up
+    // would lose updates.
     final budgetRepo = _budgetRepository;
     final envelopeRepo = _envelopeRepository;
     if (budgetRepo != null || envelopeRepo != null) {
       final baseAmount = effectiveBaseCurrencyAmount(created);
       if (rule.type == 'income' && budgetRepo != null) {
         try {
-          await budgetRepo.addIncomeToCurrentPeriod(
+          await budgetRepo.addIncomeToPeriod(
             budgetId: rule.budgetId,
+            date: postingDate,
             amount: baseAmount,
           );
         } on Exception {
@@ -174,7 +214,7 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
           await envelopeRepo.incrementLocalSpentAmount(
             envelopeId: rule.envelopeId!,
             budgetId: rule.budgetId,
-            date: effectiveNow,
+            date: postingDate,
             baseCurrencyAmount: baseAmount,
           );
         } on Exception {
@@ -183,16 +223,7 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
       }
     }
 
-    // Only advance nextOccurrence if the transaction was created.
-    try {
-      final next = _calculateNextOccurrence(rule);
-      await _transactionRepository.updateRecurringRule(
-        rule.copyWith(nextOccurrence: next),
-      );
-    } on TransactionException {
-      // Transaction was created but nextOccurrence update failed.
-      // Will be retried on next app open.
-    }
+    return true;
   }
 
   bool _isBillUpcoming(BillReminder bill, DateTime effectiveNow) {
@@ -257,7 +288,11 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
 
   static DateTime _calculateCustomNext(RecurringRule rule) {
     final current = rule.nextOccurrence;
-    final interval = rule.customInterval ?? 1;
+    // Clamp interval to at least 1 so a misconfigured rule (e.g. 0)
+    // can't return a non-advancing date and stall the catch-up loop.
+    final interval = (rule.customInterval ?? 1) < 1
+        ? 1
+        : rule.customInterval!;
     final unit = rule.customUnit ?? 'days';
 
     return switch (unit) {

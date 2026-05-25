@@ -5737,6 +5737,866 @@ class TransactionSplitsCompanion extends UpdateCompanion<TransactionSplit> {
   }
 }
 
+class $TransactionTemplatesTable extends TransactionTemplates
+    with TableInfo<$TransactionTemplatesTable, TransactionTemplate> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TransactionTemplatesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _budgetIdMeta = const VerificationMeta(
+    'budgetId',
+  );
+  @override
+  late final GeneratedColumn<String> budgetId = GeneratedColumn<String>(
+    'budget_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+    'account_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _envelopeIdMeta = const VerificationMeta(
+    'envelopeId',
+  );
+  @override
+  late final GeneratedColumn<String> envelopeId = GeneratedColumn<String>(
+    'envelope_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _amountCentsMeta = const VerificationMeta(
+    'amountCents',
+  );
+  @override
+  late final GeneratedColumn<int> amountCents = GeneratedColumn<int>(
+    'amount_cents',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _payeeMeta = const VerificationMeta('payee');
+  @override
+  late final GeneratedColumn<String> payee = GeneratedColumn<String>(
+    'payee',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _currencyMeta = const VerificationMeta(
+    'currency',
+  );
+  @override
+  late final GeneratedColumn<String> currency = GeneratedColumn<String>(
+    'currency',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tagIdsJsonMeta = const VerificationMeta(
+    'tagIdsJson',
+  );
+  @override
+  late final GeneratedColumn<String> tagIdsJson = GeneratedColumn<String>(
+    'tag_ids_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    budgetId,
+    name,
+    type,
+    accountId,
+    envelopeId,
+    amountCents,
+    payee,
+    notes,
+    currency,
+    tagIdsJson,
+    sortOrder,
+    createdAt,
+    updatedAt,
+    deletedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'transaction_templates';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TransactionTemplate> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('budget_id')) {
+      context.handle(
+        _budgetIdMeta,
+        budgetId.isAcceptableOrUnknown(data['budget_id']!, _budgetIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_budgetIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    }
+    if (data.containsKey('envelope_id')) {
+      context.handle(
+        _envelopeIdMeta,
+        envelopeId.isAcceptableOrUnknown(data['envelope_id']!, _envelopeIdMeta),
+      );
+    }
+    if (data.containsKey('amount_cents')) {
+      context.handle(
+        _amountCentsMeta,
+        amountCents.isAcceptableOrUnknown(
+          data['amount_cents']!,
+          _amountCentsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('payee')) {
+      context.handle(
+        _payeeMeta,
+        payee.isAcceptableOrUnknown(data['payee']!, _payeeMeta),
+      );
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    if (data.containsKey('currency')) {
+      context.handle(
+        _currencyMeta,
+        currency.isAcceptableOrUnknown(data['currency']!, _currencyMeta),
+      );
+    }
+    if (data.containsKey('tag_ids_json')) {
+      context.handle(
+        _tagIdsJsonMeta,
+        tagIdsJson.isAcceptableOrUnknown(
+          data['tag_ids_json']!,
+          _tagIdsJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  TransactionTemplate map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TransactionTemplate(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      budgetId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}budget_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      type: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type'],
+      )!,
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_id'],
+      ),
+      envelopeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}envelope_id'],
+      ),
+      amountCents: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}amount_cents'],
+      ),
+      payee: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payee'],
+      ),
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+      currency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}currency'],
+      ),
+      tagIdsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tag_ids_json'],
+      ),
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+    );
+  }
+
+  @override
+  $TransactionTemplatesTable createAlias(String alias) {
+    return $TransactionTemplatesTable(attachedDatabase, alias);
+  }
+}
+
+class TransactionTemplate extends DataClass
+    implements Insertable<TransactionTemplate> {
+  final String id;
+  final String budgetId;
+  final String name;
+  final String type;
+  final String? accountId;
+  final String? envelopeId;
+  final int? amountCents;
+  final String? payee;
+  final String? notes;
+  final String? currency;
+  final String? tagIdsJson;
+  final int sortOrder;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final DateTime? deletedAt;
+  const TransactionTemplate({
+    required this.id,
+    required this.budgetId,
+    required this.name,
+    required this.type,
+    this.accountId,
+    this.envelopeId,
+    this.amountCents,
+    this.payee,
+    this.notes,
+    this.currency,
+    this.tagIdsJson,
+    required this.sortOrder,
+    required this.createdAt,
+    required this.updatedAt,
+    this.deletedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['budget_id'] = Variable<String>(budgetId);
+    map['name'] = Variable<String>(name);
+    map['type'] = Variable<String>(type);
+    if (!nullToAbsent || accountId != null) {
+      map['account_id'] = Variable<String>(accountId);
+    }
+    if (!nullToAbsent || envelopeId != null) {
+      map['envelope_id'] = Variable<String>(envelopeId);
+    }
+    if (!nullToAbsent || amountCents != null) {
+      map['amount_cents'] = Variable<int>(amountCents);
+    }
+    if (!nullToAbsent || payee != null) {
+      map['payee'] = Variable<String>(payee);
+    }
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    if (!nullToAbsent || currency != null) {
+      map['currency'] = Variable<String>(currency);
+    }
+    if (!nullToAbsent || tagIdsJson != null) {
+      map['tag_ids_json'] = Variable<String>(tagIdsJson);
+    }
+    map['sort_order'] = Variable<int>(sortOrder);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    return map;
+  }
+
+  TransactionTemplatesCompanion toCompanion(bool nullToAbsent) {
+    return TransactionTemplatesCompanion(
+      id: Value(id),
+      budgetId: Value(budgetId),
+      name: Value(name),
+      type: Value(type),
+      accountId: accountId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accountId),
+      envelopeId: envelopeId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(envelopeId),
+      amountCents: amountCents == null && nullToAbsent
+          ? const Value.absent()
+          : Value(amountCents),
+      payee: payee == null && nullToAbsent
+          ? const Value.absent()
+          : Value(payee),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+      currency: currency == null && nullToAbsent
+          ? const Value.absent()
+          : Value(currency),
+      tagIdsJson: tagIdsJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tagIdsJson),
+      sortOrder: Value(sortOrder),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+    );
+  }
+
+  factory TransactionTemplate.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TransactionTemplate(
+      id: serializer.fromJson<String>(json['id']),
+      budgetId: serializer.fromJson<String>(json['budgetId']),
+      name: serializer.fromJson<String>(json['name']),
+      type: serializer.fromJson<String>(json['type']),
+      accountId: serializer.fromJson<String?>(json['accountId']),
+      envelopeId: serializer.fromJson<String?>(json['envelopeId']),
+      amountCents: serializer.fromJson<int?>(json['amountCents']),
+      payee: serializer.fromJson<String?>(json['payee']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      currency: serializer.fromJson<String?>(json['currency']),
+      tagIdsJson: serializer.fromJson<String?>(json['tagIdsJson']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'budgetId': serializer.toJson<String>(budgetId),
+      'name': serializer.toJson<String>(name),
+      'type': serializer.toJson<String>(type),
+      'accountId': serializer.toJson<String?>(accountId),
+      'envelopeId': serializer.toJson<String?>(envelopeId),
+      'amountCents': serializer.toJson<int?>(amountCents),
+      'payee': serializer.toJson<String?>(payee),
+      'notes': serializer.toJson<String?>(notes),
+      'currency': serializer.toJson<String?>(currency),
+      'tagIdsJson': serializer.toJson<String?>(tagIdsJson),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+    };
+  }
+
+  TransactionTemplate copyWith({
+    String? id,
+    String? budgetId,
+    String? name,
+    String? type,
+    Value<String?> accountId = const Value.absent(),
+    Value<String?> envelopeId = const Value.absent(),
+    Value<int?> amountCents = const Value.absent(),
+    Value<String?> payee = const Value.absent(),
+    Value<String?> notes = const Value.absent(),
+    Value<String?> currency = const Value.absent(),
+    Value<String?> tagIdsJson = const Value.absent(),
+    int? sortOrder,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    Value<DateTime?> deletedAt = const Value.absent(),
+  }) => TransactionTemplate(
+    id: id ?? this.id,
+    budgetId: budgetId ?? this.budgetId,
+    name: name ?? this.name,
+    type: type ?? this.type,
+    accountId: accountId.present ? accountId.value : this.accountId,
+    envelopeId: envelopeId.present ? envelopeId.value : this.envelopeId,
+    amountCents: amountCents.present ? amountCents.value : this.amountCents,
+    payee: payee.present ? payee.value : this.payee,
+    notes: notes.present ? notes.value : this.notes,
+    currency: currency.present ? currency.value : this.currency,
+    tagIdsJson: tagIdsJson.present ? tagIdsJson.value : this.tagIdsJson,
+    sortOrder: sortOrder ?? this.sortOrder,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+  );
+  TransactionTemplate copyWithCompanion(TransactionTemplatesCompanion data) {
+    return TransactionTemplate(
+      id: data.id.present ? data.id.value : this.id,
+      budgetId: data.budgetId.present ? data.budgetId.value : this.budgetId,
+      name: data.name.present ? data.name.value : this.name,
+      type: data.type.present ? data.type.value : this.type,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      envelopeId: data.envelopeId.present
+          ? data.envelopeId.value
+          : this.envelopeId,
+      amountCents: data.amountCents.present
+          ? data.amountCents.value
+          : this.amountCents,
+      payee: data.payee.present ? data.payee.value : this.payee,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      currency: data.currency.present ? data.currency.value : this.currency,
+      tagIdsJson: data.tagIdsJson.present
+          ? data.tagIdsJson.value
+          : this.tagIdsJson,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TransactionTemplate(')
+          ..write('id: $id, ')
+          ..write('budgetId: $budgetId, ')
+          ..write('name: $name, ')
+          ..write('type: $type, ')
+          ..write('accountId: $accountId, ')
+          ..write('envelopeId: $envelopeId, ')
+          ..write('amountCents: $amountCents, ')
+          ..write('payee: $payee, ')
+          ..write('notes: $notes, ')
+          ..write('currency: $currency, ')
+          ..write('tagIdsJson: $tagIdsJson, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    budgetId,
+    name,
+    type,
+    accountId,
+    envelopeId,
+    amountCents,
+    payee,
+    notes,
+    currency,
+    tagIdsJson,
+    sortOrder,
+    createdAt,
+    updatedAt,
+    deletedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TransactionTemplate &&
+          other.id == this.id &&
+          other.budgetId == this.budgetId &&
+          other.name == this.name &&
+          other.type == this.type &&
+          other.accountId == this.accountId &&
+          other.envelopeId == this.envelopeId &&
+          other.amountCents == this.amountCents &&
+          other.payee == this.payee &&
+          other.notes == this.notes &&
+          other.currency == this.currency &&
+          other.tagIdsJson == this.tagIdsJson &&
+          other.sortOrder == this.sortOrder &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.deletedAt == this.deletedAt);
+}
+
+class TransactionTemplatesCompanion
+    extends UpdateCompanion<TransactionTemplate> {
+  final Value<String> id;
+  final Value<String> budgetId;
+  final Value<String> name;
+  final Value<String> type;
+  final Value<String?> accountId;
+  final Value<String?> envelopeId;
+  final Value<int?> amountCents;
+  final Value<String?> payee;
+  final Value<String?> notes;
+  final Value<String?> currency;
+  final Value<String?> tagIdsJson;
+  final Value<int> sortOrder;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<DateTime?> deletedAt;
+  final Value<int> rowid;
+  const TransactionTemplatesCompanion({
+    this.id = const Value.absent(),
+    this.budgetId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.type = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.envelopeId = const Value.absent(),
+    this.amountCents = const Value.absent(),
+    this.payee = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.currency = const Value.absent(),
+    this.tagIdsJson = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TransactionTemplatesCompanion.insert({
+    required String id,
+    required String budgetId,
+    required String name,
+    required String type,
+    this.accountId = const Value.absent(),
+    this.envelopeId = const Value.absent(),
+    this.amountCents = const Value.absent(),
+    this.payee = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.currency = const Value.absent(),
+    this.tagIdsJson = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.deletedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       budgetId = Value(budgetId),
+       name = Value(name),
+       type = Value(type),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<TransactionTemplate> custom({
+    Expression<String>? id,
+    Expression<String>? budgetId,
+    Expression<String>? name,
+    Expression<String>? type,
+    Expression<String>? accountId,
+    Expression<String>? envelopeId,
+    Expression<int>? amountCents,
+    Expression<String>? payee,
+    Expression<String>? notes,
+    Expression<String>? currency,
+    Expression<String>? tagIdsJson,
+    Expression<int>? sortOrder,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? deletedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (budgetId != null) 'budget_id': budgetId,
+      if (name != null) 'name': name,
+      if (type != null) 'type': type,
+      if (accountId != null) 'account_id': accountId,
+      if (envelopeId != null) 'envelope_id': envelopeId,
+      if (amountCents != null) 'amount_cents': amountCents,
+      if (payee != null) 'payee': payee,
+      if (notes != null) 'notes': notes,
+      if (currency != null) 'currency': currency,
+      if (tagIdsJson != null) 'tag_ids_json': tagIdsJson,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TransactionTemplatesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? budgetId,
+    Value<String>? name,
+    Value<String>? type,
+    Value<String?>? accountId,
+    Value<String?>? envelopeId,
+    Value<int?>? amountCents,
+    Value<String?>? payee,
+    Value<String?>? notes,
+    Value<String?>? currency,
+    Value<String?>? tagIdsJson,
+    Value<int>? sortOrder,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<DateTime?>? deletedAt,
+    Value<int>? rowid,
+  }) {
+    return TransactionTemplatesCompanion(
+      id: id ?? this.id,
+      budgetId: budgetId ?? this.budgetId,
+      name: name ?? this.name,
+      type: type ?? this.type,
+      accountId: accountId ?? this.accountId,
+      envelopeId: envelopeId ?? this.envelopeId,
+      amountCents: amountCents ?? this.amountCents,
+      payee: payee ?? this.payee,
+      notes: notes ?? this.notes,
+      currency: currency ?? this.currency,
+      tagIdsJson: tagIdsJson ?? this.tagIdsJson,
+      sortOrder: sortOrder ?? this.sortOrder,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (budgetId.present) {
+      map['budget_id'] = Variable<String>(budgetId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (envelopeId.present) {
+      map['envelope_id'] = Variable<String>(envelopeId.value);
+    }
+    if (amountCents.present) {
+      map['amount_cents'] = Variable<int>(amountCents.value);
+    }
+    if (payee.present) {
+      map['payee'] = Variable<String>(payee.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (currency.present) {
+      map['currency'] = Variable<String>(currency.value);
+    }
+    if (tagIdsJson.present) {
+      map['tag_ids_json'] = Variable<String>(tagIdsJson.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TransactionTemplatesCompanion(')
+          ..write('id: $id, ')
+          ..write('budgetId: $budgetId, ')
+          ..write('name: $name, ')
+          ..write('type: $type, ')
+          ..write('accountId: $accountId, ')
+          ..write('envelopeId: $envelopeId, ')
+          ..write('amountCents: $amountCents, ')
+          ..write('payee: $payee, ')
+          ..write('notes: $notes, ')
+          ..write('currency: $currency, ')
+          ..write('tagIdsJson: $tagIdsJson, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $TagsTable extends Tags with TableInfo<$TagsTable, Tag> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -12768,6 +13628,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $TransactionsTable transactions = $TransactionsTable(this);
   late final $TransactionSplitsTable transactionSplits =
       $TransactionSplitsTable(this);
+  late final $TransactionTemplatesTable transactionTemplates =
+      $TransactionTemplatesTable(this);
   late final $TagsTable tags = $TagsTable(this);
   late final $TransactionTagsTable transactionTags = $TransactionTagsTable(
     this,
@@ -12796,6 +13658,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final TransactionsDao transactionsDao = TransactionsDao(
     this as AppDatabase,
   );
+  late final TransactionTemplatesDao transactionTemplatesDao =
+      TransactionTemplatesDao(this as AppDatabase);
   late final RecurringDao recurringDao = RecurringDao(this as AppDatabase);
   late final GoalsDao goalsDao = GoalsDao(this as AppDatabase);
   late final ReportsDao reportsDao = ReportsDao(this as AppDatabase);
@@ -12815,6 +13679,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     envelopeAllocations,
     transactions,
     transactionSplits,
+    transactionTemplates,
     tags,
     transactionTags,
     recurringRules,
@@ -15681,6 +16546,418 @@ typedef $$TransactionSplitsTableProcessedTableManager =
         >,
       ),
       TransactionSplit,
+      PrefetchHooks Function()
+    >;
+typedef $$TransactionTemplatesTableCreateCompanionBuilder =
+    TransactionTemplatesCompanion Function({
+      required String id,
+      required String budgetId,
+      required String name,
+      required String type,
+      Value<String?> accountId,
+      Value<String?> envelopeId,
+      Value<int?> amountCents,
+      Value<String?> payee,
+      Value<String?> notes,
+      Value<String?> currency,
+      Value<String?> tagIdsJson,
+      Value<int> sortOrder,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<DateTime?> deletedAt,
+      Value<int> rowid,
+    });
+typedef $$TransactionTemplatesTableUpdateCompanionBuilder =
+    TransactionTemplatesCompanion Function({
+      Value<String> id,
+      Value<String> budgetId,
+      Value<String> name,
+      Value<String> type,
+      Value<String?> accountId,
+      Value<String?> envelopeId,
+      Value<int?> amountCents,
+      Value<String?> payee,
+      Value<String?> notes,
+      Value<String?> currency,
+      Value<String?> tagIdsJson,
+      Value<int> sortOrder,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<DateTime?> deletedAt,
+      Value<int> rowid,
+    });
+
+class $$TransactionTemplatesTableFilterComposer
+    extends Composer<_$AppDatabase, $TransactionTemplatesTable> {
+  $$TransactionTemplatesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get budgetId => $composableBuilder(
+    column: $table.budgetId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get envelopeId => $composableBuilder(
+    column: $table.envelopeId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get amountCents => $composableBuilder(
+    column: $table.amountCents,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payee => $composableBuilder(
+    column: $table.payee,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tagIdsJson => $composableBuilder(
+    column: $table.tagIdsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$TransactionTemplatesTableOrderingComposer
+    extends Composer<_$AppDatabase, $TransactionTemplatesTable> {
+  $$TransactionTemplatesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get budgetId => $composableBuilder(
+    column: $table.budgetId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get envelopeId => $composableBuilder(
+    column: $table.envelopeId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get amountCents => $composableBuilder(
+    column: $table.amountCents,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payee => $composableBuilder(
+    column: $table.payee,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tagIdsJson => $composableBuilder(
+    column: $table.tagIdsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TransactionTemplatesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TransactionTemplatesTable> {
+  $$TransactionTemplatesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get budgetId =>
+      $composableBuilder(column: $table.budgetId, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get accountId =>
+      $composableBuilder(column: $table.accountId, builder: (column) => column);
+
+  GeneratedColumn<String> get envelopeId => $composableBuilder(
+    column: $table.envelopeId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get amountCents => $composableBuilder(
+    column: $table.amountCents,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get payee =>
+      $composableBuilder(column: $table.payee, builder: (column) => column);
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<String> get currency =>
+      $composableBuilder(column: $table.currency, builder: (column) => column);
+
+  GeneratedColumn<String> get tagIdsJson => $composableBuilder(
+    column: $table.tagIdsJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+}
+
+class $$TransactionTemplatesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $TransactionTemplatesTable,
+          TransactionTemplate,
+          $$TransactionTemplatesTableFilterComposer,
+          $$TransactionTemplatesTableOrderingComposer,
+          $$TransactionTemplatesTableAnnotationComposer,
+          $$TransactionTemplatesTableCreateCompanionBuilder,
+          $$TransactionTemplatesTableUpdateCompanionBuilder,
+          (
+            TransactionTemplate,
+            BaseReferences<
+              _$AppDatabase,
+              $TransactionTemplatesTable,
+              TransactionTemplate
+            >,
+          ),
+          TransactionTemplate,
+          PrefetchHooks Function()
+        > {
+  $$TransactionTemplatesTableTableManager(
+    _$AppDatabase db,
+    $TransactionTemplatesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TransactionTemplatesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TransactionTemplatesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$TransactionTemplatesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> budgetId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> type = const Value.absent(),
+                Value<String?> accountId = const Value.absent(),
+                Value<String?> envelopeId = const Value.absent(),
+                Value<int?> amountCents = const Value.absent(),
+                Value<String?> payee = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<String?> currency = const Value.absent(),
+                Value<String?> tagIdsJson = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TransactionTemplatesCompanion(
+                id: id,
+                budgetId: budgetId,
+                name: name,
+                type: type,
+                accountId: accountId,
+                envelopeId: envelopeId,
+                amountCents: amountCents,
+                payee: payee,
+                notes: notes,
+                currency: currency,
+                tagIdsJson: tagIdsJson,
+                sortOrder: sortOrder,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String budgetId,
+                required String name,
+                required String type,
+                Value<String?> accountId = const Value.absent(),
+                Value<String?> envelopeId = const Value.absent(),
+                Value<int?> amountCents = const Value.absent(),
+                Value<String?> payee = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<String?> currency = const Value.absent(),
+                Value<String?> tagIdsJson = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TransactionTemplatesCompanion.insert(
+                id: id,
+                budgetId: budgetId,
+                name: name,
+                type: type,
+                accountId: accountId,
+                envelopeId: envelopeId,
+                amountCents: amountCents,
+                payee: payee,
+                notes: notes,
+                currency: currency,
+                tagIdsJson: tagIdsJson,
+                sortOrder: sortOrder,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$TransactionTemplatesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $TransactionTemplatesTable,
+      TransactionTemplate,
+      $$TransactionTemplatesTableFilterComposer,
+      $$TransactionTemplatesTableOrderingComposer,
+      $$TransactionTemplatesTableAnnotationComposer,
+      $$TransactionTemplatesTableCreateCompanionBuilder,
+      $$TransactionTemplatesTableUpdateCompanionBuilder,
+      (
+        TransactionTemplate,
+        BaseReferences<
+          _$AppDatabase,
+          $TransactionTemplatesTable,
+          TransactionTemplate
+        >,
+      ),
+      TransactionTemplate,
       PrefetchHooks Function()
     >;
 typedef $$TagsTableCreateCompanionBuilder =
@@ -19339,6 +20616,8 @@ class $AppDatabaseManager {
       $$TransactionsTableTableManager(_db, _db.transactions);
   $$TransactionSplitsTableTableManager get transactionSplits =>
       $$TransactionSplitsTableTableManager(_db, _db.transactionSplits);
+  $$TransactionTemplatesTableTableManager get transactionTemplates =>
+      $$TransactionTemplatesTableTableManager(_db, _db.transactionTemplates);
   $$TagsTableTableManager get tags => $$TagsTableTableManager(_db, _db.tags);
   $$TransactionTagsTableTableManager get transactionTags =>
       $$TransactionTagsTableTableManager(_db, _db.transactionTags);

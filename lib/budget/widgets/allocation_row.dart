@@ -1,6 +1,8 @@
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/budget/bloc/bloc.dart';
+import 'package:envelope/budget/widgets/allocation_scrubber.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/feature_flags.dart';
 import 'package:envelope/shared/services/funding_status_service.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/shared/widgets/funding_status_badge.dart';
@@ -108,91 +110,112 @@ class _AllocationRowState extends State<AllocationRow> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Flexible(
-                      child: Text(
-                        widget.envelope.name,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                        overflow: TextOverflow.ellipsis,
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            widget.envelope.name,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (fundingStatus != FundingStatus.noTarget) ...[
+                          const SizedBox(width: 8),
+                          FundingStatusBadge(
+                            status: fundingStatus,
+                            amountCents: neededCents,
+                            symbol: symbol,
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text:
+                                '${l10n.budgetSpentLabel}: '
+                                '${formatCents(spent, symbol: symbol)}  ',
+                          ),
+                          TextSpan(
+                            text:
+                                '${l10n.budgetAvailableLabel}: '
+                                '${formatCents(available, symbol: symbol)}',
+                            style: available < 0
+                                ? TextStyle(
+                                    color: Theme.of(context).colorScheme.error,
+                                    fontWeight: FontWeight.w600,
+                                  )
+                                : null,
+                          ),
+                        ],
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.outline,
                       ),
                     ),
-                    if (fundingStatus != FundingStatus.noTarget) ...[
-                      const SizedBox(width: 8),
-                      FundingStatusBadge(
-                        status: fundingStatus,
-                        amountCents: neededCents,
-                        symbol: symbol,
-                      ),
-                    ],
                   ],
                 ),
-                const SizedBox(height: 2),
-                Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text:
-                            '${l10n.budgetSpentLabel}: '
-                            '${formatCents(spent, symbol: symbol)}  ',
-                      ),
-                      TextSpan(
-                        text:
-                            '${l10n.budgetAvailableLabel}: '
-                            '${formatCents(available, symbol: symbol)}',
-                        style: available < 0
-                            ? TextStyle(
-                                color: Theme.of(context).colorScheme.error,
-                                fontWeight: FontWeight.w600,
-                              )
-                            : null,
-                      ),
-                    ],
+              ),
+              SizedBox(
+                width: 100,
+                child: TextFormField(
+                  controller: _controller,
+                  focusNode: _focusNode,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
                   ),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(
+                      RegExp(r'^\d*\.?\d{0,2}'),
+                    ),
+                  ],
+                  textAlign: TextAlign.right,
+                  decoration: InputDecoration(
+                    prefixText: symbol,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
                   ),
+                  onChanged: (value) {
+                    final cents = parseCents(value) ?? 0;
+                    context.read<BudgetBloc>().add(
+                      AllocationAmountChanged(
+                        envelopeId: widget.envelope.id,
+                        amount: cents,
+                      ),
+                    );
+                  },
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          SizedBox(
-            width: 100,
-            child: TextFormField(
-              controller: _controller,
-              focusNode: _focusNode,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
-              ],
-              textAlign: TextAlign.right,
-              decoration: InputDecoration(
-                prefixText: symbol,
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 8,
-                ),
-              ),
-              onChanged: (value) {
-                final cents = parseCents(value) ?? 0;
-                context.read<BudgetBloc>().add(
-                  AllocationAmountChanged(
-                    envelopeId: widget.envelope.id,
-                    amount: cents,
-                  ),
+          if (kAllocationScrubberEnabled) ...[
+            const SizedBox(height: 6),
+            AllocationScrubber(
+              envelopeId: widget.envelope.id,
+              currentCents: effectiveAllocated,
+              onCentsChanged: (cents) {
+                final text = _centsToText(cents);
+                _controller.value = TextEditingValue(
+                  text: text,
+                  selection: TextSelection.collapsed(offset: text.length),
                 );
               },
             ),
-          ),
+          ],
         ],
       ),
     );

@@ -1,9 +1,16 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:drift/drift.dart' show InsertMode, Value;
 import 'package:envelope_api_client/envelope_api_client.dart';
 import 'package:envelope_local_storage/envelope_local_storage.dart'
-    hide BillReminder, RecurringRule, Tag, Transaction, TransactionSplit;
+    hide
+        BillReminder,
+        RecurringRule,
+        Tag,
+        Transaction,
+        TransactionSplit,
+        TransactionTemplate;
 import 'package:envelope_local_storage/envelope_local_storage.dart' as storage;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:transaction_repository/transaction_repository.dart';
@@ -626,6 +633,153 @@ class TransactionRepository {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // Transaction Templates
+  // ---------------------------------------------------------------------------
+
+  /// Creates a transaction template (saved blueprint for one-tap pre-fill).
+  ///
+  /// Writes to the API first, then caches locally.
+  Future<TransactionTemplate> createTransactionTemplate({
+    required String budgetId,
+    required String name,
+    required String type,
+    String? accountId,
+    String? envelopeId,
+    int? amountCents,
+    String? payee,
+    String? notes,
+    String? currency,
+    List<String> tagIds = const [],
+  }) async {
+    try {
+      final now = DateTime.now().toUtc();
+      final dto = TransactionTemplateDto(
+        id: '',
+        budgetId: budgetId,
+        name: name,
+        type: type,
+        accountId: accountId,
+        envelopeId: envelopeId,
+        amountCents: amountCents,
+        payee: payee,
+        notes: notes,
+        currency: currency,
+        tagIdsJson: tagIds.isEmpty ? null : _encodeTagIds(tagIds),
+        createdAt: now,
+        updatedAt: now,
+      );
+      final created = await _apiClient.transactions
+          .createTransactionTemplate(dto);
+      await _localDatabase.transactionTemplatesDao.insertTemplate(
+        _toTemplateCompanion(created),
+      );
+      return _mapTemplateFromDto(created);
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException(
+        'Failed to create transaction template',
+        error: e,
+      );
+    }
+  }
+
+  /// Fetches all non-deleted transaction templates for a budget.
+  ///
+  /// Returns the local cache immediately when present, then refreshes from
+  /// the remote in the background so multi-device edits propagate. Callers
+  /// who need fresh data should consume [watchTransactionTemplates] instead.
+  ///
+  /// Best-effort: if the remote fetch fails (e.g. the table does not exist
+  /// on a stale environment) this returns whatever local has rather than
+  /// throwing, so the rest of the form load is unaffected.
+  Future<List<TransactionTemplate>> getTransactionTemplates(
+    String budgetId,
+  ) async {
+    final local = await _localDatabase.transactionTemplatesDao
+        .getTemplatesByBudgetId(budgetId);
+    if (local.isNotEmpty) {
+      unawaited(_refreshTransactionTemplatesQuietly(budgetId));
+      return local.map(_mapTemplateFromLocal).toList();
+    }
+    try {
+      return await _refreshTransactionTemplates(budgetId);
+    } on Exception {
+      return const [];
+    }
+  }
+
+  Future<List<TransactionTemplate>> _refreshTransactionTemplates(
+    String budgetId,
+  ) async {
+    final remote = await _apiClient.transactions.getTransactionTemplates(
+      budgetId,
+    );
+    for (final dto in remote) {
+      await _localDatabase.transactionTemplatesDao.insertTemplate(
+        _toTemplateCompanion(dto),
+      );
+    }
+    return remote.map(_mapTemplateFromDto).toList();
+  }
+
+  Future<void> _refreshTransactionTemplatesQuietly(String budgetId) async {
+    try {
+      await _refreshTransactionTemplates(budgetId);
+    } on Exception {
+      // Best-effort background refresh.
+    }
+  }
+
+  /// Streams the transaction templates for a budget (live updates).
+  Stream<List<TransactionTemplate>> watchTransactionTemplates(String budgetId) {
+    return _localDatabase.transactionTemplatesDao
+        .watchTemplatesByBudgetId(budgetId)
+        .map((rows) => rows.map(_mapTemplateFromLocal).toList());
+  }
+
+  /// Updates an existing transaction template.
+  Future<TransactionTemplate> updateTransactionTemplate(
+    TransactionTemplate template,
+  ) async {
+    try {
+      final dto = _toTemplateDto(
+        template.copyWith(updatedAt: DateTime.now().toUtc()),
+      );
+      final updated = await _apiClient.transactions.updateTransactionTemplate(
+        dto,
+      );
+      await _localDatabase.transactionTemplatesDao.insertTemplate(
+        _toTemplateCompanion(updated),
+      );
+      return _mapTemplateFromDto(updated);
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException(
+        'Failed to update transaction template',
+        error: e,
+      );
+    }
+  }
+
+  /// Soft-deletes a transaction template by [id].
+  Future<void> deleteTransactionTemplate(String id) async {
+    try {
+      await _apiClient.transactions.deleteTransactionTemplate(id);
+    } on EnvelopeApiException catch (e) {
+      throw TransactionException(
+        'Failed to delete transaction template',
+        error: e,
+      );
+    }
+    try {
+      await _localDatabase.transactionTemplatesDao.softDeleteTemplate(
+        id,
+        DateTime.now().toUtc(),
+      );
+    } on Exception {
+      // Stale local entry will be cleaned up on next refresh.
+    }
+  }
+
   /// Deletes a tag by its [id].
   ///
   /// Removes from the API first. Local cache removal is best-effort.
@@ -1129,6 +1283,107 @@ class TransactionRepository {
       id: dto.id,
       budgetId: dto.budgetId,
       name: dto.name,
+    );
+  }
+
+  // --- Transaction template mappers ---
+
+  static String _encodeTagIds(List<String> ids) => jsonEncode(ids);
+
+  static List<String> _decodeTagIds(String? json) {
+    if (json == null || json.isEmpty) return const [];
+    try {
+      final decoded = jsonDecode(json);
+      if (decoded is! List) return const [];
+      return decoded.whereType<String>().toList();
+    } on FormatException {
+      return const [];
+    }
+  }
+
+  static TransactionTemplate _mapTemplateFromDto(TransactionTemplateDto dto) {
+    return TransactionTemplate(
+      id: dto.id,
+      budgetId: dto.budgetId,
+      name: dto.name,
+      type: dto.type,
+      createdAt: dto.createdAt,
+      updatedAt: dto.updatedAt,
+      accountId: dto.accountId,
+      envelopeId: dto.envelopeId,
+      amountCents: dto.amountCents,
+      payee: dto.payee,
+      notes: dto.notes,
+      currency: dto.currency,
+      tagIds: _decodeTagIds(dto.tagIdsJson),
+      sortOrder: dto.sortOrder,
+      deletedAt: dto.deletedAt,
+    );
+  }
+
+  static TransactionTemplate _mapTemplateFromLocal(
+    storage.TransactionTemplate row,
+  ) {
+    return TransactionTemplate(
+      id: row.id,
+      budgetId: row.budgetId,
+      name: row.name,
+      type: row.type,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      accountId: row.accountId,
+      envelopeId: row.envelopeId,
+      amountCents: row.amountCents,
+      payee: row.payee,
+      notes: row.notes,
+      currency: row.currency,
+      tagIds: _decodeTagIds(row.tagIdsJson),
+      sortOrder: row.sortOrder,
+      deletedAt: row.deletedAt,
+    );
+  }
+
+  static TransactionTemplateDto _toTemplateDto(TransactionTemplate template) {
+    return TransactionTemplateDto(
+      id: template.id,
+      budgetId: template.budgetId,
+      name: template.name,
+      type: template.type,
+      createdAt: template.createdAt,
+      updatedAt: template.updatedAt,
+      accountId: template.accountId,
+      envelopeId: template.envelopeId,
+      amountCents: template.amountCents,
+      payee: template.payee,
+      notes: template.notes,
+      currency: template.currency,
+      tagIdsJson: template.tagIds.isEmpty
+          ? null
+          : _encodeTagIds(template.tagIds),
+      sortOrder: template.sortOrder,
+      deletedAt: template.deletedAt,
+    );
+  }
+
+  static storage.TransactionTemplatesCompanion _toTemplateCompanion(
+    TransactionTemplateDto dto,
+  ) {
+    return storage.TransactionTemplatesCompanion.insert(
+      id: dto.id,
+      budgetId: dto.budgetId,
+      name: dto.name,
+      type: dto.type,
+      createdAt: dto.createdAt,
+      updatedAt: dto.updatedAt,
+      accountId: Value(dto.accountId),
+      envelopeId: Value(dto.envelopeId),
+      amountCents: Value(dto.amountCents),
+      payee: Value(dto.payee),
+      notes: Value(dto.notes),
+      currency: Value(dto.currency),
+      tagIdsJson: Value(dto.tagIdsJson),
+      sortOrder: Value(dto.sortOrder),
+      deletedAt: Value(dto.deletedAt),
     );
   }
 }

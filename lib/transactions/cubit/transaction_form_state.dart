@@ -62,6 +62,7 @@ final class TransactionFormState extends Equatable {
     this.recurringCustomUnit = 'days',
     this.recurringEndDate,
     this.recurringAutoPost = false,
+    this.templates = const [],
   });
 
   final TransactionFormStatus status;
@@ -82,6 +83,9 @@ final class TransactionFormState extends Equatable {
   final String recurringCustomUnit;
   final DateTime? recurringEndDate;
   final bool recurringAutoPost;
+
+  /// Saved transaction templates for the current budget.
+  final List<TransactionTemplate> templates;
 
   static const Object _sentinel = Object();
   static const Object _customIntervalSentinel = Object();
@@ -104,6 +108,7 @@ final class TransactionFormState extends Equatable {
     String? recurringCustomUnit,
     Object? recurringEndDate = _endDateSentinel,
     bool? recurringAutoPost,
+    List<TransactionTemplate>? templates,
   }) {
     return TransactionFormState(
       status: status ?? this.status,
@@ -129,6 +134,7 @@ final class TransactionFormState extends Equatable {
           ? this.recurringEndDate
           : recurringEndDate as DateTime?,
       recurringAutoPost: recurringAutoPost ?? this.recurringAutoPost,
+      templates: templates ?? this.templates,
     );
   }
 
@@ -150,5 +156,6 @@ final class TransactionFormState extends Equatable {
     recurringCustomUnit,
     recurringEndDate,
     recurringAutoPost,
+    templates,
   ];
 }
