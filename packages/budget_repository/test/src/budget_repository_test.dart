@@ -43,6 +43,64 @@ class FakeEnvelopeAllocationsCompanion extends Fake
     implements storage.EnvelopeAllocationsCompanion {}
 
 void main() {
+  group('BudgetRepository.periodForDate', () {
+    final apr = BudgetPeriod(
+      id: 'apr',
+      budgetId: 'b',
+      startDate: DateTime(2026, 4),
+      endDate: DateTime(2026, 4, 30),
+      createdAt: DateTime(2026, 4),
+    );
+    final may = BudgetPeriod(
+      id: 'may',
+      budgetId: 'b',
+      startDate: DateTime(2026, 5),
+      endDate: DateTime(2026, 5, 31),
+      createdAt: DateTime(2026, 5),
+    );
+
+    test('returns the period containing the date', () {
+      final result = BudgetRepository.periodForDate<BudgetPeriod>(
+        DateTime(2026, 4, 5),
+        [apr, may],
+        startDate: (p) => p.startDate,
+        endDate: (p) => p.endDate,
+      );
+      expect(result, apr);
+    });
+
+    test('matches inclusively at the period boundary', () {
+      expect(
+        BudgetRepository.periodForDate<BudgetPeriod>(
+          DateTime(2026, 4, 30),
+          [apr, may],
+          startDate: (p) => p.startDate,
+          endDate: (p) => p.endDate,
+        ),
+        apr,
+      );
+      expect(
+        BudgetRepository.periodForDate<BudgetPeriod>(
+          DateTime(2026, 5),
+          [apr, may],
+          startDate: (p) => p.startDate,
+          endDate: (p) => p.endDate,
+        ),
+        may,
+      );
+    });
+
+    test('returns null when the date falls outside every period', () {
+      final result = BudgetRepository.periodForDate<BudgetPeriod>(
+        DateTime(2026, 3, 31),
+        [apr, may],
+        startDate: (p) => p.startDate,
+        endDate: (p) => p.endDate,
+      );
+      expect(result, isNull);
+    });
+  });
+
   late BudgetRepository repository;
   late MockEnvelopeApiClient apiClient;
   late MockBudgetsApiClient budgetsApiClient;

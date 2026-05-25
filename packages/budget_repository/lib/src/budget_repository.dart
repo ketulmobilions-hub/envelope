@@ -272,6 +272,34 @@ class BudgetRepository {
     }
   }
 
+  /// Returns the period in [periods] whose `[startDate, endDate]` window
+  /// contains [date], or `null` when [date] falls outside every period.
+  ///
+  /// Pure helper — no I/O. Used by both [addIncomeToPeriod] /
+  /// [removeIncomeFromPeriod] (against local storage rows) and by the UI
+  /// (against `BudgetPeriod` domain models) to bucket past-dated income or
+  /// transactions into the period they belong to.
+  ///
+  /// When two periods overlap (should never happen in valid data, but is
+  /// possible mid-migration), the latest-starting match wins — it's almost
+  /// always the more recently created period.
+  static T? periodForDate<T>(
+    DateTime date,
+    Iterable<T> periods, {
+    required DateTime Function(T) startDate,
+    required DateTime Function(T) endDate,
+  }) {
+    T? best;
+    for (final p in periods) {
+      if (!startDate(p).isAfter(date) && !endDate(p).isBefore(date)) {
+        if (best == null || startDate(p).isAfter(startDate(best))) {
+          best = p;
+        }
+      }
+    }
+    return best;
+  }
+
   /// Increments `totalIncome` on the budget period that contains [date].
   ///
   /// Symmetric counterpart to [removeIncomeFromPeriod]. Use this when undoing
@@ -289,13 +317,12 @@ class BudgetRepository {
       final periods = await _localDatabase.budgetsDao.getPeriodsByBudgetId(
         budgetId,
       );
-      storage.BudgetPeriod? period;
-      for (final p in periods) {
-        if (!p.startDate.isAfter(date) && !p.endDate.isBefore(date)) {
-          period = p;
-          break;
-        }
-      }
+      final period = periodForDate<storage.BudgetPeriod>(
+        date,
+        periods,
+        startDate: (p) => p.startDate,
+        endDate: (p) => p.endDate,
+      );
       if (period == null) return;
 
       final updatedPeriod = _mapBudgetPeriodFromLocal(period).copyWith(
@@ -319,13 +346,12 @@ class BudgetRepository {
       final periods = await _localDatabase.budgetsDao.getPeriodsByBudgetId(
         budgetId,
       );
-      storage.BudgetPeriod? period;
-      for (final p in periods) {
-        if (!p.startDate.isAfter(date) && !p.endDate.isBefore(date)) {
-          period = p;
-          break;
-        }
-      }
+      final period = periodForDate<storage.BudgetPeriod>(
+        date,
+        periods,
+        startDate: (p) => p.startDate,
+        endDate: (p) => p.endDate,
+      );
       if (period == null) return;
 
       final updatedPeriod = _mapBudgetPeriodFromLocal(period).copyWith(
