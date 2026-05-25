@@ -41,6 +41,8 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     on<_RemoteChangeReceived>(_onRemoteChangeReceived);
     on<_DashboardStreamError>(_onStreamError);
     on<DashboardRefreshRequested>(_onRefreshRequested);
+    on<DashboardPreviousPeriodRequested>(_onPreviousPeriod);
+    on<DashboardNextPeriodRequested>(_onNextPeriod);
     on<QuickAllocationRequested>(_onQuickAllocationRequested);
     on<BudgetDeleteRequested>(_onBudgetDeleteRequested);
     on<_CcCreditLimitsLoaded>(_onCcCreditLimitsLoaded);
@@ -78,6 +80,11 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   bool _transactionsReceived = false;
   bool _waitingForAllocations = false;
 
+  /// True once the user has manually navigated to a non-current period. Keeps
+  /// the periods stream from snapping the selection back to "today" on every
+  /// re-fire (remote change, refresh). Reset on [DashboardStarted].
+  bool _manualPeriodSelected = false;
+
   bool get _isLoaded =>
       _periodsReceived &&
       _accountsReceived &&
@@ -100,6 +107,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     _groupsReceived = false;
     _transactionsReceived = false;
     _waitingForAllocations = false;
+    _manualPeriodSelected = false;
 
     await Future.wait([
       _periodsSubscription?.cancel() ?? Future<void>.value(),
@@ -226,7 +234,14 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
           // Fall through to existing selection on failure.
         }
       }
-      selected = sortedPeriods.firstWhere(
+      // Preserve a user-chosen period across stream re-fires, as long as it
+      // still exists. Otherwise fall back to the period containing today.
+      if (_manualPeriodSelected && state.selectedPeriod != null) {
+        selected = sortedPeriods
+            .where((p) => p.id == state.selectedPeriod!.id)
+            .firstOrNull;
+      }
+      selected ??= sortedPeriods.firstWhere(
         (p) =>
             !p.isClosed &&
             !p.startDate.isAfter(now) &&
@@ -246,6 +261,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       state.copyWith(
         status: _isLoaded ? DashboardStatus.loaded : state.status,
         selectedPeriod: selected,
+        periods: sortedPeriods,
       ),
     );
 
@@ -265,6 +281,41 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         // Keep previous value.
       }
     }
+  }
+
+  Future<void> _onPreviousPeriod(
+    DashboardPreviousPeriodRequested event,
+    Emitter<DashboardState> emit,
+  ) => _selectAdjacentPeriod(emit, -1);
+
+  Future<void> _onNextPeriod(
+    DashboardNextPeriodRequested event,
+    Emitter<DashboardState> emit,
+  ) => _selectAdjacentPeriod(emit, 1);
+
+  /// Moves the selection [delta] periods (oldest-first order) and rebinds the
+  /// allocation stream / Ready-to-Assign to the new period. No-op at the ends.
+  Future<void> _selectAdjacentPeriod(
+    Emitter<DashboardState> emit,
+    int delta,
+  ) async {
+    final sorted = state.sortedPeriods;
+    final idx = sorted.indexWhere((p) => p.id == state.selectedPeriod?.id);
+    final newIdx = idx + delta;
+    if (idx < 0 || newIdx < 0 || newIdx >= sorted.length) return;
+
+    final newPeriod = sorted[newIdx];
+    _manualPeriodSelected = true;
+    // Clear stale allocations/RTA so the UI doesn't show the old period's
+    // figures against the new period's label while the refresh is in flight.
+    emit(
+      state.copyWith(
+        selectedPeriod: newPeriod,
+        allocations: const [],
+        readyToAssign: 0,
+      ),
+    );
+    await _subscribeToAllocations(newPeriod.id);
   }
 
   void _onAccountsUpdated(

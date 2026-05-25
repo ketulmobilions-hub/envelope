@@ -293,6 +293,15 @@ class _HomeView extends StatelessWidget {
                   DashboardReadyToAssignCard(
                     readyToAssign: state.readyToAssign,
                     carriedRta: state.selectedPeriod?.carriedRta ?? 0,
+                    period: state.selectedPeriod,
+                    hasPreviousPeriod: state.hasPreviousPeriod,
+                    hasNextPeriod: state.hasNextPeriod,
+                    onPreviousPeriod: () => context.read<DashboardBloc>().add(
+                      const DashboardPreviousPeriodRequested(),
+                    ),
+                    onNextPeriod: () => context.read<DashboardBloc>().add(
+                      const DashboardNextPeriodRequested(),
+                    ),
                     onTap: () => context.push(
                       '${AppRoutes.budget}?budgetId=$budgetId',
                     ),

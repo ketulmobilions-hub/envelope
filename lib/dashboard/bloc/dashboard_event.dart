@@ -17,6 +17,16 @@ final class DashboardRefreshRequested extends DashboardEvent {
   const DashboardRefreshRequested();
 }
 
+/// Navigate the dashboard to the previous (older) budget period.
+final class DashboardPreviousPeriodRequested extends DashboardEvent {
+  const DashboardPreviousPeriodRequested();
+}
+
+/// Navigate the dashboard to the next (newer) budget period.
+final class DashboardNextPeriodRequested extends DashboardEvent {
+  const DashboardNextPeriodRequested();
+}
+
 /// Internal event when the budget periods stream emits.
 final class _PeriodsUpdated extends DashboardEvent {
   const _PeriodsUpdated(this.periods, this.generation);
