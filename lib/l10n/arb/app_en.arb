@@ -1102,6 +1102,18 @@
     "@transactionsAccountLabel": {
         "description": "Label for account dropdown"
     },
+    "transactionsAllAccounts": "All accounts",
+    "@transactionsAllAccounts": {
+        "description": "Option in the account filter that clears the account filter"
+    },
+    "transactionsUnknownAccount": "Unknown account",
+    "@transactionsUnknownAccount": {
+        "description": "Account filter chip label when the selected account no longer exists (e.g. deleted)"
+    },
+    "transactionsFilterByAccount": "Filter by account",
+    "@transactionsFilterByAccount": {
+        "description": "Title of the account filter bottom sheet on the transactions list"
+    },
     "transactionsAccountRequired": "Please select an account",
     "@transactionsAccountRequired": {
         "description": "Validation when no account selected"
