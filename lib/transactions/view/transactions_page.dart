@@ -5,8 +5,7 @@ import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/transactions/bloc/bloc.dart';
-import 'package:envelope/transactions/cubit/cubit.dart';
-import 'package:envelope/transactions/view/transaction_form_entry.dart';
+import 'package:envelope/transactions/view/quick_add_transaction_sheet.dart';
 import 'package:envelope/transactions/view/transaction_search_page.dart';
 import 'package:envelope/transactions/widgets/widgets.dart';
 import 'package:envelope_repository/envelope_repository.dart';
@@ -117,22 +116,11 @@ class TransactionsView extends StatelessWidget {
       now: appClock.now(),
     );
     if (!context.mounted) return;
-    final result = await Navigator.of(context).push<bool>(
-      MaterialPageRoute<bool>(
-        builder: (_) => BlocProvider(
-          create: (_) => TransactionFormCubit(
-            transactionRepository: context.read<TransactionRepository>(),
-            accountRepository: context.read<AccountRepository>(),
-            envelopeRepository: context.read<EnvelopeRepository>(),
-            budgetRepository: context.read<BudgetRepository>(),
-            budgetId: budgetId,
-            userId: context.read<AuthBloc>().state.user?.id ?? '',
-            budgetPeriodId: periodId,
-            now: appClock.now,
-          ),
-          child: const TransactionFormEntry(),
-        ),
-      ),
+    final result = await showTransactionFormSheet(
+      context,
+      budgetId: budgetId,
+      budgetPeriodId: periodId,
+      userId: context.read<AuthBloc>().state.user?.id ?? '',
     );
     if (result == true && context.mounted) {
       bloc.add(const TransactionsRefreshRequested());
@@ -237,23 +225,12 @@ class _TransactionsList extends StatelessWidget {
       now: appClock.now(),
     );
     if (!context.mounted) return;
-    final result = await Navigator.of(context).push<bool>(
-      MaterialPageRoute<bool>(
-        builder: (_) => BlocProvider(
-          create: (_) => TransactionFormCubit(
-            transactionRepository: context.read<TransactionRepository>(),
-            accountRepository: context.read<AccountRepository>(),
-            envelopeRepository: context.read<EnvelopeRepository>(),
-            budgetRepository: context.read<BudgetRepository>(),
-            budgetId: budgetId,
-            userId: transaction.createdBy,
-            budgetPeriodId: periodId,
-            transaction: transaction,
-            now: appClock.now,
-          ),
-          child: TransactionFormEntry(transaction: transaction),
-        ),
-      ),
+    final result = await showTransactionFormSheet(
+      context,
+      budgetId: budgetId,
+      budgetPeriodId: periodId,
+      userId: transaction.createdBy,
+      transaction: transaction,
     );
     if (result == true && context.mounted) {
       bloc.add(const TransactionsRefreshRequested());

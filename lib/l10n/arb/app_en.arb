@@ -1114,6 +1114,50 @@
     "@transactionsCreateButton": {
         "description": "Button to create a new transaction"
     },
+    "transactionsQuickAddSave": "Save",
+    "@transactionsQuickAddSave": {
+        "description": "Save button in the quick-add transaction sheet"
+    },
+    "transactionsSeeFullForm": "See full form",
+    "@transactionsSeeFullForm": {
+        "description": "Link in the quick-add sheet that opens the full transaction form"
+    },
+    "transactionsMoreOptions": "More options",
+    "@transactionsMoreOptions": {
+        "description": "Expand button revealing optional transaction fields"
+    },
+    "transactionsHideOptions": "Hide",
+    "@transactionsHideOptions": {
+        "description": "Collapse button hiding optional transaction fields"
+    },
+    "transactionsEnvelopeRequired": "Please choose an envelope",
+    "@transactionsEnvelopeRequired": {
+        "description": "Validation error when no envelope is selected on an expense"
+    },
+    "transactionsTransferSameAccountError": "From and To accounts must differ",
+    "@transactionsTransferSameAccountError": {
+        "description": "Validation error when the transfer From and To accounts are the same"
+    },
+    "templatesSaveAs": "Save as template",
+    "@templatesSaveAs": {
+        "description": "Switch to save the current transaction as a reusable template"
+    },
+    "templatesNameLabel": "Template name",
+    "@templatesNameLabel": {
+        "description": "Text-field label for naming a new transaction template"
+    },
+    "templatesNameRequired": "Name required",
+    "@templatesNameRequired": {
+        "description": "Validation error when 'Save as template' is checked but no name is provided"
+    },
+    "templatesApplyButton": "Templates",
+    "@templatesApplyButton": {
+        "description": "Button that opens the list of saved templates to apply"
+    },
+    "templatesPickerTitle": "Choose a template",
+    "@templatesPickerTitle": {
+        "description": "Header of the template picker bottom sheet"
+    },
     "templatesEmpty": "No templates yet. Save one from the More section after creating a transaction.",
     "@templatesEmpty": {
         "description": "Shown when the template picker has no entries"

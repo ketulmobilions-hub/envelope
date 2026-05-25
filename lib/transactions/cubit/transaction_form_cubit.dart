@@ -45,52 +45,114 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
   bool get isEditing => transaction != null;
 
   Future<void> _loadData() async {
-    try {
-      final accounts = await _accountRepository.watchAccounts(budgetId).first;
-      final envelopes = await _envelopeRepository
-          .watchEnvelopes(budgetId)
-          .first;
-      final categoryGroups = await _envelopeRepository
-          .watchCategoryGroups(budgetId)
-          .first;
-      final tags = await _transactionRepository.getTags(budgetId);
-
-      var selectedTagIds = <String>[];
-      var initialSplits = <SplitEntry>[];
-      if (isEditing) {
-        selectedTagIds = await _transactionRepository.getTagIdsForTransaction(
-          transaction!.id,
-        );
-
-        final splits = await _transactionRepository.getTransactionSplits(
-          transaction!.id,
-        );
-
-        initialSplits = splits
-            .map(
-              (s) => SplitEntry(
-                envelopeId: s.envelopeId,
-                amountText: (s.amount / 100).toStringAsFixed(2),
-              ),
-            )
-            .toList();
+    // Each fetch is independent: one failing must not blank out the others.
+    Future<T> safe<T>(Future<T> Function() task, T fallback) async {
+      try {
+        return await task();
+      } on Exception {
+        return fallback;
       }
+    }
 
-      if (isClosed) return;
-      emit(
-        state.copyWith(
-          status: TransactionFormStatus.loaded,
-          accounts: accounts,
-          envelopes: envelopes,
-          categoryGroups: categoryGroups,
-          tags: tags,
-          selectedTagIds: selectedTagIds,
-          initialSplits: initialSplits,
-        ),
+    final accountsFuture = safe(
+      () => _accountRepository.watchAccounts(budgetId).first,
+      const <Account>[],
+    );
+    final envelopesFuture = safe(
+      () => _envelopeRepository.watchEnvelopes(budgetId).first,
+      const <Envelope>[],
+    );
+    final categoryGroupsFuture = safe(
+      () => _envelopeRepository.watchCategoryGroups(budgetId).first,
+      const <CategoryGroup>[],
+    );
+    final tagsFuture = safe(
+      () => _transactionRepository.getTags(budgetId),
+      const <Tag>[],
+    );
+    final templatesFuture = safe(
+      () => _transactionRepository.getTransactionTemplates(budgetId),
+      const <TransactionTemplate>[],
+    );
+    final selectedTagIdsFuture = isEditing
+        ? safe(
+            () => _transactionRepository.getTagIdsForTransaction(
+              transaction!.id,
+            ),
+            const <String>[],
+          )
+        : Future.value(const <String>[]);
+    final splitsFuture = isEditing
+        ? safe(
+            () => _transactionRepository.getTransactionSplits(transaction!.id),
+            const <TransactionSplit>[],
+          )
+        : Future.value(const <TransactionSplit>[]);
+
+    final accounts = await accountsFuture;
+    final envelopes = await envelopesFuture;
+    final categoryGroups = await categoryGroupsFuture;
+    final tags = await tagsFuture;
+    final templates = await templatesFuture;
+    final selectedTagIds = await selectedTagIdsFuture;
+    final splits = await splitsFuture;
+    final initialSplits = splits
+        .map(
+          (s) => SplitEntry(
+            envelopeId: s.envelopeId,
+            amountText: (s.amount / 100).toStringAsFixed(2),
+          ),
+        )
+        .toList();
+
+    if (isClosed) return;
+    emit(
+      state.copyWith(
+        status: TransactionFormStatus.loaded,
+        accounts: accounts,
+        envelopes: envelopes,
+        categoryGroups: categoryGroups,
+        tags: tags,
+        templates: templates,
+        selectedTagIds: selectedTagIds,
+        initialSplits: initialSplits,
+      ),
+    );
+  }
+
+  /// Persists the current transaction shape as a reusable template.
+  ///
+  /// Best-effort: failures are swallowed and do not block the originating
+  /// transaction submit. The new template is appended to [state.templates]
+  /// on success.
+  Future<void> saveAsTemplate({
+    required String name,
+    required String type,
+    String? accountId,
+    String? envelopeId,
+    int? amountCents,
+    String? payee,
+    String? notes,
+    String? currency,
+    List<String> tagIds = const [],
+  }) async {
+    try {
+      final template = await _transactionRepository.createTransactionTemplate(
+        budgetId: budgetId,
+        name: name,
+        type: type,
+        accountId: accountId,
+        envelopeId: envelopeId,
+        amountCents: amountCents,
+        payee: payee,
+        notes: notes,
+        currency: currency,
+        tagIds: tagIds,
       );
-    } on Exception {
       if (isClosed) return;
-      emit(state.copyWith(status: TransactionFormStatus.loaded));
+      emit(state.copyWith(templates: [...state.templates, template]));
+    } on Exception {
+      // Template save is non-blocking; transaction already created.
     }
   }
 
