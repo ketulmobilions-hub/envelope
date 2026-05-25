@@ -75,6 +75,7 @@ class TransactionsView extends StatelessWidget {
               children: [
                 TransactionFilterBar(
                   filter: state.filter,
+                  accounts: state.accounts,
                   onFilterChanged: (filter) => context
                       .read<TransactionsBloc>()
                       .add(TransactionsFilterChanged(filter)),
