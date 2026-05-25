@@ -185,6 +185,7 @@ class BudgetRepository {
     required DateTime startDate,
     required DateTime endDate,
     int totalIncome = 0,
+    int carriedRta = 0,
   }) async {
     try {
       final dto = BudgetPeriodDto(
@@ -193,6 +194,7 @@ class BudgetRepository {
         startDate: startDate,
         endDate: endDate,
         totalIncome: totalIncome,
+        carriedRta: carriedRta,
         createdAt: DateTime.now(),
       );
 
@@ -220,6 +222,7 @@ class BudgetRepository {
         endDate: period.endDate,
         totalIncome: period.totalIncome,
         totalAllocated: period.totalAllocated,
+        carriedRta: period.carriedRta,
         isClosed: period.isClosed,
         createdAt: period.createdAt,
       );
@@ -453,17 +456,43 @@ class BudgetRepository {
         budget.periodType,
       ).subtract(const Duration(days: 1));
 
+      // Compute the signed Ready-to-Assign carried forward from the previous
+      // period (YNAB-style). `periods` was sorted by endDate desc above, so the
+      // first element is the latest existing period.
+      var carriedRta = 0;
+      final previous = periods.isEmpty ? null : periods.first;
+      if (previous != null) {
+        final prevAllocations = await _localDatabase.envelopesDao
+            .getAllocationsByPeriodId(previous.id);
+        final prevAllocated = prevAllocations.fold<int>(
+          0,
+          (sum, a) => sum + a.allocatedAmount,
+        );
+        // Signed leftover RTA: positive when under-assigned, negative when
+        // over-assigned. carried_rta from the previous period is included so
+        // unassigned money compounds across periods instead of vanishing.
+        final signedPrevRta =
+            previous.totalIncome + previous.carriedRta - prevAllocated;
+        // Uncovered cash overspend reduces the next period's RTA rather than
+        // being carried as a negative envelope rollover (see
+        // [_seedRolloverFromPreviousPeriod]).
+        var uncoveredOverspend = 0;
+        for (final a in prevAllocations) {
+          final unspent = a.allocatedAmount - a.spentAmount + a.rolloverAmount;
+          if (unspent < 0) uncoveredOverspend += -unspent;
+        }
+        carriedRta = signedPrevRta - uncoveredOverspend;
+      }
+
       final newPeriod = await createBudgetPeriod(
         budgetId: budgetId,
         startDate: startDate,
         endDate: endDate,
+        carriedRta: carriedRta,
       );
 
-      if (periods.isNotEmpty) {
-        // Carry forward each envelope's remaining balance from the immediately
-        // previous period. `periods` was sorted by endDate desc above, so the
-        // first element is the latest existing period.
-        final previous = periods.first;
+      if (previous != null) {
+        // Carry forward each envelope's remaining positive balance.
         await _seedRolloverFromPreviousPeriod(
           fromPeriodId: previous.id,
           toPeriodId: newPeriod.id,
@@ -484,7 +513,10 @@ class BudgetRepository {
   /// Carries forward each envelope's remaining balance from [fromPeriodId]
   /// into [toPeriodId] as a new allocation with `allocatedAmount=0` and
   /// `rolloverAmount=remaining`. Idempotent: skips envelopes already with an
-  /// allocation in the target period. Skips zero remainders.
+  /// allocation in the target period. Skips zero and negative remainders —
+  /// uncovered overspend is instead deducted from the new period's
+  /// `carriedRta` by [autoCreateNextPeriod], so envelopes never carry a
+  /// negative (red) rollover.
   Future<void> _seedRolloverFromPreviousPeriod({
     required String fromPeriodId,
     required String toPeriodId,
@@ -503,7 +535,7 @@ class BudgetRepository {
       if (existingEnvIds.contains(src.envelopeId)) continue;
       final unspent =
           src.allocatedAmount - src.spentAmount + src.rolloverAmount;
-      if (unspent == 0) continue;
+      if (unspent <= 0) continue;
       final dto = EnvelopeAllocationDto(
         id: '',
         envelopeId: src.envelopeId,
@@ -552,7 +584,11 @@ class BudgetRepository {
 
   /// Calculates the "Ready to Assign" amount for a budget period.
   ///
-  /// Formula: `totalIncome - sum(allocatedAmounts)`.
+  /// Formula: `totalIncome + carriedRta - sum(allocatedAmounts)`.
+  ///
+  /// `carriedRta` folds in the signed leftover RTA from the previous period
+  /// (and any uncovered overspend penalty), so unassigned money rolls forward
+  /// instead of vanishing and a negative result forces the user to rebalance.
   ///
   /// `rolloverAmount` is intentionally excluded: it represents money that
   /// stays in its envelope across periods (YNAB-style per-envelope carry).
@@ -577,7 +613,7 @@ class BudgetRepository {
         (sum, a) => sum + a.allocatedAmount,
       );
 
-      return period.totalIncome - totalAllocated;
+      return period.totalIncome + period.carriedRta - totalAllocated;
     } on BudgetException {
       rethrow;
     } on Exception catch (e) {
@@ -1242,6 +1278,7 @@ class BudgetRepository {
       endDate: dto.endDate,
       totalIncome: dto.totalIncome,
       totalAllocated: dto.totalAllocated,
+      carriedRta: dto.carriedRta,
       isClosed: dto.isClosed,
       createdAt: dto.createdAt,
     );
@@ -1257,6 +1294,7 @@ class BudgetRepository {
       endDate: row.endDate,
       totalIncome: row.totalIncome,
       totalAllocated: row.totalAllocated,
+      carriedRta: row.carriedRta,
       isClosed: row.isClosed,
       createdAt: row.createdAt,
     );
@@ -1356,6 +1394,7 @@ class BudgetRepository {
       endDate: dto.endDate,
       totalIncome: Value(dto.totalIncome),
       totalAllocated: Value(dto.totalAllocated),
+      carriedRta: Value(dto.carriedRta),
       isClosed: Value(dto.isClosed),
       createdAt: dto.createdAt,
     );

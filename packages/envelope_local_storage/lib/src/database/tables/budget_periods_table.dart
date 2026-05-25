@@ -9,6 +9,8 @@ class BudgetPeriods extends Table {
       integer().named('total_income').withDefault(const Constant(0))();
   IntColumn get totalAllocated =>
       integer().named('total_allocated').withDefault(const Constant(0))();
+  IntColumn get carriedRta =>
+      integer().named('carried_rta').withDefault(const Constant(0))();
   BoolColumn get isClosed =>
       boolean().named('is_closed').withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime().named('created_at')();

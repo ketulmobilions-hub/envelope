@@ -1628,6 +1628,18 @@ class $BudgetPeriodsTable extends BudgetPeriods
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _carriedRtaMeta = const VerificationMeta(
+    'carriedRta',
+  );
+  @override
+  late final GeneratedColumn<int> carriedRta = GeneratedColumn<int>(
+    'carried_rta',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _isClosedMeta = const VerificationMeta(
     'isClosed',
   );
@@ -1662,6 +1674,7 @@ class $BudgetPeriodsTable extends BudgetPeriods
     endDate,
     totalIncome,
     totalAllocated,
+    carriedRta,
     isClosed,
     createdAt,
   ];
@@ -1724,6 +1737,12 @@ class $BudgetPeriodsTable extends BudgetPeriods
         ),
       );
     }
+    if (data.containsKey('carried_rta')) {
+      context.handle(
+        _carriedRtaMeta,
+        carriedRta.isAcceptableOrUnknown(data['carried_rta']!, _carriedRtaMeta),
+      );
+    }
     if (data.containsKey('is_closed')) {
       context.handle(
         _isClosedMeta,
@@ -1771,6 +1790,10 @@ class $BudgetPeriodsTable extends BudgetPeriods
         DriftSqlType.int,
         data['${effectivePrefix}total_allocated'],
       )!,
+      carriedRta: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}carried_rta'],
+      )!,
       isClosed: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_closed'],
@@ -1795,6 +1818,7 @@ class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
   final DateTime endDate;
   final int totalIncome;
   final int totalAllocated;
+  final int carriedRta;
   final bool isClosed;
   final DateTime createdAt;
   const BudgetPeriod({
@@ -1804,6 +1828,7 @@ class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
     required this.endDate,
     required this.totalIncome,
     required this.totalAllocated,
+    required this.carriedRta,
     required this.isClosed,
     required this.createdAt,
   });
@@ -1816,6 +1841,7 @@ class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
     map['end_date'] = Variable<DateTime>(endDate);
     map['total_income'] = Variable<int>(totalIncome);
     map['total_allocated'] = Variable<int>(totalAllocated);
+    map['carried_rta'] = Variable<int>(carriedRta);
     map['is_closed'] = Variable<bool>(isClosed);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -1829,6 +1855,7 @@ class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
       endDate: Value(endDate),
       totalIncome: Value(totalIncome),
       totalAllocated: Value(totalAllocated),
+      carriedRta: Value(carriedRta),
       isClosed: Value(isClosed),
       createdAt: Value(createdAt),
     );
@@ -1846,6 +1873,7 @@ class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
       endDate: serializer.fromJson<DateTime>(json['endDate']),
       totalIncome: serializer.fromJson<int>(json['totalIncome']),
       totalAllocated: serializer.fromJson<int>(json['totalAllocated']),
+      carriedRta: serializer.fromJson<int>(json['carriedRta']),
       isClosed: serializer.fromJson<bool>(json['isClosed']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -1860,6 +1888,7 @@ class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
       'endDate': serializer.toJson<DateTime>(endDate),
       'totalIncome': serializer.toJson<int>(totalIncome),
       'totalAllocated': serializer.toJson<int>(totalAllocated),
+      'carriedRta': serializer.toJson<int>(carriedRta),
       'isClosed': serializer.toJson<bool>(isClosed),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -1872,6 +1901,7 @@ class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
     DateTime? endDate,
     int? totalIncome,
     int? totalAllocated,
+    int? carriedRta,
     bool? isClosed,
     DateTime? createdAt,
   }) => BudgetPeriod(
@@ -1881,6 +1911,7 @@ class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
     endDate: endDate ?? this.endDate,
     totalIncome: totalIncome ?? this.totalIncome,
     totalAllocated: totalAllocated ?? this.totalAllocated,
+    carriedRta: carriedRta ?? this.carriedRta,
     isClosed: isClosed ?? this.isClosed,
     createdAt: createdAt ?? this.createdAt,
   );
@@ -1896,6 +1927,9 @@ class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
       totalAllocated: data.totalAllocated.present
           ? data.totalAllocated.value
           : this.totalAllocated,
+      carriedRta: data.carriedRta.present
+          ? data.carriedRta.value
+          : this.carriedRta,
       isClosed: data.isClosed.present ? data.isClosed.value : this.isClosed,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -1910,6 +1944,7 @@ class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
           ..write('endDate: $endDate, ')
           ..write('totalIncome: $totalIncome, ')
           ..write('totalAllocated: $totalAllocated, ')
+          ..write('carriedRta: $carriedRta, ')
           ..write('isClosed: $isClosed, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -1924,6 +1959,7 @@ class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
     endDate,
     totalIncome,
     totalAllocated,
+    carriedRta,
     isClosed,
     createdAt,
   );
@@ -1937,6 +1973,7 @@ class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
           other.endDate == this.endDate &&
           other.totalIncome == this.totalIncome &&
           other.totalAllocated == this.totalAllocated &&
+          other.carriedRta == this.carriedRta &&
           other.isClosed == this.isClosed &&
           other.createdAt == this.createdAt);
 }
@@ -1948,6 +1985,7 @@ class BudgetPeriodsCompanion extends UpdateCompanion<BudgetPeriod> {
   final Value<DateTime> endDate;
   final Value<int> totalIncome;
   final Value<int> totalAllocated;
+  final Value<int> carriedRta;
   final Value<bool> isClosed;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
@@ -1958,6 +1996,7 @@ class BudgetPeriodsCompanion extends UpdateCompanion<BudgetPeriod> {
     this.endDate = const Value.absent(),
     this.totalIncome = const Value.absent(),
     this.totalAllocated = const Value.absent(),
+    this.carriedRta = const Value.absent(),
     this.isClosed = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1969,6 +2008,7 @@ class BudgetPeriodsCompanion extends UpdateCompanion<BudgetPeriod> {
     required DateTime endDate,
     this.totalIncome = const Value.absent(),
     this.totalAllocated = const Value.absent(),
+    this.carriedRta = const Value.absent(),
     this.isClosed = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
@@ -1984,6 +2024,7 @@ class BudgetPeriodsCompanion extends UpdateCompanion<BudgetPeriod> {
     Expression<DateTime>? endDate,
     Expression<int>? totalIncome,
     Expression<int>? totalAllocated,
+    Expression<int>? carriedRta,
     Expression<bool>? isClosed,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
@@ -1995,6 +2036,7 @@ class BudgetPeriodsCompanion extends UpdateCompanion<BudgetPeriod> {
       if (endDate != null) 'end_date': endDate,
       if (totalIncome != null) 'total_income': totalIncome,
       if (totalAllocated != null) 'total_allocated': totalAllocated,
+      if (carriedRta != null) 'carried_rta': carriedRta,
       if (isClosed != null) 'is_closed': isClosed,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
@@ -2008,6 +2050,7 @@ class BudgetPeriodsCompanion extends UpdateCompanion<BudgetPeriod> {
     Value<DateTime>? endDate,
     Value<int>? totalIncome,
     Value<int>? totalAllocated,
+    Value<int>? carriedRta,
     Value<bool>? isClosed,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
@@ -2019,6 +2062,7 @@ class BudgetPeriodsCompanion extends UpdateCompanion<BudgetPeriod> {
       endDate: endDate ?? this.endDate,
       totalIncome: totalIncome ?? this.totalIncome,
       totalAllocated: totalAllocated ?? this.totalAllocated,
+      carriedRta: carriedRta ?? this.carriedRta,
       isClosed: isClosed ?? this.isClosed,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
@@ -2046,6 +2090,9 @@ class BudgetPeriodsCompanion extends UpdateCompanion<BudgetPeriod> {
     if (totalAllocated.present) {
       map['total_allocated'] = Variable<int>(totalAllocated.value);
     }
+    if (carriedRta.present) {
+      map['carried_rta'] = Variable<int>(carriedRta.value);
+    }
     if (isClosed.present) {
       map['is_closed'] = Variable<bool>(isClosed.value);
     }
@@ -2067,6 +2114,7 @@ class BudgetPeriodsCompanion extends UpdateCompanion<BudgetPeriod> {
           ..write('endDate: $endDate, ')
           ..write('totalIncome: $totalIncome, ')
           ..write('totalAllocated: $totalAllocated, ')
+          ..write('carriedRta: $carriedRta, ')
           ..write('isClosed: $isClosed, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
@@ -14481,6 +14529,7 @@ typedef $$BudgetPeriodsTableCreateCompanionBuilder =
       required DateTime endDate,
       Value<int> totalIncome,
       Value<int> totalAllocated,
+      Value<int> carriedRta,
       Value<bool> isClosed,
       required DateTime createdAt,
       Value<int> rowid,
@@ -14493,6 +14542,7 @@ typedef $$BudgetPeriodsTableUpdateCompanionBuilder =
       Value<DateTime> endDate,
       Value<int> totalIncome,
       Value<int> totalAllocated,
+      Value<int> carriedRta,
       Value<bool> isClosed,
       Value<DateTime> createdAt,
       Value<int> rowid,
@@ -14534,6 +14584,11 @@ class $$BudgetPeriodsTableFilterComposer
 
   ColumnFilters<int> get totalAllocated => $composableBuilder(
     column: $table.totalAllocated,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get carriedRta => $composableBuilder(
+    column: $table.carriedRta,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -14587,6 +14642,11 @@ class $$BudgetPeriodsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get carriedRta => $composableBuilder(
+    column: $table.carriedRta,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isClosed => $composableBuilder(
     column: $table.isClosed,
     builder: (column) => ColumnOrderings(column),
@@ -14626,6 +14686,11 @@ class $$BudgetPeriodsTableAnnotationComposer
 
   GeneratedColumn<int> get totalAllocated => $composableBuilder(
     column: $table.totalAllocated,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get carriedRta => $composableBuilder(
+    column: $table.carriedRta,
     builder: (column) => column,
   );
 
@@ -14673,6 +14738,7 @@ class $$BudgetPeriodsTableTableManager
                 Value<DateTime> endDate = const Value.absent(),
                 Value<int> totalIncome = const Value.absent(),
                 Value<int> totalAllocated = const Value.absent(),
+                Value<int> carriedRta = const Value.absent(),
                 Value<bool> isClosed = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -14683,6 +14749,7 @@ class $$BudgetPeriodsTableTableManager
                 endDate: endDate,
                 totalIncome: totalIncome,
                 totalAllocated: totalAllocated,
+                carriedRta: carriedRta,
                 isClosed: isClosed,
                 createdAt: createdAt,
                 rowid: rowid,
@@ -14695,6 +14762,7 @@ class $$BudgetPeriodsTableTableManager
                 required DateTime endDate,
                 Value<int> totalIncome = const Value.absent(),
                 Value<int> totalAllocated = const Value.absent(),
+                Value<int> carriedRta = const Value.absent(),
                 Value<bool> isClosed = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
@@ -14705,6 +14773,7 @@ class $$BudgetPeriodsTableTableManager
                 endDate: endDate,
                 totalIncome: totalIncome,
                 totalAllocated: totalAllocated,
+                carriedRta: carriedRta,
                 isClosed: isClosed,
                 createdAt: createdAt,
                 rowid: rowid,
