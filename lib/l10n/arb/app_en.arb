@@ -705,6 +705,26 @@
     "@envelopesDetailGoalProgressPlaceholder": {
         "description": "Placeholder text for goal progress in envelope detail"
     },
+    "envelopesDetailPeriodCurrent": "Current",
+    "@envelopesDetailPeriodCurrent": {
+        "description": "Badge on the period section that contains today's date"
+    },
+    "envelopesDetailPeriodEmpty": "No transactions in this period.",
+    "@envelopesDetailPeriodEmpty": {
+        "description": "Shown inside a period section that has an allocation but no transactions"
+    },
+    "envelopesDetailPeriodRange": "{start} – {end}",
+    "@envelopesDetailPeriodRange": {
+        "description": "Date-range label for a budget period section header",
+        "placeholders": {
+            "start": {"type": "String"},
+            "end": {"type": "String"}
+        }
+    },
+    "envelopesDetailPeriodUncategorized": "Outside any budget period",
+    "@envelopesDetailPeriodUncategorized": {
+        "description": "Fallback section header for transactions whose date does not fall in any known period"
+    },
     "envelopesStatusLabel": "Status",
     "@envelopesStatusLabel": {
         "description": "Label for status field in envelope detail"

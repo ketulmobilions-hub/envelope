@@ -417,7 +417,6 @@ class _CategoryGroupSection extends StatelessWidget {
             create: (_) => EnvelopeDetailCubit(
               envelopeRepository: context.read<EnvelopeRepository>(),
               envelope: summary.envelope,
-              allocation: summary.allocation,
               transactionRepository: context.read<TransactionRepository>(),
               budgetRepository: context.read<BudgetRepository>(),
               now: context.read<AppClock>().now,
