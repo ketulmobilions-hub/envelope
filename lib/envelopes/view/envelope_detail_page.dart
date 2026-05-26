@@ -87,6 +87,7 @@ class EnvelopeDetailPage extends StatelessWidget {
       budgetId: budgetId,
       userId: userId,
       budgetPeriodId: budgetPeriodId,
+      ccPaymentEnvelopeId: state.envelope.id,
     );
   }
 

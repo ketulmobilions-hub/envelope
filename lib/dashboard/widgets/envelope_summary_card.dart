@@ -316,6 +316,7 @@ class _CategoryGroupSection extends StatelessWidget {
                                 context,
                                 ccAccount,
                                 linkedId,
+                                s.envelope.id,
                               )
                             : null,
                       ),
@@ -383,6 +384,7 @@ class _CategoryGroupSection extends StatelessWidget {
     BuildContext context,
     Account ccAccount,
     String linkedId,
+    String ccPaymentEnvelopeId,
   ) async {
     final dashState = context.read<DashboardBloc>().state;
     final budgetId =
@@ -400,6 +402,7 @@ class _CategoryGroupSection extends StatelessWidget {
       budgetId: budgetId,
       userId: userId,
       budgetPeriodId: budgetPeriodId,
+      ccPaymentEnvelopeId: ccPaymentEnvelopeId,
     );
 
     if (context.mounted) {
