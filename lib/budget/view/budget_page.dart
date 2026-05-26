@@ -10,6 +10,7 @@ import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:goal_repository/goal_repository.dart';
+import 'package:transaction_repository/transaction_repository.dart';
 
 /// Page that provides [BudgetBloc] and displays the budget allocation screen.
 class BudgetPage extends StatelessWidget {
@@ -24,6 +25,7 @@ class BudgetPage extends StatelessWidget {
         budgetRepository: context.read<BudgetRepository>(),
         envelopeRepository: context.read<EnvelopeRepository>(),
         goalRepository: context.read<GoalRepository>(),
+        transactionRepository: context.read<TransactionRepository>(),
         budgetId: budgetId,
         now: context.read<AppClock>().now,
       )..add(const BudgetStarted()),

@@ -56,6 +56,18 @@ final class _EnvelopesUpdated extends BudgetEvent {
   List<Object?> get props => [envelopes, generation];
 }
 
+/// Internal event when the transactions stream emits. Triggers a recompute of
+/// the derived CC Payment envelope availability, which depends on credit-card
+/// charge/payment history rather than stored allocations.
+final class _TransactionsChanged extends BudgetEvent {
+  const _TransactionsChanged(this.generation);
+
+  final int generation;
+
+  @override
+  List<Object?> get props => [generation];
+}
+
 /// Internal event when the templates stream emits.
 final class _TemplatesUpdated extends BudgetEvent {
   const _TemplatesUpdated(this.templates, this.generation);
