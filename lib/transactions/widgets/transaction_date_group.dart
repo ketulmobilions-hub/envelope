@@ -21,6 +21,7 @@ class TransactionDateGroup extends StatelessWidget {
     this.onTap,
     this.onEdit,
     this.onDelete,
+    this.onDuplicate,
     super.key,
   });
 
@@ -33,6 +34,7 @@ class TransactionDateGroup extends StatelessWidget {
   final ValueChanged<Transaction>? onTap;
   final ValueChanged<Transaction>? onEdit;
   final ValueChanged<Transaction>? onDelete;
+  final ValueChanged<Transaction>? onDuplicate;
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +58,7 @@ class TransactionDateGroup extends StatelessWidget {
             onTap: () => onTap?.call(transactions[i]),
             onEdit: () => onEdit?.call(transactions[i]),
             onDelete: () => onDelete?.call(transactions[i]),
+            onDuplicate: () => onDuplicate?.call(transactions[i]),
           ),
       ],
     );

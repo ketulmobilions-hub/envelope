@@ -1330,6 +1330,11 @@
         "description": "Delete button text"
     },
 
+    "transactionsDuplicate": "Duplicate",
+    "@transactionsDuplicate": {
+        "description": "Tooltip/label for duplicating a transaction"
+    },
+
     "recurringTitle": "Recurring & Bills",
     "@recurringTitle": {
         "description": "Title for the recurring transactions page"
