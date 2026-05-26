@@ -1,3 +1,4 @@
+import 'package:account_repository/account_repository.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:envelope/goals/cubit/cubit.dart';
 import 'package:envelope_repository/envelope_repository.dart';
@@ -9,11 +10,14 @@ class _MockGoalRepository extends Mock implements GoalRepository {}
 
 class _MockEnvelopeRepository extends Mock implements EnvelopeRepository {}
 
+class MockAccountRepository extends Mock implements AccountRepository {}
+
 class _FakeGoal extends Fake implements Goal {}
 
 void main() {
   late _MockGoalRepository goalRepository;
   late _MockEnvelopeRepository envelopeRepository;
+  late MockAccountRepository accountRepository;
 
   final now = DateTime(2024);
   const budgetId = 'budget-1';
@@ -53,15 +57,20 @@ void main() {
   setUp(() {
     goalRepository = _MockGoalRepository();
     envelopeRepository = _MockEnvelopeRepository();
+    accountRepository = MockAccountRepository();
     when(
       () => envelopeRepository.watchEnvelopes(budgetId),
     ).thenAnswer((_) => Stream.value(envelopes));
+    when(
+      () => accountRepository.watchAccounts(any()),
+    ).thenAnswer((_) => Stream.value(<Account>[]));
   });
 
   GoalFormCubit build({Goal? goal}) {
     return GoalFormCubit(
       goalRepository: goalRepository,
       envelopeRepository: envelopeRepository,
+      accountRepository: accountRepository,
       budgetId: budgetId,
       goal: goal,
     );

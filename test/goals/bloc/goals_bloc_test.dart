@@ -1,3 +1,4 @@
+import 'package:account_repository/account_repository.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:envelope/goals/bloc/bloc.dart';
 import 'package:envelope_repository/envelope_repository.dart';
@@ -12,10 +13,13 @@ class MockEnvelopeRepository extends Mock implements EnvelopeRepository {}
 
 class MockTransactionRepository extends Mock implements TransactionRepository {}
 
+class MockAccountRepository extends Mock implements AccountRepository {}
+
 void main() {
   late MockGoalRepository goalRepository;
   late MockEnvelopeRepository envelopeRepository;
   late MockTransactionRepository transactionRepository;
+  late MockAccountRepository accountRepository;
 
   final now = DateTime(2024);
   final testGoals = [
@@ -45,6 +49,10 @@ void main() {
     goalRepository = MockGoalRepository();
     envelopeRepository = MockEnvelopeRepository();
     transactionRepository = MockTransactionRepository();
+    accountRepository = MockAccountRepository();
+    when(
+      () => accountRepository.watchAccounts(any()),
+    ).thenAnswer((_) => Stream.value(<Account>[]));
     when(
       () => envelopeRepository.watchAllocationsForEnvelope(any()),
     ).thenAnswer((_) => const Stream<List<EnvelopeAllocation>>.empty());
@@ -60,6 +68,7 @@ void main() {
       goalRepository: goalRepository,
       envelopeRepository: envelopeRepository,
       transactionRepository: transactionRepository,
+      accountRepository: accountRepository,
       budgetId: 'budget-1',
     );
   }

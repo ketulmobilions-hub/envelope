@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:account_repository/account_repository.dart';
 import 'package:bloc/bloc.dart';
 import 'package:envelope/goals/services/goal_progress_calculator.dart';
 import 'package:envelope_repository/envelope_repository.dart';
@@ -14,11 +15,13 @@ class GoalDetailCubit extends Cubit<GoalDetailState> {
     required GoalRepository goalRepository,
     required EnvelopeRepository envelopeRepository,
     required TransactionRepository transactionRepository,
+    required AccountRepository accountRepository,
     required Goal goal,
     DebtPayoffCalculator payoffCalculator = const DebtPayoffCalculator(),
   }) : _goalRepository = goalRepository,
        _envelopeRepository = envelopeRepository,
        _transactionRepository = transactionRepository,
+       _accountRepository = accountRepository,
        _payoffCalculator = payoffCalculator,
        super(
          GoalDetailState(
@@ -30,7 +33,17 @@ class GoalDetailCubit extends Cubit<GoalDetailState> {
            ),
          ),
        ) {
-    if (goal.envelopeId == null) {
+    _initWatchers();
+  }
+
+  /// Subscribes to the data source backing the current `state.goal`: the
+  /// linked account, the linked envelope, or (unlinked) manual contributions.
+  /// Re-runnable: call after [_cancelLinkSubscriptions] when the link changes.
+  void _initWatchers() {
+    final goal = state.goal;
+    if (goal.accountId != null) {
+      _initAccountWatcher();
+    } else if (goal.envelopeId == null) {
       _contributionsSubscription = _goalRepository
           .watchContributions(goal.id)
           .listen(
@@ -43,9 +56,28 @@ class GoalDetailCubit extends Cubit<GoalDetailState> {
     }
   }
 
+  /// Cancels all link-source subscriptions and resets their cached data, so a
+  /// re-link starts clean.
+  Future<void> _cancelLinkSubscriptions() async {
+    await _contributionsSubscription?.cancel();
+    await _envelopesSubscription?.cancel();
+    await _allocationsSubscription?.cancel();
+    await _transactionsSubscription?.cancel();
+    await _accountsSubscription?.cancel();
+    _contributionsSubscription = null;
+    _envelopesSubscription = null;
+    _allocationsSubscription = null;
+    _transactionsSubscription = null;
+    _accountsSubscription = null;
+    _envelopeAllocations = const [];
+    _envelopeTransactions = const [];
+    _linkedAccountBalance = null;
+  }
+
   final GoalRepository _goalRepository;
   final EnvelopeRepository _envelopeRepository;
   final TransactionRepository _transactionRepository;
+  final AccountRepository _accountRepository;
   final DebtPayoffCalculator _payoffCalculator;
 
   /// Computes a [DebtPayoffSchedule] for `debt_payoff` goals when APR and a
@@ -77,9 +109,25 @@ class GoalDetailCubit extends Cubit<GoalDetailState> {
   StreamSubscription<List<Envelope>>? _envelopesSubscription;
   StreamSubscription<List<EnvelopeAllocation>>? _allocationsSubscription;
   StreamSubscription<List<Transaction>>? _transactionsSubscription;
+  StreamSubscription<List<Account>>? _accountsSubscription;
 
   List<EnvelopeAllocation> _envelopeAllocations = const [];
   List<Transaction> _envelopeTransactions = const [];
+  int? _linkedAccountBalance;
+
+  void _initAccountWatcher() {
+    final accountId = state.goal.accountId!;
+    _accountsSubscription = _accountRepository
+        .watchAccounts(state.goal.budgetId)
+        .listen((accounts) {
+          final match = accounts.where((a) => a.id == accountId).firstOrNull;
+          _linkedAccountBalance = match == null
+              ? null
+              : (match.currentBalance * match.displayFxRate).round();
+          emit(state.copyWith(linkedAccountName: match?.name));
+          _recompute();
+        });
+  }
 
   void _initLinkedWatchers() {
     final envelopeId = state.goal.envelopeId!;
@@ -116,6 +164,7 @@ class GoalDetailCubit extends Cubit<GoalDetailState> {
       goal: state.goal,
       envelopeAllocations: _envelopeAllocations,
       envelopeTransactions: _envelopeTransactions,
+      accountBalance: _linkedAccountBalance,
     );
     emit(
       state.copyWith(
@@ -128,7 +177,25 @@ class GoalDetailCubit extends Cubit<GoalDetailState> {
   Future<void> refresh() async {
     try {
       final updated = await _goalRepository.getGoal(state.goal.id);
-      _emitWithGoal(updated);
+      final linkChanged =
+          updated.envelopeId != state.goal.envelopeId ||
+          updated.accountId != state.goal.accountId;
+      if (linkChanged) {
+        // An edit repointed the goal to a different envelope/account (or
+        // changed link type). Tear down the old watchers and rebind.
+        await _cancelLinkSubscriptions();
+        emit(
+          state.copyWith(
+            computedCurrentAmount: null,
+            linkedEnvelopeName: null,
+            linkedAccountName: null,
+          ),
+        );
+        _emitWithGoal(updated);
+        _initWatchers();
+      } else {
+        _emitWithGoal(updated);
+      }
     } on GoalException {
       // Keep current data if refresh fails.
     }
@@ -225,6 +292,7 @@ class GoalDetailCubit extends Cubit<GoalDetailState> {
     await _envelopesSubscription?.cancel();
     await _allocationsSubscription?.cancel();
     await _transactionsSubscription?.cancel();
+    await _accountsSubscription?.cancel();
     return super.close();
   }
 }

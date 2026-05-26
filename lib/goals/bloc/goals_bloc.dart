@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:account_repository/account_repository.dart';
 import 'package:bloc/bloc.dart';
 import 'package:envelope/goals/services/goal_progress_calculator.dart';
 import 'package:envelope_repository/envelope_repository.dart';
@@ -15,10 +16,12 @@ class GoalsBloc extends Bloc<GoalsEvent, GoalsState> {
     required GoalRepository goalRepository,
     required EnvelopeRepository envelopeRepository,
     required TransactionRepository transactionRepository,
+    required AccountRepository accountRepository,
     required String budgetId,
   }) : _goalRepository = goalRepository,
        _envelopeRepository = envelopeRepository,
        _transactionRepository = transactionRepository,
+       _accountRepository = accountRepository,
        _budgetId = budgetId,
        super(const GoalsState()) {
     on<GoalsStarted>(_onStarted);
@@ -33,13 +36,16 @@ class GoalsBloc extends Bloc<GoalsEvent, GoalsState> {
   final GoalRepository _goalRepository;
   final EnvelopeRepository _envelopeRepository;
   final TransactionRepository _transactionRepository;
+  final AccountRepository _accountRepository;
   final String _budgetId;
 
   StreamSubscription<List<Goal>>? _goalsSubscription;
   StreamSubscription<List<Transaction>>? _transactionsSubscription;
+  StreamSubscription<List<Account>>? _accountsSubscription;
   final Map<String, StreamSubscription<List<EnvelopeAllocation>>>
   _envelopeSubscriptions = {};
   final Map<String, List<EnvelopeAllocation>> _envelopeAllocations = {};
+  final Map<String, Account> _accountsById = {};
   List<Transaction> _allTransactions = const [];
 
   String get budgetId => _budgetId;
@@ -63,6 +69,17 @@ class GoalsBloc extends Bloc<GoalsEvent, GoalsState> {
         .watchTransactions(budgetId: _budgetId)
         .listen((txs) {
           _allTransactions = txs;
+          add(const _GoalsRecomputeRequested());
+        });
+
+    // Account balances drive account-linked goal progress.
+    _accountsSubscription?.cancel().ignore();
+    _accountsSubscription = _accountRepository
+        .watchAccounts(_budgetId)
+        .listen((accounts) {
+          _accountsById
+            ..clear()
+            ..addEntries(accounts.map((a) => MapEntry(a.id, a)));
           add(const _GoalsRecomputeRequested());
         });
 
@@ -120,21 +137,30 @@ class GoalsBloc extends Bloc<GoalsEvent, GoalsState> {
   }
 
   Map<String, int> _computeAmounts(List<Goal> goals) {
-    final linked = goals.where((g) => g.envelopeId != null);
-    if (linked.isEmpty) return const {};
-
     final amounts = <String, int>{};
-    for (final goal in linked) {
-      final envelopeAllocs =
-          _envelopeAllocations[goal.envelopeId] ?? const [];
-      final envTxs = goal.type == 'debt_payoff'
-          ? _allTransactions.where((t) => t.envelopeId == goal.envelopeId)
-          : const <Transaction>[];
-      amounts[goal.id] = GoalProgressCalculator.compute(
-        goal: goal,
-        envelopeAllocations: envelopeAllocs,
-        envelopeTransactions: envTxs,
-      );
+    for (final goal in goals) {
+      if (goal.accountId != null) {
+        // Account-linked: progress = the linked account's base-currency
+        // balance. Skip if the account isn't loaded yet.
+        final account = _accountsById[goal.accountId];
+        if (account == null) continue;
+        amounts[goal.id] = GoalProgressCalculator.compute(
+          goal: goal,
+          accountBalance:
+              (account.currentBalance * account.displayFxRate).round(),
+        );
+      } else if (goal.envelopeId != null) {
+        final envelopeAllocs =
+            _envelopeAllocations[goal.envelopeId] ?? const [];
+        final envTxs = goal.type == 'debt_payoff'
+            ? _allTransactions.where((t) => t.envelopeId == goal.envelopeId)
+            : const <Transaction>[];
+        amounts[goal.id] = GoalProgressCalculator.compute(
+          goal: goal,
+          envelopeAllocations: envelopeAllocs,
+          envelopeTransactions: envTxs,
+        );
+      }
     }
     return amounts;
   }
@@ -208,6 +234,7 @@ class GoalsBloc extends Bloc<GoalsEvent, GoalsState> {
   Future<void> close() async {
     await _goalsSubscription?.cancel();
     await _transactionsSubscription?.cancel();
+    await _accountsSubscription?.cancel();
     for (final sub in _envelopeSubscriptions.values) {
       await sub.cancel();
     }

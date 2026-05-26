@@ -10,6 +10,7 @@ void main() {
   Goal goal({
     String type = 'savings_target',
     String? envelopeId = 'env-1',
+    String? accountId,
     int currentAmount = 0,
   }) {
     return Goal(
@@ -18,6 +19,7 @@ void main() {
       type: type,
       name: 'Test',
       envelopeId: envelopeId,
+      accountId: accountId,
       currentAmount: currentAmount,
       createdAt: now,
       updatedAt: now,
@@ -173,6 +175,31 @@ void main() {
         envelopeTransactions: const [],
       );
       expect(result, 999);
+    });
+
+    test('account-linked goal returns the provided account balance', () {
+      final result = GoalProgressCalculator.compute(
+        goal: goal(envelopeId: null, accountId: 'acct-1'),
+        accountBalance: 250000,
+      );
+      expect(result, 250000);
+    });
+
+    test('account-linked goal takes precedence over an envelope link', () {
+      final result = GoalProgressCalculator.compute(
+        goal: goal(accountId: 'acct-1'),
+        envelopeAllocations: [allocation(periodId: 'p1', allocated: 100)],
+        accountBalance: 250000,
+      );
+      expect(result, 250000);
+    });
+
+    test('account-linked goal falls back to stored amount when balance '
+        'is unavailable', () {
+      final result = GoalProgressCalculator.compute(
+        goal: goal(envelopeId: null, accountId: 'acct-1', currentAmount: 42),
+      );
+      expect(result, 42);
     });
   });
 }
