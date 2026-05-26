@@ -21,6 +21,7 @@ class TimelineTransactionTile extends StatelessWidget {
     this.onTap,
     this.onEdit,
     this.onDelete,
+    this.onDuplicate,
     super.key,
   });
 
@@ -33,6 +34,7 @@ class TimelineTransactionTile extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final VoidCallback? onDuplicate;
 
   @override
   Widget build(BuildContext context) {
@@ -221,6 +223,19 @@ class TimelineTransactionTile extends StatelessWidget {
                             ),
                         ],
                       ),
+                      // Transfers are created via a dedicated two-account flow,
+                      // so duplication is only offered for single-entry types.
+                      if (onDuplicate != null &&
+                          transaction.type != 'transfer') ...[
+                        const SizedBox(width: 4),
+                        IconButton(
+                          icon: const Icon(Icons.copy_outlined, size: 20),
+                          tooltip: l10n.transactionsDuplicate,
+                          visualDensity: VisualDensity.compact,
+                          color: colorScheme.outline,
+                          onPressed: onDuplicate,
+                        ),
+                      ],
                     ],
                   ),
                 ),

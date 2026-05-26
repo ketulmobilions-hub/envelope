@@ -208,6 +208,7 @@ class _TransactionsList extends StatelessWidget {
             onTap: (txn) => _openEditTransaction(context, txn),
             onEdit: (txn) => _openEditTransaction(context, txn),
             onDelete: (txn) => _onDelete(context, txn),
+            onDuplicate: (txn) => _openDuplicateTransaction(context, txn),
           ),
       ],
     );
@@ -232,6 +233,48 @@ class _TransactionsList extends StatelessWidget {
       budgetPeriodId: periodId,
       userId: transaction.createdBy,
       transaction: transaction,
+    );
+    if (result == true && context.mounted) {
+      bloc.add(const TransactionsRefreshRequested());
+    }
+  }
+
+  /// Opens the add-transaction sheet pre-filled with [transaction]'s values
+  /// (create mode), so the user can review and save a copy. The date defaults
+  /// to today; tags are not carried over. Transfers are excluded at the tile.
+  Future<void> _openDuplicateTransaction(
+    BuildContext context,
+    Transaction transaction,
+  ) async {
+    final bloc = context.read<TransactionsBloc>();
+    final budgetRepository = context.read<BudgetRepository>();
+    final now = context.read<AppClock>().now();
+    final periodId = await _getCurrentPeriodId(
+      budgetRepository,
+      budgetId,
+      now: now,
+    );
+    if (!context.mounted) return;
+    final template = TransactionTemplate(
+      id: '',
+      budgetId: budgetId,
+      name: '',
+      type: transaction.type,
+      accountId: transaction.accountId,
+      envelopeId: transaction.envelopeId,
+      amountCents: transaction.amount,
+      payee: transaction.payee,
+      notes: transaction.notes,
+      currency: transaction.currency,
+      createdAt: now,
+      updatedAt: now,
+    );
+    final result = await showTransactionFormSheet(
+      context,
+      budgetId: budgetId,
+      budgetPeriodId: periodId,
+      userId: context.read<AuthBloc>().state.user?.id ?? '',
+      initialTemplate: template,
     );
     if (result == true && context.mounted) {
       bloc.add(const TransactionsRefreshRequested());
