@@ -1,3 +1,4 @@
+import 'package:account_repository/account_repository.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:envelope/goals/cubit/cubit.dart';
 import 'package:envelope_repository/envelope_repository.dart';
@@ -13,10 +14,13 @@ class _MockEnvelopeRepository extends Mock implements EnvelopeRepository {}
 class _MockTransactionRepository extends Mock
     implements TransactionRepository {}
 
+class MockAccountRepository extends Mock implements AccountRepository {}
+
 void main() {
   late _MockGoalRepository goalRepository;
   late _MockEnvelopeRepository envelopeRepository;
   late _MockTransactionRepository transactionRepository;
+  late MockAccountRepository accountRepository;
 
   final now = DateTime(2024);
   const budgetId = 'budget-1';
@@ -25,6 +29,10 @@ void main() {
     goalRepository = _MockGoalRepository();
     envelopeRepository = _MockEnvelopeRepository();
     transactionRepository = _MockTransactionRepository();
+    accountRepository = MockAccountRepository();
+    when(
+      () => accountRepository.watchAccounts(any()),
+    ).thenAnswer((_) => Stream.value(<Account>[]));
     when(
       () => envelopeRepository.watchEnvelopes(any()),
     ).thenAnswer((_) => const Stream<List<Envelope>>.empty());
@@ -44,6 +52,7 @@ void main() {
       goalRepository: goalRepository,
       envelopeRepository: envelopeRepository,
       transactionRepository: transactionRepository,
+      accountRepository: accountRepository,
       goal: goal,
     );
   }
@@ -249,6 +258,55 @@ void main() {
       wait: const Duration(milliseconds: 50),
       verify: (cubit) {
         expect(cubit.state.computedCurrentAmount, 175);
+      },
+    );
+
+    test(
+      'refresh rebinds the watcher when repointed to another account',
+      () async {
+        Account account(String id, int balance) => Account(
+          id: id,
+          budgetId: budgetId,
+          name: id,
+          type: 'savings',
+          currency: 'USD',
+          currentBalance: balance,
+          createdAt: now,
+          updatedAt: now,
+        );
+        when(() => accountRepository.watchAccounts(any())).thenAnswer(
+          (_) => Stream.value([
+            account('acct-A', 10000),
+            account('acct-B', 50000),
+          ]),
+        );
+        final goalA = Goal(
+          id: 'goal-1',
+          budgetId: budgetId,
+          type: 'savings_target',
+          name: 'Emergency',
+          accountId: 'acct-A',
+          targetAmount: 100000,
+          createdAt: now,
+          updatedAt: now,
+        );
+        final goalB = goalA.copyWith(accountId: 'acct-B');
+        when(
+          () => goalRepository.getGoal('goal-1'),
+        ).thenAnswer((_) async => goalB);
+
+        final cubit = build(goal: goalA);
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        expect(cubit.state.computedCurrentAmount, 10000);
+        expect(cubit.state.linkedAccountName, 'acct-A');
+
+        await cubit.refresh();
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        expect(cubit.state.goal.accountId, 'acct-B');
+        expect(cubit.state.computedCurrentAmount, 50000);
+        expect(cubit.state.linkedAccountName, 'acct-B');
+
+        await cubit.close();
       },
     );
   });

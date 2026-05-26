@@ -15,11 +15,20 @@ import 'package:transaction_repository/transaction_repository.dart';
 class GoalProgressCalculator {
   const GoalProgressCalculator._();
 
+  /// [accountBalance] is the linked account's balance in the budget's base
+  /// currency. Required for account-linked goals; ignored otherwise.
   static int compute({
     required Goal goal,
-    required Iterable<EnvelopeAllocation> envelopeAllocations,
-    required Iterable<Transaction> envelopeTransactions,
+    Iterable<EnvelopeAllocation> envelopeAllocations = const [],
+    Iterable<Transaction> envelopeTransactions = const [],
+    int? accountBalance,
   }) {
+    // Account-linked goals track the linked account's balance directly.
+    // Checked first so a goal that somehow has both links prefers the account.
+    // Falls back to the stored amount if the balance is unavailable.
+    if (goal.accountId != null) {
+      return accountBalance ?? goal.currentAmount;
+    }
     if (goal.envelopeId == null) return goal.currentAmount;
     switch (goal.type) {
       case 'savings_target':

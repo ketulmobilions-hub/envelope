@@ -1,3 +1,4 @@
+import 'package:account_repository/account_repository.dart';
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/goals/cubit/cubit.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
@@ -62,7 +63,7 @@ class GoalDetailPage extends StatelessWidget {
           overrideCurrentAmount: effectiveAmount,
         );
         final symbol = currencySymbol(context);
-        final isLinked = goal.envelopeId != null;
+        final isLinked = goal.envelopeId != null || goal.accountId != null;
 
         return Scaffold(
           appBar: AppBar(
@@ -78,9 +79,18 @@ class GoalDetailPage extends StatelessWidget {
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              if (isLinked && state.linkedEnvelopeName != null) ...[
-                _LinkedEnvelopeBanner(
-                  envelopeName: state.linkedEnvelopeName!,
+              if (state.linkedEnvelopeName != null) ...[
+                _LinkedSourceBanner(
+                  text: l10n.goalsLinkedEnvelopeInfo(
+                    state.linkedEnvelopeName!,
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ] else if (state.linkedAccountName != null) ...[
+                _LinkedSourceBanner(
+                  text: l10n.goalsLinkedAccountInfo(
+                    state.linkedAccountName!,
+                  ),
                 ),
                 const SizedBox(height: 12),
               ],
@@ -329,6 +339,7 @@ class GoalDetailPage extends StatelessWidget {
           create: (_) => GoalFormCubit(
             goalRepository: context.read<GoalRepository>(),
             envelopeRepository: context.read<EnvelopeRepository>(),
+            accountRepository: context.read<AccountRepository>(),
             budgetId: budgetId,
             goal: goal,
           ),
@@ -370,14 +381,13 @@ class GoalDetailPage extends StatelessWidget {
   }
 }
 
-class _LinkedEnvelopeBanner extends StatelessWidget {
-  const _LinkedEnvelopeBanner({required this.envelopeName});
+class _LinkedSourceBanner extends StatelessWidget {
+  const _LinkedSourceBanner({required this.text});
 
-  final String envelopeName;
+  final String text;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -395,7 +405,7 @@ class _LinkedEnvelopeBanner extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              l10n.goalsLinkedEnvelopeInfo(envelopeName),
+              text,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurface,
               ),

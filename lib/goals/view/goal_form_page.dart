@@ -1,8 +1,9 @@
+import 'package:account_repository/account_repository.dart';
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/goals/cubit/cubit.dart';
-import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/goals/widgets/goal_helpers.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/shared/widgets/app_option_picker.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope_repository/envelope_repository.dart';
@@ -168,6 +169,42 @@ class _GoalFormPageState extends State<GoalFormPage> {
                             opt.envelope?.name ?? l10n.goalsEnvelopeNone,
                       );
                     },
+                  ),
+                  const SizedBox(height: 16),
+                  BlocBuilder<GoalFormCubit, GoalFormState>(
+                    buildWhen: (p, c) =>
+                        p.accountId != c.accountId || p.accounts != c.accounts,
+                    builder: (context, state) {
+                      final options = <_AccountOption>[
+                        const _AccountOption(null),
+                        ...state.accounts.map(_AccountOption.new),
+                      ];
+                      final selected = options.firstWhere(
+                        (o) => o.account?.id == state.accountId,
+                        orElse: () => const _AccountOption(null),
+                      );
+                      return AppOptionPicker<_AccountOption>(
+                        options: options,
+                        value: selected,
+                        onChanged: (opt) => context
+                            .read<GoalFormCubit>()
+                            .accountChanged(opt.account?.id),
+                        labelText: l10n.goalsAccountLabel,
+                        icon: Icons.savings_outlined,
+                        itemLabel: (opt) =>
+                            opt.account?.name ?? l10n.goalsAccountNone,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 6),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Text(
+                      l10n.goalsLinkMutualExclusiveHint,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   // Type-specific fields.
@@ -346,6 +383,15 @@ class _EnvelopeOption extends Equatable {
 
   @override
   List<Object?> get props => [envelope?.id];
+}
+
+class _AccountOption extends Equatable {
+  const _AccountOption(this.account);
+
+  final Account? account;
+
+  @override
+  List<Object?> get props => [account?.id];
 }
 
 class _DatePickerField extends StatelessWidget {

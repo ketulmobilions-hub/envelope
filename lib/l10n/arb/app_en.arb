@@ -1752,6 +1752,18 @@
     "@goalsEnvelopeLabel": {
         "description": "Label for the envelope picker on the goal form"
     },
+    "goalsAccountLabel": "Account (optional)",
+    "@goalsAccountLabel": {
+        "description": "Label for the account link picker on the goal form"
+    },
+    "goalsLinkMutualExclusiveHint": "Link to an envelope or an account — choosing one clears the other.",
+    "@goalsLinkMutualExclusiveHint": {
+        "description": "Helper text on the goal form explaining envelope/account links are mutually exclusive"
+    },
+    "goalsAccountNone": "No account",
+    "@goalsAccountNone": {
+        "description": "Option in the goal account picker for no account link"
+    },
     "goalsEnvelopeNone": "No envelope",
     "@goalsEnvelopeNone": {
         "description": "Picker option for goals not linked to any envelope"
@@ -1759,6 +1771,13 @@
     "goalsLinkedEnvelopeInfo": "Progress tracked from envelope “{name}”",
     "@goalsLinkedEnvelopeInfo": {
         "description": "Banner shown on goal detail page when linked to envelope",
+        "placeholders": {
+            "name": { "type": "String" }
+        }
+    },
+    "goalsLinkedAccountInfo": "Progress tracked from the balance of account “{name}”",
+    "@goalsLinkedAccountInfo": {
+        "description": "Banner shown on goal detail page when linked to an account",
         "placeholders": {
             "name": { "type": "String" }
         }

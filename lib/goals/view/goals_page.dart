@@ -1,3 +1,4 @@
+import 'package:account_repository/account_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/goals/bloc/bloc.dart';
@@ -31,6 +32,7 @@ class GoalsPage extends StatelessWidget {
             goalRepository: context.read<GoalRepository>(),
             envelopeRepository: context.read<EnvelopeRepository>(),
             transactionRepository: context.read<TransactionRepository>(),
+            accountRepository: context.read<AccountRepository>(),
             budgetId: budgetId,
           )..add(const GoalsStarted()),
         ),
@@ -185,6 +187,7 @@ class GoalsView extends StatelessWidget {
           create: (_) => GoalFormCubit(
             goalRepository: context.read<GoalRepository>(),
             envelopeRepository: context.read<EnvelopeRepository>(),
+            accountRepository: context.read<AccountRepository>(),
             budgetId: budgetId,
           ),
           child: const GoalFormPage(),
@@ -356,6 +359,7 @@ class _GoalsList extends StatelessWidget {
             goalRepository: context.read<GoalRepository>(),
             envelopeRepository: context.read<EnvelopeRepository>(),
             transactionRepository: context.read<TransactionRepository>(),
+            accountRepository: context.read<AccountRepository>(),
             goal: goal,
           ),
           child: GoalDetailPage(budgetId: budgetId),
@@ -378,6 +382,7 @@ class _GoalsList extends StatelessWidget {
           create: (_) => GoalFormCubit(
             goalRepository: context.read<GoalRepository>(),
             envelopeRepository: context.read<EnvelopeRepository>(),
+            accountRepository: context.read<AccountRepository>(),
             budgetId: budgetId,
             goal: goal,
           ),
