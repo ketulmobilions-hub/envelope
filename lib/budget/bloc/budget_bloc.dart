@@ -5,6 +5,7 @@ import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:goal_repository/goal_repository.dart';
+import 'package:transaction_repository/transaction_repository.dart';
 
 part 'budget_event.dart';
 part 'budget_state.dart';
@@ -14,11 +15,13 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     required BudgetRepository budgetRepository,
     required EnvelopeRepository envelopeRepository,
     required GoalRepository goalRepository,
+    required TransactionRepository transactionRepository,
     required String budgetId,
     DateTime Function()? now,
   }) : _budgetRepository = budgetRepository,
        _envelopeRepository = envelopeRepository,
        _goalRepository = goalRepository,
+       _transactionRepository = transactionRepository,
        _budgetId = budgetId,
        _now = now ?? DateTime.now,
        super(BudgetState()) {
@@ -27,6 +30,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     on<_AllocationsUpdated>(_onAllocationsUpdated);
     on<_CategoryGroupsUpdated>(_onCategoryGroupsUpdated);
     on<_EnvelopesUpdated>(_onEnvelopesUpdated);
+    on<_TransactionsChanged>(_onTransactionsChanged);
     on<_TemplatesUpdated>(_onTemplatesUpdated);
     on<_GoalsUpdated>(_onGoalsUpdated);
     on<_BudgetStreamError>(_onStreamError);
@@ -46,6 +50,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
   final BudgetRepository _budgetRepository;
   final EnvelopeRepository _envelopeRepository;
   final GoalRepository _goalRepository;
+  final TransactionRepository _transactionRepository;
   final String _budgetId;
   final DateTime Function() _now;
 
@@ -55,6 +60,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
   StreamSubscription<List<Envelope>>? _envelopesSubscription;
   StreamSubscription<List<AllocationTemplate>>? _templatesSubscription;
   StreamSubscription<List<Goal>>? _goalsSubscription;
+  StreamSubscription<List<Transaction>>? _transactionsSubscription;
 
   // Incremented on each BudgetStarted to discard stale events from prior
   // budget-level subscriptions.
@@ -103,6 +109,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
       _envelopesSubscription?.cancel() ?? Future<void>.value(),
       _templatesSubscription?.cancel() ?? Future<void>.value(),
       _goalsSubscription?.cancel() ?? Future<void>.value(),
+      _transactionsSubscription?.cancel() ?? Future<void>.value(),
     ]);
 
     final gen = _generation;
@@ -139,6 +146,17 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
         .watchGoals(_budgetId)
         .listen(
           (goals) => add(_GoalsUpdated(goals, gen)),
+          onError: (Object _) => add(const _BudgetStreamError()),
+        );
+
+    // CC Payment availability is derived from credit-card charge/payment
+    // history, so it must recompute whenever transactions change — adding or
+    // deleting a credit-card expense does not touch the stored allocations
+    // this bloc otherwise watches.
+    _transactionsSubscription = _transactionRepository
+        .watchTransactions(budgetId: _budgetId)
+        .listen(
+          (_) => add(_TransactionsChanged(gen)),
           onError: (Object _) => add(const _BudgetStreamError()),
         );
 
@@ -288,6 +306,18 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
       }
     }
     return result;
+  }
+
+  Future<void> _onTransactionsChanged(
+    _TransactionsChanged event,
+    Emitter<BudgetState> emit,
+  ) async {
+    if (event.generation != _generation) return;
+    final ccAvailable = await _computeCCPaymentAvailable(
+      allocations: state.allocations,
+      envelopes: state.envelopes,
+    );
+    emit(state.copyWith(ccPaymentAvailable: ccAvailable));
   }
 
   void _onCategoryGroupsUpdated(
@@ -638,6 +668,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     await _envelopesSubscription?.cancel();
     await _templatesSubscription?.cancel();
     await _goalsSubscription?.cancel();
+    await _transactionsSubscription?.cancel();
     return super.close();
   }
 }

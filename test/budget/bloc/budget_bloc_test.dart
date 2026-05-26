@@ -5,6 +5,7 @@ import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:goal_repository/goal_repository.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:transaction_repository/transaction_repository.dart';
 
 class MockBudgetRepository extends Mock implements BudgetRepository {}
 
@@ -12,12 +13,15 @@ class MockEnvelopeRepository extends Mock implements EnvelopeRepository {}
 
 class MockGoalRepository extends Mock implements GoalRepository {}
 
+class MockTransactionRepository extends Mock implements TransactionRepository {}
+
 class FakeEnvelopeAllocation extends Fake implements EnvelopeAllocation {}
 
 void main() {
   late MockBudgetRepository budgetRepository;
   late MockEnvelopeRepository envelopeRepository;
   late MockGoalRepository goalRepository;
+  late MockTransactionRepository transactionRepository;
 
   final now = DateTime(2026, 3, 13);
 
@@ -74,6 +78,7 @@ void main() {
     budgetRepository = MockBudgetRepository();
     envelopeRepository = MockEnvelopeRepository();
     goalRepository = MockGoalRepository();
+    transactionRepository = MockTransactionRepository();
   });
 
   void stubHappyPath() {
@@ -92,6 +97,9 @@ void main() {
     when(
       () => envelopeRepository.watchAllocations('period-1'),
     ).thenAnswer((_) => Stream.value(testAllocations));
+    when(
+      () => transactionRepository.watchTransactions(budgetId: 'budget-1'),
+    ).thenAnswer((_) => Stream.value(const <Transaction>[]));
 
     when(
       () => budgetRepository.refreshBudgetPeriods('budget-1'),
@@ -125,6 +133,7 @@ void main() {
     budgetRepository: budgetRepository,
     envelopeRepository: envelopeRepository,
     goalRepository: goalRepository,
+    transactionRepository: transactionRepository,
     budgetId: 'budget-1',
     now: () => now,
   );
@@ -142,6 +151,42 @@ void main() {
           expect(bloc.state.categoryGroups, testGroups);
           expect(bloc.state.envelopes, testEnvelopes);
           expect(bloc.state.readyToAssign, 50000);
+        },
+      );
+
+      blocTest<BudgetBloc, BudgetState>(
+        'subscribes to transactions and computes CC Payment availability',
+        setUp: () {
+          stubHappyPath();
+          final ccEnvelope = Envelope(
+            id: 'cc-env',
+            categoryGroupId: 'group-1',
+            budgetId: 'budget-1',
+            name: 'Visa Payment',
+            createdAt: now,
+            linkedAccountId: 'acc-cc',
+          );
+          when(
+            () => envelopeRepository.watchEnvelopes('budget-1'),
+          ).thenAnswer((_) => Stream.value([...testEnvelopes, ccEnvelope]));
+          when(
+            () => envelopeRepository.calculateCCPaymentAvailable(
+              allocation: any(named: 'allocation'),
+              ccAccountId: 'acc-cc',
+              periodStart: testPeriod.startDate,
+              periodEnd: testPeriod.endDate,
+            ),
+          ).thenAnswer((_) async => 30000);
+        },
+        build: buildBloc,
+        act: (bloc) => bloc.add(const BudgetStarted()),
+        verify: (bloc) {
+          // The transactions stream must be watched so the derived CC Payment
+          // available recomputes when a credit-card expense is added/deleted.
+          verify(
+            () => transactionRepository.watchTransactions(budgetId: 'budget-1'),
+          ).called(1);
+          expect(bloc.state.ccPaymentAvailable['cc-env'], 30000);
         },
       );
 
