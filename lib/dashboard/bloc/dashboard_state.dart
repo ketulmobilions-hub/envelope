@@ -125,11 +125,17 @@ final class DashboardState extends Equatable {
     final spentMap = <String, int>{};
     if (period != null) {
       for (final t in transactions) {
-        if (t.type == 'expense' &&
-            t.envelopeId != null &&
-            !t.date.isBefore(period.startDate) &&
-            !t.date.isAfter(period.endDate)) {
+        if (t.envelopeId == null ||
+            t.date.isBefore(period.startDate) ||
+            t.date.isAfter(period.endDate)) {
+          continue;
+        }
+        if (t.type == 'expense') {
           spentMap[t.envelopeId!] = (spentMap[t.envelopeId!] ?? 0) + t.amount;
+        } else if (t.type == 'transfer' && t.amount < 0) {
+          // Categorized transfer OUT to an off-budget account counts as spend
+          // (outgoing leg amount is negative, so subtract to add).
+          spentMap[t.envelopeId!] = (spentMap[t.envelopeId!] ?? 0) - t.amount;
         }
       }
     }

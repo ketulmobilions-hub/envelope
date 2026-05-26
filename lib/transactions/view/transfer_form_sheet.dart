@@ -58,6 +58,7 @@ class _TransferFormSheetState extends State<TransferFormSheet> {
   late DateTime _selectedDate;
   String? _fromAccountId;
   String? _toAccountId;
+  String? _envelopeId;
 
   @override
   void initState() {
@@ -106,6 +107,7 @@ class _TransferFormSheetState extends State<TransferFormSheet> {
         toAccountId: _toAccountId!,
         amountCents: amountCents,
         date: _selectedDate,
+        envelopeId: _envelopeId,
       ),
     );
   }
@@ -131,6 +133,16 @@ class _TransferFormSheetState extends State<TransferFormSheet> {
         final isLoading = state.status == TransferFormStatus.loading;
         final isSubmitting = state.status == TransferFormStatus.submitting;
         final accounts = state.accounts;
+
+        // Classify the selected pair to decide whether a funding envelope is
+        // needed (on -> off) or the inflow raises Ready to Assign (off -> on).
+        final fromAcct = accounts
+            .where((a) => a.id == _fromAccountId)
+            .firstOrNull;
+        final toAcct = accounts.where((a) => a.id == _toAccountId).firstOrNull;
+        final isOutToOffBudget =
+            fromAcct != null && toAcct != null &&
+            fromAcct.isOnBudget && !toAcct.isOnBudget;
 
         return Padding(
           padding: EdgeInsets.only(
@@ -228,6 +240,19 @@ class _TransferFormSheetState extends State<TransferFormSheet> {
                     icon: Icons.login_outlined,
                     itemLabel: (a) => a.name,
                   ),
+                  if (isOutToOffBudget) ...[
+                    const SizedBox(height: 12),
+                    AppOptionPicker<Envelope>(
+                      options: state.envelopes,
+                      value: state.envelopes
+                          .where((e) => e.id == _envelopeId)
+                          .firstOrNull,
+                      onChanged: (e) => setState(() => _envelopeId = e.id),
+                      labelText: l10n.transactionsTransferFundingEnvelope,
+                      icon: Icons.account_balance_wallet_outlined,
+                      itemLabel: (e) => e.name,
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
@@ -239,7 +264,12 @@ class _TransferFormSheetState extends State<TransferFormSheet> {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton(
-                      onPressed: (isSubmitting || isLoading) ? null : _submit,
+                      onPressed:
+                          (isSubmitting ||
+                              isLoading ||
+                              (isOutToOffBudget && _envelopeId == null))
+                          ? null
+                          : _submit,
                       child: (isSubmitting || isLoading)
                           ? const SizedBox.square(
                               dimension: 20,
