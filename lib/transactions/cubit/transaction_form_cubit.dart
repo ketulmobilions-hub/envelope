@@ -427,6 +427,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
               envelopeId: isSplitMode ? null : envelopeId,
               splits: isSplitMode ? splits : [],
               expenseAmount: amountCents,
+              budgetPeriodId: budgetPeriodId!,
             );
           }
 
@@ -486,14 +487,21 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
       } else {
         // ── Create one-off transaction ─────────────────────────────────────
 
+        // Resolve the period that actually contains the transaction's date —
+        // NOT the period selected when the sheet opened. A back-dated expense
+        // must hit (and if necessary create) the period covering its date, so
+        // its spent/overspend lands in the right month and carries forward.
+        final effectivePeriodId = await _resolvePeriodForDate(date);
+
         // Ensure allocation rows exist before the transaction so the DB
-        // spent-amount trigger has a row to update (even for $0-allocated envelopes).
-        if (type == 'expense' && budgetPeriodId != null) {
+        // spent-amount trigger has a row to update (even for $0-allocated
+        // envelopes).
+        if (type == 'expense' && effectivePeriodId != null) {
           if (!isSplitMode && envelopeId != null) {
             try {
               await _envelopeRepository.ensureAllocation(
                 envelopeId: envelopeId,
-                budgetPeriodId: budgetPeriodId!,
+                budgetPeriodId: effectivePeriodId,
               );
             } on EnvelopeException {
               // Best-effort.
@@ -504,7 +512,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
                 try {
                   await _envelopeRepository.ensureAllocation(
                     envelopeId: split.envelopeId!,
-                    budgetPeriodId: budgetPeriodId!,
+                    budgetPeriodId: effectivePeriodId,
                   );
                 } on EnvelopeException {
                   // Best-effort.
@@ -545,8 +553,11 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         final newIncome = type == 'income' ? toBase(amountCents) : 0;
         if (newIncome != 0) {
           try {
-            await _budgetRepository.addIncomeToCurrentPeriod(
+            // Credit the period containing the transaction's date (not the
+            // latest period) so back-dated income lands in the right month.
+            await _budgetRepository.addIncomeToPeriod(
               budgetId: budgetId,
+              date: date,
               amount: newIncome,
             );
           } on BudgetException {
@@ -555,35 +566,33 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         }
 
         if (type == 'expense') {
+          // Awaited (not fire-and-forget): the carry-forward recompute below
+          // reads these local spent amounts, so they must land first.
           if (!isSplitMode && envelopeId != null) {
-            unawaited(
-              _envelopeRepository.incrementLocalSpentAmount(
-                envelopeId: envelopeId,
-                budgetId: budgetId,
-                date: date,
-                baseCurrencyAmount: toBase(amountCents),
-              ),
+            await _envelopeRepository.incrementLocalSpentAmount(
+              envelopeId: envelopeId,
+              budgetId: budgetId,
+              date: date,
+              baseCurrencyAmount: toBase(amountCents),
             );
           } else if (isSplitMode) {
             for (final split in splits) {
               final splitEnvId = split.envelopeId;
               if (splitEnvId != null && split.amountCents > 0) {
-                unawaited(
-                  _envelopeRepository.incrementLocalSpentAmount(
-                    envelopeId: splitEnvId,
-                    budgetId: budgetId,
-                    date: date,
-                    baseCurrencyAmount: toBase(split.amountCents),
-                  ),
+                await _envelopeRepository.incrementLocalSpentAmount(
+                  envelopeId: splitEnvId,
+                  budgetId: budgetId,
+                  date: date,
+                  baseCurrencyAmount: toBase(split.amountCents),
                 );
               }
             }
           }
         }
 
-        if (budgetPeriodId != null) {
+        if (effectivePeriodId != null) {
           try {
-            await _envelopeRepository.refreshAllocations(budgetPeriodId!);
+            await _envelopeRepository.refreshAllocations(effectivePeriodId);
           } on Exception {
             // Best-effort.
           }
@@ -594,22 +603,46 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
           // Best-effort.
         }
 
-        if (type == 'expense' && budgetPeriodId != null) {
+        if (type == 'expense' && effectivePeriodId != null) {
           await _transferToCCPaymentEnvelope(
             accountId: accountId,
             envelopeId: isSplitMode ? null : envelopeId,
             splits: isSplitMode ? splits : [],
             expenseAmount: amountCents,
+            budgetPeriodId: effectivePeriodId,
           );
         }
 
-        final overspendData = await _checkOverspend(
-          type: type,
-          envelopeId: envelopeId,
-          isSplitMode: isSplitMode,
-          splits: splits,
-          accountId: accountId,
-        );
+        // Propagate carry-forward for a back-dated transaction into later
+        // periods: an expense's uncovered overspend reduces, and income raises,
+        // the leftover RTA that rolls forward. No-op when the transaction is in
+        // the latest period (nothing follows it).
+        if (effectivePeriodId != null) {
+          try {
+            await _budgetRepository.recomputeCarryForwardFrom(
+              budgetId: budgetId,
+              fromPeriodId: effectivePeriodId,
+            );
+          } on BudgetException {
+            // Best-effort; next period creation recomputes carry-forward.
+          }
+        }
+
+        // Only prompt the cover-overspend flow for the current period (the one
+        // the sheet opened with). A back-dated expense lands in a past period
+        // that typically has no funds to cover from — surfacing the dialog
+        // there is a dead end. Its overspend instead carries forward into the
+        // current period's RTA via recomputeCarryForwardFrom above.
+        final overspendData = effectivePeriodId == budgetPeriodId
+            ? await _checkOverspend(
+                type: type,
+                envelopeId: envelopeId,
+                isSplitMode: isSplitMode,
+                splits: splits,
+                accountId: accountId,
+                periodId: effectivePeriodId,
+              )
+            : null;
 
         if (isClosed) return;
         if (overspendData != null) {
@@ -797,9 +830,10 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     required bool isSplitMode,
     required List<SplitEntry> splits,
     String? accountId,
+    String? periodId,
   }) async {
-    final periodId = budgetPeriodId;
-    if (periodId == null) return null;
+    final effectivePeriodId = periodId ?? budgetPeriodId;
+    if (effectivePeriodId == null) return null;
     if (type != 'expense') return null;
 
     final affectedEnvelopeIds = <String>[];
@@ -816,7 +850,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
 
     try {
       final allocations = await _envelopeRepository
-          .watchAllocations(periodId)
+          .watchAllocations(effectivePeriodId)
           .first;
 
       EnvelopeAllocation? overspent;
@@ -847,14 +881,14 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
       var readyToAssign = 0;
       try {
         readyToAssign = await _budgetRepository.calculateReadyToAssign(
-          periodId,
+          effectivePeriodId,
         );
       } on Exception {
         // Fallback to 0 if unavailable.
       }
 
       EnvelopeAllocation? ccPaymentAllocation;
-      if (accountId != null && budgetPeriodId != null) {
+      if (accountId != null) {
         final account = state.accounts
             .where((a) => a.id == accountId)
             .firstOrNull;
@@ -866,7 +900,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
               ccPaymentAllocation = await _envelopeRepository
                   .getEnvelopeAllocationByEnvelopeAndPeriod(
                     envelopeId: ccEnvelope.id,
-                    budgetPeriodId: budgetPeriodId!,
+                    budgetPeriodId: effectivePeriodId,
                   );
             }
           } on Exception {
@@ -889,14 +923,15 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     }
   }
 
-  // Ensures the CC Payment envelope has an allocation row for the current
-  // period so it appears in the budget page. No allocation amounts are changed —
+  // Ensures the CC Payment envelope has an allocation row for [budgetPeriodId]
+  // so it appears in the budget page. No allocation amounts are changed —
   // CC Payment available is derived from transaction history (YNAB approach).
   Future<void> _transferToCCPaymentEnvelope({
     required String accountId,
     required String? envelopeId,
     required List<SplitEntry> splits,
     required int expenseAmount,
+    required String budgetPeriodId,
   }) async {
     try {
       final account = state.accounts
@@ -906,14 +941,29 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
 
       final ccPaymentEnvelope = await _envelopeRepository
           .getEnvelopeByLinkedAccountId(accountId, budgetId);
-      if (ccPaymentEnvelope == null || budgetPeriodId == null) return;
+      if (ccPaymentEnvelope == null) return;
 
       await _envelopeRepository.ensureAllocation(
         envelopeId: ccPaymentEnvelope.id,
-        budgetPeriodId: budgetPeriodId!,
+        budgetPeriodId: budgetPeriodId,
       );
     } on Exception {
       // Best-effort; does not block transaction recording.
+    }
+  }
+
+  /// Resolves the budget period containing [date], creating coverage if the
+  /// transaction is dated outside existing periods. Falls back to the period
+  /// the sheet opened with if resolution fails.
+  Future<String?> _resolvePeriodForDate(DateTime date) async {
+    try {
+      final resolved = await _budgetRepository.ensurePeriodForDate(
+        budgetId: budgetId,
+        date: date,
+      );
+      return resolved ?? budgetPeriodId;
+    } on BudgetException {
+      return budgetPeriodId;
     }
   }
 }

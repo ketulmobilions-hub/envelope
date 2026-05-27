@@ -913,6 +913,116 @@ void main() {
       });
     });
 
+    group('ensurePeriodForDate / carry-forward', () {
+      final apr = testLocalBudgetPeriod.copyWith(
+        id: 'apr',
+        startDate: DateTime(2026, 4),
+        endDate: DateTime(2026, 4, 30),
+        totalIncome: 0,
+        totalAllocated: 0,
+        carriedRta: 0,
+      );
+      final may = testLocalBudgetPeriod.copyWith(
+        id: 'may',
+        startDate: DateTime(2026, 5),
+        endDate: DateTime(2026, 5, 31),
+        totalIncome: 0,
+        totalAllocated: 0,
+        carriedRta: 0,
+      );
+
+      test('returns the existing period containing the date', () async {
+        when(
+          () => budgetsDao.getPeriodsByBudgetId('budget-1'),
+        ).thenAnswer((_) async => [apr, may]);
+
+        final id = await repository.ensurePeriodForDate(
+          budgetId: 'budget-1',
+          date: DateTime(2026, 4, 10),
+        );
+
+        expect(id, equals('apr'));
+        verifyNever(() => budgetsApiClient.createBudgetPeriod(any()));
+      });
+
+      test(
+        'recomputeCarryForwardFrom pushes a prior overspend into the next '
+        'period carriedRta',
+        () async {
+          when(
+            () => budgetsDao.getPeriodsByBudgetId('budget-1'),
+          ).thenAnswer((_) async => [may, apr]); // unsorted on purpose
+          // April: $500 spent against $0 allocated → $500 uncovered overspend.
+          when(
+            () => envelopesDao.getAllocationsByPeriodId('apr'),
+          ).thenAnswer(
+            (_) async => [
+              testLocalAllocation.copyWith(
+                budgetPeriodId: 'apr',
+                allocatedAmount: 0,
+                spentAmount: 50000,
+                rolloverAmount: 0,
+              ),
+            ],
+          );
+          when(
+            () => envelopesDao.getAllocationsByPeriodId('may'),
+          ).thenAnswer((_) async => <storage.EnvelopeAllocation>[]);
+          BudgetPeriodDto? captured;
+          when(() => budgetsApiClient.updateBudgetPeriod(any())).thenAnswer((
+            inv,
+          ) async {
+            captured = inv.positionalArguments.first as BudgetPeriodDto;
+            return captured!;
+          });
+          when(
+            () => budgetsDao.insertBudgetPeriod(any(), mode: any(named: 'mode')),
+          ).thenAnswer((_) async => 1);
+
+          await repository.recomputeCarryForwardFrom(
+            budgetId: 'budget-1',
+            fromPeriodId: 'apr',
+          );
+
+          // signedPrevRta = 0 + 0 - 0 = 0; uncovered overspend = 50000.
+          expect(captured?.id, equals('may'));
+          expect(captured?.carriedRta, equals(-50000));
+        },
+      );
+
+      test('back-fills a period before the earliest for a back-dated date',
+          () async {
+        var periods = [may];
+        when(
+          () => budgetsDao.getPeriodsByBudgetId('budget-1'),
+        ).thenAnswer((_) async => periods);
+        when(
+          () => budgetsDao.getBudget('budget-1'),
+        ).thenAnswer((_) async => testLocalBudget);
+        when(() => budgetsApiClient.createBudgetPeriod(any())).thenAnswer((
+          inv,
+        ) async {
+          final dto = inv.positionalArguments.first as BudgetPeriodDto;
+          periods = [apr, may]; // reflect creation so the ensure loop ends
+          return dto.copyWith(id: 'apr');
+        });
+        when(
+          () => budgetsDao.insertBudgetPeriod(any(), mode: any(named: 'mode')),
+        ).thenAnswer((_) async => 1);
+        when(() => budgetsApiClient.updateBudgetPeriod(any())).thenAnswer(
+          (inv) async => inv.positionalArguments.first as BudgetPeriodDto,
+        );
+
+        final id = await repository.ensurePeriodForDate(
+          budgetId: 'budget-1',
+          date: DateTime(2026, 4, 10),
+        );
+
+        expect(id, equals('apr'));
+        verify(() => budgetsApiClient.createBudgetPeriod(any())).called(1);
+      });
+    });
+
     // -----------------------------------------------------------------
     // Budget-Level Allocation Operations
     // -----------------------------------------------------------------
