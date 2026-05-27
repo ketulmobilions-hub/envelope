@@ -578,6 +578,145 @@ class BudgetRepository {
     }
   }
 
+  /// Returns the id of the budget period containing [date], creating any
+  /// missing periods (forward or backward) needed to cover it.
+  ///
+  /// Walks forward via [autoCreateNextPeriod] when [date] is after the latest
+  /// period, and backward via [autoCreatePreviousPeriod] when [date] is before
+  /// the earliest. Returns `null` only if no periods exist at all (the seed
+  /// period is created by onboarding) or the safety cap is hit.
+  Future<String?> ensurePeriodForDate({
+    required String budgetId,
+    required DateTime date,
+  }) async {
+    const safetyCap = 36;
+    for (var i = 0; i < safetyCap; i++) {
+      final periods = await _localDatabase.budgetsDao.getPeriodsByBudgetId(
+        budgetId,
+      );
+      if (periods.isEmpty) return null;
+
+      final containing = periods
+          .where((p) => !p.startDate.isAfter(date) && !p.endDate.isBefore(date))
+          .firstOrNull;
+      if (containing != null) return containing.id;
+
+      final latest = periods.reduce(
+        (a, b) => a.endDate.isAfter(b.endDate) ? a : b,
+      );
+      final earliest = periods.reduce(
+        (a, b) => a.startDate.isBefore(b.startDate) ? a : b,
+      );
+
+      if (date.isAfter(latest.endDate)) {
+        await autoCreateNextPeriod(budgetId);
+      } else if (date.isBefore(earliest.startDate)) {
+        await autoCreatePreviousPeriod(budgetId);
+      } else {
+        // Date falls in a gap between existing periods — should not happen for
+        // contiguous chains; stop rather than loop forever.
+        return null;
+      }
+    }
+    return null;
+  }
+
+  /// Creates the budget period immediately BEFORE the earliest existing one.
+  ///
+  /// Used to back-fill coverage for a transaction dated before the budget's
+  /// first period. The new period becomes the earliest (so nothing precedes it,
+  /// `carriedRta` starts at 0); the period that was previously earliest then
+  /// has its carry-forward recomputed from the new one via
+  /// [recomputeCarryForwardFrom].
+  Future<BudgetPeriod> autoCreatePreviousPeriod(String budgetId) async {
+    try {
+      final budget = await getBudget(budgetId);
+      final periods = await _localDatabase.budgetsDao.getPeriodsByBudgetId(
+        budgetId,
+      );
+      if (periods.isEmpty) {
+        // No anchor to step back from — fall back to the standard seed path.
+        return autoCreateNextPeriod(budgetId);
+      }
+
+      final earliest = periods.reduce(
+        (a, b) => a.startDate.isBefore(b.startDate) ? a : b,
+      );
+      final startDate = _subtractPeriod(earliest.startDate, budget.periodType);
+      final endDate = earliest.startDate.subtract(const Duration(days: 1));
+
+      final created = await createBudgetPeriod(
+        budgetId: budgetId,
+        startDate: startDate,
+        endDate: endDate,
+      );
+
+      // The formerly-earliest period now follows the new one; propagate
+      // carry-forward (RTA + rollovers) forward from the new period.
+      await recomputeCarryForwardFrom(
+        budgetId: budgetId,
+        fromPeriodId: created.id,
+      );
+      return created;
+    } on BudgetException {
+      rethrow;
+    } on Exception catch (e) {
+      throw BudgetException(
+        'Failed to auto-create previous period',
+        error: e,
+      );
+    }
+  }
+
+  /// Recomputes [BudgetPeriod.carriedRta] and re-seeds positive rollovers for
+  /// every period chronologically AFTER [fromPeriodId], propagating changes
+  /// (e.g. a newly recorded back-dated overspend) forward through the chain.
+  ///
+  /// Mirrors the carry-forward formula in [autoCreateNextPeriod]: each period's
+  /// carried RTA is the previous period's signed leftover RTA minus its
+  /// uncovered cash overspend.
+  Future<void> recomputeCarryForwardFrom({
+    required String budgetId,
+    required String fromPeriodId,
+  }) async {
+    final periods = await _localDatabase.budgetsDao.getPeriodsByBudgetId(
+      budgetId,
+    )
+      ..sort((a, b) => a.startDate.compareTo(b.startDate));
+    final startIdx = periods.indexWhere((p) => p.id == fromPeriodId);
+    if (startIdx < 0) return;
+
+    for (var i = startIdx + 1; i < periods.length; i++) {
+      final previous = periods[i - 1];
+      final current = periods[i];
+
+      final prevAllocations = await _localDatabase.envelopesDao
+          .getAllocationsByPeriodId(previous.id);
+      final prevAllocated = prevAllocations.fold<int>(
+        0,
+        (sum, a) => sum + a.allocatedAmount,
+      );
+      final signedPrevRta =
+          previous.totalIncome + previous.carriedRta - prevAllocated;
+      var uncoveredOverspend = 0;
+      for (final a in prevAllocations) {
+        final unspent = a.allocatedAmount - a.spentAmount + a.rolloverAmount;
+        if (unspent < 0) uncoveredOverspend += -unspent;
+      }
+      final newCarried = signedPrevRta - uncoveredOverspend;
+
+      if (newCarried != current.carriedRta) {
+        await updateBudgetPeriod(
+          _mapBudgetPeriodFromLocal(current).copyWith(carriedRta: newCarried),
+        );
+      }
+      await _seedRolloverFromPreviousPeriod(
+        fromPeriodId: previous.id,
+        toPeriodId: current.id,
+      );
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Budget-Level Allocation Operations
   // ---------------------------------------------------------------------------

@@ -47,6 +47,10 @@ void main() {
     updatedAt: now,
   );
 
+  setUpAll(() {
+    registerFallbackValue(DateTime(2026));
+  });
+
   setUp(() {
     transactionRepo = _MockTransactionRepository();
     accountRepo = _MockAccountRepository();
@@ -68,13 +72,26 @@ void main() {
       () => transactionRepo.getTransactionTemplates(any()),
     ).thenAnswer((_) async => <TransactionTemplate>[]);
     when(
-      () => budgetRepo.addIncomeToCurrentPeriod(
+      () => budgetRepo.addIncomeToPeriod(
         budgetId: any(named: 'budgetId'),
+        date: any(named: 'date'),
         amount: any(named: 'amount'),
       ),
     ).thenAnswer((_) async {});
     when(
       () => accountRepo.refreshAccounts(any()),
+    ).thenAnswer((_) async {});
+    when(
+      () => budgetRepo.ensurePeriodForDate(
+        budgetId: any(named: 'budgetId'),
+        date: any(named: 'date'),
+      ),
+    ).thenAnswer((_) async => null);
+    when(
+      () => budgetRepo.recomputeCarryForwardFrom(
+        budgetId: any(named: 'budgetId'),
+        fromPeriodId: any(named: 'fromPeriodId'),
+      ),
     ).thenAnswer((_) async {});
   });
 
