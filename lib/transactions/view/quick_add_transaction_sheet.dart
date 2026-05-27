@@ -276,13 +276,14 @@ class _QuickAddTransactionSheetState extends State<QuickAddTransactionSheet> {
     if (!_saveAsTemplate || _isEditing) return;
     final name = _templateNameController.text.trim();
     if (name.isEmpty) return;
-    final cents = parseCents(_amountController.text);
+    // Templates intentionally omit the amount (and date) — they capture the
+    // reusable shape (account, envelope, payee, notes, tags), not a one-off
+    // value. The amount field stays blank when the template is applied.
     await context.read<TransactionFormCubit>().saveAsTemplate(
       name: name,
       type: _type,
       accountId: _accountId,
       envelopeId: _type == 'expense' ? _envelopeId : null,
-      amountCents: cents,
       payee: _payeeController.text.trim().isEmpty
           ? null
           : _payeeController.text.trim(),
