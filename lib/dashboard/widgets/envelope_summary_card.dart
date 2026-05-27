@@ -411,8 +411,12 @@ class _CategoryGroupSection extends StatelessWidget {
   }
 
   void _openDetail(BuildContext context, EnvelopeSummary summary) {
+    // CC Payment envelopes have their own "Pay" FAB and shouldn't show the
+    // shell's add-transaction FAB, so present them over the root navigator
+    // (covering the shell FAB + nav bar). Regular envelopes stay nested.
+    final isCreditCard = summary.envelope.linkedAccountId != null;
     unawaited(
-      Navigator.of(context).push(
+      Navigator.of(context, rootNavigator: isCreditCard).push(
         PageRouteBuilder<void>(
           transitionDuration: const Duration(milliseconds: 500),
           reverseTransitionDuration: const Duration(milliseconds: 400),
@@ -422,6 +426,7 @@ class _CategoryGroupSection extends StatelessWidget {
               envelope: summary.envelope,
               transactionRepository: context.read<TransactionRepository>(),
               budgetRepository: context.read<BudgetRepository>(),
+              accountRepository: context.read<AccountRepository>(),
               now: context.read<AppClock>().now,
             ),
             child: EnvelopeDetailPage(

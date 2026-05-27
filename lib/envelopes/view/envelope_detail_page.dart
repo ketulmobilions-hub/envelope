@@ -306,59 +306,137 @@ class _EnvelopeAppBarState extends State<_EnvelopeAppBar>
                 24,
                 48,
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    l10n.envelopesDetailAvailable.toUpperCase(),
-                    style: const TextStyle(
-                      color: AppColors.onPrimary,
-                      fontSize: 13,
-                      letterSpacing: 0.8,
+              child: state.isCreditCardEnvelope
+                  ? _buildCreditCardSummary(l10n, symbol)
+                  : _buildEnvelopeSummary(
+                      l10n,
+                      symbol,
+                      available: available,
+                      allocated: allocated,
+                      spent: spent,
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    formatCents(available, symbol: symbol),
-                    style: GoogleFonts.playfairDisplay(
-                      color: AppColors.onPrimary,
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SlideTransition(
-                        position: _slideLeft,
-                        child: FadeTransition(
-                          opacity: _opacityCurve,
-                          child: _HeaderDetail(
-                            label: l10n.envelopesDetailAllocated,
-                            amount: allocated,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 32),
-                      SlideTransition(
-                        position: _slideRight,
-                        child: FadeTransition(
-                          opacity: _opacityCurve,
-                          child: _HeaderDetail(
-                            label: l10n.envelopesDetailSpent,
-                            amount: spent,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildEnvelopeSummary(
+    AppLocalizations l10n,
+    String symbol, {
+    required int available,
+    required int allocated,
+    required int spent,
+  }) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          l10n.envelopesDetailAvailable.toUpperCase(),
+          style: const TextStyle(
+            color: AppColors.onPrimary,
+            fontSize: 13,
+            letterSpacing: 0.8,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          formatCents(available, symbol: symbol),
+          style: GoogleFonts.playfairDisplay(
+            color: AppColors.onPrimary,
+            fontSize: 36,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SlideTransition(
+              position: _slideLeft,
+              child: FadeTransition(
+                opacity: _opacityCurve,
+                child: _HeaderDetail(
+                  label: l10n.envelopesDetailAllocated,
+                  amount: allocated,
+                ),
+              ),
+            ),
+            const SizedBox(width: 32),
+            SlideTransition(
+              position: _slideRight,
+              child: FadeTransition(
+                opacity: _opacityCurve,
+                child: _HeaderDetail(
+                  label: l10n.envelopesDetailSpent,
+                  amount: spent,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// CC Payment envelope header: shows available credit out of the limit when
+  /// a credit limit is known, otherwise just the amount due. No allocated /
+  /// spent — those figures aren't meaningful for a credit-card envelope.
+  Widget _buildCreditCardSummary(AppLocalizations l10n, String symbol) {
+    final state = widget.state;
+    final availableCredit = state.ccAvailableCreditCents;
+    final hasLimit = availableCredit != null;
+
+    final label = hasLimit
+        ? l10n.envelopesDetailAvailable
+        : l10n.envelopesDetailDue;
+    final amount = hasLimit ? availableCredit : state.ccDueCents;
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: const TextStyle(
+            color: AppColors.onPrimary,
+            fontSize: 13,
+            letterSpacing: 0.8,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          formatCents(amount, symbol: symbol),
+          style: GoogleFonts.playfairDisplay(
+            color: AppColors.onPrimary,
+            fontSize: 36,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        if (hasLimit) ...[
+          const SizedBox(height: 4),
+          Text(
+            l10n.envelopesDetailOfLimit(
+              formatCents(state.ccCreditLimit!, symbol: symbol),
+            ),
+            style: const TextStyle(
+              color: AppColors.onPrimary,
+              fontSize: 13,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.ccDueLabel(formatCents(state.ccDueCents, symbol: symbol)),
+            style: const TextStyle(
+              color: AppColors.onPrimary,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -503,6 +581,7 @@ class _EnvelopeContentState extends State<_EnvelopeContent>
                               isCurrent:
                                   group.period?.id == state.currentPeriodId,
                               envelopeColor: widget.envelopeColor,
+                              hideFigures: state.isCreditCardEnvelope,
                             ),
                       ],
                     );
@@ -585,11 +664,16 @@ class _PeriodSection extends StatelessWidget {
     required this.group,
     required this.isCurrent,
     required this.envelopeColor,
+    this.hideFigures = false,
   });
 
   final EnvelopePeriodGroup group;
   final bool isCurrent;
   final Color envelopeColor;
+
+  /// When true (CC Payment envelope), the allocated/spent/available row is
+  /// omitted — those figures aren't meaningful for a credit-card envelope.
+  final bool hideFigures;
 
   @override
   Widget build(BuildContext context) {
@@ -645,7 +729,7 @@ class _PeriodSection extends StatelessWidget {
                 ),
             ],
           ),
-          if (period != null) ...[
+          if (period != null && !hideFigures) ...[
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

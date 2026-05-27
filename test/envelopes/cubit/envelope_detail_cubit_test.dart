@@ -1,3 +1,4 @@
+import 'package:account_repository/account_repository.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/envelopes/cubit/cubit.dart';
@@ -12,10 +13,13 @@ class MockTransactionRepository extends Mock implements TransactionRepository {}
 
 class MockBudgetRepository extends Mock implements BudgetRepository {}
 
+class MockAccountRepository extends Mock implements AccountRepository {}
+
 void main() {
   late MockEnvelopeRepository envelopeRepository;
   late MockTransactionRepository transactionRepository;
   late MockBudgetRepository budgetRepository;
+  late MockAccountRepository accountRepository;
 
   final now = DateTime(2026, 5, 25);
   final apr5 = DateTime(2026, 4, 5);
@@ -92,6 +96,7 @@ void main() {
     envelopeRepository = MockEnvelopeRepository();
     transactionRepository = MockTransactionRepository();
     budgetRepository = MockBudgetRepository();
+    accountRepository = MockAccountRepository();
 
     when(
       () => transactionRepository.watchTransactions(
@@ -115,6 +120,7 @@ void main() {
       envelopeRepository: envelopeRepository,
       transactionRepository: transactionRepository,
       budgetRepository: budgetRepository,
+      accountRepository: accountRepository,
       envelope: testEnvelope,
       now: clock ?? () => now,
     );
@@ -130,7 +136,69 @@ void main() {
       expect(cubit.state.transactions, isEmpty);
       expect(cubit.state.groups, isEmpty);
       expect(cubit.state.currentGroup, isNull);
+      expect(cubit.state.isCreditCardEnvelope, isFalse);
       addTearDown(cubit.close);
+    });
+
+    test('CC Payment envelope exposes due and available credit', () async {
+      final ccEnvelope = Envelope(
+        id: 'cc-env',
+        categoryGroupId: 'group-1',
+        budgetId: 'budget-1',
+        name: 'Visa Payment',
+        createdAt: apr5,
+        linkedAccountId: 'acc-cc',
+      );
+      final ccAccount = Account(
+        id: 'acc-cc',
+        budgetId: 'budget-1',
+        name: 'Visa',
+        type: 'credit_card',
+        currency: 'USD',
+        currentBalance: -300000, // owes 3,000.00
+        createdAt: apr5,
+        updatedAt: apr5,
+      );
+      when(
+        () => transactionRepository.watchTransactions(
+          budgetId: any(named: 'budgetId'),
+          accountId: any(named: 'accountId'),
+          envelopeId: any(named: 'envelopeId'),
+        ),
+      ).thenAnswer((_) => const Stream.empty());
+      when(
+        () => accountRepository.watchAccounts('budget-1'),
+      ).thenAnswer((_) => Stream.value([ccAccount]));
+      when(
+        () => accountRepository.getDebtAccount('acc-cc'),
+      ).thenAnswer(
+        (_) async => const DebtAccount(
+          accountId: 'acc-cc',
+          interestRate: 0,
+          minimumPayment: 0,
+          originalBalance: 0,
+          creditLimit: 500000,
+        ),
+      );
+
+      final cubit = EnvelopeDetailCubit(
+        envelopeRepository: envelopeRepository,
+        transactionRepository: transactionRepository,
+        budgetRepository: budgetRepository,
+        accountRepository: accountRepository,
+        envelope: ccEnvelope,
+        now: () => now,
+      );
+      addTearDown(cubit.close);
+
+      await cubit.stream.firstWhere(
+        (s) => s.linkedAccount != null && s.ccCreditLimit != null,
+      );
+
+      expect(cubit.state.isCreditCardEnvelope, isTrue);
+      expect(cubit.state.ccDueCents, 300000);
+      // 500000 limit + (-300000) balance = 200000 available credit.
+      expect(cubit.state.ccAvailableCreditCents, 200000);
     });
 
     blocTest<EnvelopeDetailCubit, EnvelopeDetailState>(

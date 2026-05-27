@@ -18,8 +18,7 @@ final class EnvelopePeriodGroup extends Equatable {
 
   int get allocated => allocation?.allocatedAmount ?? 0;
   int get spent => allocation?.spentAmount ?? 0;
-  int get available =>
-      allocated - spent + (allocation?.rolloverAmount ?? 0);
+  int get available => allocated - spent + (allocation?.rolloverAmount ?? 0);
 
   @override
   List<Object?> get props => [period, allocation, transactions];
@@ -32,12 +31,40 @@ final class EnvelopeDetailState extends Equatable {
     this.allocations = const [],
     this.transactions = const [],
     this.currentPeriodId,
+    this.linkedAccount,
+    this.ccCreditLimit,
   });
 
   final Envelope envelope;
   final List<BudgetPeriod> periods;
   final List<EnvelopeAllocation> allocations;
   final List<Transaction> transactions;
+
+  /// The linked credit-card account when this is a CC Payment envelope
+  /// (`envelope.linkedAccountId != null`), else null. Carries `currentBalance`.
+  final Account? linkedAccount;
+
+  /// The linked CC account's credit limit (cents), if set; null when unknown
+  /// or the account has no limit.
+  final int? ccCreditLimit;
+
+  /// True when this envelope is a CC Payment envelope linked to a credit card.
+  bool get isCreditCardEnvelope => envelope.linkedAccountId != null;
+
+  /// Amount currently owed on the linked card (cents); 0 when not in debt.
+  int get ccDueCents {
+    final balance = linkedAccount?.currentBalance ?? 0;
+    return balance < 0 ? -balance : 0;
+  }
+
+  /// Available credit (limit minus debt) when a credit limit is known, else
+  /// null. `currentBalance` is negative when in debt, so `limit + balance`.
+  int? get ccAvailableCreditCents {
+    final limit = ccCreditLimit;
+    final account = linkedAccount;
+    if (limit == null || account == null) return null;
+    return limit + account.currentBalance;
+  }
 
   /// Id of the period containing "now" — picked by the cubit (which owns the
   /// clock). Used to flag the active group in the UI; the state itself never
@@ -77,20 +104,22 @@ final class EnvelopeDetailState extends Equatable {
       }
     }
 
-    final relevantPeriods = periods
-        .where(
-          (p) =>
-              allocationByPeriod.containsKey(p.id) ||
-              txnsByPeriod.containsKey(p.id),
-        )
-        .toList()
-      ..sort((a, b) => b.startDate.compareTo(a.startDate));
+    final relevantPeriods =
+        periods
+            .where(
+              (p) =>
+                  allocationByPeriod.containsKey(p.id) ||
+                  txnsByPeriod.containsKey(p.id),
+            )
+            .toList()
+          ..sort((a, b) => b.startDate.compareTo(a.startDate));
 
     final result = <EnvelopePeriodGroup>[];
     for (final p in relevantPeriods) {
-      final txns = (txnsByPeriod[p.id] ?? <Transaction>[])..sort(
-        (a, b) => b.date.compareTo(a.date),
-      );
+      final txns = (txnsByPeriod[p.id] ?? <Transaction>[])
+        ..sort(
+          (a, b) => b.date.compareTo(a.date),
+        );
       result.add(
         EnvelopePeriodGroup(
           period: p,
@@ -126,6 +155,8 @@ final class EnvelopeDetailState extends Equatable {
     List<EnvelopeAllocation>? allocations,
     List<Transaction>? transactions,
     Object? currentPeriodId = _sentinel,
+    Account? linkedAccount,
+    Object? ccCreditLimit = _sentinel,
   }) {
     return EnvelopeDetailState(
       envelope: envelope ?? this.envelope,
@@ -137,6 +168,10 @@ final class EnvelopeDetailState extends Equatable {
       currentPeriodId: currentPeriodId == _sentinel
           ? this.currentPeriodId
           : currentPeriodId as String?,
+      linkedAccount: linkedAccount ?? this.linkedAccount,
+      ccCreditLimit: ccCreditLimit == _sentinel
+          ? this.ccCreditLimit
+          : ccCreditLimit as int?,
     );
   }
 
@@ -149,5 +184,7 @@ final class EnvelopeDetailState extends Equatable {
     allocations,
     transactions,
     currentPeriodId,
+    linkedAccount,
+    ccCreditLimit,
   ];
 }

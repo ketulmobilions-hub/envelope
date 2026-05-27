@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:account_repository/account_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/envelopes/bloc/bloc.dart';
 import 'package:envelope/shared/services/app_clock.dart';
@@ -300,13 +301,17 @@ class _EnvelopesViewState extends State<EnvelopesView> {
     final activeGroups = bloc.state.categoryGroups
         .where((g) => !g.isArchived)
         .toList();
-    await Navigator.of(context).push(
+    // CC Payment envelopes have their own "Pay" FAB; present over the root
+    // navigator so the shell's add-transaction FAB (and nav bar) are hidden.
+    final isCreditCard = envelope.linkedAccountId != null;
+    await Navigator.of(context, rootNavigator: isCreditCard).push(
       MaterialPageRoute<void>(
         builder: (_) => BlocProvider(
           create: (_) => EnvelopeDetailCubit(
             envelopeRepository: context.read<EnvelopeRepository>(),
             transactionRepository: context.read<TransactionRepository>(),
             budgetRepository: context.read<BudgetRepository>(),
+            accountRepository: context.read<AccountRepository>(),
             envelope: envelope,
             now: context.read<AppClock>().now,
           ),
