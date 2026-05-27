@@ -685,6 +685,17 @@
     "@envelopesDetailAvailable": {
         "description": "Label for available amount in envelope detail"
     },
+    "envelopesDetailDue": "Due",
+    "@envelopesDetailDue": {
+        "description": "Label shown above the amount due on a credit-card payment envelope detail header (no credit limit set)"
+    },
+    "envelopesDetailOfLimit": "of {limit}",
+    "@envelopesDetailOfLimit": {
+        "description": "Subtitle under available credit on a credit-card payment envelope detail header, showing the credit limit",
+        "placeholders": {
+            "limit": {"type": "String"}
+        }
+    },
     "envelopesDetailAllocationHistory": "Allocation History",
     "@envelopesDetailAllocationHistory": {
         "description": "Title for allocation history section"

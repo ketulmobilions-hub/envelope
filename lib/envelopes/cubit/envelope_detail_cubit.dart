@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:account_repository/account_repository.dart';
 import 'package:bloc/bloc.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope_repository/envelope_repository.dart';
@@ -13,11 +14,13 @@ class EnvelopeDetailCubit extends Cubit<EnvelopeDetailState> {
     required EnvelopeRepository envelopeRepository,
     required TransactionRepository transactionRepository,
     required BudgetRepository budgetRepository,
+    required AccountRepository accountRepository,
     required Envelope envelope,
     DateTime Function()? now,
   }) : _envelopeRepository = envelopeRepository,
        _transactionRepository = transactionRepository,
        _budgetRepository = budgetRepository,
+       _accountRepository = accountRepository,
        _now = now ?? DateTime.now,
        super(EnvelopeDetailState(envelope: envelope)) {
     _transactionSubscription = transactionRepository
@@ -50,16 +53,45 @@ class EnvelopeDetailCubit extends Cubit<EnvelopeDetailState> {
           );
         });
 
+    // CC Payment envelope: track the linked credit-card account's balance and
+    // credit limit so the detail header can show available-credit / due
+    // instead of the (meaningless here) allocated/spent figures.
+    final linkedAccountId = envelope.linkedAccountId;
+    if (linkedAccountId != null) {
+      _accountsSubscription = _accountRepository
+          .watchAccounts(envelope.budgetId)
+          .listen((accounts) {
+            if (isClosed) return;
+            final linked = accounts
+                .where((a) => a.id == linkedAccountId)
+                .firstOrNull;
+            if (linked != null) emit(state.copyWith(linkedAccount: linked));
+          });
+      unawaited(_loadCreditLimit(linkedAccountId));
+    }
+
     unawaited(_refreshTransactions());
   }
 
   final EnvelopeRepository _envelopeRepository;
   final TransactionRepository _transactionRepository;
   final BudgetRepository _budgetRepository;
+  final AccountRepository _accountRepository;
   final DateTime Function() _now;
   StreamSubscription<List<Transaction>>? _transactionSubscription;
   StreamSubscription<List<BudgetPeriod>>? _periodsSubscription;
   StreamSubscription<List<EnvelopeAllocation>>? _allocationsSubscription;
+  StreamSubscription<List<Account>>? _accountsSubscription;
+
+  Future<void> _loadCreditLimit(String accountId) async {
+    try {
+      final debt = await _accountRepository.getDebtAccount(accountId);
+      if (isClosed) return;
+      emit(state.copyWith(ccCreditLimit: debt?.creditLimit));
+    } on Exception {
+      // Best-effort; header falls back to the "due" view without a limit.
+    }
+  }
 
   String? _selectCurrentPeriodId(List<BudgetPeriod> periods) {
     if (periods.isEmpty) return null;
@@ -113,6 +145,7 @@ class EnvelopeDetailCubit extends Cubit<EnvelopeDetailState> {
     await _transactionSubscription?.cancel();
     await _periodsSubscription?.cancel();
     await _allocationsSubscription?.cancel();
+    await _accountsSubscription?.cancel();
     return super.close();
   }
 }
