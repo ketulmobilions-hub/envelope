@@ -50,6 +50,9 @@ Future<bool?> showTransactionFormSheet(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
+    // Present above the shell so the sheet covers the app's add-transaction
+    // FAB (and nav bar) instead of leaving them floating over the form.
+    useRootNavigator: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
@@ -186,6 +189,16 @@ class _QuickAddTransactionSheetState extends State<QuickAddTransactionSheet> {
     super.dispose();
   }
 
+  static bool _recurringChanged(
+    TransactionFormState prev,
+    TransactionFormState curr,
+  ) =>
+      prev.recurringFrequency != curr.recurringFrequency ||
+      prev.recurringCustomInterval != curr.recurringCustomInterval ||
+      prev.recurringCustomUnit != curr.recurringCustomUnit ||
+      prev.recurringEndDate != curr.recurringEndDate ||
+      prev.recurringAutoPost != curr.recurringAutoPost;
+
   void _applyTemplate(TransactionTemplate template) {
     setState(() {
       _type = template.type;
@@ -194,8 +207,9 @@ class _QuickAddTransactionSheetState extends State<QuickAddTransactionSheet> {
           ? (template.envelopeId ?? _envelopeId)
           : null;
       if (template.amountCents != null && template.amountCents! > 0) {
-        _amountController.text = (template.amountCents! / 100)
-            .toStringAsFixed(2);
+        _amountController.text = (template.amountCents! / 100).toStringAsFixed(
+          2,
+        );
       }
       if (template.payee != null) _payeeController.text = template.payee!;
       if (template.notes != null) _notesController.text = template.notes!;
@@ -462,15 +476,13 @@ class _QuickAddTransactionSheetState extends State<QuickAddTransactionSheet> {
           await _persistDefaults();
           if (mounted) await _handleOverspend(state);
         } else if (state.status == TransactionFormStatus.failure) {
-          final msg =
-              state.errorMessage ?? l10n.transactionsErrorLoadFailed;
+          final msg = state.errorMessage ?? l10n.transactionsErrorLoadFailed;
           messenger.showSnackBar(SnackBar(content: Text(msg)));
         } else if (state.tagError != null) {
           messenger.showSnackBar(SnackBar(content: Text(state.tagError!)));
         }
       },
       builder: (context, state) {
-
         final isLoading = state.status == TransactionFormStatus.loading;
         final isSubmitting = state.status == TransactionFormStatus.submitting;
         final selectedAccount = state.accounts
@@ -490,376 +502,405 @@ class _QuickAddTransactionSheetState extends State<QuickAddTransactionSheet> {
           ),
           child: Form(
             key: _formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).dividerColor,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _isEditing
-                              ? l10n.transactionsEditTransaction
-                              : _type == 'income'
-                              ? l10n.transactionsTypeIncome
-                              : l10n.transactionsTypeExpense,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ),
-                      if (!_isEditing && state.templates.isNotEmpty)
-                        TextButton.icon(
-                          icon: const Icon(Icons.bookmarks_outlined, size: 18),
-                          label: Text(l10n.templatesApplyButton),
-                          onPressed: _showTemplatePicker,
-                        ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _amountController,
-                    focusNode: _amountFocus,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(
-                        RegExp(r'^\d*\.?\d{0,2}'),
-                      ),
-                    ],
-                    decoration: InputDecoration(
-                      hintText: '${symbol}0.00',
-                      hintStyle: Theme.of(context).textTheme.displaySmall
-                          ?.copyWith(
-                            color: Theme.of(context).colorScheme.outline,
-                          ),
-                      border: InputBorder.none,
-                      errorText: _amountError,
-                    ),
-                    onChanged: (_) {
-                      if (_amountError != null) {
-                        setState(() => _amountError = null);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  AppOptionPicker<Account>(
-                    options: state.accounts,
-                    value: selectedAccount,
-                    onChanged: (a) => setState(() {
-                      _accountId = a.id;
-                      _accountError = null;
-                      if (kMultiCurrencyEnabled && !_currencyManuallySet) {
-                        _currency = a.currency;
-                        _fxRateController.text = a.displayFxRate.toString();
-                      }
-                    }),
-                    labelText: l10n.transactionsAccountLabel,
-                    icon: Icons.account_balance_outlined,
-                    itemLabel: (a) => a.name,
-                  ),
-                  if (_accountError != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4, left: 12),
-                      child: Text(
-                        _accountError!,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  if (_type == 'expense') ...[
-                    const SizedBox(height: 12),
-                    EnvelopePicker(
-                      value: selectedEnvelope,
-                      onChanged: (e) => setState(() {
-                        _envelopeId = e.id;
-                        _envelopeError = null;
-                      }),
-                      hideCCPaymentsGroup: true,
-                    ),
-                    if (_envelopeError != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4, left: 12),
-                        child: Text(
-                          _envelopeError!,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                  ],
-                  if (kMultiCurrencyEnabled) ...[
-                    const SizedBox(height: 12),
-                    _CurrencyOverrideTile(
-                      code: txCurrency,
-                      onChanged: (code) => setState(() {
-                        _currency = code;
-                        _currencyManuallySet = true;
-                        if (code == baseCurrency) {
-                          _fxRateController.text = '1.0';
-                        }
-                      }),
-                    ),
-                  ],
-                  if (kMultiCurrencyEnabled && isForeign) ...[
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _fxRateController,
-                      decoration: InputDecoration(
-                        labelText: l10n.transactionsExchangeRateLabel,
-                        helperText: l10n.transactionsExchangeRateHelper(
-                          txCurrency,
-                          baseSymbol,
-                          baseCurrency,
-                        ),
-                        prefixIcon: const Icon(Icons.currency_exchange),
-                      ),
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                          RegExp(r'^\d*\.?\d{0,6}'),
-                        ),
-                      ],
-                      onChanged: (_) => setState(() {}),
-                      validator: (value) {
-                        final parsed = double.tryParse(value?.trim() ?? '');
-                        if (parsed == null || parsed <= 0) {
-                          return l10n.transactionsExchangeRateInvalid;
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 4),
-                    Builder(
-                      builder: (_) {
-                        final cents = parseCents(_amountController.text) ?? 0;
-                        final rateVal =
-                            double.tryParse(_fxRateController.text.trim()) ??
-                            1.0;
-                        final base = ((cents * rateVal).round() / 100)
-                            .toStringAsFixed(2);
-                        return Padding(
-                          padding: const EdgeInsets.only(left: 12),
-                          child: Text(
-                            '≈ $baseSymbol$base',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                  if (!_isEditing) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        if (_saveAsTemplate) ...[
-                          Expanded(
-                            child: TextField(
-                              controller: _templateNameController,
-                              onChanged: (_) {
-                                if (_templateNameError != null) {
-                                  setState(() => _templateNameError = null);
-                                }
-                              },
-                              decoration: InputDecoration(
-                                hintText: l10n.templatesNameLabel,
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 6,
-                                ),
-                                errorText: _templateNameError,
-                              ),
-                              textCapitalization: TextCapitalization.words,
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).dividerColor,
+                              borderRadius: BorderRadius.circular(2),
                             ),
                           ),
-                          const SizedBox(width: 8),
-                        ],
-                        GestureDetector(
-                          onTap: () => setState(() {
-                            _saveAsTemplate = !_saveAsTemplate;
-                            if (!_saveAsTemplate) _templateNameError = null;
-                          }),
-                          child: Text(
-                            l10n.templatesSaveAs,
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
                         ),
-                        const SizedBox(width: 4),
-                        SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: Checkbox(
-                            value: _saveAsTemplate,
-                            onChanged: (v) => setState(() {
-                              _saveAsTemplate = v ?? false;
-                              if (!_saveAsTemplate) {
-                                _templateNameError = null;
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _isEditing
+                                    ? l10n.transactionsEditTransaction
+                                    : _type == 'income'
+                                    ? l10n.transactionsTypeIncome
+                                    : l10n.transactionsTypeExpense,
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                            ),
+                            if (!_isEditing && state.templates.isNotEmpty)
+                              TextButton.icon(
+                                icon: const Icon(
+                                  Icons.bookmarks_outlined,
+                                  size: 18,
+                                ),
+                                label: Text(l10n.templatesApplyButton),
+                                onPressed: _showTemplatePicker,
+                              ),
+                            IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () => Navigator.of(context).pop(),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _amountController,
+                          focusNode: _amountFocus,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.displaySmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'^\d*\.?\d{0,2}'),
+                            ),
+                          ],
+                          decoration: InputDecoration(
+                            hintText: '${symbol}0.00',
+                            hintStyle: Theme.of(context).textTheme.displaySmall
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.outline,
+                                ),
+                            border: InputBorder.none,
+                            errorText: _amountError,
+                          ),
+                          onChanged: (_) {
+                            if (_amountError != null) {
+                              setState(() => _amountError = null);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        AppOptionPicker<Account>(
+                          options: state.accounts,
+                          value: selectedAccount,
+                          onChanged: (a) => setState(() {
+                            _accountId = a.id;
+                            _accountError = null;
+                            if (kMultiCurrencyEnabled &&
+                                !_currencyManuallySet) {
+                              _currency = a.currency;
+                              _fxRateController.text = a.displayFxRate
+                                  .toString();
+                            }
+                          }),
+                          labelText: l10n.transactionsAccountLabel,
+                          icon: Icons.account_balance_outlined,
+                          itemLabel: (a) => a.name,
+                        ),
+                        if (_accountError != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4, left: 12),
+                            child: Text(
+                              _accountError!,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.error,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        if (_type == 'expense') ...[
+                          const SizedBox(height: 12),
+                          EnvelopePicker(
+                            value: selectedEnvelope,
+                            onChanged: (e) => setState(() {
+                              _envelopeId = e.id;
+                              _envelopeError = null;
+                            }),
+                            hideCCPaymentsGroup: true,
+                          ),
+                          if (_envelopeError != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4, left: 12),
+                              child: Text(
+                                _envelopeError!,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                        ],
+                        if (kMultiCurrencyEnabled) ...[
+                          const SizedBox(height: 12),
+                          _CurrencyOverrideTile(
+                            code: txCurrency,
+                            onChanged: (code) => setState(() {
+                              _currency = code;
+                              _currencyManuallySet = true;
+                              if (code == baseCurrency) {
+                                _fxRateController.text = '1.0';
                               }
                             }),
-                            visualDensity: VisualDensity.compact,
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
                           ),
+                        ],
+                        if (kMultiCurrencyEnabled && isForeign) ...[
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _fxRateController,
+                            decoration: InputDecoration(
+                              labelText: l10n.transactionsExchangeRateLabel,
+                              helperText: l10n.transactionsExchangeRateHelper(
+                                txCurrency,
+                                baseSymbol,
+                                baseCurrency,
+                              ),
+                              prefixIcon: const Icon(Icons.currency_exchange),
+                            ),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'^\d*\.?\d{0,6}'),
+                              ),
+                            ],
+                            onChanged: (_) => setState(() {}),
+                            validator: (value) {
+                              final parsed = double.tryParse(
+                                value?.trim() ?? '',
+                              );
+                              if (parsed == null || parsed <= 0) {
+                                return l10n.transactionsExchangeRateInvalid;
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 4),
+                          Builder(
+                            builder: (_) {
+                              final cents =
+                                  parseCents(_amountController.text) ?? 0;
+                              final rateVal =
+                                  double.tryParse(
+                                    _fxRateController.text.trim(),
+                                  ) ??
+                                  1.0;
+                              final base = ((cents * rateVal).round() / 100)
+                                  .toStringAsFixed(2);
+                              return Padding(
+                                padding: const EdgeInsets.only(left: 12),
+                                child: Text(
+                                  '≈ $baseSymbol$base',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                        if (!_isEditing) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              if (_saveAsTemplate) ...[
+                                Expanded(
+                                  child: TextField(
+                                    controller: _templateNameController,
+                                    onChanged: (_) {
+                                      if (_templateNameError != null) {
+                                        setState(
+                                          () => _templateNameError = null,
+                                        );
+                                      }
+                                    },
+                                    decoration: InputDecoration(
+                                      hintText: l10n.templatesNameLabel,
+                                      isDense: true,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 6,
+                                          ),
+                                      errorText: _templateNameError,
+                                    ),
+                                    textCapitalization:
+                                        TextCapitalization.words,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                              ],
+                              GestureDetector(
+                                onTap: () => setState(() {
+                                  _saveAsTemplate = !_saveAsTemplate;
+                                  if (!_saveAsTemplate)
+                                    _templateNameError = null;
+                                }),
+                                child: Text(
+                                  l10n.templatesSaveAs,
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: Checkbox(
+                                  value: _saveAsTemplate,
+                                  onChanged: (v) => setState(() {
+                                    _saveAsTemplate = v ?? false;
+                                    if (!_saveAsTemplate) {
+                                      _templateNameError = null;
+                                    }
+                                  }),
+                                  visualDensity: VisualDensity.compact,
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            onPressed: () =>
+                                setState(() => _moreExpanded = !_moreExpanded),
+                            icon: Icon(
+                              _moreExpanded
+                                  ? Icons.expand_less
+                                  : Icons.expand_more,
+                            ),
+                            label: Text(
+                              _moreExpanded
+                                  ? l10n.transactionsHideOptions
+                                  : l10n.transactionsMoreOptions,
+                            ),
+                          ),
+                        ),
+                        AnimatedSize(
+                          duration: const Duration(milliseconds: 180),
+                          curve: Curves.easeOutCubic,
+                          child: _moreExpanded
+                              ? Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    HorizontalDatePicker(
+                                      selectedDate: _date,
+                                      onDateSelected: (d) =>
+                                          setState(() => _date = d),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    TextField(
+                                      controller: _payeeController,
+                                      decoration: InputDecoration(
+                                        labelText: l10n.transactionsPayeeLabel,
+                                        prefixIcon: const Icon(
+                                          Icons.person_outline,
+                                        ),
+                                      ),
+                                      textCapitalization:
+                                          TextCapitalization.words,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    TextField(
+                                      controller: _notesController,
+                                      decoration: InputDecoration(
+                                        labelText: l10n.transactionsNotesLabel,
+                                        isDense: true,
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 8,
+                                            ),
+                                        prefixIcon: const Icon(
+                                          Icons.notes_outlined,
+                                        ),
+                                      ),
+                                      minLines: 1,
+                                      maxLines: 3,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    TagPicker(
+                                      availableTags: state.tags,
+                                      selectedTagIds: _selectedTagIds,
+                                      onChanged: (ids) => setState(
+                                        () => _selectedTagIds = ids,
+                                      ),
+                                      onCreateTag: _createTag,
+                                    ),
+                                    if (showRecurringToggle) ...[
+                                      const SizedBox(height: 4),
+                                      SwitchListTile(
+                                        contentPadding: EdgeInsets.zero,
+                                        title: Text(
+                                          l10n.recurringMakeRecurringLabel,
+                                        ),
+                                        value: _isRecurring,
+                                        onChanged: (value) {
+                                          setState(() => _isRecurring = value);
+                                          context
+                                              .read<TransactionFormCubit>()
+                                              .toggleRecurring(value: value);
+                                        },
+                                      ),
+                                      AnimatedSize(
+                                        duration: const Duration(
+                                          milliseconds: 200,
+                                        ),
+                                        curve: Curves.easeInOut,
+                                        child: _isRecurring
+                                            ? BlocBuilder<
+                                                TransactionFormCubit,
+                                                TransactionFormState
+                                              >(
+                                                buildWhen: _recurringChanged,
+                                                builder:
+                                                    (context, recurringState) =>
+                                                        _RecurringSection(
+                                                          state: recurringState,
+                                                          selectedDate: _date,
+                                                          isRecurring:
+                                                              _isRecurring,
+                                                        ),
+                                              )
+                                            : const SizedBox.shrink(),
+                                      ),
+                                    ],
+                                    const SizedBox(height: 4),
+                                  ],
+                                )
+                              : const SizedBox.shrink(),
                         ),
                       ],
                     ),
-                  ],
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      onPressed: () =>
-                          setState(() => _moreExpanded = !_moreExpanded),
-                      icon: Icon(
-                        _moreExpanded ? Icons.expand_less : Icons.expand_more,
-                      ),
-                      label: Text(
-                        _moreExpanded
-                            ? l10n.transactionsHideOptions
-                            : l10n.transactionsMoreOptions,
-                      ),
-                    ),
                   ),
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 180),
-                    curve: Curves.easeOutCubic,
-                    child: _moreExpanded
-                        ? Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              HorizontalDatePicker(
-                                selectedDate: _date,
-                                onDateSelected: (d) =>
-                                    setState(() => _date = d),
-                              ),
-                              const SizedBox(height: 12),
-                              TextField(
-                                controller: _payeeController,
-                                decoration: InputDecoration(
-                                  labelText: l10n.transactionsPayeeLabel,
-                                  prefixIcon: const Icon(
-                                    Icons.person_outline,
-                                  ),
-                                ),
-                                textCapitalization: TextCapitalization.words,
-                              ),
-                              const SizedBox(height: 12),
-                              TextField(
-                                controller: _notesController,
-                                decoration: InputDecoration(
-                                  labelText: l10n.transactionsNotesLabel,
-                                  prefixIcon: const Icon(
-                                    Icons.notes_outlined,
-                                  ),
-                                ),
-                                maxLines: 2,
-                              ),
-                              const SizedBox(height: 12),
-                              TagPicker(
-                                availableTags: state.tags,
-                                selectedTagIds: _selectedTagIds,
-                                onChanged: (ids) => setState(
-                                  () => _selectedTagIds = ids,
-                                ),
-                                onCreateTag: _createTag,
-                              ),
-                              if (showRecurringToggle) ...[
-                                const SizedBox(height: 4),
-                                SwitchListTile(
-                                  contentPadding: EdgeInsets.zero,
-                                  title: Text(
-                                    l10n.recurringMakeRecurringLabel,
-                                  ),
-                                  value: _isRecurring,
-                                  onChanged: (value) {
-                                    setState(() => _isRecurring = value);
-                                    context
-                                        .read<TransactionFormCubit>()
-                                        .toggleRecurring(value: value);
-                                  },
-                                ),
-                                AnimatedSize(
-                                  duration: const Duration(milliseconds: 200),
-                                  curve: Curves.easeInOut,
-                                  child: _isRecurring
-                                      ? BlocBuilder<
-                                          TransactionFormCubit,
-                                          TransactionFormState
-                                        >(
-                                          buildWhen: (prev, curr) =>
-                                              prev.recurringFrequency !=
-                                                  curr.recurringFrequency ||
-                                              prev.recurringCustomInterval !=
-                                                  curr.recurringCustomInterval ||
-                                              prev.recurringCustomUnit !=
-                                                  curr.recurringCustomUnit ||
-                                              prev.recurringEndDate !=
-                                                  curr.recurringEndDate ||
-                                              prev.recurringAutoPost !=
-                                                  curr.recurringAutoPost,
-                                          builder: (context, recurringState) =>
-                                              _RecurringSection(
-                                                state: recurringState,
-                                                selectedDate: _date,
-                                                isRecurring: _isRecurring,
-                                              ),
-                                        )
-                                      : const SizedBox.shrink(),
-                                ),
-                              ],
-                              const SizedBox(height: 4),
-                            ],
-                          )
-                        : const SizedBox.shrink(),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: (isSubmitting || isLoading) ? null : _submit,
-                      child: (isSubmitting || isLoading)
-                          ? const SizedBox.square(
-                              dimension: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : Text(
-                              _isEditing
-                                  ? l10n.transactionsSaveButton
-                                  : l10n.transactionsCreateButton,
+                ),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: FloatingActionButton(
+                    // No hero animation: a page FAB may sit behind this
+                    // modal sheet and share the default tag.
+                    heroTag: null,
+                    tooltip: _isEditing
+                        ? l10n.transactionsSaveButton
+                        : l10n.transactionsCreateButton,
+                    onPressed: (isSubmitting || isLoading) ? null : _submit,
+                    child: (isSubmitting || isLoading)
+                        ? const SizedBox.square(
+                            dimension: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
                             ),
-                    ),
+                          )
+                        : const Icon(Icons.check),
                   ),
-                  const SizedBox(height: 12),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         );

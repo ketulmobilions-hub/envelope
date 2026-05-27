@@ -39,21 +39,28 @@ class _TagPickerState extends State<TagPicker> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l10n.transactionsTagsLabel,
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 4,
+        Row(
           children: [
-            for (final tag in widget.availableTags)
-              _buildTagChip(tag, colorScheme),
-            ActionChip(
-              avatar: const Icon(Icons.add, size: 18),
-              label: Text(l10n.transactionsAddTag),
-              onPressed: () => setState(() => _isCreating = true),
+            Text(
+              l10n.transactionsTagsLabel,
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  for (final tag in widget.availableTags)
+                    _buildTagChip(tag, colorScheme),
+                  ActionChip(
+                    avatar: const Icon(Icons.add, size: 18),
+                    label: Text(l10n.transactionsAddTag),
+                    onPressed: () => setState(() => _isCreating = true),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
