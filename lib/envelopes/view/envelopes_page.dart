@@ -246,8 +246,8 @@ class _EnvelopesViewState extends State<EnvelopesView> {
     final activeGroups = bloc.state.categoryGroups
         .where((g) => !g.isArchived)
         .toList();
-    final result = await Navigator.of(context).push<bool>(
-      MaterialPageRoute<bool>(
+    final result = await Navigator.of(context).push<Object>(
+      MaterialPageRoute<Object>(
         builder: (_) => BlocProvider(
           create: (_) => EnvelopeFormCubit(
             envelopeRepository: context.read<EnvelopeRepository>(),
@@ -260,7 +260,7 @@ class _EnvelopesViewState extends State<EnvelopesView> {
         ),
       ),
     );
-    if (result == true && context.mounted) {
+    if (result != null && context.mounted) {
       bloc.add(const EnvelopesRefreshRequested());
     }
   }
@@ -273,8 +273,8 @@ class _EnvelopesViewState extends State<EnvelopesView> {
     final activeGroups = bloc.state.categoryGroups
         .where((g) => !g.isArchived)
         .toList();
-    final result = await Navigator.of(context).push<bool>(
-      MaterialPageRoute<bool>(
+    final result = await Navigator.of(context).push<Object>(
+      MaterialPageRoute<Object>(
         builder: (_) => BlocProvider(
           create: (_) => EnvelopeFormCubit(
             envelopeRepository: context.read<EnvelopeRepository>(),
@@ -288,7 +288,7 @@ class _EnvelopesViewState extends State<EnvelopesView> {
         ),
       ),
     );
-    if (result == true && context.mounted) {
+    if (result != null && context.mounted) {
       bloc.add(const EnvelopesRefreshRequested());
     }
   }
