@@ -608,6 +608,29 @@ class $BudgetsTable extends Budgets with TableInfo<$BudgetsTable, Budget> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _openingBalanceMeta = const VerificationMeta(
+    'openingBalance',
+  );
+  @override
+  late final GeneratedColumn<int> openingBalance = GeneratedColumn<int>(
+    'opening_balance',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _openingDateMeta = const VerificationMeta(
+    'openingDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> openingDate = GeneratedColumn<DateTime>(
+    'opening_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -639,6 +662,8 @@ class $BudgetsTable extends Budgets with TableInfo<$BudgetsTable, Budget> {
     periodStartDay,
     baseCurrency,
     isArchived,
+    openingBalance,
+    openingDate,
     createdAt,
     updatedAt,
   ];
@@ -707,6 +732,24 @@ class $BudgetsTable extends Budgets with TableInfo<$BudgetsTable, Budget> {
         isArchived.isAcceptableOrUnknown(data['is_archived']!, _isArchivedMeta),
       );
     }
+    if (data.containsKey('opening_balance')) {
+      context.handle(
+        _openingBalanceMeta,
+        openingBalance.isAcceptableOrUnknown(
+          data['opening_balance']!,
+          _openingBalanceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('opening_date')) {
+      context.handle(
+        _openingDateMeta,
+        openingDate.isAcceptableOrUnknown(
+          data['opening_date']!,
+          _openingDateMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -760,6 +803,14 @@ class $BudgetsTable extends Budgets with TableInfo<$BudgetsTable, Budget> {
         DriftSqlType.bool,
         data['${effectivePrefix}is_archived'],
       )!,
+      openingBalance: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}opening_balance'],
+      )!,
+      openingDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}opening_date'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -785,6 +836,8 @@ class Budget extends DataClass implements Insertable<Budget> {
   final int periodStartDay;
   final String baseCurrency;
   final bool isArchived;
+  final int openingBalance;
+  final DateTime? openingDate;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Budget({
@@ -795,6 +848,8 @@ class Budget extends DataClass implements Insertable<Budget> {
     required this.periodStartDay,
     required this.baseCurrency,
     required this.isArchived,
+    required this.openingBalance,
+    this.openingDate,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -808,6 +863,10 @@ class Budget extends DataClass implements Insertable<Budget> {
     map['period_start_day'] = Variable<int>(periodStartDay);
     map['base_currency'] = Variable<String>(baseCurrency);
     map['is_archived'] = Variable<bool>(isArchived);
+    map['opening_balance'] = Variable<int>(openingBalance);
+    if (!nullToAbsent || openingDate != null) {
+      map['opening_date'] = Variable<DateTime>(openingDate);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -822,6 +881,10 @@ class Budget extends DataClass implements Insertable<Budget> {
       periodStartDay: Value(periodStartDay),
       baseCurrency: Value(baseCurrency),
       isArchived: Value(isArchived),
+      openingBalance: Value(openingBalance),
+      openingDate: openingDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(openingDate),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -840,6 +903,8 @@ class Budget extends DataClass implements Insertable<Budget> {
       periodStartDay: serializer.fromJson<int>(json['periodStartDay']),
       baseCurrency: serializer.fromJson<String>(json['baseCurrency']),
       isArchived: serializer.fromJson<bool>(json['isArchived']),
+      openingBalance: serializer.fromJson<int>(json['openingBalance']),
+      openingDate: serializer.fromJson<DateTime?>(json['openingDate']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -855,6 +920,8 @@ class Budget extends DataClass implements Insertable<Budget> {
       'periodStartDay': serializer.toJson<int>(periodStartDay),
       'baseCurrency': serializer.toJson<String>(baseCurrency),
       'isArchived': serializer.toJson<bool>(isArchived),
+      'openingBalance': serializer.toJson<int>(openingBalance),
+      'openingDate': serializer.toJson<DateTime?>(openingDate),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -868,6 +935,8 @@ class Budget extends DataClass implements Insertable<Budget> {
     int? periodStartDay,
     String? baseCurrency,
     bool? isArchived,
+    int? openingBalance,
+    Value<DateTime?> openingDate = const Value.absent(),
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => Budget(
@@ -878,6 +947,8 @@ class Budget extends DataClass implements Insertable<Budget> {
     periodStartDay: periodStartDay ?? this.periodStartDay,
     baseCurrency: baseCurrency ?? this.baseCurrency,
     isArchived: isArchived ?? this.isArchived,
+    openingBalance: openingBalance ?? this.openingBalance,
+    openingDate: openingDate.present ? openingDate.value : this.openingDate,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -898,6 +969,12 @@ class Budget extends DataClass implements Insertable<Budget> {
       isArchived: data.isArchived.present
           ? data.isArchived.value
           : this.isArchived,
+      openingBalance: data.openingBalance.present
+          ? data.openingBalance.value
+          : this.openingBalance,
+      openingDate: data.openingDate.present
+          ? data.openingDate.value
+          : this.openingDate,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -913,6 +990,8 @@ class Budget extends DataClass implements Insertable<Budget> {
           ..write('periodStartDay: $periodStartDay, ')
           ..write('baseCurrency: $baseCurrency, ')
           ..write('isArchived: $isArchived, ')
+          ..write('openingBalance: $openingBalance, ')
+          ..write('openingDate: $openingDate, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -928,6 +1007,8 @@ class Budget extends DataClass implements Insertable<Budget> {
     periodStartDay,
     baseCurrency,
     isArchived,
+    openingBalance,
+    openingDate,
     createdAt,
     updatedAt,
   );
@@ -942,6 +1023,8 @@ class Budget extends DataClass implements Insertable<Budget> {
           other.periodStartDay == this.periodStartDay &&
           other.baseCurrency == this.baseCurrency &&
           other.isArchived == this.isArchived &&
+          other.openingBalance == this.openingBalance &&
+          other.openingDate == this.openingDate &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -954,6 +1037,8 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
   final Value<int> periodStartDay;
   final Value<String> baseCurrency;
   final Value<bool> isArchived;
+  final Value<int> openingBalance;
+  final Value<DateTime?> openingDate;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -965,6 +1050,8 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
     this.periodStartDay = const Value.absent(),
     this.baseCurrency = const Value.absent(),
     this.isArchived = const Value.absent(),
+    this.openingBalance = const Value.absent(),
+    this.openingDate = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -977,6 +1064,8 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
     this.periodStartDay = const Value.absent(),
     required String baseCurrency,
     this.isArchived = const Value.absent(),
+    this.openingBalance = const Value.absent(),
+    this.openingDate = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
@@ -994,6 +1083,8 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
     Expression<int>? periodStartDay,
     Expression<String>? baseCurrency,
     Expression<bool>? isArchived,
+    Expression<int>? openingBalance,
+    Expression<DateTime>? openingDate,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -1006,6 +1097,8 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
       if (periodStartDay != null) 'period_start_day': periodStartDay,
       if (baseCurrency != null) 'base_currency': baseCurrency,
       if (isArchived != null) 'is_archived': isArchived,
+      if (openingBalance != null) 'opening_balance': openingBalance,
+      if (openingDate != null) 'opening_date': openingDate,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -1020,6 +1113,8 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
     Value<int>? periodStartDay,
     Value<String>? baseCurrency,
     Value<bool>? isArchived,
+    Value<int>? openingBalance,
+    Value<DateTime?>? openingDate,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
@@ -1032,6 +1127,8 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
       periodStartDay: periodStartDay ?? this.periodStartDay,
       baseCurrency: baseCurrency ?? this.baseCurrency,
       isArchived: isArchived ?? this.isArchived,
+      openingBalance: openingBalance ?? this.openingBalance,
+      openingDate: openingDate ?? this.openingDate,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -1062,6 +1159,12 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
     if (isArchived.present) {
       map['is_archived'] = Variable<bool>(isArchived.value);
     }
+    if (openingBalance.present) {
+      map['opening_balance'] = Variable<int>(openingBalance.value);
+    }
+    if (openingDate.present) {
+      map['opening_date'] = Variable<DateTime>(openingDate.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -1084,6 +1187,8 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
           ..write('periodStartDay: $periodStartDay, ')
           ..write('baseCurrency: $baseCurrency, ')
           ..write('isArchived: $isArchived, ')
+          ..write('openingBalance: $openingBalance, ')
+          ..write('openingDate: $openingDate, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -14010,6 +14115,8 @@ typedef $$BudgetsTableCreateCompanionBuilder =
       Value<int> periodStartDay,
       required String baseCurrency,
       Value<bool> isArchived,
+      Value<int> openingBalance,
+      Value<DateTime?> openingDate,
       required DateTime createdAt,
       required DateTime updatedAt,
       Value<int> rowid,
@@ -14023,6 +14130,8 @@ typedef $$BudgetsTableUpdateCompanionBuilder =
       Value<int> periodStartDay,
       Value<String> baseCurrency,
       Value<bool> isArchived,
+      Value<int> openingBalance,
+      Value<DateTime?> openingDate,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
@@ -14069,6 +14178,16 @@ class $$BudgetsTableFilterComposer
 
   ColumnFilters<bool> get isArchived => $composableBuilder(
     column: $table.isArchived,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get openingBalance => $composableBuilder(
+    column: $table.openingBalance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get openingDate => $composableBuilder(
+    column: $table.openingDate,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -14127,6 +14246,16 @@ class $$BudgetsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get openingBalance => $composableBuilder(
+    column: $table.openingBalance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get openingDate => $composableBuilder(
+    column: $table.openingDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -14176,6 +14305,16 @@ class $$BudgetsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get openingBalance => $composableBuilder(
+    column: $table.openingBalance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get openingDate => $composableBuilder(
+    column: $table.openingDate,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -14218,6 +14357,8 @@ class $$BudgetsTableTableManager
                 Value<int> periodStartDay = const Value.absent(),
                 Value<String> baseCurrency = const Value.absent(),
                 Value<bool> isArchived = const Value.absent(),
+                Value<int> openingBalance = const Value.absent(),
+                Value<DateTime?> openingDate = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -14229,6 +14370,8 @@ class $$BudgetsTableTableManager
                 periodStartDay: periodStartDay,
                 baseCurrency: baseCurrency,
                 isArchived: isArchived,
+                openingBalance: openingBalance,
+                openingDate: openingDate,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -14242,6 +14385,8 @@ class $$BudgetsTableTableManager
                 Value<int> periodStartDay = const Value.absent(),
                 required String baseCurrency,
                 Value<bool> isArchived = const Value.absent(),
+                Value<int> openingBalance = const Value.absent(),
+                Value<DateTime?> openingDate = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -14253,6 +14398,8 @@ class $$BudgetsTableTableManager
                 periodStartDay: periodStartDay,
                 baseCurrency: baseCurrency,
                 isArchived: isArchived,
+                openingBalance: openingBalance,
+                openingDate: openingDate,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
