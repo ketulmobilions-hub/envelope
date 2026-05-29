@@ -152,17 +152,6 @@ void main() {
       expect(find.byType(EnvelopesStep), findsOneWidget);
     });
 
-    testWidgets('renders AllocationStep on allocation step', (tester) async {
-      when(() => cubit.state).thenReturn(
-        const OnboardingState(
-          currentStep: OnboardingStep.allocation,
-        ),
-      );
-      await tester.pumpWidget(buildSubject());
-      await tester.pumpAndSettle();
-      expect(find.byType(AllocationStep), findsOneWidget);
-    });
-
     testWidgets('shows progress indicator on non-welcome steps', (
       tester,
     ) async {
@@ -211,6 +200,21 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Continue'));
       verify(() => cubit.nextStep()).called(1);
+    });
+
+    testWidgets('bottom button on envelopes step calls completeOnboarding', (
+      tester,
+    ) async {
+      when(() => cubit.state).thenReturn(
+        const OnboardingState(
+          currentStep: OnboardingStep.envelopes,
+        ),
+      );
+      when(() => cubit.completeOnboarding()).thenAnswer((_) async {});
+      await tester.pumpWidget(buildSubject());
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Complete Setup'));
+      verify(() => cubit.completeOnboarding()).called(1);
     });
 
     testWidgets('shows snackbar on failure with error', (tester) async {

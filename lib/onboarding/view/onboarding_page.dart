@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:account_repository/account_repository.dart';
 import 'package:auth_repository/auth_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
@@ -66,7 +68,8 @@ class OnboardingView extends StatelessWidget {
         final stepIndex = state.currentStep.index;
         final totalSteps = OnboardingStep.values.length;
         final isWelcome = state.currentStep == OnboardingStep.welcome;
-        final isAllocation = state.currentStep == OnboardingStep.allocation;
+        final isLastStep = stepIndex == totalSteps - 1;
+        final isSubmitting = state.status == OnboardingStatus.submitting;
 
         return Scaffold(
           appBar: isWelcome
@@ -79,21 +82,41 @@ class OnboardingView extends StatelessWidget {
                         context.read<OnboardingCubit>().previousStep(),
                   ),
                 ),
-          bottomNavigationBar: (!isWelcome && !isAllocation)
-              ? SafeArea(
+          bottomNavigationBar: isWelcome
+              ? null
+              : SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
                     child: SizedBox(
                       width: double.infinity,
                       child: FilledButton(
-                        onPressed: () =>
-                            context.read<OnboardingCubit>().nextStep(),
-                        child: Text(l10n.onboardingContinue),
+                        onPressed: isSubmitting
+                            ? null
+                            : () {
+                                final cubit = context.read<OnboardingCubit>();
+                                if (isLastStep) {
+                                  unawaited(cubit.completeOnboarding());
+                                } else {
+                                  cubit.nextStep();
+                                }
+                              },
+                        child: isSubmitting
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                isLastStep
+                                    ? l10n.onboardingComplete
+                                    : l10n.onboardingContinue,
+                              ),
                       ),
                     ),
                   ),
-                )
-              : null,
+                ),
           body: Column(
             children: [
               if (!isWelcome)
@@ -124,7 +147,6 @@ class OnboardingView extends StatelessWidget {
       OnboardingStep.currency => const CurrencyStep(),
       OnboardingStep.accounts => const AccountsStep(),
       OnboardingStep.envelopes => const EnvelopesStep(),
-      OnboardingStep.allocation => const AllocationStep(),
     };
   }
 }

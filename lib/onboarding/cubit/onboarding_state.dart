@@ -6,7 +6,6 @@ enum OnboardingStep {
   currency,
   accounts,
   envelopes,
-  allocation,
 }
 
 /// Status of the onboarding submission.
@@ -113,7 +112,6 @@ final class OnboardingState extends Equatable {
     this.baseCurrency = 'USD',
     this.accounts = const [],
     this.categoryGroups = defaultCategoryGroups,
-    this.allocations = const {},
   });
 
   final OnboardingStep currentStep;
@@ -122,7 +120,6 @@ final class OnboardingState extends Equatable {
   final String baseCurrency;
   final List<OnboardingAccount> accounts;
   final List<OnboardingCategoryGroup> categoryGroups;
-  final Map<String, double> allocations;
 
   /// Creates a copy with updated fields.
   ///
@@ -136,7 +133,6 @@ final class OnboardingState extends Equatable {
     String? baseCurrency,
     List<OnboardingAccount>? accounts,
     List<OnboardingCategoryGroup>? categoryGroups,
-    Map<String, double>? allocations,
   }) {
     return OnboardingState(
       currentStep: currentStep ?? this.currentStep,
@@ -145,7 +141,6 @@ final class OnboardingState extends Equatable {
       baseCurrency: baseCurrency ?? this.baseCurrency,
       accounts: accounts ?? this.accounts,
       categoryGroups: categoryGroups ?? this.categoryGroups,
-      allocations: allocations ?? this.allocations,
     );
   }
 
@@ -157,6 +152,5 @@ final class OnboardingState extends Equatable {
     baseCurrency,
     accounts,
     categoryGroups,
-    allocations,
   ];
 }

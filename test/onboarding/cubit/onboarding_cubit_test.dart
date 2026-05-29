@@ -61,7 +61,6 @@ void main() {
       expect(cubit.state.baseCurrency, 'USD');
       expect(cubit.state.accounts, isEmpty);
       expect(cubit.state.categoryGroups, defaultCategoryGroups);
-      expect(cubit.state.allocations, isEmpty);
     });
 
     group('step navigation', () {
@@ -96,10 +95,16 @@ void main() {
       );
 
       blocTest<OnboardingCubit, OnboardingState>(
-        'nextStep does not advance past allocation',
+        'nextStep does not advance past envelopes',
         build: buildCubit,
         seed: () => const OnboardingState(
-          currentStep: OnboardingStep.allocation,
+          currentStep: OnboardingStep.envelopes,
+          categoryGroups: [
+            OnboardingCategoryGroup(
+              name: 'Needs',
+              envelopes: ['Rent'],
+            ),
+          ],
         ),
         act: (cubit) => cubit.nextStep(),
         expect: () => <OnboardingState>[],
@@ -208,27 +213,6 @@ void main() {
         ],
       );
 
-      blocTest<OnboardingCubit, OnboardingState>(
-        'nextStep advances on envelopes step with envelopes',
-        build: buildCubit,
-        seed: () => const OnboardingState(
-          currentStep: OnboardingStep.envelopes,
-          categoryGroups: [
-            OnboardingCategoryGroup(
-              name: 'Needs',
-              envelopes: ['Rent'],
-            ),
-          ],
-        ),
-        act: (cubit) => cubit.nextStep(),
-        expect: () => [
-          isA<OnboardingState>().having(
-            (s) => s.currentStep,
-            'currentStep',
-            OnboardingStep.allocation,
-          ),
-        ],
-      );
     });
 
     group('currency selection', () {
@@ -413,31 +397,6 @@ void main() {
             ],
           ),
         ],
-      );
-    });
-
-    group('allocation', () {
-      blocTest<OnboardingCubit, OnboardingState>(
-        'setAllocation updates allocation map with composite key',
-        build: buildCubit,
-        act: (cubit) => cubit.setAllocation(0, 'Rent', 1500),
-        expect: () => [
-          const OnboardingState(
-            allocations: {'0:Rent': 1500},
-          ),
-        ],
-      );
-
-      blocTest<OnboardingCubit, OnboardingState>(
-        'getAllocation returns value for composite key',
-        build: buildCubit,
-        seed: () => const OnboardingState(
-          allocations: {'0:Rent': 1500},
-        ),
-        verify: (cubit) {
-          expect(cubit.getAllocation(0, 'Rent'), 1500);
-          expect(cubit.getAllocation(1, 'Rent'), 0);
-        },
       );
     });
 

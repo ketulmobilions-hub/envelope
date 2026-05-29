@@ -157,28 +157,6 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     emit(state.copyWith(categoryGroups: groups));
   }
 
-  /// Sets the allocation amount for an envelope.
-  ///
-  /// Uses a composite key `groupIndex:envelopeName` to avoid collisions
-  /// when multiple groups have envelopes with the same name.
-  void setAllocation(
-    int groupIndex,
-    String envelopeName,
-    double amount,
-  ) {
-    final key = '$groupIndex:$envelopeName';
-    emit(
-      state.copyWith(
-        allocations: {...state.allocations, key: amount},
-      ),
-    );
-  }
-
-  /// Returns the allocation for a specific envelope.
-  double getAllocation(int groupIndex, String envelopeName) {
-    return state.allocations['$groupIndex:$envelopeName'] ?? 0;
-  }
-
   /// Returns a validation error for the current step, or null if valid.
   OnboardingError? _validateCurrentStep() {
     return switch (state.currentStep) {
@@ -262,16 +240,14 @@ class OnboardingCubit extends Cubit<OnboardingState> {
         now.year,
         now.month + 1,
       ).subtract(const Duration(days: 1));
-      final period = await _budgetRepository.createBudgetPeriod(
+      await _budgetRepository.createBudgetPeriod(
         budgetId: budgetId,
         startDate: periodStart,
         endDate: periodEnd,
         totalIncome: totalStartingBalance,
       );
 
-      // Create category groups and their envelopes, persisting any
-      // allocations the user set during the onboarding allocation step.
-      var groupIndex = 0;
+      // Create category groups and their envelopes.
       for (final group in state.categoryGroups) {
         final createdGroup = await _envelopeRepository.createCategoryGroup(
           budgetId: budgetId,
@@ -279,24 +255,12 @@ class OnboardingCubit extends Cubit<OnboardingState> {
         );
 
         for (final envelopeName in group.envelopes) {
-          final createdEnvelope = await _envelopeRepository.createEnvelope(
+          await _envelopeRepository.createEnvelope(
             categoryGroupId: createdGroup.id,
             budgetId: budgetId,
             name: envelopeName,
           );
-
-          final key = '$groupIndex:$envelopeName';
-          final allocationAmount = state.allocations[key] ?? 0;
-          if (allocationAmount > 0) {
-            final amountCents = (allocationAmount * 100).round();
-            await _envelopeRepository.allocate(
-              envelopeId: createdEnvelope.id,
-              budgetPeriodId: period.id,
-              amount: amountCents,
-            );
-          }
         }
-        groupIndex++;
       }
 
       // Create CC Payments group + linked payment envelopes AFTER the user's
