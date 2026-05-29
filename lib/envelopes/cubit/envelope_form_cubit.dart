@@ -25,6 +25,7 @@ class EnvelopeFormCubit extends Cubit<EnvelopeFormState> {
   }) async {
     emit(state.copyWith(status: EnvelopeFormStatus.submitting));
     try {
+      Envelope? created;
       if (isEditing) {
         final updated = envelope!.copyWith(
           name: name,
@@ -33,14 +34,19 @@ class EnvelopeFormCubit extends Cubit<EnvelopeFormState> {
         );
         await _envelopeRepository.updateEnvelope(updated);
       } else {
-        await _envelopeRepository.createEnvelope(
+        created = await _envelopeRepository.createEnvelope(
           budgetId: budgetId,
           categoryGroupId: categoryGroupId,
           name: name,
           color: color,
         );
       }
-      emit(state.copyWith(status: EnvelopeFormStatus.success));
+      emit(
+        state.copyWith(
+          status: EnvelopeFormStatus.success,
+          createdEnvelope: created,
+        ),
+      );
     } on EnvelopeException catch (e) {
       emit(
         state.copyWith(

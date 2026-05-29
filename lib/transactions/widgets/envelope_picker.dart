@@ -108,7 +108,10 @@ class EnvelopePicker extends StatelessWidget {
     if (result is Envelope) {
       onChanged(result);
     } else if (result is _NewEnvelopeResult) {
-      await Navigator.of(context, rootNavigator: true).push<bool>(
+      final formResult = await Navigator.of(
+        context,
+        rootNavigator: true,
+      ).push<Object>(
         MaterialPageRoute(
           builder: (_) => BlocProvider(
             create: (_) => EnvelopeFormCubit(
@@ -123,6 +126,9 @@ class EnvelopePicker extends StatelessWidget {
         ),
       );
       if (context.mounted) await cubit.reloadEnvelopes();
+      // Auto-select the newly-created envelope for this transaction so the
+      // user doesn't have to reopen the picker to pick it.
+      if (formResult is Envelope) onChanged(formResult);
     } else if (result == _kNewGroup) {
       await Navigator.of(context, rootNavigator: true).push<bool>(
         MaterialPageRoute(

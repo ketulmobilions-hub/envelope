@@ -76,7 +76,10 @@ class _EnvelopeFormPageState extends State<EnvelopeFormPage> {
     return BlocListener<EnvelopeFormCubit, EnvelopeFormState>(
       listener: (context, state) {
         if (state.status == EnvelopeFormStatus.success) {
-          Navigator.of(context).pop(true);
+          // Pop with the new envelope on create so callers (e.g. the envelope
+          // picker) can auto-select it; pop with `true` on edit to signal a
+          // change. Existing callers should check `result != null`.
+          Navigator.of(context).pop<Object>(state.createdEnvelope ?? true);
         } else if (state.status == EnvelopeFormStatus.failure) {
           showAppSnackBar(
             context,

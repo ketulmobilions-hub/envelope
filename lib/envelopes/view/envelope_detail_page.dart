@@ -96,8 +96,8 @@ class EnvelopeDetailPage extends StatelessWidget {
     Envelope envelope,
   ) async {
     final cubit = context.read<EnvelopeDetailCubit>();
-    final result = await Navigator.of(context).push<bool>(
-      MaterialPageRoute<bool>(
+    final result = await Navigator.of(context).push<Object>(
+      MaterialPageRoute<Object>(
         builder: (_) => BlocProvider(
           create: (_) => EnvelopeFormCubit(
             envelopeRepository: context.read<EnvelopeRepository>(),
@@ -111,7 +111,7 @@ class EnvelopeDetailPage extends StatelessWidget {
         ),
       ),
     );
-    if (result == true && context.mounted) {
+    if (result != null && context.mounted) {
       await cubit.refresh();
     }
   }
