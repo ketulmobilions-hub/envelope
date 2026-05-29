@@ -11,6 +11,10 @@ class Budgets extends Table {
   TextColumn get baseCurrency => text().named('base_currency')();
   BoolColumn get isArchived =>
       boolean().named('is_archived').withDefault(const Constant(false))();
+  IntColumn get openingBalance =>
+      integer().named('opening_balance').withDefault(const Constant(0))();
+  DateTimeColumn get openingDate =>
+      dateTime().named('opening_date').nullable()();
   DateTimeColumn get createdAt => dateTime().named('created_at')();
   DateTimeColumn get updatedAt => dateTime().named('updated_at')();
 

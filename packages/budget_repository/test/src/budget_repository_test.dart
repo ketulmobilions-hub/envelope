@@ -139,6 +139,7 @@ void main() {
     periodType: 'monthly',
     periodStartDay: 1,
     isArchived: false,
+    openingBalance: 0,
     createdAt: now,
     updatedAt: now,
   );
@@ -298,6 +299,81 @@ void main() {
           throwsA(isA<BudgetException>()),
         );
       });
+
+      test(
+        'opening balance and date round-trip Budget <-> BudgetDto '
+        '<-> storage.Budget (issue #80)',
+        () async {
+          final openingDate = DateTime(2026, 4, 15);
+          const openingBalance = 1234567;
+
+          // 1. DTO -> domain Budget (via API response).
+          final apiResponse = BudgetDto(
+            id: 'budget-1',
+            ownerId: 'owner-1',
+            name: 'My Budget',
+            baseCurrency: 'USD',
+            openingBalance: openingBalance,
+            openingDate: openingDate,
+            createdAt: now,
+            updatedAt: now,
+          );
+          when(
+            () => budgetsApiClient.createBudget(any()),
+          ).thenAnswer((_) async => apiResponse);
+          when(
+            () => budgetsDao.insertBudget(
+              any(),
+              mode: any(named: 'mode'),
+            ),
+          ).thenAnswer((_) async => 1);
+
+          final created = await repository.createBudget(
+            name: 'My Budget',
+            baseCurrency: 'USD',
+            ownerId: 'owner-1',
+            openingBalance: openingBalance,
+            openingDate: openingDate,
+          );
+
+          expect(created.openingBalance, equals(openingBalance));
+          expect(created.openingDate, equals(openingDate));
+
+          // 2. Storage row -> domain Budget (via local fallback).
+          final storageRow = storage.Budget(
+            id: 'budget-1',
+            ownerId: 'owner-1',
+            name: 'My Budget',
+            baseCurrency: 'USD',
+            periodType: 'monthly',
+            periodStartDay: 1,
+            isArchived: false,
+            openingBalance: openingBalance,
+            openingDate: openingDate,
+            createdAt: now,
+            updatedAt: now,
+          );
+          when(
+            () => budgetsDao.getBudget('budget-1'),
+          ).thenAnswer((_) async => storageRow);
+          final loaded = await repository.getBudget('budget-1');
+          expect(loaded.openingBalance, equals(openingBalance));
+          expect(loaded.openingDate, equals(openingDate));
+
+          // 3. Domain Budget -> DTO (via updateBudget).
+          BudgetDto? capturedUpdateDto;
+          when(
+            () => budgetsApiClient.updateBudget(any()),
+          ).thenAnswer((invocation) async {
+            capturedUpdateDto =
+                invocation.positionalArguments.first as BudgetDto;
+            return capturedUpdateDto!;
+          });
+          await repository.updateBudget(loaded);
+          expect(capturedUpdateDto?.openingBalance, equals(openingBalance));
+          expect(capturedUpdateDto?.openingDate, equals(openingDate));
+        },
+      );
     });
 
     group('getBudget', () {
@@ -819,6 +895,7 @@ void main() {
           periodType: 'weekly',
           periodStartDay: 1,
           isArchived: false,
+          openingBalance: 0,
           createdAt: now,
           updatedAt: now,
         );
@@ -869,6 +946,7 @@ void main() {
           periodType: 'monthly',
           periodStartDay: 31,
           isArchived: false,
+          openingBalance: 0,
           createdAt: now,
           updatedAt: now,
         );

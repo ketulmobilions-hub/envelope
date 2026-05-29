@@ -409,6 +409,8 @@ void main() {
             name: any(named: 'name'),
             baseCurrency: any(named: 'baseCurrency'),
             ownerId: any(named: 'ownerId'),
+            openingBalance: any(named: 'openingBalance'),
+            openingDate: any(named: 'openingDate'),
           ),
         ).thenAnswer(
           (_) async => Budget(
@@ -529,6 +531,8 @@ void main() {
               name: 'My Budget',
               baseCurrency: 'USD',
               ownerId: testUserId,
+              openingBalance: 150050,
+              openingDate: any(named: 'openingDate'),
             ),
           ).called(1);
           verify(
@@ -1059,6 +1063,129 @@ void main() {
               OnboardingStatus.success,
             ),
           ],
+        );
+      });
+
+      group('opening balance (issue #80)', () {
+        // Fixed clock so we can assert openingDate exactly. May 15 2026
+        // means openingDate must be the start of May 2026.
+        final fixedNow = DateTime(2026, 5, 15);
+        final expectedOpeningDate = DateTime(2026, 5);
+
+        OnboardingCubit buildWithFixedClock() => OnboardingCubit(
+          sharedPreferences: prefs,
+          envelopeRepository: envelopeRepository,
+          accountRepository: accountRepository,
+          budgetRepository: budgetRepository,
+          authRepository: authRepository,
+          userId: testUserId,
+          now: () => fixedNow,
+        );
+
+        blocTest<OnboardingCubit, OnboardingState>(
+          'writes openingBalance from on-budget account starting balances and '
+          'seeds the initial period with totalIncome=0',
+          build: () {
+            stubCreateBudget();
+            when(
+              () => accountRepository.createAccount(
+                budgetId: any(named: 'budgetId'),
+                name: any(named: 'name'),
+                type: any(named: 'type'),
+                currency: any(named: 'currency'),
+                startingBalance: any(named: 'startingBalance'),
+                isOnBudget: any(named: 'isOnBudget'),
+              ),
+            ).thenAnswer(
+              (_) async => Account(
+                id: 'acc-1',
+                budgetId: testBudgetId,
+                name: 'Checking',
+                type: 'checking',
+                currency: 'USD',
+                createdAt: now,
+                updatedAt: now,
+              ),
+            );
+            when(
+              () => envelopeRepository.createCategoryGroup(
+                budgetId: any(named: 'budgetId'),
+                name: any(named: 'name'),
+              ),
+            ).thenAnswer(
+              (_) async => CategoryGroup(
+                id: 'group-1',
+                budgetId: testBudgetId,
+                name: 'Needs',
+                createdAt: now,
+              ),
+            );
+            when(
+              () => envelopeRepository.createEnvelope(
+                categoryGroupId: any(named: 'categoryGroupId'),
+                budgetId: any(named: 'budgetId'),
+                name: any(named: 'name'),
+              ),
+            ).thenAnswer(
+              (_) async => Envelope(
+                id: 'env-1',
+                categoryGroupId: 'group-1',
+                budgetId: testBudgetId,
+                name: 'Rent',
+                createdAt: now,
+              ),
+            );
+            return buildWithFixedClock();
+          },
+          seed: () => const OnboardingState(
+            accounts: [
+              // On-budget: contributes to openingBalance.
+              OnboardingAccount(
+                name: 'Checking',
+                type: 'checking',
+                currency: 'USD',
+                startingBalance: 100000,
+              ),
+              // Off-budget: must NOT contribute.
+              OnboardingAccount(
+                name: 'Brokerage',
+                type: 'investment',
+                currency: 'USD',
+                startingBalance: 50000,
+                isOnBudget: false,
+              ),
+            ],
+            categoryGroups: [
+              OnboardingCategoryGroup(
+                name: 'Needs',
+                envelopes: ['Rent'],
+              ),
+            ],
+          ),
+          act: (cubit) => cubit.completeOnboarding(),
+          verify: (_) {
+            // openingBalance = $100,000 only (off-budget excluded).
+            // openingDate = start of the month of `now` (May 1 2026).
+            verify(
+              () => budgetRepository.createBudget(
+                name: 'My Budget',
+                baseCurrency: 'USD',
+                ownerId: testUserId,
+                openingBalance: 10000000,
+                openingDate: expectedOpeningDate,
+              ),
+            ).called(1);
+            // Seed period has zero income; opening balance lives on the
+            // budget instead.
+            verify(
+              () => budgetRepository.createBudgetPeriod(
+                budgetId: testBudgetId,
+                startDate: expectedOpeningDate,
+                endDate: DateTime(2026, 5, 31),
+                totalIncome: 0,
+              ),
+            ).called(1);
+          },
         );
       });
     });

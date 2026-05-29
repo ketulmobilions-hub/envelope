@@ -183,29 +183,50 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       // of the app (settings, formatters reading AuthBloc) reflects it.
       await _authRepository.updateProfile(baseCurrency: state.baseCurrency);
 
+      // Normalize each account's starting balance to cents up front so the
+      // clamp/rounding is applied identically when seeding the budget's
+      // `openingBalance` and when creating each account row.
+      // startingBalance is stored as cents (int) — use .round() to handle
+      // floating-point imprecision from the double input.
+      final accountsWithCents = state.accounts.map((account) {
+        final clampedBalance = account.startingBalance.clamp(
+          -maxDollarAmount,
+          maxDollarAmount,
+        );
+        return (account: account, balanceCents: (clampedBalance * 100).round());
+      }).toList();
+
+      // Compute the period-agnostic seed cash (sum of on-budget account
+      // starting balances in cents). It is stored on the budget as
+      // `openingBalance` so it remains available in any period — including
+      // backdated periods auto-created later — rather than being trapped on
+      // the onboarding month's `totalIncome` (issue #80).
+      var openingBalance = 0;
+      for (final entry in accountsWithCents) {
+        if (!entry.account.isOnBudget) continue;
+        if (entry.balanceCents > 0) {
+          openingBalance += entry.balanceCents;
+        }
+      }
+
+      final now = _now();
+
       // Create the budget first — RLS policies require a budget row to exist
       // before accounts/envelopes can reference it.
       final budget = await _budgetRepository.createBudget(
         name: 'My Budget',
         baseCurrency: state.baseCurrency,
         ownerId: _userId,
+        openingBalance: openingBalance,
+        openingDate: DateTime(now.year, now.month),
       );
       final budgetId = budget.id;
 
       // Create accounts.
-      // startingBalance is stored as cents (int) — use .round() to handle
-      // floating-point imprecision from the double input.
-      var totalStartingBalance = 0;
       final ccAccounts = <({String accountId, String cardName})>[];
-      for (final account in state.accounts) {
-        final clampedBalance = account.startingBalance.clamp(
-          -maxDollarAmount,
-          maxDollarAmount,
-        );
-        final balanceCents = (clampedBalance * 100).round();
-        if (account.isOnBudget && balanceCents > 0) {
-          totalStartingBalance += balanceCents;
-        }
+      for (final entry in accountsWithCents) {
+        final account = entry.account;
+        final balanceCents = entry.balanceCents;
         final created = await _accountRepository.createAccount(
           budgetId: budgetId,
           name: account.name,
@@ -232,9 +253,9 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       }
 
       // Create the initial budget period for the current month.
-      // totalIncome is seeded with the sum of all account starting balances
-      // so that "Ready to Assign" reflects money available to budget.
-      final now = _now();
+      // totalIncome is 0 — the seed cash lives on `Budget.openingBalance`
+      // and is added to RTA in whichever period contains `openingDate`
+      // (issue #80).
       final periodStart = DateTime(now.year, now.month);
       final periodEnd = DateTime(
         now.year,
@@ -244,7 +265,6 @@ class OnboardingCubit extends Cubit<OnboardingState> {
         budgetId: budgetId,
         startDate: periodStart,
         endDate: periodEnd,
-        totalIncome: totalStartingBalance,
       );
 
       // Create category groups and their envelopes.

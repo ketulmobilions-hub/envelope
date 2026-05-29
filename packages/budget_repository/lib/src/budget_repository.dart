@@ -43,12 +43,18 @@ class BudgetRepository {
   // ---------------------------------------------------------------------------
 
   /// Creates a new budget.
+  ///
+  /// [openingBalance] (cents) is the period-agnostic seed cash anchored on
+  /// [openingDate]. The seed is added to "Ready to Assign" in whichever
+  /// period contains [openingDate] and propagates forward via `carriedRta`.
   Future<Budget> createBudget({
     required String name,
     required String baseCurrency,
     required String ownerId,
     String periodType = 'monthly',
     int periodStartDay = 1,
+    int openingBalance = 0,
+    DateTime? openingDate,
   }) async {
     _beginLocalWrite();
     try {
@@ -59,6 +65,8 @@ class BudgetRepository {
         baseCurrency: baseCurrency,
         periodType: periodType,
         periodStartDay: periodStartDay,
+        openingBalance: openingBalance,
+        openingDate: openingDate,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -1376,6 +1384,8 @@ class BudgetRepository {
       periodType: dto.periodType,
       periodStartDay: dto.periodStartDay,
       isArchived: dto.isArchived,
+      openingBalance: dto.openingBalance,
+      openingDate: dto.openingDate,
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
     );
@@ -1390,6 +1400,8 @@ class BudgetRepository {
       periodType: row.periodType,
       periodStartDay: row.periodStartDay,
       isArchived: row.isArchived,
+      openingBalance: row.openingBalance,
+      openingDate: row.openingDate,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     );
@@ -1404,6 +1416,8 @@ class BudgetRepository {
       periodType: budget.periodType,
       periodStartDay: budget.periodStartDay,
       isArchived: budget.isArchived,
+      openingBalance: budget.openingBalance,
+      openingDate: budget.openingDate,
       createdAt: budget.createdAt,
       updatedAt: budget.updatedAt,
     );
@@ -1511,6 +1525,8 @@ class BudgetRepository {
       periodType: Value(dto.periodType),
       periodStartDay: Value(dto.periodStartDay),
       isArchived: Value(dto.isArchived),
+      openingBalance: Value(dto.openingBalance),
+      openingDate: Value(dto.openingDate),
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
     );

@@ -52,7 +52,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 17;
+  int get schemaVersion => 18;
 
   /// Deletes all rows from every table. Used for account deletion / GDPR.
   Future<void> clearAllTables() async {
@@ -146,6 +146,15 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 17) {
         await m.addColumn(budgetPeriods, budgetPeriods.carriedRta);
+      }
+      if (from < 18) {
+        // Adds the period-agnostic seed-cash columns to budgets (issue #80).
+        // Backfill of existing budgets (moving seed cash off the onboarding
+        // period's `total_income`) ships in a paired migration alongside
+        // the Phase 3 RTA-logic PR to avoid an interim RTA regression for
+        // existing users.
+        await m.addColumn(budgets, budgets.openingBalance);
+        await m.addColumn(budgets, budgets.openingDate);
       }
     },
   );

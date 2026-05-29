@@ -16,6 +16,10 @@ _BudgetDto _$BudgetDtoFromJson(Map<String, dynamic> json) => _BudgetDto(
   periodType: json['period_type'] as String? ?? 'monthly',
   periodStartDay: (json['period_start_day'] as num?)?.toInt() ?? 1,
   isArchived: json['is_archived'] as bool? ?? false,
+  openingBalance: (json['opening_balance'] as num?)?.toInt() ?? 0,
+  openingDate: json['opening_date'] == null
+      ? null
+      : DateTime.parse(json['opening_date'] as String),
 );
 
 Map<String, dynamic> _$BudgetDtoToJson(_BudgetDto instance) =>
@@ -29,4 +33,6 @@ Map<String, dynamic> _$BudgetDtoToJson(_BudgetDto instance) =>
       'period_type': instance.periodType,
       'period_start_day': instance.periodStartDay,
       'is_archived': instance.isArchived,
+      'opening_balance': instance.openingBalance,
+      'opening_date': instance.openingDate?.toIso8601String(),
     };
