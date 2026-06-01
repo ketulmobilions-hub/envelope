@@ -479,8 +479,21 @@ class BudgetRepository {
         // Signed leftover RTA: positive when under-assigned, negative when
         // over-assigned. carried_rta from the previous period is included so
         // unassigned money compounds across periods instead of vanishing.
-        final signedPrevRta =
-            previous.totalIncome + previous.carriedRta - prevAllocated;
+        // openingContribution is folded into whichever period contains
+        // `Budget.openingDate` so seed cash propagates forward (issue #80).
+        // Uses the domain `budget` already fetched above (via getBudget, with
+        // remote fallback) rather than the DAO directly to avoid a silently-
+        // zero contribution on a cold local cache.
+        final prevOpening = _openingContributionFor(
+          openingBalance: budget.openingBalance,
+          openingDate: budget.openingDate,
+          start: previous.startDate,
+          end: previous.endDate,
+        );
+        final signedPrevRta = previous.totalIncome +
+            prevOpening +
+            previous.carriedRta -
+            prevAllocated;
         // Uncovered cash overspend reduces the next period's RTA rather than
         // being carried as a negative envelope rollover (see
         // [_seedRolloverFromPreviousPeriod]).
@@ -659,6 +672,22 @@ class BudgetRepository {
         endDate: endDate,
       );
 
+      // If the back-filled period starts before the budget's anchor for seed
+      // cash, shift `openingDate` to the new period's startDate so the opening
+      // balance lands in the earliest period (issue #80). The cascade below
+      // then redistributes it forward via `carriedRta`.
+      //
+      // Budgets with a null `openingDate` are skipped here: their seed cash
+      // has no calendar anchor to migrate. Phase 1+2's onboarding write always
+      // sets `openingDate` when `openingBalance` is non-zero, so this branch
+      // is effectively legacy-only and the silent skip is intentional.
+      final openingDate = budget.openingDate;
+      if (openingDate != null && startDate.isBefore(openingDate)) {
+        await updateBudget(
+          budget.copyWith(openingDate: startDate, updatedAt: DateTime.now()),
+        );
+      }
+
       // The formerly-earliest period now follows the new one; propagate
       // carry-forward (RTA + rollovers) forward from the new period.
       await recomputeCarryForwardFrom(
@@ -694,6 +723,16 @@ class BudgetRepository {
     final startIdx = periods.indexWhere((p) => p.id == fromPeriodId);
     if (startIdx < 0) return;
 
+    // Fetch via repo (remote fallback on cold cache) rather than DAO directly
+    // so a stale local cache cannot silently zero the opening contribution.
+    final budget = await getBudget(budgetId);
+
+    // Cascade reads its OWN updates: when period N's carriedRta is rewritten,
+    // period N+1 must see the new value (not the snapshot loaded above). Track
+    // recomputed values in a map keyed by periodId so subsequent iterations
+    // read fresh data without re-fetching from the DB.
+    final recomputedCarriedRta = <String, int>{};
+
     for (var i = startIdx + 1; i < periods.length; i++) {
       final previous = periods[i - 1];
       final current = periods[i];
@@ -704,14 +743,27 @@ class BudgetRepository {
         0,
         (sum, a) => sum + a.allocatedAmount,
       );
-      final signedPrevRta =
-          previous.totalIncome + previous.carriedRta - prevAllocated;
+      // openingContribution is folded in for whichever period contains
+      // `Budget.openingDate` so the seed cash propagates forward (issue #80).
+      final prevOpening = _openingContributionFor(
+        openingBalance: budget.openingBalance,
+        openingDate: budget.openingDate,
+        start: previous.startDate,
+        end: previous.endDate,
+      );
+      final prevCarriedRta =
+          recomputedCarriedRta[previous.id] ?? previous.carriedRta;
+      final signedPrevRta = previous.totalIncome +
+          prevOpening +
+          prevCarriedRta -
+          prevAllocated;
       var uncoveredOverspend = 0;
       for (final a in prevAllocations) {
         final unspent = a.allocatedAmount - a.spentAmount + a.rolloverAmount;
         if (unspent < 0) uncoveredOverspend += -unspent;
       }
       final newCarried = signedPrevRta - uncoveredOverspend;
+      recomputedCarriedRta[current.id] = newCarried;
 
       if (newCarried != current.carriedRta) {
         await updateBudgetPeriod(
@@ -731,7 +783,12 @@ class BudgetRepository {
 
   /// Calculates the "Ready to Assign" amount for a budget period.
   ///
-  /// Formula: `totalIncome + carriedRta - sum(allocatedAmounts)`.
+  /// Formula:
+  /// `totalIncome + openingContribution + carriedRta - sum(allocatedAmounts)`.
+  ///
+  /// `openingContribution` is `Budget.openingBalance` when the period contains
+  /// `Budget.openingDate`, otherwise 0. This anchors the seed cash to a single
+  /// period; downstream periods receive it via `carriedRta`.
   ///
   /// `carriedRta` folds in the signed leftover RTA from the previous period
   /// (and any uncovered overspend penalty), so unassigned money rolls forward
@@ -752,6 +809,10 @@ class BudgetRepository {
         );
       }
 
+      // Fetch via repo (remote fallback on cold cache) rather than DAO directly
+      // so a stale local cache cannot silently zero the opening contribution.
+      final budget = await getBudget(period.budgetId);
+
       final allocations = await _localDatabase.envelopesDao
           .getAllocationsByPeriodId(budgetPeriodId);
 
@@ -760,7 +821,17 @@ class BudgetRepository {
         (sum, a) => sum + a.allocatedAmount,
       );
 
-      return period.totalIncome + period.carriedRta - totalAllocated;
+      final openingContribution = _openingContributionFor(
+        openingBalance: budget.openingBalance,
+        openingDate: budget.openingDate,
+        start: period.startDate,
+        end: period.endDate,
+      );
+
+      return period.totalIncome +
+          openingContribution +
+          period.carriedRta -
+          totalAllocated;
     } on BudgetException {
       rethrow;
     } on Exception catch (e) {
@@ -769,6 +840,25 @@ class BudgetRepository {
         error: e,
       );
     }
+  }
+
+  /// Returns [openingBalance] when `[start, end]` (inclusive on both ends)
+  /// contains [openingDate], else 0. Null-safe — returns 0 when [openingDate]
+  /// is unset (e.g. legacy budgets predating #80).
+  ///
+  /// Inclusive boundaries are load-bearing: periods are stored as a calendar
+  /// `[startDate, endDate]` pair (endDate is the last day of the period, not
+  /// an exclusive next-period start), so `openingDate == startDate` and
+  /// `openingDate == endDate` must both fall inside this period.
+  static int _openingContributionFor({
+    required int openingBalance,
+    required DateTime? openingDate,
+    required DateTime start,
+    required DateTime end,
+  }) {
+    if (openingDate == null) return 0;
+    if (start.isAfter(openingDate) || end.isBefore(openingDate)) return 0;
+    return openingBalance;
   }
 
   /// Duplicates the allocated amounts from one budget period to another.

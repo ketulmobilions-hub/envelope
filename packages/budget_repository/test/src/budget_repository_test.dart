@@ -1,5 +1,5 @@
 import 'package:budget_repository/budget_repository.dart';
-import 'package:drift/drift.dart' show InsertMode;
+import 'package:drift/drift.dart' show InsertMode, Value;
 import 'package:envelope_api_client/envelope_api_client.dart';
 import 'package:envelope_local_storage/envelope_local_storage.dart' as storage;
 import 'package:mocktail/mocktail.dart';
@@ -245,6 +245,14 @@ void main() {
     when(
       () => envelopesDao.getAllocationsByPeriodId(any()),
     ).thenAnswer((_) async => <storage.EnvelopeAllocation>[]);
+
+    // Default: budget lookup returns a legacy-shaped row (openingBalance = 0,
+    // openingDate = null) so RTA / cascade logic that now folds in
+    // `openingBalance` (issue #80) preserves prior behavior in tests that
+    // don't care about seed cash. Individual tests override.
+    when(
+      () => budgetsDao.getBudget(any()),
+    ).thenAnswer((_) async => testLocalBudget);
 
     repository = BudgetRepository(
       apiClient: apiClient,
@@ -1099,6 +1107,251 @@ void main() {
         expect(id, equals('apr'));
         verify(() => budgetsApiClient.createBudgetPeriod(any())).called(1);
       });
+
+      test(
+        'autoCreateNextPeriod folds opening balance into previous '
+        'signed RTA (#80)',
+        () async {
+          // April is the opening period. Opening balance = 100000.
+          // April has no income, no allocations → signed prev RTA = 100000.
+          // May should carry that forward.
+          when(() => budgetsDao.getBudget('budget-1')).thenAnswer(
+            (_) async => testLocalBudget.copyWith(
+              openingBalance: 100000,
+              openingDate: Value<DateTime?>(DateTime(2026, 4)),
+            ),
+          );
+          when(
+            () => budgetsDao.getPeriodsByBudgetId('budget-1'),
+          ).thenAnswer((_) async => [apr]);
+          BudgetPeriodDto? captured;
+          when(() => budgetsApiClient.createBudgetPeriod(any())).thenAnswer((
+            inv,
+          ) async {
+            captured = inv.positionalArguments.first as BudgetPeriodDto;
+            return captured!.copyWith(id: 'may');
+          });
+          when(
+            () => budgetsDao.insertBudgetPeriod(
+              any(),
+              mode: any(named: 'mode'),
+            ),
+          ).thenAnswer((_) async => 1);
+
+          await repository.autoCreateNextPeriod('budget-1');
+
+          expect(captured?.carriedRta, equals(100000));
+        },
+      );
+
+      test(
+        'autoCreatePreviousPeriod shifts openingDate to the new earlier '
+        'start (#80)',
+        () async {
+          // Budget anchored at May 1; back-filling creates April → openingDate
+          // must shift to April 1 so the seed cash lands in the earliest
+          // period.
+          final budget = BudgetDto(
+            id: 'budget-1',
+            ownerId: 'owner-1',
+            name: 'My Budget',
+            baseCurrency: 'USD',
+            openingBalance: 100000,
+            openingDate: DateTime(2026, 5),
+            createdAt: now,
+            updatedAt: now,
+          );
+          when(() => budgetsDao.getBudget('budget-1')).thenAnswer(
+            (_) async => testLocalBudget.copyWith(
+              openingBalance: 100000,
+              openingDate: Value<DateTime?>(DateTime(2026, 5)),
+            ),
+          );
+          when(
+            () => budgetsDao.getPeriodsByBudgetId('budget-1'),
+          ).thenAnswer((_) async => [may]);
+          when(
+            () => budgetsApiClient.getBudget('budget-1'),
+          ).thenAnswer((_) async => budget);
+          when(() => budgetsApiClient.createBudgetPeriod(any())).thenAnswer((
+            inv,
+          ) async {
+            final dto = inv.positionalArguments.first as BudgetPeriodDto;
+            return dto.copyWith(id: 'apr');
+          });
+          BudgetDto? capturedUpdate;
+          when(() => budgetsApiClient.updateBudget(any())).thenAnswer((
+            inv,
+          ) async {
+            capturedUpdate = inv.positionalArguments.first as BudgetDto;
+            return capturedUpdate!;
+          });
+          when(
+            () => budgetsDao.insertBudgetPeriod(
+              any(),
+              mode: any(named: 'mode'),
+            ),
+          ).thenAnswer((_) async => 1);
+          when(
+            () => budgetsDao.insertBudget(any(), mode: any(named: 'mode')),
+          ).thenAnswer((_) async => 1);
+          when(() => budgetsApiClient.updateBudgetPeriod(any())).thenAnswer(
+            (inv) async => inv.positionalArguments.first as BudgetPeriodDto,
+          );
+
+          await repository.autoCreatePreviousPeriod('budget-1');
+
+          expect(capturedUpdate?.openingDate, equals(DateTime(2026, 4)));
+          // openingBalance must NOT be modified — only the anchor date moves.
+          expect(capturedUpdate?.openingBalance, equals(100000));
+        },
+      );
+
+      test(
+        'autoCreatePreviousPeriod does NOT shift openingDate when budget '
+        'is legacy (null openingDate)',
+        () async {
+          when(
+            () => budgetsDao.getBudget('budget-1'),
+          ).thenAnswer((_) async => testLocalBudget);
+          when(
+            () => budgetsDao.getPeriodsByBudgetId('budget-1'),
+          ).thenAnswer((_) async => [may]);
+          when(
+            () => budgetsApiClient.getBudget('budget-1'),
+          ).thenAnswer((_) async => testBudgetDto);
+          when(() => budgetsApiClient.createBudgetPeriod(any())).thenAnswer((
+            inv,
+          ) async {
+            final dto = inv.positionalArguments.first as BudgetPeriodDto;
+            return dto.copyWith(id: 'apr');
+          });
+          when(
+            () => budgetsDao.insertBudgetPeriod(
+              any(),
+              mode: any(named: 'mode'),
+            ),
+          ).thenAnswer((_) async => 1);
+          when(() => budgetsApiClient.updateBudgetPeriod(any())).thenAnswer(
+            (inv) async => inv.positionalArguments.first as BudgetPeriodDto,
+          );
+
+          await repository.autoCreatePreviousPeriod('budget-1');
+
+          verifyNever(() => budgetsApiClient.updateBudget(any()));
+        },
+      );
+
+      test(
+        'recomputeCarryForwardFrom propagates opening balance across 3 '
+        'periods (#80)',
+        () async {
+          // Budget anchored at March. March is the earliest period, so March
+          // receives the seed cash and the cascade carries it forward through
+          // April and May untouched (no allocations, no income).
+          final mar = testLocalBudgetPeriod.copyWith(
+            id: 'mar',
+            startDate: DateTime(2026, 3),
+            endDate: DateTime(2026, 3, 31),
+            totalIncome: 0,
+            totalAllocated: 0,
+            carriedRta: 0,
+          );
+          when(() => budgetsDao.getBudget('budget-1')).thenAnswer(
+            (_) async => testLocalBudget.copyWith(
+              openingBalance: 100000,
+              openingDate: Value<DateTime?>(DateTime(2026, 3)),
+            ),
+          );
+          when(
+            () => budgetsDao.getPeriodsByBudgetId('budget-1'),
+          ).thenAnswer((_) async => [may, mar, apr]); // unsorted
+          final captured = <BudgetPeriodDto>[];
+          when(() => budgetsApiClient.updateBudgetPeriod(any())).thenAnswer((
+            inv,
+          ) async {
+            final dto = inv.positionalArguments.first as BudgetPeriodDto;
+            captured.add(dto);
+            return dto;
+          });
+          when(
+            () => budgetsDao.insertBudgetPeriod(
+              any(),
+              mode: any(named: 'mode'),
+            ),
+          ).thenAnswer((_) async => 1);
+
+          await repository.recomputeCarryForwardFrom(
+            budgetId: 'budget-1',
+            fromPeriodId: 'mar',
+          );
+
+          // April carriedRta = signedPrev(mar) = 0 + 100000 + 0 - 0 = 100000.
+          // May  carriedRta = signedPrev(apr) = 0 + 0      + 100000 - 0
+          //                                  = 100000.
+          final aprUpdate = captured.firstWhere((d) => d.id == 'apr');
+          final mayUpdate = captured.firstWhere((d) => d.id == 'may');
+          expect(aprUpdate.carriedRta, equals(100000));
+          expect(mayUpdate.carriedRta, equals(100000));
+        },
+      );
+
+      test(
+        'recomputeCarryForwardFrom applies opening contribution to the '
+        'middle period only (#80)',
+        () async {
+          // 3 periods (mar, apr, may); anchored at April (middle period). The
+          // contribution must land on April exactly once and propagate forward
+          // to May without re-applying.
+          final mar = testLocalBudgetPeriod.copyWith(
+            id: 'mar',
+            startDate: DateTime(2026, 3),
+            endDate: DateTime(2026, 3, 31),
+            totalIncome: 0,
+            totalAllocated: 0,
+            carriedRta: 0,
+          );
+          when(() => budgetsDao.getBudget('budget-1')).thenAnswer(
+            (_) async => testLocalBudget.copyWith(
+              openingBalance: 100000,
+              openingDate: Value<DateTime?>(DateTime(2026, 4, 15)),
+            ),
+          );
+          when(
+            () => budgetsDao.getPeriodsByBudgetId('budget-1'),
+          ).thenAnswer((_) async => [mar, apr, may]);
+          final captured = <BudgetPeriodDto>[];
+          when(() => budgetsApiClient.updateBudgetPeriod(any())).thenAnswer((
+            inv,
+          ) async {
+            final dto = inv.positionalArguments.first as BudgetPeriodDto;
+            captured.add(dto);
+            return dto;
+          });
+          when(
+            () => budgetsDao.insertBudgetPeriod(
+              any(),
+              mode: any(named: 'mode'),
+            ),
+          ).thenAnswer((_) async => 1);
+
+          await repository.recomputeCarryForwardFrom(
+            budgetId: 'budget-1',
+            fromPeriodId: 'mar',
+          );
+
+          // April carriedRta = signedPrev(mar) = 0 + 0 + 0 - 0 = 0.
+          // May   carriedRta = signedPrev(apr) = 0 + 100000 + 0 - 0 = 100000.
+          final aprUpdate = captured
+              .where((d) => d.id == 'apr')
+              .firstOrNull;
+          final mayUpdate = captured.firstWhere((d) => d.id == 'may');
+          // April was already at carriedRta=0 — recompute may skip the update
+          // when the value is unchanged. Either: no update, or update with 0.
+          expect(aprUpdate?.carriedRta ?? 0, equals(0));
+          expect(mayUpdate.carriedRta, equals(100000));
+        },
+      );
     });
 
     // -----------------------------------------------------------------
@@ -1149,6 +1402,146 @@ void main() {
           () => repository.calculateReadyToAssign('period-1'),
           throwsA(isA<BudgetException>()),
         );
+      });
+
+      test(
+        'includes openingBalance when period contains openingDate (#80)',
+        () async {
+          when(
+            () => budgetsDao.getBudgetPeriod('period-1'),
+          ).thenAnswer((_) async => testLocalBudgetPeriod);
+          when(() => budgetsDao.getBudget('budget-1')).thenAnswer(
+            (_) async => testLocalBudget.copyWith(
+              openingBalance: 100000,
+              openingDate: Value<DateTime?>(DateTime(2024, 1, 15)),
+            ),
+          );
+          when(
+            () => envelopesDao.getAllocationsByPeriodId('period-1'),
+          ).thenAnswer((_) async => [testLocalAllocation]);
+
+          final result = await repository.calculateReadyToAssign('period-1');
+
+          // income(500000) + opening(100000) + carried(0) - allocated(100000)
+          // = 500000.
+          expect(result, equals(500000));
+        },
+      );
+
+      test(
+        'excludes openingBalance when period does NOT contain openingDate '
+        '(#80)',
+        () async {
+          when(
+            () => budgetsDao.getBudgetPeriod('period-1'),
+          ).thenAnswer((_) async => testLocalBudgetPeriod);
+          when(() => budgetsDao.getBudget('budget-1')).thenAnswer(
+            (_) async => testLocalBudget.copyWith(
+              openingBalance: 100000,
+              openingDate: Value<DateTime?>(DateTime(2024, 3)),
+            ),
+          );
+          when(
+            () => envelopesDao.getAllocationsByPeriodId('period-1'),
+          ).thenAnswer((_) async => [testLocalAllocation]);
+
+          final result = await repository.calculateReadyToAssign('period-1');
+
+          // openingDate is in March; the period is January → contribution is 0.
+          expect(result, equals(400000));
+        },
+      );
+
+      test('ignores openingBalance when openingDate is null (legacy)',
+          () async {
+        when(
+          () => budgetsDao.getBudgetPeriod('period-1'),
+        ).thenAnswer((_) async => testLocalBudgetPeriod);
+        when(
+          () => budgetsDao.getBudget('budget-1'),
+        ).thenAnswer((_) async => testLocalBudget.copyWith(
+              openingBalance: 100000,
+            ));
+        when(
+          () => envelopesDao.getAllocationsByPeriodId('period-1'),
+        ).thenAnswer((_) async => [testLocalAllocation]);
+
+        final result = await repository.calculateReadyToAssign('period-1');
+
+        expect(result, equals(400000));
+      });
+
+      // Boundary tests for `_openingContributionFor`. testLocalBudgetPeriod
+      // spans [2024-01-01, 2024-01-31] inclusive — these pin down that the
+      // window matches calendar-day-inclusive on both ends, the contract the
+      // rest of phase 3 relies on.
+      test('opening balance includes openingDate == startDate (#80)',
+          () async {
+        when(
+          () => budgetsDao.getBudgetPeriod('period-1'),
+        ).thenAnswer((_) async => testLocalBudgetPeriod);
+        when(() => budgetsDao.getBudget('budget-1')).thenAnswer(
+          (_) async => testLocalBudget.copyWith(
+            openingBalance: 100000,
+            openingDate: Value<DateTime?>(DateTime(2024)),
+          ),
+        );
+
+        final result = await repository.calculateReadyToAssign('period-1');
+
+        // income(500000) + opening(100000) + carried(0) - allocated(0).
+        expect(result, equals(600000));
+      });
+
+      test('opening balance includes openingDate == endDate (#80)', () async {
+        when(
+          () => budgetsDao.getBudgetPeriod('period-1'),
+        ).thenAnswer((_) async => testLocalBudgetPeriod);
+        when(() => budgetsDao.getBudget('budget-1')).thenAnswer(
+          (_) async => testLocalBudget.copyWith(
+            openingBalance: 100000,
+            openingDate: Value<DateTime?>(DateTime(2024, 1, 31)),
+          ),
+        );
+
+        final result = await repository.calculateReadyToAssign('period-1');
+
+        expect(result, equals(600000));
+      });
+
+      test('opening balance excludes openingDate one day before start (#80)',
+          () async {
+        when(
+          () => budgetsDao.getBudgetPeriod('period-1'),
+        ).thenAnswer((_) async => testLocalBudgetPeriod);
+        when(() => budgetsDao.getBudget('budget-1')).thenAnswer(
+          (_) async => testLocalBudget.copyWith(
+            openingBalance: 100000,
+            openingDate: Value<DateTime?>(DateTime(2023, 12, 31)),
+          ),
+        );
+
+        final result = await repository.calculateReadyToAssign('period-1');
+
+        // No allocation, no opening contribution.
+        expect(result, equals(500000));
+      });
+
+      test('opening balance excludes openingDate one day after end (#80)',
+          () async {
+        when(
+          () => budgetsDao.getBudgetPeriod('period-1'),
+        ).thenAnswer((_) async => testLocalBudgetPeriod);
+        when(() => budgetsDao.getBudget('budget-1')).thenAnswer(
+          (_) async => testLocalBudget.copyWith(
+            openingBalance: 100000,
+            openingDate: Value<DateTime?>(DateTime(2024, 2)),
+          ),
+        );
+
+        final result = await repository.calculateReadyToAssign('period-1');
+
+        expect(result, equals(500000));
       });
     });
 
