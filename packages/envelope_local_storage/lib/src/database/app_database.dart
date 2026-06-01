@@ -52,7 +52,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 18;
+  int get schemaVersion => 19;
 
   /// Deletes all rows from every table. Used for account deletion / GDPR.
   Future<void> clearAllTables() async {
@@ -156,6 +156,89 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(budgets, budgets.openingBalance);
         await m.addColumn(budgets, budgets.openingDate);
       }
+      if (from < 19) {
+        // Issue #80 phase 7: data backfill paired with Supabase 00040.
+        //
+        // Moves the seed cash for pre-phase-2 budgets off the onboarding
+        // period's `total_income` onto `budgets.opening_balance` /
+        // `budgets.opening_date`. The per-period RTA is invariant under this
+        // swap because the phase-3 formula folds `opening_contribution` into
+        // the same period that previously sourced the seed via `total_income`
+        // — so no `carried_rta` recompute is needed.
+        await backfillOpeningBalance(this);
+      }
     },
   );
+}
+
+/// Backfills `opening_balance` / `opening_date` for pre-phase-2 budgets by
+/// moving the seed cash off the earliest period's `total_income` onto the
+/// budget row. Idempotent — only touches budgets that still hold the column
+/// defaults (`opening_balance = 0 AND opening_date IS NULL`).
+///
+/// `opening_date` is set to the earliest period's `start_date` precisely so
+/// the phase-3 `calculateReadyToAssign` formula folds `opening_contribution`
+/// into the same period that previously sourced the seed via `total_income`
+/// — making the per-period RTA invariant under this swap.
+///
+/// Exposed at library level so the migration step and the integration test
+/// can share the same SQL. Match-up with Supabase migration 00040.
+Future<void> backfillOpeningBalance(AppDatabase db) async {
+  await db.transaction(() async {
+    // Gate: budget still on phase-1 defaults AND its EARLIEST period (by
+    // start_date) holds positive income. Matching the *earliest* — rather
+    // than any period — keeps Drift parity with the Postgres CTE
+    // (`distinct on (budget_id) ... order by start_date asc` in 00040). A
+    // pathological budget whose earliest period has total_income = 0 but a
+    // later one has positive income is intentionally skipped: pre-phase-2
+    // onboarding always wrote the seed to the very first period, so any
+    // other shape is corrupted state we should not silently move.
+    await db.customStatement('''
+      UPDATE budgets
+         SET opening_balance = (
+               SELECT bp.total_income
+                 FROM budget_periods bp
+                WHERE bp.budget_id = budgets.id
+                ORDER BY bp.start_date ASC
+                LIMIT 1
+             ),
+             opening_date = (
+               SELECT bp.start_date
+                 FROM budget_periods bp
+                WHERE bp.budget_id = budgets.id
+                ORDER BY bp.start_date ASC
+                LIMIT 1
+             ),
+             updated_at = ?
+       WHERE opening_balance = 0
+         AND opening_date IS NULL
+         AND (
+               SELECT bp.total_income
+                 FROM budget_periods bp
+                WHERE bp.budget_id = budgets.id
+                ORDER BY bp.start_date ASC
+                LIMIT 1
+             ) > 0;
+    ''', [DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000]);
+
+    // Tight gate: only zero the period whose `total_income` matches the
+    // budget's `opening_balance` we just set. This protects phase-2 budgets
+    // (whose anchor period typically has `total_income = 0` already) and any
+    // budget whose anchor-period income coincidentally diverges from the
+    // stored anchor amount. It also makes the second statement idempotent —
+    // re-running finds `total_income = 0 != opening_balance`, so nothing
+    // matches.
+    await db.customStatement('''
+      UPDATE budget_periods
+         SET total_income = 0
+       WHERE id IN (
+               SELECT bp.id FROM budget_periods bp
+                 JOIN budgets b ON b.id = bp.budget_id
+                WHERE b.opening_date IS NOT NULL
+                  AND b.opening_balance > 0
+                  AND bp.start_date = b.opening_date
+                  AND bp.total_income = b.opening_balance
+             );
+    ''');
+  });
 }
