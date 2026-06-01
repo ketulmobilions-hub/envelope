@@ -303,7 +303,7 @@ packages:
     source: hosted
     version: "0.4.1"
   drift:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: drift
       sha256: "61f876c0291b194980bafd203f48e85d5fb04e4a7334367d1a89f44004dbcb83"
