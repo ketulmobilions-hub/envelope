@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:auth_repository/auth_repository.dart';
+import 'package:budget_repository/budget_repository.dart';
+import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/app/routes/app_router.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
@@ -11,12 +13,14 @@ import 'package:envelope/shared/feature_flags.dart';
 import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/widgets/currency_picker_sheet.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope_api_client/envelope_api_client.dart';
-import 'package:envelope_local_storage/envelope_local_storage.dart' hide User;
+import 'package:envelope_local_storage/envelope_local_storage.dart' show AppDatabase;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:notification_repository/notification_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -131,6 +135,9 @@ class _SettingsView extends StatelessWidget {
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () => context.go(AppRoutes.templates),
                     ),
+                    const Divider(),
+                    _SectionHeader(title: l10n.settingsBudget),
+                    const OpeningBalanceTile(),
                     const Divider(),
                     _SectionHeader(title: l10n.settingsData),
                     ListTile(
@@ -493,6 +500,65 @@ class _SectionHeader extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Read-only display of the budget's seed cash (issue #80, phase 5).
+///
+/// Reactively rebuilds when `Budget.openingBalance` / `Budget.openingDate`
+/// shift (e.g. after `BudgetRepository.autoCreatePreviousPeriod` shifts the
+/// anchor on a back-dated transaction). Hidden when no active budget exists
+/// (e.g. mid-onboarding).
+class OpeningBalanceTile extends StatelessWidget {
+  const OpeningBalanceTile({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final budgetId =
+        context.read<SharedPreferences>().getString(activeBudgetIdKey);
+    if (budgetId == null || budgetId.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return StreamBuilder<Budget>(
+      stream: context.read<BudgetRepository>().watchBudget(budgetId),
+      builder: (context, snapshot) {
+        // Suppress the flicker between subscription and first emission: render
+        // an empty subtitle rather than the "Not configured" legacy state.
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
+          return ListTile(
+            leading: const Icon(Icons.savings_outlined),
+            title: Text(l10n.settingsOpeningBalance),
+            subtitle: const Text(''),
+          );
+        }
+        final budget = snapshot.data;
+        final openingDate = budget?.openingDate;
+        final configured = budget != null && openingDate != null;
+        return ListTile(
+          leading: const Icon(Icons.savings_outlined),
+          title: Text(l10n.settingsOpeningBalance),
+          subtitle: Text(
+            configured
+                ? '${_formatAmount(budget.openingBalance, budget.baseCurrency)}'
+                    ' · '
+                    '${l10n.settingsOpeningBalanceSubtitle(
+                    _formatDate(openingDate),
+                  )}'
+                : l10n.settingsOpeningBalanceUnset,
+          ),
+        );
+      },
+    );
+  }
+
+  static String _formatAmount(int cents, String currencyCode) {
+    return formatCents(cents, symbol: currencySymbolFromCode(currencyCode));
+  }
+
+  static String _formatDate(DateTime date) =>
+      DateFormat.yMMMd().format(date);
 }
 
 class _DebugClockTiles extends StatefulWidget {

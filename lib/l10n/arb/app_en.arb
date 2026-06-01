@@ -2523,6 +2523,17 @@
     "@settingsThemeSystem": { "description": "System theme option" },
     "settingsNotifications": "Notifications",
     "@settingsNotifications": { "description": "Notifications option" },
+    "settingsBudget": "Budget",
+    "@settingsBudget": { "description": "Budget section header in settings" },
+    "settingsOpeningBalance": "Opening Balance",
+    "@settingsOpeningBalance": { "description": "Read-only label for the budget's seed cash (issue #80)" },
+    "settingsOpeningBalanceSubtitle": "Seed cash anchored on {date}",
+    "@settingsOpeningBalanceSubtitle": {
+      "description": "Subtitle showing the date the opening balance is anchored to",
+      "placeholders": { "date": { "type": "String" } }
+    },
+    "settingsOpeningBalanceUnset": "Not configured",
+    "@settingsOpeningBalanceUnset": { "description": "Shown when the budget has no opening balance set (legacy budget)" },
     "settingsData": "Data",
     "@settingsData": { "description": "Data section header" },
     "settingsExportData": "Export Data",
