@@ -10,6 +10,10 @@ import 'package:transaction_repository/transaction_repository.dart';
 part 'budget_event.dart';
 part 'budget_state.dart';
 
+/// `(openingBalance, openingDate)` pair — the only `Budget` fields that
+/// affect RTA. Diffed in [BudgetBloc._onBudgetUpdated] to gate refreshes.
+typedef _OpeningAnchor = (int openingBalance, DateTime? openingDate);
+
 class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
   BudgetBloc({
     required BudgetRepository budgetRepository,
@@ -26,6 +30,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
        _now = now ?? DateTime.now,
        super(BudgetState()) {
     on<BudgetStarted>(_onStarted);
+    on<_BudgetUpdated>(_onBudgetUpdated);
     on<_PeriodsUpdated>(_onPeriodsUpdated);
     on<_AllocationsUpdated>(_onAllocationsUpdated);
     on<_CategoryGroupsUpdated>(_onCategoryGroupsUpdated);
@@ -54,6 +59,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
   final String _budgetId;
   final DateTime Function() _now;
 
+  StreamSubscription<Budget>? _budgetSubscription;
   StreamSubscription<List<BudgetPeriod>>? _periodsSubscription;
   StreamSubscription<List<EnvelopeAllocation>>? _allocationsSubscription;
   StreamSubscription<List<CategoryGroup>>? _groupsSubscription;
@@ -79,6 +85,15 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
   // period. Prevents status flipping to loaded before allocations arrive.
   bool _waitingForAllocations = false;
 
+  /// Last observed seed-cash anchor `(openingBalance, openingDate)`. Stored to
+  /// suppress redundant RTA refreshes when an unrelated budget field changes —
+  /// only diffs that affect RTA trigger work.
+  ///
+  /// Reset to `null` in [_onStarted] BEFORE the new subscription is created;
+  /// the generation guard on `_BudgetUpdated` rejects late events from the
+  /// prior subscription, so the reset cannot leak a stale anchor.
+  _OpeningAnchor? _lastOpeningAnchor;
+
   /// True once all four budget-level streams have emitted at least once AND
   /// the current period's allocations have been received.
   bool get _isLoaded =>
@@ -101,8 +116,10 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     _envelopesReceived = false;
     _templatesReceived = false;
     _waitingForAllocations = false;
+    _lastOpeningAnchor = null;
 
     await Future.wait([
+      _budgetSubscription?.cancel() ?? Future<void>.value(),
       _periodsSubscription?.cancel() ?? Future<void>.value(),
       _allocationsSubscription?.cancel() ?? Future<void>.value(),
       _groupsSubscription?.cancel() ?? Future<void>.value(),
@@ -113,6 +130,15 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     ]);
 
     final gen = _generation;
+
+    _budgetSubscription = _budgetRepository.watchBudget(_budgetId).listen(
+      (budget) => add(_BudgetUpdated(budget, gen)),
+      // A transient watch error here only blocks anchor-shift refreshes; the
+      // rest of the budget screen remains usable. Swallow rather than flip
+      // the whole screen to error (matches the "keep previous value" stance
+      // in [_onBudgetUpdated]).
+      onError: (Object _) {},
+    );
 
     _periodsSubscription = _budgetRepository
         .watchBudgetPeriods(_budgetId)
@@ -183,6 +209,39 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
   ) {
     if (event.generation != _generation) return;
     emit(state.copyWith(goals: event.goals));
+  }
+
+  Future<void> _onBudgetUpdated(
+    _BudgetUpdated event,
+    Emitter<BudgetState> emit,
+  ) async {
+    if (event.generation != _generation) return;
+
+    final anchor = (event.budget.openingBalance, event.budget.openingDate);
+    if (_lastOpeningAnchor == anchor) return;
+    final previousAnchor = _lastOpeningAnchor;
+    _lastOpeningAnchor = anchor;
+
+    // Periods stream not yet emitted → no period to refresh RTA for. The
+    // cache is still updated above so future identical emissions dedup
+    // correctly; `_onAllocationsUpdated` will read the current budget when it
+    // computes the initial RTA, so the new anchor lands without us
+    // recomputing here.
+    final selected = state.selectedPeriod;
+    if (selected == null) return;
+
+    // First non-trivial emission with a selected period — `_onAllocationsUpdated`
+    // already computed RTA against this anchor, no extra refresh needed.
+    if (previousAnchor == null) return;
+
+    try {
+      final readyToAssign = await _budgetRepository.calculateReadyToAssign(
+        selected.id,
+      );
+      emit(state.copyWith(readyToAssign: readyToAssign));
+    } on BudgetException {
+      // Keep previous value.
+    }
   }
 
   Future<void> _onPeriodsUpdated(
@@ -662,6 +721,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
 
   @override
   Future<void> close() async {
+    await _budgetSubscription?.cancel();
     await _periodsSubscription?.cancel();
     await _allocationsSubscription?.cancel();
     await _groupsSubscription?.cancel();

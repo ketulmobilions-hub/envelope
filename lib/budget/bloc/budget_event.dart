@@ -12,6 +12,19 @@ final class BudgetStarted extends BudgetEvent {
   const BudgetStarted();
 }
 
+/// Internal event when the budget row stream emits. Used to refresh derived
+/// values (RTA) when `openingBalance` / `openingDate` changes — e.g. after
+/// [BudgetRepository.autoCreatePreviousPeriod] shifts the seed-cash anchor.
+final class _BudgetUpdated extends BudgetEvent {
+  const _BudgetUpdated(this.budget, this.generation);
+
+  final Budget budget;
+  final int generation;
+
+  @override
+  List<Object?> get props => [budget, generation];
+}
+
 /// Internal event when the budget periods stream emits.
 final class _PeriodsUpdated extends BudgetEvent {
   const _PeriodsUpdated(this.periods, this.generation);

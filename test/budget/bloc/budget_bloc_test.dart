@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/budget/bloc/bloc.dart';
@@ -24,6 +26,15 @@ void main() {
   late MockTransactionRepository transactionRepository;
 
   final now = DateTime(2026, 3, 13);
+
+  final testBudget = Budget(
+    id: 'budget-1',
+    ownerId: 'owner-1',
+    name: 'My Budget',
+    baseCurrency: 'USD',
+    createdAt: now,
+    updatedAt: now,
+  );
 
   final testPeriod = BudgetPeriod(
     id: 'period-1',
@@ -83,6 +94,9 @@ void main() {
 
   void stubHappyPath() {
     when(
+      () => budgetRepository.watchBudget('budget-1'),
+    ).thenAnswer((_) => Stream.value(testBudget));
+    when(
       () => budgetRepository.watchBudgetPeriods('budget-1'),
     ).thenAnswer((_) => Stream.value([testPeriod]));
     when(
@@ -139,6 +153,163 @@ void main() {
   );
 
   group('BudgetBloc', () {
+    group('budget anchor (#80, phase 4)', () {
+      blocTest<BudgetBloc, BudgetState>(
+        'refreshes RTA when openingBalance / openingDate changes mid-session',
+        setUp: () {
+          stubHappyPath();
+          final controller = StreamController<Budget>();
+          when(
+            () => budgetRepository.watchBudget('budget-1'),
+          ).thenAnswer((_) => controller.stream);
+
+          var calls = 0;
+          when(
+            () => budgetRepository.calculateReadyToAssign('period-1'),
+          ).thenAnswer((_) async {
+            calls++;
+            return calls == 1 ? 50000 : 100000;
+          });
+
+          scheduleMicrotask(() async {
+            controller.add(testBudget);
+            await Future<void>.delayed(const Duration(milliseconds: 30));
+            controller.add(
+              testBudget.copyWith(
+                openingBalance: 100000,
+                openingDate: DateTime(2026, 3),
+              ),
+            );
+          });
+        },
+        build: buildBloc,
+        act: (bloc) => bloc.add(const BudgetStarted()),
+        wait: const Duration(milliseconds: 150),
+        verify: (bloc) {
+          expect(bloc.state.readyToAssign, equals(100000));
+        },
+      );
+
+      blocTest<BudgetBloc, BudgetState>(
+        'does NOT refresh RTA when an unrelated budget field changes',
+        setUp: () {
+          stubHappyPath();
+          final controller = StreamController<Budget>();
+          when(
+            () => budgetRepository.watchBudget('budget-1'),
+          ).thenAnswer((_) => controller.stream);
+
+          // Use distinct return values per call so any extra recompute would
+          // visibly flip the state. Anchor unchanged → no shift call →
+          // readyToAssign stays at the initial allocations-load value.
+          var calls = 0;
+          when(
+            () => budgetRepository.calculateReadyToAssign('period-1'),
+          ).thenAnswer((_) async {
+            calls++;
+            return calls == 1 ? 50000 : 999999;
+          });
+
+          scheduleMicrotask(() async {
+            controller.add(testBudget);
+            await Future<void>.delayed(const Duration(milliseconds: 30));
+            controller.add(testBudget.copyWith(name: 'Renamed'));
+          });
+        },
+        build: buildBloc,
+        act: (bloc) => bloc.add(const BudgetStarted()),
+        wait: const Duration(milliseconds: 150),
+        verify: (bloc) {
+          expect(bloc.state.readyToAssign, equals(50000));
+        },
+      );
+
+      blocTest<BudgetBloc, BudgetState>(
+        'A -> B -> A anchor round-trip refreshes RTA twice',
+        setUp: () {
+          stubHappyPath();
+          final controller = StreamController<Budget>();
+          when(
+            () => budgetRepository.watchBudget('budget-1'),
+          ).thenAnswer((_) => controller.stream);
+
+          final initial = testBudget.copyWith(
+            openingBalance: 50000,
+            openingDate: DateTime(2026, 3),
+          );
+          final shifted = testBudget.copyWith(
+            openingBalance: 200000,
+            openingDate: DateTime(2026, 3),
+          );
+
+          var calls = 0;
+          when(
+            () => budgetRepository.calculateReadyToAssign('period-1'),
+          ).thenAnswer((_) async {
+            calls++;
+            return switch (calls) {
+              1 => 50000,
+              2 => 200000,
+              _ => 75000,
+            };
+          });
+
+          scheduleMicrotask(() async {
+            controller.add(initial);
+            await Future<void>.delayed(const Duration(milliseconds: 30));
+            controller.add(shifted);
+            await Future<void>.delayed(const Duration(milliseconds: 30));
+            controller.add(initial);
+          });
+        },
+        build: buildBloc,
+        act: (bloc) => bloc.add(const BudgetStarted()),
+        wait: const Duration(milliseconds: 200),
+        verify: (bloc) {
+          expect(bloc.state.readyToAssign, equals(75000));
+        },
+      );
+
+      blocTest<BudgetBloc, BudgetState>(
+        'anchor shift BEFORE periods land is picked up by initial RTA call',
+        setUp: () {
+          stubHappyPath();
+          final budgetController = StreamController<Budget>();
+          final periodsController = StreamController<List<BudgetPeriod>>();
+          when(
+            () => budgetRepository.watchBudget('budget-1'),
+          ).thenAnswer((_) => budgetController.stream);
+          when(
+            () => budgetRepository.watchBudgetPeriods('budget-1'),
+          ).thenAnswer((_) => periodsController.stream);
+
+          when(
+            () => budgetRepository.calculateReadyToAssign('period-1'),
+          ).thenAnswer((_) async => 314159);
+
+          scheduleMicrotask(() async {
+            budgetController.add(testBudget);
+            await Future<void>.delayed(const Duration(milliseconds: 10));
+            budgetController.add(
+              testBudget.copyWith(
+                openingBalance: 500000,
+                openingDate: DateTime(2026, 3),
+              ),
+            );
+            await Future<void>.delayed(const Duration(milliseconds: 10));
+            periodsController.add([testPeriod]);
+          });
+        },
+        build: buildBloc,
+        act: (bloc) => bloc.add(const BudgetStarted()),
+        wait: const Duration(milliseconds: 200),
+        verify: (bloc) {
+          expect(bloc.state.readyToAssign, equals(314159));
+          expect(bloc.state.selectedPeriod?.id, equals('period-1'));
+        },
+      );
+    });
+
     group('BudgetStarted', () {
       blocTest<BudgetBloc, BudgetState>(
         'transitions to loaded and sets selectedPeriod',

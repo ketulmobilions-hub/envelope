@@ -77,6 +77,9 @@ void main() {
         () => transactionRepository.refreshTransactions(any()),
       ).thenAnswer((_) async {});
       when(
+        () => budgetRepository.watchBudget(any()),
+      ).thenAnswer((_) => const Stream<Budget>.empty());
+      when(
         () => budgetRepository.watchBudgetPeriods(any()),
       ).thenAnswer((_) => Stream.value([]));
       when(
