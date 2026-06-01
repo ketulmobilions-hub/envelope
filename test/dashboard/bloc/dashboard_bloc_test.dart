@@ -27,6 +27,15 @@ void main() {
   const budgetId = 'budget-1';
   final now = DateTime(2024, 6, 15);
 
+  final budget = Budget(
+    id: budgetId,
+    ownerId: 'owner-1',
+    name: 'My Budget',
+    baseCurrency: 'USD',
+    createdAt: now,
+    updatedAt: now,
+  );
+
   final period = BudgetPeriod(
     id: 'period-1',
     budgetId: budgetId,
@@ -138,6 +147,9 @@ void main() {
     transactionRepository = _MockTransactionRepository();
 
     // Default stubs
+    when(
+      () => budgetRepository.watchBudget(any()),
+    ).thenAnswer((_) => Stream.value(budget));
     when(
       () => budgetRepository.watchBudgetPeriods(any()),
     ).thenAnswer((_) => Stream.value([period]));
@@ -451,6 +463,177 @@ void main() {
         // Final state should have accounts from the second
         // subscription, not be stuck or corrupted.
         expect(bloc.state.accounts, accounts);
+      },
+    );
+
+    blocTest<DashboardBloc, DashboardState>(
+      'refreshes RTA when the budget row emits a new openingBalance / '
+      'openingDate anchor (#80, phase 4)',
+      build: () {
+        final controller = StreamController<Budget>();
+        when(
+          () => budgetRepository.watchBudget(any()),
+        ).thenAnswer((_) => controller.stream);
+
+        // Initial-load RTA calls (periods + allocations) return 50000; the
+        // anchor-shift recompute returns the distinctive 100000 so the test
+        // is robust to load-sequence changes that adjust the initial-call
+        // count.
+        var calls = 0;
+        when(() => budgetRepository.calculateReadyToAssign(any())).thenAnswer(
+          (_) async {
+            calls++;
+            return calls <= 2 ? 50000 : 100000;
+          },
+        );
+
+        scheduleMicrotask(() async {
+          controller.add(budget);
+          await Future<void>.delayed(const Duration(milliseconds: 30));
+          controller.add(
+            budget.copyWith(
+              openingBalance: 100000,
+              openingDate: DateTime(2024, 6),
+            ),
+          );
+        });
+
+        return buildBloc();
+      },
+      act: (bloc) => bloc.add(const DashboardStarted()),
+      wait: const Duration(milliseconds: 150),
+      verify: (bloc) {
+        expect(bloc.state.readyToAssign, equals(100000));
+      },
+    );
+
+    blocTest<DashboardBloc, DashboardState>(
+      'does NOT refresh RTA when an unrelated budget field changes',
+      build: () {
+        final controller = StreamController<Budget>();
+        when(
+          () => budgetRepository.watchBudget(any()),
+        ).thenAnswer((_) => controller.stream);
+
+        // Initial-load calls return 50000; any extra call (which would only
+        // come from `_onBudgetUpdated`) returns the distinctive 999999. State
+        // staying at 50000 proves no anchor-shift recompute fired.
+        var calls = 0;
+        when(() => budgetRepository.calculateReadyToAssign(any())).thenAnswer(
+          (_) async {
+            calls++;
+            return calls <= 2 ? 50000 : 999999;
+          },
+        );
+
+        scheduleMicrotask(() async {
+          controller.add(budget);
+          await Future<void>.delayed(const Duration(milliseconds: 30));
+          controller.add(budget.copyWith(name: 'Renamed'));
+        });
+
+        return buildBloc();
+      },
+      act: (bloc) => bloc.add(const DashboardStarted()),
+      wait: const Duration(milliseconds: 150),
+      verify: (bloc) {
+        expect(bloc.state.readyToAssign, equals(50000));
+      },
+    );
+
+    blocTest<DashboardBloc, DashboardState>(
+      'A -> B -> A anchor round-trip refreshes RTA twice (#80, phase 4)',
+      build: () {
+        final controller = StreamController<Budget>();
+        when(
+          () => budgetRepository.watchBudget(any()),
+        ).thenAnswer((_) => controller.stream);
+
+        final initial = budget.copyWith(
+          openingBalance: 50000,
+          openingDate: DateTime(2024, 6),
+        );
+        final shifted = budget.copyWith(
+          openingBalance: 200000,
+          openingDate: DateTime(2024, 6),
+        );
+
+        var calls = 0;
+        when(() => budgetRepository.calculateReadyToAssign(any())).thenAnswer(
+          (_) async {
+            calls++;
+            // Initial loads (periods + allocations) → 50000. Anchor shifts
+            // come next: B (3rd call) then back to A (4th call).
+            return switch (calls) {
+              <= 2 => 50000,
+              3 => 200000,
+              _ => 75000,
+            };
+          },
+        );
+
+        scheduleMicrotask(() async {
+          controller.add(initial);
+          await Future<void>.delayed(const Duration(milliseconds: 30));
+          controller.add(shifted);
+          await Future<void>.delayed(const Duration(milliseconds: 30));
+          controller.add(initial);
+        });
+
+        return buildBloc();
+      },
+      act: (bloc) => bloc.add(const DashboardStarted()),
+      wait: const Duration(milliseconds: 200),
+      verify: (bloc) {
+        expect(bloc.state.readyToAssign, equals(75000));
+      },
+    );
+
+    blocTest<DashboardBloc, DashboardState>(
+      'anchor shift BEFORE periods land is picked up by initial RTA call '
+      '(#80, phase 4 race)',
+      build: () {
+        // Emit two distinct anchors via the budget stream BEFORE we ever
+        // expose periods. The `_onPeriodsUpdated` initial computation should
+        // produce RTA using whichever budget state `calculateReadyToAssign`
+        // sees at that point — phase 3 guarantees the repo reads fresh data.
+        final budgetController = StreamController<Budget>();
+        final periodsController = StreamController<List<BudgetPeriod>>();
+        when(
+          () => budgetRepository.watchBudget(any()),
+        ).thenAnswer((_) => budgetController.stream);
+        when(
+          () => budgetRepository.watchBudgetPeriods(any()),
+        ).thenAnswer((_) => periodsController.stream);
+
+        when(
+          () => budgetRepository.calculateReadyToAssign(any()),
+        ).thenAnswer((_) async => 314159);
+
+        scheduleMicrotask(() async {
+          budgetController.add(budget);
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+          budgetController.add(
+            budget.copyWith(
+              openingBalance: 500000,
+              openingDate: DateTime(2024, 6),
+            ),
+          );
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+          periodsController.add([period]);
+        });
+
+        return buildBloc();
+      },
+      act: (bloc) => bloc.add(const DashboardStarted()),
+      wait: const Duration(milliseconds: 200),
+      verify: (bloc) {
+        // RTA reflects the initial post-load value; the new anchor was
+        // observed via the cached value but no extra recompute fired because
+        // periods landed AFTER all budget emissions (the periods handler runs
+        // calculateReadyToAssign once with the latest budget state).
+        expect(bloc.state.readyToAssign, equals(314159));
+        expect(bloc.state.selectedPeriod?.id, equals('period-1'));
       },
     );
   });

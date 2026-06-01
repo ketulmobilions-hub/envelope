@@ -99,6 +99,22 @@ class BudgetRepository {
     }
   }
 
+  /// Watches a single budget by [budgetId].
+  ///
+  /// Returns a reactive stream from local storage that re-emits whenever the
+  /// row changes (e.g. an `openingBalance` / `openingDate` shift from
+  /// [autoCreatePreviousPeriod] or a Realtime cache write). Consumers use
+  /// this to refresh derived values (e.g. RTA) without forcing a full reload.
+  Stream<Budget> watchBudget(String budgetId) {
+    return _localDatabase.budgetsDao
+        .watchBudget(budgetId)
+        .map(_mapBudgetFromLocal)
+        .handleError(
+          (Object error) =>
+              throw BudgetException('Failed to watch budget', error: error),
+        );
+  }
+
   /// Watches all budgets for the given [ownerId].
   ///
   /// Returns a reactive stream from local storage filtered by owner.

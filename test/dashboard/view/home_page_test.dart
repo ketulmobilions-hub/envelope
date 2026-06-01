@@ -85,6 +85,9 @@ void main() {
 
     // Repository stubs for DashboardBloc and RecurringCheckCubit
     when(
+      () => budgetRepository.watchBudget(any()),
+    ).thenAnswer((_) => const Stream<Budget>.empty());
+    when(
       () => budgetRepository.watchBudgetPeriods(any()),
     ).thenAnswer((_) => Stream.value([]));
     when(

@@ -450,6 +450,45 @@ void main() {
       });
     });
 
+    group('watchBudget', () {
+      test('streams a single budget mapped to the domain model (#80)', () {
+        when(() => budgetsDao.watchBudget('budget-1')).thenAnswer(
+          (_) => Stream.value(
+            testLocalBudget.copyWith(
+              openingBalance: 12345,
+              openingDate: Value<DateTime?>(DateTime(2026, 4, 15)),
+            ),
+          ),
+        );
+
+        final stream = repository.watchBudget('budget-1');
+
+        expect(
+          stream,
+          emits(
+            isA<Budget>()
+                .having((b) => b.id, 'id', 'budget-1')
+                .having((b) => b.openingBalance, 'openingBalance', 12345)
+                .having(
+                  (b) => b.openingDate,
+                  'openingDate',
+                  DateTime(2026, 4, 15),
+                ),
+          ),
+        );
+      });
+
+      test('maps stream errors to BudgetException', () {
+        when(() => budgetsDao.watchBudget('budget-1')).thenAnswer(
+          (_) => Stream<storage.Budget>.error(Exception('drift exploded')),
+        );
+
+        final stream = repository.watchBudget('budget-1');
+
+        expect(stream, emitsError(isA<BudgetException>()));
+      });
+    });
+
     group('updateBudget', () {
       test('updates via API and caches locally', () async {
         when(
