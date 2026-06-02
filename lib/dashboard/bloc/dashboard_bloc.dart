@@ -14,6 +14,10 @@ import 'package:transaction_repository/transaction_repository.dart';
 part 'dashboard_event.dart';
 part 'dashboard_state.dart';
 
+/// `(openingBalance, openingDate)` pair — the only `Budget` fields that
+/// affect RTA. Diffed in [DashboardBloc._onBudgetUpdated] to gate refreshes.
+typedef _OpeningAnchor = (int openingBalance, DateTime? openingDate);
+
 class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   DashboardBloc({
     required BudgetRepository budgetRepository,
@@ -22,14 +26,17 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     required TransactionRepository transactionRepository,
     required String budgetId,
     SharingRepository? sharingRepository,
+    DateTime Function()? now,
   }) : _budgetRepository = budgetRepository,
        _accountRepository = accountRepository,
        _envelopeRepository = envelopeRepository,
        _transactionRepository = transactionRepository,
        _budgetId = budgetId,
        _sharingRepository = sharingRepository,
+       _now = now ?? DateTime.now,
        super(const DashboardState()) {
     on<DashboardStarted>(_onStarted);
+    on<_BudgetUpdated>(_onBudgetUpdated);
     on<_PeriodsUpdated>(_onPeriodsUpdated);
     on<_AccountsUpdated>(_onAccountsUpdated);
     on<_AllocationsUpdated>(_onAllocationsUpdated);
@@ -39,6 +46,8 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     on<_RemoteChangeReceived>(_onRemoteChangeReceived);
     on<_DashboardStreamError>(_onStreamError);
     on<DashboardRefreshRequested>(_onRefreshRequested);
+    on<DashboardPreviousPeriodRequested>(_onPreviousPeriod);
+    on<DashboardNextPeriodRequested>(_onNextPeriod);
     on<QuickAllocationRequested>(_onQuickAllocationRequested);
     on<BudgetDeleteRequested>(_onBudgetDeleteRequested);
     on<_CcCreditLimitsLoaded>(_onCcCreditLimitsLoaded);
@@ -50,7 +59,9 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   final TransactionRepository _transactionRepository;
   final String _budgetId;
   final SharingRepository? _sharingRepository;
+  final DateTime Function() _now;
 
+  StreamSubscription<Budget>? _budgetSubscription;
   StreamSubscription<List<BudgetPeriod>>? _periodsSubscription;
   StreamSubscription<List<Account>>? _accountsSubscription;
   StreamSubscription<List<Envelope>>? _envelopesSubscription;
@@ -66,6 +77,15 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   int _generation = 0;
   int _allocationsGeneration = 0;
 
+  /// Last observed seed-cash anchor `(openingBalance, openingDate)`. Stored to
+  /// suppress redundant RTA refreshes when an unrelated budget field changes
+  /// (e.g. `name`, `isArchived`) — only diffs that affect RTA trigger work.
+  ///
+  /// Reset to `null` in [_onStarted] BEFORE the new subscription is created;
+  /// the generation guard on `_BudgetUpdated` rejects late events from the
+  /// prior subscription, so the reset cannot leak a stale anchor.
+  _OpeningAnchor? _lastOpeningAnchor;
+
   bool _signedOut = false;
 
   bool _periodsReceived = false;
@@ -74,6 +94,11 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   bool _groupsReceived = false;
   bool _transactionsReceived = false;
   bool _waitingForAllocations = false;
+
+  /// True once the user has manually navigated to a non-current period. Keeps
+  /// the periods stream from snapping the selection back to "today" on every
+  /// re-fire (remote change, refresh). Reset on [DashboardStarted].
+  bool _manualPeriodSelected = false;
 
   bool get _isLoaded =>
       _periodsReceived &&
@@ -97,8 +122,11 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     _groupsReceived = false;
     _transactionsReceived = false;
     _waitingForAllocations = false;
+    _manualPeriodSelected = false;
+    _lastOpeningAnchor = null;
 
     await Future.wait([
+      _budgetSubscription?.cancel() ?? Future<void>.value(),
       _periodsSubscription?.cancel() ?? Future<void>.value(),
       _accountsSubscription?.cancel() ?? Future<void>.value(),
       _envelopesSubscription?.cancel() ?? Future<void>.value(),
@@ -161,6 +189,15 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     // fresh data so the dashboard loads correctly on first open.
     final gen = _generation;
 
+    _budgetSubscription = _budgetRepository.watchBudget(_budgetId).listen(
+      (budget) => add(_BudgetUpdated(budget, gen)),
+      // A transient watch error here only blocks anchor-shift refreshes; the
+      // rest of the dashboard remains usable. Swallow rather than flip the
+      // whole dashboard to error (matches the "keep previous value" stance in
+      // [_onBudgetUpdated]).
+      onError: (Object _) {},
+    );
+
     _periodsSubscription = _budgetRepository
         .watchBudgetPeriods(_budgetId)
         .listen(
@@ -197,6 +234,39 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         );
   }
 
+  Future<void> _onBudgetUpdated(
+    _BudgetUpdated event,
+    Emitter<DashboardState> emit,
+  ) async {
+    if (event.generation != _generation) return;
+
+    final anchor = (event.budget.openingBalance, event.budget.openingDate);
+    if (_lastOpeningAnchor == anchor) return;
+    final previousAnchor = _lastOpeningAnchor;
+    _lastOpeningAnchor = anchor;
+
+    // Periods stream not yet emitted → no period to refresh RTA for. The
+    // cache is still updated above so future identical emissions dedup
+    // correctly; `_onPeriodsUpdated` will read the current budget when it
+    // computes the initial RTA, so the new anchor lands without us
+    // recomputing here.
+    final selected = state.selectedPeriod;
+    if (selected == null) return;
+
+    // First non-trivial emission with a selected period — `_onPeriodsUpdated`
+    // already computed RTA against this anchor, no extra refresh needed.
+    if (previousAnchor == null) return;
+
+    try {
+      final readyToAssign = await _budgetRepository.calculateReadyToAssign(
+        selected.id,
+      );
+      emit(state.copyWith(readyToAssign: readyToAssign));
+    } on BudgetException {
+      // Keep previous value.
+    }
+  }
+
   Future<void> _onPeriodsUpdated(
     _PeriodsUpdated event,
     Emitter<DashboardState> emit,
@@ -210,8 +280,27 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     // Select the current (non-closed) period containing today.
     BudgetPeriod? selected;
     if (sortedPeriods.isNotEmpty) {
-      final now = DateTime.now();
-      selected = sortedPeriods.firstWhere(
+      final now = _now();
+      // If the latest period ends before "now", create the missing periods
+      // forward and bail; the watch stream will re-fire this handler with
+      // the new period list.
+      final latest = sortedPeriods.last;
+      if (latest.endDate.isBefore(now)) {
+        try {
+          await _budgetRepository.ensureCurrentPeriod(_budgetId, asOf: now);
+          return;
+        } on BudgetException {
+          // Fall through to existing selection on failure.
+        }
+      }
+      // Preserve a user-chosen period across stream re-fires, as long as it
+      // still exists. Otherwise fall back to the period containing today.
+      if (_manualPeriodSelected && state.selectedPeriod != null) {
+        selected = sortedPeriods
+            .where((p) => p.id == state.selectedPeriod!.id)
+            .firstOrNull;
+      }
+      selected ??= sortedPeriods.firstWhere(
         (p) =>
             !p.isClosed &&
             !p.startDate.isAfter(now) &&
@@ -231,6 +320,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       state.copyWith(
         status: _isLoaded ? DashboardStatus.loaded : state.status,
         selectedPeriod: selected,
+        periods: sortedPeriods,
       ),
     );
 
@@ -250,6 +340,41 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         // Keep previous value.
       }
     }
+  }
+
+  Future<void> _onPreviousPeriod(
+    DashboardPreviousPeriodRequested event,
+    Emitter<DashboardState> emit,
+  ) => _selectAdjacentPeriod(emit, -1);
+
+  Future<void> _onNextPeriod(
+    DashboardNextPeriodRequested event,
+    Emitter<DashboardState> emit,
+  ) => _selectAdjacentPeriod(emit, 1);
+
+  /// Moves the selection [delta] periods (oldest-first order) and rebinds the
+  /// allocation stream / Ready-to-Assign to the new period. No-op at the ends.
+  Future<void> _selectAdjacentPeriod(
+    Emitter<DashboardState> emit,
+    int delta,
+  ) async {
+    final sorted = state.sortedPeriods;
+    final idx = sorted.indexWhere((p) => p.id == state.selectedPeriod?.id);
+    final newIdx = idx + delta;
+    if (idx < 0 || newIdx < 0 || newIdx >= sorted.length) return;
+
+    final newPeriod = sorted[newIdx];
+    _manualPeriodSelected = true;
+    // Clear stale allocations/RTA so the UI doesn't show the old period's
+    // figures against the new period's label while the refresh is in flight.
+    emit(
+      state.copyWith(
+        selectedPeriod: newPeriod,
+        allocations: const [],
+        readyToAssign: 0,
+      ),
+    );
+    await _subscribeToAllocations(newPeriod.id);
   }
 
   void _onAccountsUpdated(
@@ -589,6 +714,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     await _remoteChangeSubscription?.cancel();
     await _remoteChangeMergeController?.close();
 
+    await _budgetSubscription?.cancel();
     await _periodsSubscription?.cancel();
     await _accountsSubscription?.cancel();
     await _envelopesSubscription?.cancel();

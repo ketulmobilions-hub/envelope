@@ -60,9 +60,11 @@ void main() {
     name: 'Checking',
     type: 'checking',
     currency: 'USD',
+    displayFxRate: 1.0,
     startingBalance: 10000,
     currentBalance: 15000,
     isArchived: false,
+    isOnBudget: true,
     createdAt: now,
     updatedAt: now,
   );
@@ -365,9 +367,11 @@ void main() {
           name: 'Checking',
           type: 'checking',
           currency: 'USD',
+          displayFxRate: 1.0,
           startingBalance: 10000,
           currentBalance: 15000,
           isArchived: true,
+          isOnBudget: true,
           createdAt: now,
           updatedAt: now,
         );

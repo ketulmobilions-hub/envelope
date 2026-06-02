@@ -1,5 +1,7 @@
+import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/budget/widgets/allocation_row.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 
@@ -18,6 +20,7 @@ class AllocationGroupTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final symbol = currencySymbol(context);
     return ExpansionTile(
       initiallyExpanded: true,
       title: Text(
@@ -28,7 +31,7 @@ class AllocationGroupTile extends StatelessWidget {
       ),
       trailing: envelopesWithAllocations.isNotEmpty
           ? Text(
-              _groupTotal(envelopesWithAllocations),
+              _groupTotal(envelopesWithAllocations, symbol),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.outline,
               ),
@@ -59,11 +62,14 @@ class AllocationGroupTile extends StatelessWidget {
     );
   }
 
-  static String _groupTotal(List<(Envelope, EnvelopeAllocation?)> pairs) {
+  static String _groupTotal(
+    List<(Envelope, EnvelopeAllocation?)> pairs,
+    String symbol,
+  ) {
     final total = pairs.fold<int>(
       0,
       (sum, pair) => sum + (pair.$2?.allocatedAmount ?? 0),
     );
-    return '\$${(total / 100).toStringAsFixed(2)}';
+    return formatCents(total, symbol: symbol);
   }
 }

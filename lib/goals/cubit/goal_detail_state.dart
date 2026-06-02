@@ -15,6 +15,10 @@ final class GoalDetailState extends Equatable {
     this.status = GoalDetailStatus.idle,
     this.contributions = const [],
     this.errorMessage,
+    this.computedCurrentAmount,
+    this.linkedEnvelopeName,
+    this.linkedAccountName,
+    this.payoffSchedule,
   });
 
   final Goal goal;
@@ -22,11 +26,33 @@ final class GoalDetailState extends Equatable {
   final List<GoalContribution> contributions;
   final String? errorMessage;
 
+  /// Live-derived current amount for goals linked to an envelope.
+  /// Null for unlinked goals — UI should fall back to `goal.currentAmount`.
+  final int? computedCurrentAmount;
+
+  /// Name of the linked envelope, if any.
+  final String? linkedEnvelopeName;
+
+  /// Name of the linked account, if any (account-balance-tracked goals).
+  final String? linkedAccountName;
+
+  /// Projected payoff schedule for `debt_payoff` goals with APR set.
+  /// Null when not applicable (other goal types, missing APR / min payment).
+  final DebtPayoffSchedule? payoffSchedule;
+
+  /// Effective current amount for UI rendering.
+  int get effectiveCurrentAmount =>
+      computedCurrentAmount ?? goal.currentAmount;
+
   GoalDetailState copyWith({
     Goal? goal,
     GoalDetailStatus? status,
     List<GoalContribution>? contributions,
     Object? errorMessage = _sentinel,
+    Object? computedCurrentAmount = _sentinel,
+    Object? linkedEnvelopeName = _sentinel,
+    Object? linkedAccountName = _sentinel,
+    Object? payoffSchedule = _sentinel,
   }) {
     return GoalDetailState(
       goal: goal ?? this.goal,
@@ -35,11 +61,32 @@ final class GoalDetailState extends Equatable {
       errorMessage: errorMessage == _sentinel
           ? this.errorMessage
           : errorMessage as String?,
+      computedCurrentAmount: computedCurrentAmount == _sentinel
+          ? this.computedCurrentAmount
+          : computedCurrentAmount as int?,
+      linkedEnvelopeName: linkedEnvelopeName == _sentinel
+          ? this.linkedEnvelopeName
+          : linkedEnvelopeName as String?,
+      linkedAccountName: linkedAccountName == _sentinel
+          ? this.linkedAccountName
+          : linkedAccountName as String?,
+      payoffSchedule: payoffSchedule == _sentinel
+          ? this.payoffSchedule
+          : payoffSchedule as DebtPayoffSchedule?,
     );
   }
 
   static const Object _sentinel = Object();
 
   @override
-  List<Object?> get props => [goal, status, contributions, errorMessage];
+  List<Object?> get props => [
+    goal,
+    status,
+    contributions,
+    errorMessage,
+    computedCurrentAmount,
+    linkedEnvelopeName,
+    linkedAccountName,
+    payoffSchedule,
+  ];
 }

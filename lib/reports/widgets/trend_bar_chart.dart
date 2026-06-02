@@ -1,4 +1,5 @@
 import 'package:envelope/reports/widgets/report_helpers.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ class TrendBarChart extends StatelessWidget {
   Widget build(BuildContext context) {
     if (dataPoints.isEmpty) return const SizedBox.shrink();
 
+    final symbol = currencySymbol(context);
     final maxY = dataPoints.fold<double>(0, (max, p) {
       final m = [p.income, p.spending].reduce((a, b) => a > b ? a : b);
       return m / 100 > max ? m / 100 : max;
@@ -55,7 +57,7 @@ class TrendBarChart extends StatelessWidget {
                 reservedSize: 50,
                 getTitlesWidget: (value, meta) {
                   return Text(
-                    '\$${value.toInt()}',
+                    '$symbol${value.toInt()}',
                     style: const TextStyle(
                       fontSize: 10,
                       color: AppColors.secondaryText,

@@ -4,6 +4,7 @@ import 'package:account_repository/account_repository.dart';
 import 'package:envelope/accounts/widgets/account_helpers.dart';
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:envelope/transactions/cubit/transfer_form_cubit.dart';
@@ -22,6 +23,7 @@ Future<void> showCCPayBottomSheet(
   required String budgetId,
   required String userId,
   required String? budgetPeriodId,
+  required String ccPaymentEnvelopeId,
 }) async {
   final transactionRepo = context.read<TransactionRepository>();
   final accountRepo = context.read<AccountRepository>();
@@ -48,6 +50,7 @@ Future<void> showCCPayBottomSheet(
         ccAccountName: ccAccountName,
         ccDebtCents: ccDebtCents,
         accounts: accounts,
+        ccPaymentEnvelopeId: ccPaymentEnvelopeId,
       ),
     ),
   );
@@ -59,12 +62,14 @@ class _CCPayBottomSheet extends StatefulWidget {
     required this.ccAccountName,
     required this.ccDebtCents,
     required this.accounts,
+    required this.ccPaymentEnvelopeId,
   });
 
   final String ccAccountId;
   final String ccAccountName;
   final int ccDebtCents;
   final List<Account> accounts;
+  final String ccPaymentEnvelopeId;
 
   @override
   State<_CCPayBottomSheet> createState() => _CCPayBottomSheetState();
@@ -113,7 +118,11 @@ class _CCPayBottomSheetState extends State<_CCPayBottomSheet> {
         fromAccountId: fromAccountId,
         toAccountId: widget.ccAccountId,
         amountCents: amountCents,
-        date: DateTime.now(),
+        date: context.read<AppClock>().now(),
+        // The CC account is off-budget; the payment is funded by its linked
+        // CC Payment envelope, so the outgoing leg reduces that envelope's
+        // available (and satisfies the on->off-budget funding requirement).
+        envelopeId: widget.ccPaymentEnvelopeId,
       ),
     );
   }
@@ -132,13 +141,9 @@ class _CCPayBottomSheetState extends State<_CCPayBottomSheet> {
           messenger.showSnackBar(
             SnackBar(content: Text(l10n.ccPaySuccess)),
           );
-        } else if (state.status == TransferFormStatus.failure) {
-          ScaffoldMessenger.of(ctx).showSnackBar(
-            SnackBar(
-              content: Text(state.errorMessage ?? l10n.ccPayError),
-            ),
-          );
         }
+        // Failures are surfaced inline below the button — a SnackBar would
+        // render behind this modal sheet and never be seen.
       },
       child: Padding(
         padding: EdgeInsets.only(
@@ -243,6 +248,22 @@ class _CCPayBottomSheetState extends State<_CCPayBottomSheet> {
                 },
               ),
               const SizedBox(height: 24),
+              BlocBuilder<TransferFormCubit, TransferFormState>(
+                builder: (ctx, state) {
+                  if (state.status == TransferFormStatus.failure) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        state.errorMessage ?? l10n.ccPayError,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.error,
+                        ),
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
               BlocBuilder<TransferFormCubit, TransferFormState>(
                 builder: (ctx, state) {
                   final isSubmitting =

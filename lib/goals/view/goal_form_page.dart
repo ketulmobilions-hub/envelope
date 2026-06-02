@@ -1,10 +1,13 @@
+import 'package:account_repository/account_repository.dart';
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/goals/cubit/cubit.dart';
-import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/goals/widgets/goal_helpers.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/shared/widgets/app_option_picker.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
+import 'package:envelope_repository/envelope_repository.dart';
+import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -30,6 +33,8 @@ class _GoalFormPageState extends State<GoalFormPage> {
   late final TextEditingController _nameController;
   late final TextEditingController _targetAmountController;
   late final TextEditingController _monthlyContributionController;
+  late final TextEditingController _aprController;
+  late final TextEditingController _minPaymentController;
   late String _selectedType;
   DateTime? _targetDate;
 
@@ -55,6 +60,16 @@ class _GoalFormPageState extends State<GoalFormPage> {
           ? (widget.goal!.monthlyContribution! / 100).toStringAsFixed(2)
           : '',
     );
+    _aprController = TextEditingController(
+      text: widget.goal?.aprBps != null
+          ? (widget.goal!.aprBps! / 100).toStringAsFixed(2)
+          : '',
+    );
+    _minPaymentController = TextEditingController(
+      text: widget.goal?.minPaymentCents != null
+          ? (widget.goal!.minPaymentCents! / 100).toStringAsFixed(2)
+          : '',
+    );
     _selectedType = widget.goal?.type ?? _goalTypes.first;
     _targetDate = widget.goal?.targetDate;
   }
@@ -64,6 +79,8 @@ class _GoalFormPageState extends State<GoalFormPage> {
     _nameController.dispose();
     _targetAmountController.dispose();
     _monthlyContributionController.dispose();
+    _aprController.dispose();
+    _minPaymentController.dispose();
     super.dispose();
   }
 
@@ -127,6 +144,69 @@ class _GoalFormPageState extends State<GoalFormPage> {
                     itemLabel: (type) => localizedGoalType(type, l10n),
                   ),
                   const SizedBox(height: 16),
+                  BlocBuilder<GoalFormCubit, GoalFormState>(
+                    buildWhen: (p, c) =>
+                        p.envelopeId != c.envelopeId ||
+                        p.envelopes != c.envelopes,
+                    builder: (context, state) {
+                      final options = <_EnvelopeOption>[
+                        const _EnvelopeOption(null),
+                        ...state.envelopes.map(_EnvelopeOption.new),
+                      ];
+                      final selected = options.firstWhere(
+                        (o) => o.envelope?.id == state.envelopeId,
+                        orElse: () => const _EnvelopeOption(null),
+                      );
+                      return AppOptionPicker<_EnvelopeOption>(
+                        options: options,
+                        value: selected,
+                        onChanged: (opt) => context
+                            .read<GoalFormCubit>()
+                            .envelopeChanged(opt.envelope?.id),
+                        labelText: l10n.goalsEnvelopeLabel,
+                        icon: Icons.account_balance_wallet_outlined,
+                        itemLabel: (opt) =>
+                            opt.envelope?.name ?? l10n.goalsEnvelopeNone,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  BlocBuilder<GoalFormCubit, GoalFormState>(
+                    buildWhen: (p, c) =>
+                        p.accountId != c.accountId || p.accounts != c.accounts,
+                    builder: (context, state) {
+                      final options = <_AccountOption>[
+                        const _AccountOption(null),
+                        ...state.accounts.map(_AccountOption.new),
+                      ];
+                      final selected = options.firstWhere(
+                        (o) => o.account?.id == state.accountId,
+                        orElse: () => const _AccountOption(null),
+                      );
+                      return AppOptionPicker<_AccountOption>(
+                        options: options,
+                        value: selected,
+                        onChanged: (opt) => context
+                            .read<GoalFormCubit>()
+                            .accountChanged(opt.account?.id),
+                        labelText: l10n.goalsAccountLabel,
+                        icon: Icons.savings_outlined,
+                        itemLabel: (opt) =>
+                            opt.account?.name ?? l10n.goalsAccountNone,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 6),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Text(
+                      l10n.goalsLinkMutualExclusiveHint,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   // Type-specific fields.
                   if (_selectedType == 'savings_target' ||
                       _selectedType == 'debt_payoff') ...[
@@ -184,6 +264,58 @@ class _GoalFormPageState extends State<GoalFormPage> {
                     ),
                     const SizedBox(height: 16),
                   ],
+                  if (_selectedType == 'debt_payoff') ...[
+                    TextFormField(
+                      controller: _aprController,
+                      decoration: InputDecoration(
+                        labelText: l10n.goalsAprLabel,
+                        prefixIcon: const Icon(Icons.percent_outlined),
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'^\d*\.?\d{0,2}'),
+                        ),
+                      ],
+                      textInputAction: TextInputAction.next,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) return null;
+                        final parsed = double.tryParse(value);
+                        if (parsed == null || parsed < 0 || parsed > 100) {
+                          return l10n.goalsAprInvalid;
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _minPaymentController,
+                      decoration: InputDecoration(
+                        labelText: l10n.goalsMinPaymentLabel,
+                        prefixText: symbol,
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'^\d*\.?\d{0,2}'),
+                        ),
+                      ],
+                      textInputAction: TextInputAction.done,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) return null;
+                        final cents = parseCents(value);
+                        if (cents == null || cents <= 0) {
+                          return l10n.goalsMinPaymentInvalid;
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   const SizedBox(height: 16),
                   BlocBuilder<GoalFormCubit, GoalFormState>(
                     buildWhen: (prev, curr) => prev.status != curr.status,
@@ -224,14 +356,42 @@ class _GoalFormPageState extends State<GoalFormPage> {
       _monthlyContributionController.text,
     );
 
+    int? aprBps;
+    int? minPaymentCents;
+    if (_selectedType == 'debt_payoff') {
+      final aprPercent = double.tryParse(_aprController.text.trim());
+      if (aprPercent != null) aprBps = (aprPercent * 100).round();
+      minPaymentCents = parseCents(_minPaymentController.text);
+    }
+
     context.read<GoalFormCubit>().submit(
       name: _nameController.text.trim(),
       type: _selectedType,
       targetAmount: targetAmountCents,
       targetDate: _targetDate,
       monthlyContribution: monthlyContributionCents,
+      aprBps: aprBps,
+      minPaymentCents: minPaymentCents,
     );
   }
+}
+
+class _EnvelopeOption extends Equatable {
+  const _EnvelopeOption(this.envelope);
+
+  final Envelope? envelope;
+
+  @override
+  List<Object?> get props => [envelope?.id];
+}
+
+class _AccountOption extends Equatable {
+  const _AccountOption(this.account);
+
+  final Account? account;
+
+  @override
+  List<Object?> get props => [account?.id];
 }
 
 class _DatePickerField extends StatelessWidget {

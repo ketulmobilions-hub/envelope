@@ -18,6 +18,7 @@ abstract class TransactionDto with _$TransactionDto {
     @JsonKey(name: 'created_at') required DateTime createdAt,
     @JsonKey(name: 'updated_at') required DateTime updatedAt,
     @JsonKey(name: 'exchange_rate') @Default(1.0) double exchangeRate,
+    @JsonKey(name: 'base_currency_amount') @Default(0) int baseCurrencyAmount,
     @JsonKey(name: 'is_reconciled') @Default(false) bool isReconciled,
     @JsonKey(name: 'envelope_id') String? envelopeId,
     String? payee,

@@ -48,10 +48,15 @@ class EnvelopeRepository {
   }) async {
     _beginLocalWrite();
     try {
+      // Append at the end of the existing groups for deterministic dashboard
+      // ordering. Clients that reorder later overwrite via batchReorder.
+      final existing = await _localDatabase.envelopesDao
+          .getCategoryGroupsByBudgetId(budgetId);
       final dto = CategoryGroupDto(
         id: '',
         budgetId: budgetId,
         name: name,
+        sortOrder: existing.length,
         createdAt: DateTime.now(),
       );
 
@@ -252,6 +257,10 @@ class EnvelopeRepository {
   }) async {
     _beginLocalWrite();
     try {
+      // Append at the end of the group's envelopes for deterministic
+      // ordering. Clients that reorder later overwrite via batchReorder.
+      final existing = await _localDatabase.envelopesDao
+          .getEnvelopesByCategoryGroupId(categoryGroupId);
       final dto = EnvelopeDto(
         id: '',
         categoryGroupId: categoryGroupId,
@@ -259,6 +268,7 @@ class EnvelopeRepository {
         name: name,
         color: color,
         linkedAccountId: linkedAccountId,
+        sortOrder: existing.length,
         createdAt: DateTime.now(),
       );
 
@@ -599,6 +609,27 @@ class EnvelopeRepository {
         );
   }
 
+  /// Watches all allocations for an [envelopeId] across every period.
+  ///
+  /// Returns a reactive stream from local storage. Used by goal-progress
+  /// computation, which sums balances across periods to avoid current-period
+  /// detection mismatches.
+  Stream<List<EnvelopeAllocation>> watchAllocationsForEnvelope(
+    String envelopeId,
+  ) {
+    return _localDatabase.envelopesDao
+        .watchAllocationsByEnvelopeId(envelopeId)
+        .map(
+          (rows) => rows.map(_mapAllocationFromLocal).toList(),
+        )
+        .handleError(
+          (Object error) => throw EnvelopeException(
+            'Failed to watch allocations for envelope',
+            error: error,
+          ),
+        );
+  }
+
   /// Updates an [allocation].
   ///
   /// Sends the update to the API and syncs locally.
@@ -702,11 +733,15 @@ class EnvelopeRepository {
   /// matching [envelopeId] + the budget period that contains [date] in
   /// [budgetId]. No API call is made — this is an optimistic update to give
   /// instant UI feedback after an expense transaction is created.
+  ///
+  /// [baseCurrencyAmount] must already be expressed in the budget's base
+  /// currency (i.e. `transaction.amount * transaction.exchangeRate`), so the
+  /// running spent total stays in a single currency.
   Future<void> incrementLocalSpentAmount({
     required String envelopeId,
     required String budgetId,
     required DateTime date,
-    required int amount,
+    required int baseCurrencyAmount,
   }) async {
     try {
       final periods = await _localDatabase.budgetsDao.getPeriodsByBudgetId(
@@ -739,7 +774,7 @@ class EnvelopeRepository {
           envelopeId: Value(alloc.envelopeId),
           budgetPeriodId: Value(alloc.budgetPeriodId),
           allocatedAmount: Value(alloc.allocatedAmount),
-          spentAmount: Value(alloc.spentAmount + amount),
+          spentAmount: Value(alloc.spentAmount + baseCurrencyAmount),
           rolloverAmount: Value(alloc.rolloverAmount),
           createdAt: Value(alloc.createdAt),
         ),

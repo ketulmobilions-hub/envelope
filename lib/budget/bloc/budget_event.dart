@@ -12,6 +12,19 @@ final class BudgetStarted extends BudgetEvent {
   const BudgetStarted();
 }
 
+/// Internal event when the budget row stream emits. Used to refresh derived
+/// values (RTA) when `openingBalance` / `openingDate` changes — e.g. after
+/// [BudgetRepository.autoCreatePreviousPeriod] shifts the seed-cash anchor.
+final class _BudgetUpdated extends BudgetEvent {
+  const _BudgetUpdated(this.budget, this.generation);
+
+  final Budget budget;
+  final int generation;
+
+  @override
+  List<Object?> get props => [budget, generation];
+}
+
 /// Internal event when the budget periods stream emits.
 final class _PeriodsUpdated extends BudgetEvent {
   const _PeriodsUpdated(this.periods, this.generation);
@@ -56,6 +69,18 @@ final class _EnvelopesUpdated extends BudgetEvent {
   List<Object?> get props => [envelopes, generation];
 }
 
+/// Internal event when the transactions stream emits. Triggers a recompute of
+/// the derived CC Payment envelope availability, which depends on credit-card
+/// charge/payment history rather than stored allocations.
+final class _TransactionsChanged extends BudgetEvent {
+  const _TransactionsChanged(this.generation);
+
+  final int generation;
+
+  @override
+  List<Object?> get props => [generation];
+}
+
 /// Internal event when the templates stream emits.
 final class _TemplatesUpdated extends BudgetEvent {
   const _TemplatesUpdated(this.templates, this.generation);
@@ -65,6 +90,18 @@ final class _TemplatesUpdated extends BudgetEvent {
 
   @override
   List<Object?> get props => [templates, generation];
+}
+
+/// Internal event when the goals stream emits. Drives the "needed this month"
+/// chip on envelope rows by exposing each envelope's linked goals.
+final class _GoalsUpdated extends BudgetEvent {
+  const _GoalsUpdated(this.goals, this.generation);
+
+  final List<Goal> goals;
+  final int generation;
+
+  @override
+  List<Object?> get props => [goals, generation];
 }
 
 /// Internal event when any stream errors.

@@ -1,21 +1,40 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/budget/bloc/bloc.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:goal_repository/goal_repository.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:transaction_repository/transaction_repository.dart';
 
 class MockBudgetRepository extends Mock implements BudgetRepository {}
 
 class MockEnvelopeRepository extends Mock implements EnvelopeRepository {}
+
+class MockGoalRepository extends Mock implements GoalRepository {}
+
+class MockTransactionRepository extends Mock implements TransactionRepository {}
 
 class FakeEnvelopeAllocation extends Fake implements EnvelopeAllocation {}
 
 void main() {
   late MockBudgetRepository budgetRepository;
   late MockEnvelopeRepository envelopeRepository;
+  late MockGoalRepository goalRepository;
+  late MockTransactionRepository transactionRepository;
 
   final now = DateTime(2026, 3, 13);
+
+  final testBudget = Budget(
+    id: 'budget-1',
+    ownerId: 'owner-1',
+    name: 'My Budget',
+    baseCurrency: 'USD',
+    createdAt: now,
+    updatedAt: now,
+  );
 
   final testPeriod = BudgetPeriod(
     id: 'period-1',
@@ -69,9 +88,14 @@ void main() {
   setUp(() {
     budgetRepository = MockBudgetRepository();
     envelopeRepository = MockEnvelopeRepository();
+    goalRepository = MockGoalRepository();
+    transactionRepository = MockTransactionRepository();
   });
 
   void stubHappyPath() {
+    when(
+      () => budgetRepository.watchBudget('budget-1'),
+    ).thenAnswer((_) => Stream.value(testBudget));
     when(
       () => budgetRepository.watchBudgetPeriods('budget-1'),
     ).thenAnswer((_) => Stream.value([testPeriod]));
@@ -87,6 +111,9 @@ void main() {
     when(
       () => envelopeRepository.watchAllocations('period-1'),
     ).thenAnswer((_) => Stream.value(testAllocations));
+    when(
+      () => transactionRepository.watchTransactions(budgetId: 'budget-1'),
+    ).thenAnswer((_) => Stream.value(const <Transaction>[]));
 
     when(
       () => budgetRepository.refreshBudgetPeriods('budget-1'),
@@ -106,15 +133,183 @@ void main() {
     when(
       () => budgetRepository.calculateReadyToAssign('period-1'),
     ).thenAnswer((_) async => 50000);
+    when(
+      () => goalRepository.watchGoals('budget-1'),
+    ).thenAnswer((_) => Stream.value(const <Goal>[]));
+    when(
+      () => goalRepository.refreshGoals('budget-1'),
+    ).thenAnswer((_) async {});
   }
 
+  // Inject a fixed clock so the bloc does not fall back to wall-clock time
+  // and trigger `ensureCurrentPeriod` against the fixture period.
   BudgetBloc buildBloc() => BudgetBloc(
     budgetRepository: budgetRepository,
     envelopeRepository: envelopeRepository,
+    goalRepository: goalRepository,
+    transactionRepository: transactionRepository,
     budgetId: 'budget-1',
+    now: () => now,
   );
 
   group('BudgetBloc', () {
+    group('budget anchor (#80, phase 4)', () {
+      blocTest<BudgetBloc, BudgetState>(
+        'refreshes RTA when openingBalance / openingDate changes mid-session',
+        setUp: () {
+          stubHappyPath();
+          final controller = StreamController<Budget>();
+          when(
+            () => budgetRepository.watchBudget('budget-1'),
+          ).thenAnswer((_) => controller.stream);
+
+          var calls = 0;
+          when(
+            () => budgetRepository.calculateReadyToAssign('period-1'),
+          ).thenAnswer((_) async {
+            calls++;
+            return calls == 1 ? 50000 : 100000;
+          });
+
+          scheduleMicrotask(() async {
+            controller.add(testBudget);
+            await Future<void>.delayed(const Duration(milliseconds: 30));
+            controller.add(
+              testBudget.copyWith(
+                openingBalance: 100000,
+                openingDate: DateTime(2026, 3),
+              ),
+            );
+          });
+        },
+        build: buildBloc,
+        act: (bloc) => bloc.add(const BudgetStarted()),
+        wait: const Duration(milliseconds: 150),
+        verify: (bloc) {
+          expect(bloc.state.readyToAssign, equals(100000));
+        },
+      );
+
+      blocTest<BudgetBloc, BudgetState>(
+        'does NOT refresh RTA when an unrelated budget field changes',
+        setUp: () {
+          stubHappyPath();
+          final controller = StreamController<Budget>();
+          when(
+            () => budgetRepository.watchBudget('budget-1'),
+          ).thenAnswer((_) => controller.stream);
+
+          // Use distinct return values per call so any extra recompute would
+          // visibly flip the state. Anchor unchanged → no shift call →
+          // readyToAssign stays at the initial allocations-load value.
+          var calls = 0;
+          when(
+            () => budgetRepository.calculateReadyToAssign('period-1'),
+          ).thenAnswer((_) async {
+            calls++;
+            return calls == 1 ? 50000 : 999999;
+          });
+
+          scheduleMicrotask(() async {
+            controller.add(testBudget);
+            await Future<void>.delayed(const Duration(milliseconds: 30));
+            controller.add(testBudget.copyWith(name: 'Renamed'));
+          });
+        },
+        build: buildBloc,
+        act: (bloc) => bloc.add(const BudgetStarted()),
+        wait: const Duration(milliseconds: 150),
+        verify: (bloc) {
+          expect(bloc.state.readyToAssign, equals(50000));
+        },
+      );
+
+      blocTest<BudgetBloc, BudgetState>(
+        'A -> B -> A anchor round-trip refreshes RTA twice',
+        setUp: () {
+          stubHappyPath();
+          final controller = StreamController<Budget>();
+          when(
+            () => budgetRepository.watchBudget('budget-1'),
+          ).thenAnswer((_) => controller.stream);
+
+          final initial = testBudget.copyWith(
+            openingBalance: 50000,
+            openingDate: DateTime(2026, 3),
+          );
+          final shifted = testBudget.copyWith(
+            openingBalance: 200000,
+            openingDate: DateTime(2026, 3),
+          );
+
+          var calls = 0;
+          when(
+            () => budgetRepository.calculateReadyToAssign('period-1'),
+          ).thenAnswer((_) async {
+            calls++;
+            return switch (calls) {
+              1 => 50000,
+              2 => 200000,
+              _ => 75000,
+            };
+          });
+
+          scheduleMicrotask(() async {
+            controller.add(initial);
+            await Future<void>.delayed(const Duration(milliseconds: 30));
+            controller.add(shifted);
+            await Future<void>.delayed(const Duration(milliseconds: 30));
+            controller.add(initial);
+          });
+        },
+        build: buildBloc,
+        act: (bloc) => bloc.add(const BudgetStarted()),
+        wait: const Duration(milliseconds: 200),
+        verify: (bloc) {
+          expect(bloc.state.readyToAssign, equals(75000));
+        },
+      );
+
+      blocTest<BudgetBloc, BudgetState>(
+        'anchor shift BEFORE periods land is picked up by initial RTA call',
+        setUp: () {
+          stubHappyPath();
+          final budgetController = StreamController<Budget>();
+          final periodsController = StreamController<List<BudgetPeriod>>();
+          when(
+            () => budgetRepository.watchBudget('budget-1'),
+          ).thenAnswer((_) => budgetController.stream);
+          when(
+            () => budgetRepository.watchBudgetPeriods('budget-1'),
+          ).thenAnswer((_) => periodsController.stream);
+
+          when(
+            () => budgetRepository.calculateReadyToAssign('period-1'),
+          ).thenAnswer((_) async => 314159);
+
+          scheduleMicrotask(() async {
+            budgetController.add(testBudget);
+            await Future<void>.delayed(const Duration(milliseconds: 10));
+            budgetController.add(
+              testBudget.copyWith(
+                openingBalance: 500000,
+                openingDate: DateTime(2026, 3),
+              ),
+            );
+            await Future<void>.delayed(const Duration(milliseconds: 10));
+            periodsController.add([testPeriod]);
+          });
+        },
+        build: buildBloc,
+        act: (bloc) => bloc.add(const BudgetStarted()),
+        wait: const Duration(milliseconds: 200),
+        verify: (bloc) {
+          expect(bloc.state.readyToAssign, equals(314159));
+          expect(bloc.state.selectedPeriod?.id, equals('period-1'));
+        },
+      );
+    });
+
     group('BudgetStarted', () {
       blocTest<BudgetBloc, BudgetState>(
         'transitions to loaded and sets selectedPeriod',
@@ -127,6 +322,42 @@ void main() {
           expect(bloc.state.categoryGroups, testGroups);
           expect(bloc.state.envelopes, testEnvelopes);
           expect(bloc.state.readyToAssign, 50000);
+        },
+      );
+
+      blocTest<BudgetBloc, BudgetState>(
+        'subscribes to transactions and computes CC Payment availability',
+        setUp: () {
+          stubHappyPath();
+          final ccEnvelope = Envelope(
+            id: 'cc-env',
+            categoryGroupId: 'group-1',
+            budgetId: 'budget-1',
+            name: 'Visa Payment',
+            createdAt: now,
+            linkedAccountId: 'acc-cc',
+          );
+          when(
+            () => envelopeRepository.watchEnvelopes('budget-1'),
+          ).thenAnswer((_) => Stream.value([...testEnvelopes, ccEnvelope]));
+          when(
+            () => envelopeRepository.calculateCCPaymentAvailable(
+              allocation: any(named: 'allocation'),
+              ccAccountId: 'acc-cc',
+              periodStart: testPeriod.startDate,
+              periodEnd: testPeriod.endDate,
+            ),
+          ).thenAnswer((_) async => 30000);
+        },
+        build: buildBloc,
+        act: (bloc) => bloc.add(const BudgetStarted()),
+        verify: (bloc) {
+          // The transactions stream must be watched so the derived CC Payment
+          // available recomputes when a credit-card expense is added/deleted.
+          verify(
+            () => transactionRepository.watchTransactions(budgetId: 'budget-1'),
+          ).called(1);
+          expect(bloc.state.ccPaymentAvailable['cc-env'], 30000);
         },
       );
 
@@ -148,6 +379,56 @@ void main() {
           verify(
             () => budgetRepository.refreshAllocationTemplates('budget-1'),
           ).called(1);
+          verify(() => goalRepository.refreshGoals('budget-1')).called(1);
+        },
+      );
+
+      blocTest<BudgetBloc, BudgetState>(
+        'populates goals and goalsByEnvelope from goal stream',
+        setUp: () {
+          stubHappyPath();
+          final linkedGoal = Goal(
+            id: 'goal-1',
+            budgetId: 'budget-1',
+            type: 'monthly_contribution',
+            name: 'Rent',
+            envelopeId: 'env-1',
+            monthlyContribution: 50000,
+            createdAt: now,
+            updatedAt: now,
+          );
+          final unlinkedGoal = Goal(
+            id: 'goal-2',
+            budgetId: 'budget-1',
+            type: 'savings_target',
+            name: 'Emergency Fund',
+            targetAmount: 100000,
+            createdAt: now,
+            updatedAt: now,
+          );
+          final completedLinked = Goal(
+            id: 'goal-3',
+            budgetId: 'budget-1',
+            type: 'savings_target',
+            name: 'Done',
+            envelopeId: 'env-2',
+            isCompleted: true,
+            createdAt: now,
+            updatedAt: now,
+          );
+          when(() => goalRepository.watchGoals('budget-1')).thenAnswer(
+            (_) => Stream.value([linkedGoal, unlinkedGoal, completedLinked]),
+          );
+        },
+        build: buildBloc,
+        act: (bloc) => bloc.add(const BudgetStarted()),
+        verify: (bloc) {
+          expect(bloc.state.goals, hasLength(3));
+          // Only the active linked goal is keyed under env-1; completed and
+          // unlinked goals are excluded.
+          expect(bloc.state.goalsByEnvelope.keys.toList(), ['env-1']);
+          expect(bloc.state.goalsByEnvelope['env-1'], hasLength(1));
+          expect(bloc.state.goalsByEnvelope['env-1']!.first.id, 'goal-1');
         },
       );
 

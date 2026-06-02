@@ -3,3 +3,4 @@ export 'recurring_rule.dart';
 export 'tag.dart';
 export 'transaction.dart';
 export 'transaction_split.dart';
+export 'transaction_template.dart';

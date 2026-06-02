@@ -23,6 +23,18 @@ mixin _$Budget {
   int get periodStartDay;
   bool get isArchived;
 
+  /// Sum of on-budget account starting balances in cents.
+  ///
+  /// Added to "Ready to Assign" in whichever period contains
+  /// [openingDate] and propagates forward via `carriedRta`. This decouples
+  /// seed cash from the onboarding month so backdated transactions can be
+  /// covered by allocations.
+  int get openingBalance;
+
+  /// Date the opening balance is anchored to. Shifts earlier when a
+  /// period is backfilled before it.
+  DateTime? get openingDate;
+
   /// Create a copy of Budget
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -52,7 +64,11 @@ mixin _$Budget {
             (identical(other.periodStartDay, periodStartDay) ||
                 other.periodStartDay == periodStartDay) &&
             (identical(other.isArchived, isArchived) ||
-                other.isArchived == isArchived));
+                other.isArchived == isArchived) &&
+            (identical(other.openingBalance, openingBalance) ||
+                other.openingBalance == openingBalance) &&
+            (identical(other.openingDate, openingDate) ||
+                other.openingDate == openingDate));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -68,11 +84,13 @@ mixin _$Budget {
     periodType,
     periodStartDay,
     isArchived,
+    openingBalance,
+    openingDate,
   );
 
   @override
   String toString() {
-    return 'Budget(id: $id, ownerId: $ownerId, name: $name, baseCurrency: $baseCurrency, createdAt: $createdAt, updatedAt: $updatedAt, periodType: $periodType, periodStartDay: $periodStartDay, isArchived: $isArchived)';
+    return 'Budget(id: $id, ownerId: $ownerId, name: $name, baseCurrency: $baseCurrency, createdAt: $createdAt, updatedAt: $updatedAt, periodType: $periodType, periodStartDay: $periodStartDay, isArchived: $isArchived, openingBalance: $openingBalance, openingDate: $openingDate)';
   }
 }
 
@@ -91,6 +109,8 @@ abstract mixin class $BudgetCopyWith<$Res> {
     String periodType,
     int periodStartDay,
     bool isArchived,
+    int openingBalance,
+    DateTime? openingDate,
   });
 }
 
@@ -115,6 +135,8 @@ class _$BudgetCopyWithImpl<$Res> implements $BudgetCopyWith<$Res> {
     Object? periodType = null,
     Object? periodStartDay = null,
     Object? isArchived = null,
+    Object? openingBalance = null,
+    Object? openingDate = freezed,
   }) {
     return _then(
       _self.copyWith(
@@ -154,6 +176,14 @@ class _$BudgetCopyWithImpl<$Res> implements $BudgetCopyWith<$Res> {
             ? _self.isArchived
             : isArchived // ignore: cast_nullable_to_non_nullable
                   as bool,
+        openingBalance: null == openingBalance
+            ? _self.openingBalance
+            : openingBalance // ignore: cast_nullable_to_non_nullable
+                  as int,
+        openingDate: freezed == openingDate
+            ? _self.openingDate
+            : openingDate // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
       ),
     );
   }
@@ -262,6 +292,8 @@ extension BudgetPatterns on Budget {
       String periodType,
       int periodStartDay,
       bool isArchived,
+      int openingBalance,
+      DateTime? openingDate,
     )?
     $default, {
     required TResult orElse(),
@@ -279,6 +311,8 @@ extension BudgetPatterns on Budget {
           _that.periodType,
           _that.periodStartDay,
           _that.isArchived,
+          _that.openingBalance,
+          _that.openingDate,
         );
       case _:
         return orElse();
@@ -310,6 +344,8 @@ extension BudgetPatterns on Budget {
       String periodType,
       int periodStartDay,
       bool isArchived,
+      int openingBalance,
+      DateTime? openingDate,
     )
     $default,
   ) {
@@ -326,6 +362,8 @@ extension BudgetPatterns on Budget {
           _that.periodType,
           _that.periodStartDay,
           _that.isArchived,
+          _that.openingBalance,
+          _that.openingDate,
         );
       case _:
         throw StateError('Unexpected subclass');
@@ -356,6 +394,8 @@ extension BudgetPatterns on Budget {
       String periodType,
       int periodStartDay,
       bool isArchived,
+      int openingBalance,
+      DateTime? openingDate,
     )?
     $default,
   ) {
@@ -372,6 +412,8 @@ extension BudgetPatterns on Budget {
           _that.periodType,
           _that.periodStartDay,
           _that.isArchived,
+          _that.openingBalance,
+          _that.openingDate,
         );
       case _:
         return null;
@@ -392,6 +434,8 @@ class _Budget implements Budget {
     this.periodType = 'monthly',
     this.periodStartDay = 1,
     this.isArchived = false,
+    this.openingBalance = 0,
+    this.openingDate,
   });
   factory _Budget.fromJson(Map<String, dynamic> json) => _$BudgetFromJson(json);
 
@@ -416,6 +460,21 @@ class _Budget implements Budget {
   @override
   @JsonKey()
   final bool isArchived;
+
+  /// Sum of on-budget account starting balances in cents.
+  ///
+  /// Added to "Ready to Assign" in whichever period contains
+  /// [openingDate] and propagates forward via `carriedRta`. This decouples
+  /// seed cash from the onboarding month so backdated transactions can be
+  /// covered by allocations.
+  @override
+  @JsonKey()
+  final int openingBalance;
+
+  /// Date the opening balance is anchored to. Shifts earlier when a
+  /// period is backfilled before it.
+  @override
+  final DateTime? openingDate;
 
   /// Create a copy of Budget
   /// with the given fields replaced by the non-null parameter values.
@@ -449,7 +508,11 @@ class _Budget implements Budget {
             (identical(other.periodStartDay, periodStartDay) ||
                 other.periodStartDay == periodStartDay) &&
             (identical(other.isArchived, isArchived) ||
-                other.isArchived == isArchived));
+                other.isArchived == isArchived) &&
+            (identical(other.openingBalance, openingBalance) ||
+                other.openingBalance == openingBalance) &&
+            (identical(other.openingDate, openingDate) ||
+                other.openingDate == openingDate));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -465,11 +528,13 @@ class _Budget implements Budget {
     periodType,
     periodStartDay,
     isArchived,
+    openingBalance,
+    openingDate,
   );
 
   @override
   String toString() {
-    return 'Budget(id: $id, ownerId: $ownerId, name: $name, baseCurrency: $baseCurrency, createdAt: $createdAt, updatedAt: $updatedAt, periodType: $periodType, periodStartDay: $periodStartDay, isArchived: $isArchived)';
+    return 'Budget(id: $id, ownerId: $ownerId, name: $name, baseCurrency: $baseCurrency, createdAt: $createdAt, updatedAt: $updatedAt, periodType: $periodType, periodStartDay: $periodStartDay, isArchived: $isArchived, openingBalance: $openingBalance, openingDate: $openingDate)';
   }
 }
 
@@ -489,6 +554,8 @@ abstract mixin class _$BudgetCopyWith<$Res> implements $BudgetCopyWith<$Res> {
     String periodType,
     int periodStartDay,
     bool isArchived,
+    int openingBalance,
+    DateTime? openingDate,
   });
 }
 
@@ -513,6 +580,8 @@ class __$BudgetCopyWithImpl<$Res> implements _$BudgetCopyWith<$Res> {
     Object? periodType = null,
     Object? periodStartDay = null,
     Object? isArchived = null,
+    Object? openingBalance = null,
+    Object? openingDate = freezed,
   }) {
     return _then(
       _Budget(
@@ -552,6 +621,14 @@ class __$BudgetCopyWithImpl<$Res> implements _$BudgetCopyWith<$Res> {
             ? _self.isArchived
             : isArchived // ignore: cast_nullable_to_non_nullable
                   as bool,
+        openingBalance: null == openingBalance
+            ? _self.openingBalance
+            : openingBalance // ignore: cast_nullable_to_non_nullable
+                  as int,
+        openingDate: freezed == openingDate
+            ? _self.openingDate
+            : openingDate // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
       ),
     );
   }

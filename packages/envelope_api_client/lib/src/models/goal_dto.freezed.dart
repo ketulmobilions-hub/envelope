@@ -36,6 +36,12 @@ mixin _$GoalDto {
   DateTime? get targetDate;
   @JsonKey(name: 'monthly_contribution')
   int? get monthlyContribution;
+  @JsonKey(name: 'apr_bps')
+  int? get aprBps;
+  @JsonKey(name: 'min_payment_cents')
+  int? get minPaymentCents;
+  @JsonKey(name: 'sort_order')
+  int get sortOrder;
 
   /// Create a copy of GoalDto
   /// with the given fields replaced by the non-null parameter values.
@@ -74,7 +80,12 @@ mixin _$GoalDto {
             (identical(other.targetDate, targetDate) ||
                 other.targetDate == targetDate) &&
             (identical(other.monthlyContribution, monthlyContribution) ||
-                other.monthlyContribution == monthlyContribution));
+                other.monthlyContribution == monthlyContribution) &&
+            (identical(other.aprBps, aprBps) || other.aprBps == aprBps) &&
+            (identical(other.minPaymentCents, minPaymentCents) ||
+                other.minPaymentCents == minPaymentCents) &&
+            (identical(other.sortOrder, sortOrder) ||
+                other.sortOrder == sortOrder));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -94,11 +105,14 @@ mixin _$GoalDto {
     targetAmount,
     targetDate,
     monthlyContribution,
+    aprBps,
+    minPaymentCents,
+    sortOrder,
   );
 
   @override
   String toString() {
-    return 'GoalDto(id: $id, budgetId: $budgetId, type: $type, name: $name, createdAt: $createdAt, updatedAt: $updatedAt, currentAmount: $currentAmount, isCompleted: $isCompleted, envelopeId: $envelopeId, accountId: $accountId, targetAmount: $targetAmount, targetDate: $targetDate, monthlyContribution: $monthlyContribution)';
+    return 'GoalDto(id: $id, budgetId: $budgetId, type: $type, name: $name, createdAt: $createdAt, updatedAt: $updatedAt, currentAmount: $currentAmount, isCompleted: $isCompleted, envelopeId: $envelopeId, accountId: $accountId, targetAmount: $targetAmount, targetDate: $targetDate, monthlyContribution: $monthlyContribution, aprBps: $aprBps, minPaymentCents: $minPaymentCents, sortOrder: $sortOrder)';
   }
 }
 
@@ -121,6 +135,9 @@ abstract mixin class $GoalDtoCopyWith<$Res> {
     @JsonKey(name: 'target_amount') int? targetAmount,
     @JsonKey(name: 'target_date') DateTime? targetDate,
     @JsonKey(name: 'monthly_contribution') int? monthlyContribution,
+    @JsonKey(name: 'apr_bps') int? aprBps,
+    @JsonKey(name: 'min_payment_cents') int? minPaymentCents,
+    @JsonKey(name: 'sort_order') int sortOrder,
   });
 }
 
@@ -149,6 +166,9 @@ class _$GoalDtoCopyWithImpl<$Res> implements $GoalDtoCopyWith<$Res> {
     Object? targetAmount = freezed,
     Object? targetDate = freezed,
     Object? monthlyContribution = freezed,
+    Object? aprBps = freezed,
+    Object? minPaymentCents = freezed,
+    Object? sortOrder = null,
   }) {
     return _then(
       _self.copyWith(
@@ -204,6 +224,18 @@ class _$GoalDtoCopyWithImpl<$Res> implements $GoalDtoCopyWith<$Res> {
             ? _self.monthlyContribution
             : monthlyContribution // ignore: cast_nullable_to_non_nullable
                   as int?,
+        aprBps: freezed == aprBps
+            ? _self.aprBps
+            : aprBps // ignore: cast_nullable_to_non_nullable
+                  as int?,
+        minPaymentCents: freezed == minPaymentCents
+            ? _self.minPaymentCents
+            : minPaymentCents // ignore: cast_nullable_to_non_nullable
+                  as int?,
+        sortOrder: null == sortOrder
+            ? _self.sortOrder
+            : sortOrder // ignore: cast_nullable_to_non_nullable
+                  as int,
       ),
     );
   }
@@ -316,6 +348,9 @@ extension GoalDtoPatterns on GoalDto {
       @JsonKey(name: 'target_amount') int? targetAmount,
       @JsonKey(name: 'target_date') DateTime? targetDate,
       @JsonKey(name: 'monthly_contribution') int? monthlyContribution,
+      @JsonKey(name: 'apr_bps') int? aprBps,
+      @JsonKey(name: 'min_payment_cents') int? minPaymentCents,
+      @JsonKey(name: 'sort_order') int sortOrder,
     )?
     $default, {
     required TResult orElse(),
@@ -337,6 +372,9 @@ extension GoalDtoPatterns on GoalDto {
           _that.targetAmount,
           _that.targetDate,
           _that.monthlyContribution,
+          _that.aprBps,
+          _that.minPaymentCents,
+          _that.sortOrder,
         );
       case _:
         return orElse();
@@ -372,6 +410,9 @@ extension GoalDtoPatterns on GoalDto {
       @JsonKey(name: 'target_amount') int? targetAmount,
       @JsonKey(name: 'target_date') DateTime? targetDate,
       @JsonKey(name: 'monthly_contribution') int? monthlyContribution,
+      @JsonKey(name: 'apr_bps') int? aprBps,
+      @JsonKey(name: 'min_payment_cents') int? minPaymentCents,
+      @JsonKey(name: 'sort_order') int sortOrder,
     )
     $default,
   ) {
@@ -392,6 +433,9 @@ extension GoalDtoPatterns on GoalDto {
           _that.targetAmount,
           _that.targetDate,
           _that.monthlyContribution,
+          _that.aprBps,
+          _that.minPaymentCents,
+          _that.sortOrder,
         );
       case _:
         throw StateError('Unexpected subclass');
@@ -426,6 +470,9 @@ extension GoalDtoPatterns on GoalDto {
       @JsonKey(name: 'target_amount') int? targetAmount,
       @JsonKey(name: 'target_date') DateTime? targetDate,
       @JsonKey(name: 'monthly_contribution') int? monthlyContribution,
+      @JsonKey(name: 'apr_bps') int? aprBps,
+      @JsonKey(name: 'min_payment_cents') int? minPaymentCents,
+      @JsonKey(name: 'sort_order') int sortOrder,
     )?
     $default,
   ) {
@@ -446,6 +493,9 @@ extension GoalDtoPatterns on GoalDto {
           _that.targetAmount,
           _that.targetDate,
           _that.monthlyContribution,
+          _that.aprBps,
+          _that.minPaymentCents,
+          _that.sortOrder,
         );
       case _:
         return null;
@@ -470,6 +520,9 @@ class _GoalDto implements GoalDto {
     @JsonKey(name: 'target_amount') this.targetAmount,
     @JsonKey(name: 'target_date') this.targetDate,
     @JsonKey(name: 'monthly_contribution') this.monthlyContribution,
+    @JsonKey(name: 'apr_bps') this.aprBps,
+    @JsonKey(name: 'min_payment_cents') this.minPaymentCents,
+    @JsonKey(name: 'sort_order') this.sortOrder = 0,
   });
   factory _GoalDto.fromJson(Map<String, dynamic> json) =>
       _$GoalDtoFromJson(json);
@@ -510,6 +563,15 @@ class _GoalDto implements GoalDto {
   @override
   @JsonKey(name: 'monthly_contribution')
   final int? monthlyContribution;
+  @override
+  @JsonKey(name: 'apr_bps')
+  final int? aprBps;
+  @override
+  @JsonKey(name: 'min_payment_cents')
+  final int? minPaymentCents;
+  @override
+  @JsonKey(name: 'sort_order')
+  final int sortOrder;
 
   /// Create a copy of GoalDto
   /// with the given fields replaced by the non-null parameter values.
@@ -551,7 +613,12 @@ class _GoalDto implements GoalDto {
             (identical(other.targetDate, targetDate) ||
                 other.targetDate == targetDate) &&
             (identical(other.monthlyContribution, monthlyContribution) ||
-                other.monthlyContribution == monthlyContribution));
+                other.monthlyContribution == monthlyContribution) &&
+            (identical(other.aprBps, aprBps) || other.aprBps == aprBps) &&
+            (identical(other.minPaymentCents, minPaymentCents) ||
+                other.minPaymentCents == minPaymentCents) &&
+            (identical(other.sortOrder, sortOrder) ||
+                other.sortOrder == sortOrder));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -571,11 +638,14 @@ class _GoalDto implements GoalDto {
     targetAmount,
     targetDate,
     monthlyContribution,
+    aprBps,
+    minPaymentCents,
+    sortOrder,
   );
 
   @override
   String toString() {
-    return 'GoalDto(id: $id, budgetId: $budgetId, type: $type, name: $name, createdAt: $createdAt, updatedAt: $updatedAt, currentAmount: $currentAmount, isCompleted: $isCompleted, envelopeId: $envelopeId, accountId: $accountId, targetAmount: $targetAmount, targetDate: $targetDate, monthlyContribution: $monthlyContribution)';
+    return 'GoalDto(id: $id, budgetId: $budgetId, type: $type, name: $name, createdAt: $createdAt, updatedAt: $updatedAt, currentAmount: $currentAmount, isCompleted: $isCompleted, envelopeId: $envelopeId, accountId: $accountId, targetAmount: $targetAmount, targetDate: $targetDate, monthlyContribution: $monthlyContribution, aprBps: $aprBps, minPaymentCents: $minPaymentCents, sortOrder: $sortOrder)';
   }
 }
 
@@ -599,6 +669,9 @@ abstract mixin class _$GoalDtoCopyWith<$Res> implements $GoalDtoCopyWith<$Res> {
     @JsonKey(name: 'target_amount') int? targetAmount,
     @JsonKey(name: 'target_date') DateTime? targetDate,
     @JsonKey(name: 'monthly_contribution') int? monthlyContribution,
+    @JsonKey(name: 'apr_bps') int? aprBps,
+    @JsonKey(name: 'min_payment_cents') int? minPaymentCents,
+    @JsonKey(name: 'sort_order') int sortOrder,
   });
 }
 
@@ -627,6 +700,9 @@ class __$GoalDtoCopyWithImpl<$Res> implements _$GoalDtoCopyWith<$Res> {
     Object? targetAmount = freezed,
     Object? targetDate = freezed,
     Object? monthlyContribution = freezed,
+    Object? aprBps = freezed,
+    Object? minPaymentCents = freezed,
+    Object? sortOrder = null,
   }) {
     return _then(
       _GoalDto(
@@ -682,6 +758,18 @@ class __$GoalDtoCopyWithImpl<$Res> implements _$GoalDtoCopyWith<$Res> {
             ? _self.monthlyContribution
             : monthlyContribution // ignore: cast_nullable_to_non_nullable
                   as int?,
+        aprBps: freezed == aprBps
+            ? _self.aprBps
+            : aprBps // ignore: cast_nullable_to_non_nullable
+                  as int?,
+        minPaymentCents: freezed == minPaymentCents
+            ? _self.minPaymentCents
+            : minPaymentCents // ignore: cast_nullable_to_non_nullable
+                  as int?,
+        sortOrder: null == sortOrder
+            ? _self.sortOrder
+            : sortOrder // ignore: cast_nullable_to_non_nullable
+                  as int,
       ),
     );
   }

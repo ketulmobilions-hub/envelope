@@ -6,12 +6,15 @@ import 'package:envelope/accounts/widgets/account_helpers.dart';
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/dashboard/bloc/bloc.dart';
+import 'package:envelope/dashboard/widgets/allocate_envelope_sheet.dart';
 import 'package:envelope/envelopes/cubit/cubit.dart';
 import 'package:envelope/envelopes/view/envelope_detail_page.dart';
 import 'package:envelope/envelopes/widgets/envelope_card.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
+import 'package:envelope/shared/widgets/animated_cents.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:envelope/transactions/widgets/cc_pay_bottom_sheet.dart';
 import 'package:envelope/transactions/widgets/cover_overspend_dialog.dart';
@@ -192,15 +195,18 @@ class _CategoryGroupSection extends StatelessWidget {
                   ),
                 ),
               ),
-              Text(
-                formatCents(totalAvailable, symbol: symbol),
+              AnimatedCents(
+                cents: totalAvailable,
+                symbol: symbol,
                 style: theme.textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: availColor,
                 ),
               ),
-              Text(
-                '/${formatCents(totalAllocated, symbol: symbol)}',
+              AnimatedCents(
+                cents: totalAllocated,
+                symbol: symbol,
+                prefix: '/',
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: AppColors.secondaryText,
                 ),
@@ -247,7 +253,7 @@ class _CategoryGroupSection extends StatelessWidget {
                         : s.available;
                     final displayAllocated = hasCreditInfo
                         ? creditLimit
-                        : s.allocated;
+                        : s.budgeted;
                     final displayOverspent = hasCreditInfo
                         ? displayAvailable < 0
                         : s.isOverspent;
@@ -286,13 +292,16 @@ class _CategoryGroupSection extends StatelessWidget {
                         color: AppColors.fromHex(s.envelope.color),
                         heroTag: 'envelope_${s.envelope.id}',
                         onTap: () => _openDetail(context, s),
-                        onAllocate: linkedId != null
+                        onEditTap: linkedId != null
                             ? null
-                            : (cents) {
-                                context.read<DashboardBloc>().add(
-                                  QuickAllocationRequested(
+                            : () {
+                                unawaited(
+                                  showAllocateEnvelopeSheet(
+                                    context,
                                     envelopeId: s.envelope.id,
-                                    amount: cents,
+                                    envelopeName: s.envelope.name,
+                                    currentAllocatedCents:
+                                        s.allocation?.allocatedAmount ?? 0,
                                   ),
                                 );
                               },
@@ -307,6 +316,7 @@ class _CategoryGroupSection extends StatelessWidget {
                                 context,
                                 ccAccount,
                                 linkedId,
+                                s.envelope.id,
                               )
                             : null,
                       ),
@@ -374,6 +384,7 @@ class _CategoryGroupSection extends StatelessWidget {
     BuildContext context,
     Account ccAccount,
     String linkedId,
+    String ccPaymentEnvelopeId,
   ) async {
     final dashState = context.read<DashboardBloc>().state;
     final budgetId =
@@ -391,6 +402,7 @@ class _CategoryGroupSection extends StatelessWidget {
       budgetId: budgetId,
       userId: userId,
       budgetPeriodId: budgetPeriodId,
+      ccPaymentEnvelopeId: ccPaymentEnvelopeId,
     );
 
     if (context.mounted) {
@@ -399,8 +411,12 @@ class _CategoryGroupSection extends StatelessWidget {
   }
 
   void _openDetail(BuildContext context, EnvelopeSummary summary) {
+    // CC Payment envelopes have their own "Pay" FAB and shouldn't show the
+    // shell's add-transaction FAB, so present them over the root navigator
+    // (covering the shell FAB + nav bar). Regular envelopes stay nested.
+    final isCreditCard = summary.envelope.linkedAccountId != null;
     unawaited(
-      Navigator.of(context).push(
+      Navigator.of(context, rootNavigator: isCreditCard).push(
         PageRouteBuilder<void>(
           transitionDuration: const Duration(milliseconds: 500),
           reverseTransitionDuration: const Duration(milliseconds: 400),
@@ -408,9 +424,10 @@ class _CategoryGroupSection extends StatelessWidget {
             create: (_) => EnvelopeDetailCubit(
               envelopeRepository: context.read<EnvelopeRepository>(),
               envelope: summary.envelope,
-              allocation: summary.allocation,
               transactionRepository: context.read<TransactionRepository>(),
               budgetRepository: context.read<BudgetRepository>(),
+              accountRepository: context.read<AccountRepository>(),
+              now: context.read<AppClock>().now,
             ),
             child: EnvelopeDetailPage(
               categoryGroups: categoryGroups,

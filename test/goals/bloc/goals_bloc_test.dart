@@ -1,13 +1,25 @@
+import 'package:account_repository/account_repository.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:envelope/goals/bloc/bloc.dart';
+import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:goal_repository/goal_repository.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:transaction_repository/transaction_repository.dart';
 
 class MockGoalRepository extends Mock implements GoalRepository {}
 
+class MockEnvelopeRepository extends Mock implements EnvelopeRepository {}
+
+class MockTransactionRepository extends Mock implements TransactionRepository {}
+
+class MockAccountRepository extends Mock implements AccountRepository {}
+
 void main() {
   late MockGoalRepository goalRepository;
+  late MockEnvelopeRepository envelopeRepository;
+  late MockTransactionRepository transactionRepository;
+  late MockAccountRepository accountRepository;
 
   final now = DateTime(2024);
   final testGoals = [
@@ -35,7 +47,31 @@ void main() {
 
   setUp(() {
     goalRepository = MockGoalRepository();
+    envelopeRepository = MockEnvelopeRepository();
+    transactionRepository = MockTransactionRepository();
+    accountRepository = MockAccountRepository();
+    when(
+      () => accountRepository.watchAccounts(any()),
+    ).thenAnswer((_) => Stream.value(<Account>[]));
+    when(
+      () => envelopeRepository.watchAllocationsForEnvelope(any()),
+    ).thenAnswer((_) => const Stream<List<EnvelopeAllocation>>.empty());
+    when(
+      () => transactionRepository.watchTransactions(
+        budgetId: any(named: 'budgetId'),
+      ),
+    ).thenAnswer((_) => const Stream<List<Transaction>>.empty());
   });
+
+  GoalsBloc buildBloc() {
+    return GoalsBloc(
+      goalRepository: goalRepository,
+      envelopeRepository: envelopeRepository,
+      transactionRepository: transactionRepository,
+      accountRepository: accountRepository,
+      budgetId: 'budget-1',
+    );
+  }
 
   group('GoalsBloc', () {
     blocTest<GoalsBloc, GoalsState>(
@@ -47,10 +83,7 @@ void main() {
         when(
           () => goalRepository.refreshGoals('budget-1'),
         ).thenAnswer((_) async {});
-        return GoalsBloc(
-          goalRepository: goalRepository,
-          budgetId: 'budget-1',
-        );
+        return buildBloc();
       },
       act: (bloc) => bloc.add(const GoalsStarted()),
       expect: () => [
@@ -75,10 +108,7 @@ void main() {
         when(
           () => goalRepository.refreshGoals('budget-1'),
         ).thenThrow(const GoalException('Network error'));
-        return GoalsBloc(
-          goalRepository: goalRepository,
-          budgetId: 'budget-1',
-        );
+        return buildBloc();
       },
       act: (bloc) => bloc.add(const GoalsStarted()),
       expect: () => [
@@ -97,10 +127,7 @@ void main() {
         when(
           () => goalRepository.completeGoal('goal-1'),
         ).thenAnswer((_) async {});
-        return GoalsBloc(
-          goalRepository: goalRepository,
-          budgetId: 'budget-1',
-        );
+        return buildBloc();
       },
       act: (bloc) => bloc.add(GoalCompleteToggled(testGoals.first)),
       verify: (_) {
@@ -115,10 +142,7 @@ void main() {
         when(
           () => goalRepository.uncompleteGoal('goal-1'),
         ).thenAnswer((_) async {});
-        return GoalsBloc(
-          goalRepository: goalRepository,
-          budgetId: 'budget-1',
-        );
+        return buildBloc();
       },
       act: (bloc) => bloc.add(
         GoalCompleteToggled(
@@ -136,10 +160,7 @@ void main() {
         when(
           () => goalRepository.completeGoal('goal-1'),
         ).thenThrow(const GoalException('Failed'));
-        return GoalsBloc(
-          goalRepository: goalRepository,
-          budgetId: 'budget-1',
-        );
+        return buildBloc();
       },
       act: (bloc) => bloc.add(GoalCompleteToggled(testGoals.first)),
       expect: () => [
@@ -157,10 +178,7 @@ void main() {
         when(
           () => goalRepository.deleteGoal('goal-1'),
         ).thenThrow(const GoalException('Failed'));
-        return GoalsBloc(
-          goalRepository: goalRepository,
-          budgetId: 'budget-1',
-        );
+        return buildBloc();
       },
       act: (bloc) => bloc.add(const GoalDeleted('goal-1')),
       expect: () => [
@@ -178,10 +196,7 @@ void main() {
         when(
           () => goalRepository.deleteGoal('goal-1'),
         ).thenAnswer((_) async {});
-        return GoalsBloc(
-          goalRepository: goalRepository,
-          budgetId: 'budget-1',
-        );
+        return buildBloc();
       },
       act: (bloc) => bloc.add(const GoalDeleted('goal-1')),
       verify: (_) {
@@ -195,14 +210,62 @@ void main() {
         when(
           () => goalRepository.refreshGoals('budget-1'),
         ).thenAnswer((_) async {});
-        return GoalsBloc(
-          goalRepository: goalRepository,
-          budgetId: 'budget-1',
-        );
+        return buildBloc();
       },
       act: (bloc) => bloc.add(const GoalsRefreshRequested()),
       verify: (_) {
         verify(() => goalRepository.refreshGoals('budget-1')).called(1);
+      },
+    );
+
+    blocTest<GoalsBloc, GoalsState>(
+      'computes amounts from envelope-keyed allocation stream',
+      build: () {
+        final linkedGoal = Goal(
+          id: 'goal-3',
+          budgetId: 'budget-1',
+          name: 'Vacation',
+          type: 'savings_target',
+          envelopeId: 'env-1',
+          targetAmount: 100000,
+          createdAt: now,
+          updatedAt: now,
+        );
+        when(
+          () => goalRepository.watchGoals('budget-1'),
+        ).thenAnswer((_) => Stream.value([linkedGoal]));
+        when(
+          () => goalRepository.refreshGoals('budget-1'),
+        ).thenAnswer((_) async {});
+        when(
+          () => envelopeRepository.watchAllocationsForEnvelope('env-1'),
+        ).thenAnswer(
+          (_) => Stream.value([
+            EnvelopeAllocation(
+              id: 'a1',
+              envelopeId: 'env-1',
+              budgetPeriodId: 'p1',
+              createdAt: now,
+              allocatedAmount: 200,
+              spentAmount: 50,
+            ),
+            EnvelopeAllocation(
+              id: 'a2',
+              envelopeId: 'env-1',
+              budgetPeriodId: 'p2',
+              createdAt: now,
+              allocatedAmount: 100,
+              spentAmount: 30,
+            ),
+          ]),
+        );
+        return buildBloc();
+      },
+      act: (bloc) => bloc.add(const GoalsStarted()),
+      wait: const Duration(milliseconds: 50),
+      verify: (bloc) {
+        // (200-50) + (100-30) = 220
+        expect(bloc.state.computedAmounts['goal-3'], 220);
       },
     );
   });

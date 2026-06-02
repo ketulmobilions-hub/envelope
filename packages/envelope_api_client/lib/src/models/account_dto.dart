@@ -12,6 +12,7 @@ abstract class AccountDto with _$AccountDto {
     required String name,
     required String type,
     required String currency,
+    @JsonKey(name: 'display_fx_rate') @Default(1.0) double displayFxRate,
     @JsonKey(name: 'created_at') required DateTime createdAt,
     @JsonKey(name: 'updated_at') required DateTime updatedAt,
     @JsonKey(name: 'starting_balance') @Default(0) int startingBalance,

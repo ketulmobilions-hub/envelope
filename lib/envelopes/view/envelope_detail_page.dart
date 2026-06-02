@@ -5,6 +5,7 @@ import 'package:envelope/auth/auth.dart';
 import 'package:envelope/envelopes/cubit/cubit.dart';
 import 'package:envelope/envelopes/view/envelope_form_page.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/theme/app_colors.dart';
@@ -14,6 +15,7 @@ import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 
 /// Detail page for a single envelope with terracotta header.
@@ -66,7 +68,7 @@ class EnvelopeDetailPage extends StatelessWidget {
     final linkedId = state.envelope.linkedAccountId!;
     final budgetId = state.envelope.budgetId;
     final userId = context.read<AuthBloc>().state.user?.id ?? '';
-    final budgetPeriodId = state.allocation?.budgetPeriodId;
+    final budgetPeriodId = state.currentPeriodId;
     final accounts = await context
         .read<AccountRepository>()
         .watchAccounts(budgetId)
@@ -85,6 +87,7 @@ class EnvelopeDetailPage extends StatelessWidget {
       budgetId: budgetId,
       userId: userId,
       budgetPeriodId: budgetPeriodId,
+      ccPaymentEnvelopeId: state.envelope.id,
     );
   }
 
@@ -93,8 +96,8 @@ class EnvelopeDetailPage extends StatelessWidget {
     Envelope envelope,
   ) async {
     final cubit = context.read<EnvelopeDetailCubit>();
-    final result = await Navigator.of(context).push<bool>(
-      MaterialPageRoute<bool>(
+    final result = await Navigator.of(context).push<Object>(
+      MaterialPageRoute<Object>(
         builder: (_) => BlocProvider(
           create: (_) => EnvelopeFormCubit(
             envelopeRepository: context.read<EnvelopeRepository>(),
@@ -108,7 +111,7 @@ class EnvelopeDetailPage extends StatelessWidget {
         ),
       ),
     );
-    if (result == true && context.mounted) {
+    if (result != null && context.mounted) {
       await cubit.refresh();
     }
   }
@@ -258,6 +261,10 @@ class _EnvelopeAppBarState extends State<_EnvelopeAppBar>
     final symbol = currencySymbol(context);
     final state = widget.state;
     final envelope = state.envelope;
+    final currentGroup = state.currentGroup;
+    final available = currentGroup?.available ?? 0;
+    final allocated = currentGroup?.allocated ?? 0;
+    final spent = currentGroup?.spent ?? 0;
 
     return SliverAppBar(
       expandedHeight: 210,
@@ -299,59 +306,137 @@ class _EnvelopeAppBarState extends State<_EnvelopeAppBar>
                 24,
                 48,
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    l10n.envelopesDetailAvailable.toUpperCase(),
-                    style: const TextStyle(
-                      color: AppColors.onPrimary,
-                      fontSize: 13,
-                      letterSpacing: 0.8,
+              child: state.isCreditCardEnvelope
+                  ? _buildCreditCardSummary(l10n, symbol)
+                  : _buildEnvelopeSummary(
+                      l10n,
+                      symbol,
+                      available: available,
+                      allocated: allocated,
+                      spent: spent,
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    formatCents(state.available, symbol: symbol),
-                    style: GoogleFonts.playfairDisplay(
-                      color: AppColors.onPrimary,
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SlideTransition(
-                        position: _slideLeft,
-                        child: FadeTransition(
-                          opacity: _opacityCurve,
-                          child: _HeaderDetail(
-                            label: l10n.envelopesDetailAllocated,
-                            amount: state.allocated,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 32),
-                      SlideTransition(
-                        position: _slideRight,
-                        child: FadeTransition(
-                          opacity: _opacityCurve,
-                          child: _HeaderDetail(
-                            label: l10n.envelopesDetailSpent,
-                            amount: state.spent,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildEnvelopeSummary(
+    AppLocalizations l10n,
+    String symbol, {
+    required int available,
+    required int allocated,
+    required int spent,
+  }) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          l10n.envelopesDetailAvailable.toUpperCase(),
+          style: const TextStyle(
+            color: AppColors.onPrimary,
+            fontSize: 13,
+            letterSpacing: 0.8,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          formatCents(available, symbol: symbol),
+          style: GoogleFonts.playfairDisplay(
+            color: AppColors.onPrimary,
+            fontSize: 36,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SlideTransition(
+              position: _slideLeft,
+              child: FadeTransition(
+                opacity: _opacityCurve,
+                child: _HeaderDetail(
+                  label: l10n.envelopesDetailAllocated,
+                  amount: allocated,
+                ),
+              ),
+            ),
+            const SizedBox(width: 32),
+            SlideTransition(
+              position: _slideRight,
+              child: FadeTransition(
+                opacity: _opacityCurve,
+                child: _HeaderDetail(
+                  label: l10n.envelopesDetailSpent,
+                  amount: spent,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// CC Payment envelope header: shows available credit out of the limit when
+  /// a credit limit is known, otherwise just the amount due. No allocated /
+  /// spent — those figures aren't meaningful for a credit-card envelope.
+  Widget _buildCreditCardSummary(AppLocalizations l10n, String symbol) {
+    final state = widget.state;
+    final availableCredit = state.ccAvailableCreditCents;
+    final hasLimit = availableCredit != null;
+
+    final label = hasLimit
+        ? l10n.envelopesDetailAvailable
+        : l10n.envelopesDetailDue;
+    final amount = hasLimit ? availableCredit : state.ccDueCents;
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: const TextStyle(
+            color: AppColors.onPrimary,
+            fontSize: 13,
+            letterSpacing: 0.8,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          formatCents(amount, symbol: symbol),
+          style: GoogleFonts.playfairDisplay(
+            color: AppColors.onPrimary,
+            fontSize: 36,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        if (hasLimit) ...[
+          const SizedBox(height: 4),
+          Text(
+            l10n.envelopesDetailOfLimit(
+              formatCents(state.ccCreditLimit!, symbol: symbol),
+            ),
+            style: const TextStyle(
+              color: AppColors.onPrimary,
+              fontSize: 13,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.ccDueLabel(formatCents(state.ccDueCents, symbol: symbol)),
+            style: const TextStyle(
+              color: AppColors.onPrimary,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -448,13 +533,15 @@ class _EnvelopeContentState extends State<_EnvelopeContent>
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                // Transactions.
+                // Per-period transactions.
                 BlocBuilder<EnvelopeDetailCubit, EnvelopeDetailState>(
                   buildWhen: (prev, curr) =>
-                      prev.transactions != curr.transactions,
+                      prev.transactions != curr.transactions ||
+                      prev.allocations != curr.allocations ||
+                      prev.periods != curr.periods ||
+                      prev.currentPeriodId != curr.currentPeriodId,
                   builder: (context, state) {
-                    final transactions = [...state.transactions]
-                      ..sort((a, b) => b.date.compareTo(a.date));
+                    final groups = state.groups;
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -465,7 +552,7 @@ class _EnvelopeContentState extends State<_EnvelopeContent>
                             style: sectionTitle,
                           ),
                         ),
-                        if (transactions.isEmpty)
+                        if (groups.isEmpty)
                           Padding(
                             padding: const EdgeInsets.all(20),
                             child: Center(
@@ -488,32 +575,14 @@ class _EnvelopeContentState extends State<_EnvelopeContent>
                             ),
                           )
                         else
-                          for (int i = 0; i < transactions.length; i++) ...[
-                            if (i == 0 ||
-                                !_sameDay(
-                                  transactions[i].date,
-                                  transactions[i - 1].date,
-                                ))
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(4, 12, 4, 4),
-                                child: Text(
-                                  formatDateHeader(
-                                    transactions[i].date,
-                                    l10n,
-                                  ),
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: AppColors.onPrimary.withValues(
-                                      alpha: 0.6,
-                                    ),
-                                    letterSpacing: 0.8,
-                                  ),
-                                ),
-                              ),
-                            _TransactionRow(
-                              transaction: transactions[i],
+                          for (final group in groups)
+                            _PeriodSection(
+                              group: group,
+                              isCurrent:
+                                  group.period?.id == state.currentPeriodId,
                               envelopeColor: widget.envelopeColor,
+                              hideFigures: state.isCreditCardEnvelope,
                             ),
-                          ],
                       ],
                     );
                   },
@@ -589,6 +658,137 @@ class _HeaderDetail extends StatelessWidget {
 
 bool _sameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
+
+class _PeriodSection extends StatelessWidget {
+  const _PeriodSection({
+    required this.group,
+    required this.isCurrent,
+    required this.envelopeColor,
+    this.hideFigures = false,
+  });
+
+  final EnvelopePeriodGroup group;
+  final bool isCurrent;
+  final Color envelopeColor;
+
+  /// When true (CC Payment envelope), the allocated/spent/available row is
+  /// omitted — those figures aren't meaningful for a credit-card envelope.
+  final bool hideFigures;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final period = group.period;
+    final transactions = group.transactions;
+    final mutedStyle = theme.textTheme.bodyMedium?.copyWith(
+      color: AppColors.onPrimary.withValues(alpha: 0.85),
+    );
+    final periodLabel = period == null
+        ? l10n.envelopesDetailPeriodUncategorized
+        : l10n.envelopesDetailPeriodRange(
+            DateFormat.yMMMd().format(period.startDate),
+            DateFormat.yMMMd().format(period.endDate),
+          );
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  periodLabel,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
+                    color: AppColors.onPrimary,
+                  ),
+                ),
+              ),
+              if (isCurrent)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.onPrimary.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    l10n.envelopesDetailPeriodCurrent.toUpperCase(),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: AppColors.onPrimary,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          if (period != null && !hideFigures) ...[
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _HeaderDetail(
+                  label: l10n.envelopesDetailAllocated,
+                  amount: group.allocated,
+                ),
+                _HeaderDetail(
+                  label: l10n.envelopesDetailSpent,
+                  amount: group.spent,
+                ),
+                _HeaderDetail(
+                  label: l10n.envelopesDetailAvailable,
+                  amount: group.available,
+                ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 8),
+          if (transactions.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              child: Text(
+                l10n.envelopesDetailPeriodEmpty,
+                style: mutedStyle,
+              ),
+            )
+          else
+            for (int i = 0; i < transactions.length; i++) ...[
+              if (i == 0 ||
+                  !_sameDay(
+                    transactions[i].date,
+                    transactions[i - 1].date,
+                  ))
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 12, 4, 4),
+                  child: Text(
+                    formatDateHeader(
+                      transactions[i].date,
+                      l10n,
+                      now: context.read<AppClock>().now(),
+                    ),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: AppColors.onPrimary.withValues(alpha: 0.6),
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+              _TransactionRow(
+                transaction: transactions[i],
+                envelopeColor: envelopeColor,
+              ),
+            ],
+        ],
+      ),
+    );
+  }
+}
 
 class _TransactionRow extends StatelessWidget {
   const _TransactionRow({

@@ -10,6 +10,8 @@ class Transactions extends Table {
   TextColumn get currency => text()();
   RealColumn get exchangeRate =>
       real().named('exchange_rate').withDefault(const Constant(1))();
+  IntColumn get baseCurrencyAmount =>
+      integer().named('base_currency_amount').withDefault(const Constant(0))();
   TextColumn get payee => text().nullable()();
   TextColumn get notes => text().nullable()();
   DateTimeColumn get date => dateTime()();

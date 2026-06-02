@@ -358,9 +358,15 @@
     "@accountsStartingBalanceLabel": {
         "description": "Label for starting balance input"
     },
-    "accountsBalanceTooLarge": "Amount must be $999,999,999.99 or less",
+    "accountsBalanceTooLarge": "Amount must be {amount} or less",
     "@accountsBalanceTooLarge": {
-        "description": "Error when balance exceeds the maximum allowed amount"
+        "description": "Error when balance exceeds the maximum allowed amount",
+        "placeholders": {
+            "amount": {
+                "type": "String",
+                "example": "$999,999,999.99"
+            }
+        }
     },
     "accountsCreateButton": "Create Account",
     "@accountsCreateButton": {
@@ -386,9 +392,15 @@
     "@accountsCreditLimitLabel": {
         "description": "Label for credit card credit limit field"
     },
-    "accountsCreditLimitTooLarge": "Credit limit must be $999,999,999.99 or less",
+    "accountsCreditLimitTooLarge": "Credit limit must be {amount} or less",
     "@accountsCreditLimitTooLarge": {
-        "description": "Error when credit limit exceeds maximum allowed amount"
+        "description": "Error when credit limit exceeds maximum allowed amount",
+        "placeholders": {
+            "amount": {
+                "type": "String",
+                "example": "$999,999,999.99"
+            }
+        }
     },
     "accountsAvailableCreditLabel": "Available Credit",
     "@accountsAvailableCreditLabel": {
@@ -397,6 +409,44 @@
     "accountsCurrencyLabel": "Currency",
     "@accountsCurrencyLabel": {
         "description": "Label for currency field"
+    },
+    "accountsCurrencyEditingDisabled": "Currency cannot be changed after the account is created.",
+    "@accountsCurrencyEditingDisabled": {
+        "description": "Helper shown on the disabled currency field while editing"
+    },
+    "accountsDisplayFxRateLabel": "Conversion rate to base currency",
+    "@accountsDisplayFxRateLabel": {
+        "description": "Label for the per-account FX rate input"
+    },
+    "accountsDisplayFxRateHelper": "1 {accountCode} = X {baseSymbol} {baseCode}",
+    "@accountsDisplayFxRateHelper": {
+        "description": "Helper text under the FX rate input",
+        "placeholders": {
+            "accountCode": { "type": "String" },
+            "baseSymbol": { "type": "String" },
+            "baseCode": { "type": "String" }
+        }
+    },
+    "accountsDisplayFxRateInvalid": "Enter a positive conversion rate",
+    "@accountsDisplayFxRateInvalid": {
+        "description": "Validation error for invalid FX rate"
+    },
+    "transactionsExchangeRateLabel": "Exchange rate",
+    "@transactionsExchangeRateLabel": {
+        "description": "Label for per-transaction exchange rate input"
+    },
+    "transactionsExchangeRateHelper": "1 {accountCode} = X {baseSymbol} {baseCode}",
+    "@transactionsExchangeRateHelper": {
+        "description": "Helper under transaction FX rate input",
+        "placeholders": {
+            "accountCode": { "type": "String" },
+            "baseSymbol": { "type": "String" },
+            "baseCode": { "type": "String" }
+        }
+    },
+    "transactionsExchangeRateInvalid": "Enter a positive exchange rate",
+    "@transactionsExchangeRateInvalid": {
+        "description": "Validation error for invalid transaction FX rate"
     },
     "accountsStatusLabel": "Status",
     "@accountsStatusLabel": {
@@ -635,6 +685,17 @@
     "@envelopesDetailAvailable": {
         "description": "Label for available amount in envelope detail"
     },
+    "envelopesDetailDue": "Due",
+    "@envelopesDetailDue": {
+        "description": "Label shown above the amount due on a credit-card payment envelope detail header (no credit limit set)"
+    },
+    "envelopesDetailOfLimit": "of {limit}",
+    "@envelopesDetailOfLimit": {
+        "description": "Subtitle under available credit on a credit-card payment envelope detail header, showing the credit limit",
+        "placeholders": {
+            "limit": {"type": "String"}
+        }
+    },
     "envelopesDetailAllocationHistory": "Allocation History",
     "@envelopesDetailAllocationHistory": {
         "description": "Title for allocation history section"
@@ -654,6 +715,26 @@
     "envelopesDetailGoalProgressPlaceholder": "Goal tracking coming soon.",
     "@envelopesDetailGoalProgressPlaceholder": {
         "description": "Placeholder text for goal progress in envelope detail"
+    },
+    "envelopesDetailPeriodCurrent": "Current",
+    "@envelopesDetailPeriodCurrent": {
+        "description": "Badge on the period section that contains today's date"
+    },
+    "envelopesDetailPeriodEmpty": "No transactions in this period.",
+    "@envelopesDetailPeriodEmpty": {
+        "description": "Shown inside a period section that has an allocation but no transactions"
+    },
+    "envelopesDetailPeriodRange": "{start} – {end}",
+    "@envelopesDetailPeriodRange": {
+        "description": "Date-range label for a budget period section header",
+        "placeholders": {
+            "start": {"type": "String"},
+            "end": {"type": "String"}
+        }
+    },
+    "envelopesDetailPeriodUncategorized": "Outside any budget period",
+    "@envelopesDetailPeriodUncategorized": {
+        "description": "Fallback section header for transactions whose date does not fall in any known period"
     },
     "envelopesStatusLabel": "Status",
     "@envelopesStatusLabel": {
@@ -695,6 +776,124 @@
     "budgetAvailableLabel": "Available",
     "@budgetAvailableLabel": {
         "description": "Label for the available amount"
+    },
+    "budgetNeededThisMonth": "Needed this month: {amount}",
+    "@budgetNeededThisMonth": {
+        "description": "Accessible label for the funding-shortfall chip on envelope rows and goal tiles",
+        "placeholders": {
+            "amount": {
+                "type": "String",
+                "example": "$120.00"
+            }
+        }
+    },
+    "budgetNeededShort": "Need {amount}",
+    "@budgetNeededShort": {
+        "description": "Short chip label for the funding-shortfall badge",
+        "placeholders": {
+            "amount": {
+                "type": "String",
+                "example": "$120.00"
+            }
+        }
+    },
+    "fundingStatusFunded": "Funded",
+    "@fundingStatusFunded": {
+        "description": "Short chip label when an envelope or goal is fully funded for the current period"
+    },
+    "fundingStatusFundedTooltip": "Fully funded this month",
+    "@fundingStatusFundedTooltip": {
+        "description": "Accessible tooltip / long form for the fully-funded chip"
+    },
+    "fundingStatusOverspent": "Overspent",
+    "@fundingStatusOverspent": {
+        "description": "Short chip label when spending exceeds the envelope's allocation plus rollover"
+    },
+    "fundingStatusOverspentTooltip": "Spent more than allocated this period",
+    "@fundingStatusOverspentTooltip": {
+        "description": "Accessible tooltip / long form for the overspent chip"
+    },
+    "goalsAprLabel": "APR (%)",
+    "@goalsAprLabel": {
+        "description": "Form-field label for the annual percentage rate on a debt-payoff goal"
+    },
+    "goalsMinPaymentLabel": "Minimum monthly payment",
+    "@goalsMinPaymentLabel": {
+        "description": "Form-field label for the lender-required minimum monthly payment"
+    },
+    "goalsPayoffSchedule": "Payoff schedule",
+    "@goalsPayoffSchedule": {
+        "description": "Section heading on the goal detail page that shows the projected debt payoff"
+    },
+    "goalsPayoffMonths": "{count, plural, =1{1 month} other{{count} months}}",
+    "@goalsPayoffMonths": {
+        "description": "Months remaining until debt is paid off",
+        "placeholders": {
+            "count": {
+                "type": "int",
+                "example": "47"
+            }
+        }
+    },
+    "goalsPayoffDate": "Payoff date",
+    "@goalsPayoffDate": {
+        "description": "Row label for the projected payoff date"
+    },
+    "goalsTotalInterest": "Total interest",
+    "@goalsTotalInterest": {
+        "description": "Row label for the total interest paid over the schedule"
+    },
+    "goalsPayoffInfinite": "At this payment, the balance never pays off",
+    "@goalsPayoffInfinite": {
+        "description": "Warning shown when the monthly payment does not exceed the monthly interest charge"
+    },
+    "goalsAprInvalid": "Enter a value between 0 and 100",
+    "@goalsAprInvalid": {
+        "description": "Validation message for the APR field on the debt-payoff goal form"
+    },
+    "goalsMinPaymentInvalid": "Enter an amount greater than zero",
+    "@goalsMinPaymentInvalid": {
+        "description": "Validation message for the minimum-payment field on the debt-payoff goal form"
+    },
+    "autoAssignButton": "Auto-assign",
+    "@autoAssignButton": {
+        "description": "Button label that triggers auto-assignment of Ready-to-Assign across goals"
+    },
+    "autoAssignPreviewTitle": "Auto-assign preview",
+    "@autoAssignPreviewTitle": {
+        "description": "Title of the confirmation dialog showing the planned distribution"
+    },
+    "autoAssignPreviewBody": "{count, plural, =1{Allocate {total} across 1 goal in this order?} other{Allocate {total} across {count} goals in this order?}}",
+    "@autoAssignPreviewBody": {
+        "description": "Confirmation dialog body summarizing the auto-assign distribution",
+        "placeholders": {
+            "count": {"type": "int"},
+            "total": {"type": "String", "example": "$125.00"}
+        }
+    },
+    "autoAssignConfirm": "Apply",
+    "@autoAssignConfirm": {
+        "description": "Confirm-button label on the auto-assign preview dialog"
+    },
+    "autoAssignSuccess": "Auto-assign applied",
+    "@autoAssignSuccess": {
+        "description": "Snackbar after auto-assign applies successfully"
+    },
+    "autoAssignFailure": "Auto-assign could not finish",
+    "@autoAssignFailure": {
+        "description": "Snackbar after auto-assign fails to apply some actions"
+    },
+    "autoAssignNoTargets": "No goals need funding this month",
+    "@autoAssignNoTargets": {
+        "description": "Snackbar when no active goal has an unmet monthly need"
+    },
+    "autoAssignInsufficientRta": "Nothing left to assign",
+    "@autoAssignInsufficientRta": {
+        "description": "Snackbar when Ready-to-Assign is zero or negative"
+    },
+    "goalsReorderHint": "Drag goals to set funding priority",
+    "@goalsReorderHint": {
+        "description": "Hint shown above the reorderable active-goals list"
     },
     "budgetSaveAllocations": "Save",
     "@budgetSaveAllocations": {
@@ -914,6 +1113,18 @@
     "@transactionsAccountLabel": {
         "description": "Label for account dropdown"
     },
+    "transactionsAllAccounts": "All accounts",
+    "@transactionsAllAccounts": {
+        "description": "Option in the account filter that clears the account filter"
+    },
+    "transactionsUnknownAccount": "Unknown account",
+    "@transactionsUnknownAccount": {
+        "description": "Account filter chip label when the selected account no longer exists (e.g. deleted)"
+    },
+    "transactionsFilterByAccount": "Filter by account",
+    "@transactionsFilterByAccount": {
+        "description": "Title of the account filter bottom sheet on the transactions list"
+    },
     "transactionsAccountRequired": "Please select an account",
     "@transactionsAccountRequired": {
         "description": "Validation when no account selected"
@@ -946,6 +1157,73 @@
     "@transactionsCreateButton": {
         "description": "Button to create a new transaction"
     },
+    "transactionsQuickAddSave": "Save",
+    "@transactionsQuickAddSave": {
+        "description": "Save button in the quick-add transaction sheet"
+    },
+    "transactionsSeeFullForm": "See full form",
+    "@transactionsSeeFullForm": {
+        "description": "Link in the quick-add sheet that opens the full transaction form"
+    },
+    "transactionsMoreOptions": "More options",
+    "@transactionsMoreOptions": {
+        "description": "Expand button revealing optional transaction fields"
+    },
+    "transactionsHideOptions": "Hide",
+    "@transactionsHideOptions": {
+        "description": "Collapse button hiding optional transaction fields"
+    },
+    "transactionsEnvelopeRequired": "Please choose an envelope",
+    "@transactionsEnvelopeRequired": {
+        "description": "Validation error when no envelope is selected on an expense"
+    },
+    "transactionsTransferSameAccountError": "From and To accounts must differ",
+    "@transactionsTransferSameAccountError": {
+        "description": "Validation error when the transfer From and To accounts are the same"
+    },
+    "templatesSaveAs": "Save as template",
+    "@templatesSaveAs": {
+        "description": "Switch to save the current transaction as a reusable template"
+    },
+    "templatesNameLabel": "Template name",
+    "@templatesNameLabel": {
+        "description": "Text-field label for naming a new transaction template"
+    },
+    "templatesNameRequired": "Name required",
+    "@templatesNameRequired": {
+        "description": "Validation error when 'Save as template' is checked but no name is provided"
+    },
+    "templatesApplyButton": "Templates",
+    "@templatesApplyButton": {
+        "description": "Button that opens the list of saved templates to apply"
+    },
+    "templatesPickerTitle": "Choose a template",
+    "@templatesPickerTitle": {
+        "description": "Header of the template picker bottom sheet"
+    },
+    "templatesEmpty": "No templates yet. Save one from the More section after creating a transaction.",
+    "@templatesEmpty": {
+        "description": "Shown when the template picker has no entries"
+    },
+    "templatesTitle": "Templates",
+    "@templatesTitle": {
+        "description": "Title for the Templates management page"
+    },
+    "templatesDelete": "Delete template",
+    "@templatesDelete": {
+        "description": "Confirm delete dialog title for a template"
+    },
+    "templatesDeleteConfirm": "Delete \"{name}\"? This cannot be undone.",
+    "@templatesDeleteConfirm": {
+        "description": "Body of the delete-template confirmation dialog",
+        "placeholders": {
+            "name": {"type": "String"}
+        }
+    },
+    "settingsTemplates": "Transaction templates",
+    "@settingsTemplates": {
+        "description": "Settings list tile linking to the Templates management page"
+    },
     "transactionsSaveButton": "Save Changes",
     "@transactionsSaveButton": {
         "description": "Button to save transaction edits"
@@ -977,6 +1255,10 @@
     "transactionsTransferTitle": "Transfer Between Accounts",
     "@transactionsTransferTitle": {
         "description": "Title for the transfer form page"
+    },
+    "transactionsTransferFundingEnvelope": "Funded from envelope",
+    "@transactionsTransferFundingEnvelope": {
+        "description": "Label for the envelope picker shown when transferring to an off-budget account"
     },
     "transactionsTransferFrom": "From Account",
     "@transactionsTransferFrom": {
@@ -1057,6 +1339,11 @@
     "transactionsDelete": "Delete",
     "@transactionsDelete": {
         "description": "Delete button text"
+    },
+
+    "transactionsDuplicate": "Duplicate",
+    "@transactionsDuplicate": {
+        "description": "Tooltip/label for duplicating a transaction"
     },
 
     "recurringTitle": "Recurring & Bills",
@@ -1301,6 +1588,32 @@
     "@dashboardReadyToAssign": {
         "description": "Label for the ready to assign amount on the dashboard"
     },
+    "dashboardPreviousPeriod": "Previous period",
+    "@dashboardPreviousPeriod": {
+        "description": "Tooltip for the previous-period chevron on the Ready to Assign card"
+    },
+    "dashboardNextPeriod": "Next period",
+    "@dashboardNextPeriod": {
+        "description": "Tooltip for the next-period chevron on the Ready to Assign card"
+    },
+    "dashboardRtaCarriedPositive": "Includes {amount} carried from last period",
+    "@dashboardRtaCarriedPositive": {
+        "description": "Subtitle on the Ready to Assign card when a positive balance was carried forward",
+        "placeholders": {
+            "amount": {
+                "type": "String"
+            }
+        }
+    },
+    "dashboardRtaCarriedNegative": "{amount} deducted: overspend or over-assignment last period",
+    "@dashboardRtaCarriedNegative": {
+        "description": "Subtitle on the Ready to Assign card when last period's overspend/over-assignment reduced the carried balance",
+        "placeholders": {
+            "amount": {
+                "type": "String"
+            }
+        }
+    },
     "dashboardTotalBalance": "Total Balance",
     "@dashboardTotalBalance": {
         "description": "Label for total balance across all accounts"
@@ -1454,6 +1767,40 @@
     "goalsTypeLabel": "Goal Type",
     "@goalsTypeLabel": {
         "description": "Label for goal type dropdown"
+    },
+    "goalsEnvelopeLabel": "Envelope (optional)",
+    "@goalsEnvelopeLabel": {
+        "description": "Label for the envelope picker on the goal form"
+    },
+    "goalsAccountLabel": "Account (optional)",
+    "@goalsAccountLabel": {
+        "description": "Label for the account link picker on the goal form"
+    },
+    "goalsLinkMutualExclusiveHint": "Link to an envelope or an account — choosing one clears the other.",
+    "@goalsLinkMutualExclusiveHint": {
+        "description": "Helper text on the goal form explaining envelope/account links are mutually exclusive"
+    },
+    "goalsAccountNone": "No account",
+    "@goalsAccountNone": {
+        "description": "Option in the goal account picker for no account link"
+    },
+    "goalsEnvelopeNone": "No envelope",
+    "@goalsEnvelopeNone": {
+        "description": "Picker option for goals not linked to any envelope"
+    },
+    "goalsLinkedEnvelopeInfo": "Progress tracked from envelope “{name}”",
+    "@goalsLinkedEnvelopeInfo": {
+        "description": "Banner shown on goal detail page when linked to envelope",
+        "placeholders": {
+            "name": { "type": "String" }
+        }
+    },
+    "goalsLinkedAccountInfo": "Progress tracked from the balance of account “{name}”",
+    "@goalsLinkedAccountInfo": {
+        "description": "Banner shown on goal detail page when linked to an account",
+        "placeholders": {
+            "name": { "type": "String" }
+        }
     },
     "goalsTargetAmountLabel": "Target Amount",
     "@goalsTargetAmountLabel": {
@@ -1664,6 +2011,48 @@
     "quickAllocateCancel": "Cancel",
     "@quickAllocateCancel": {
         "description": "Cancel button in quick allocate dialog"
+    },
+    "allocateSheetCurrentlyAllocated": "Currently allocated: {amount}",
+    "@allocateSheetCurrentlyAllocated": {
+        "description": "Info line in allocate sheet showing current allocation",
+        "placeholders": {
+            "amount": {
+                "type": "String",
+                "example": "$100.00"
+            }
+        }
+    },
+    "allocateSheetReadyToAssign": "Ready to assign: {amount}",
+    "@allocateSheetReadyToAssign": {
+        "description": "Info line in allocate sheet showing unallocated pool",
+        "placeholders": {
+            "amount": {
+                "type": "String",
+                "example": "$250.00"
+            }
+        }
+    },
+    "allocateSheetModeAdd": "Add",
+    "@allocateSheetModeAdd": {
+        "description": "Segmented button label: add delta to existing allocation"
+    },
+    "allocateSheetModeSet": "Set to",
+    "@allocateSheetModeSet": {
+        "description": "Segmented button label: set allocation to absolute amount"
+    },
+    "allocateSheetNewAllocation": "New allocation: {amount}",
+    "@allocateSheetNewAllocation": {
+        "description": "Live preview of resulting allocation amount",
+        "placeholders": {
+            "amount": {
+                "type": "String",
+                "example": "$200.00"
+            }
+        }
+    },
+    "allocateSheetOverAllocated": "Exceeds Ready to Assign",
+    "@allocateSheetOverAllocated": {
+        "description": "Warning when the new allocation delta exceeds the unallocated pool"
     },
     "dashboardErrorAllocation": "Failed to save allocation",
     "@dashboardErrorAllocation": {
@@ -2134,6 +2523,17 @@
     "@settingsThemeSystem": { "description": "System theme option" },
     "settingsNotifications": "Notifications",
     "@settingsNotifications": { "description": "Notifications option" },
+    "settingsBudget": "Budget",
+    "@settingsBudget": { "description": "Budget section header in settings" },
+    "settingsOpeningBalance": "Opening Balance",
+    "@settingsOpeningBalance": { "description": "Read-only label for the budget's seed cash (issue #80)" },
+    "settingsOpeningBalanceSubtitle": "Seed cash anchored on {date}",
+    "@settingsOpeningBalanceSubtitle": {
+      "description": "Subtitle showing the date the opening balance is anchored to",
+      "placeholders": { "date": { "type": "String" } }
+    },
+    "settingsOpeningBalanceUnset": "Not configured",
+    "@settingsOpeningBalanceUnset": { "description": "Shown when the budget has no opening balance set (legacy budget)" },
     "settingsData": "Data",
     "@settingsData": { "description": "Data section header" },
     "settingsExportData": "Export Data",
@@ -2156,6 +2556,31 @@
     "@settingsPrivacyPolicy": { "description": "Privacy policy link" },
     "settingsTermsOfService": "Terms of Service",
     "@settingsTermsOfService": { "description": "Terms of service link" },
+    "settingsDebugSection": "Debug (debug builds only)",
+    "@settingsDebugSection": {
+        "description": "Section header for QA/debug-only settings"
+    },
+    "settingsDebugSimulatedDate": "Simulated date",
+    "@settingsDebugSimulatedDate": {
+        "description": "Settings tile to set or change the simulated app clock"
+    },
+    "settingsDebugSimulatedDateOff": "Off (using real clock)",
+    "@settingsDebugSimulatedDateOff": {
+        "description": "Subtitle when no simulated clock override is active"
+    },
+    "settingsDebugClearSimulatedDate": "Clear simulated date",
+    "@settingsDebugClearSimulatedDate": {
+        "description": "Settings tile to clear the simulated app clock override"
+    },
+    "debugClockBannerLabel": "Simulated: {date}",
+    "@debugClockBannerLabel": {
+        "description": "Persistent banner shown when the simulated clock override is active",
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
     "settingsCancel": "Cancel",
     "@settingsCancel": { "description": "Cancel button" },
     "settingsSave": "Save",

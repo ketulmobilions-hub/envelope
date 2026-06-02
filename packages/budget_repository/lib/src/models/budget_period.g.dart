@@ -15,6 +15,7 @@ _BudgetPeriod _$BudgetPeriodFromJson(Map<String, dynamic> json) =>
       createdAt: DateTime.parse(json['createdAt'] as String),
       totalIncome: (json['totalIncome'] as num?)?.toInt() ?? 0,
       totalAllocated: (json['totalAllocated'] as num?)?.toInt() ?? 0,
+      carriedRta: (json['carriedRta'] as num?)?.toInt() ?? 0,
       isClosed: json['isClosed'] as bool? ?? false,
     );
 
@@ -27,5 +28,6 @@ Map<String, dynamic> _$BudgetPeriodToJson(_BudgetPeriod instance) =>
       'createdAt': instance.createdAt.toIso8601String(),
       'totalIncome': instance.totalIncome,
       'totalAllocated': instance.totalAllocated,
+      'carriedRta': instance.carriedRta,
       'isClosed': instance.isClosed,
     };

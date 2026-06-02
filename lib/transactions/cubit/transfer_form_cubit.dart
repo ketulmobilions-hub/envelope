@@ -20,7 +20,7 @@ class TransferFormCubit extends Cubit<TransferFormState> {
        _accountRepository = accountRepository,
        _envelopeRepository = envelopeRepository,
        super(const TransferFormState()) {
-    _loadAccounts();
+    _load();
   }
 
   final TransactionRepository _transactionRepository;
@@ -30,14 +30,23 @@ class TransferFormCubit extends Cubit<TransferFormState> {
   final String userId;
   final String? budgetPeriodId;
 
-  Future<void> _loadAccounts() async {
+  Future<void> _load() async {
     try {
       final accounts = await _accountRepository.watchAccounts(budgetId).first;
+      final envelopeRepo = _envelopeRepository;
+      // Exclude archived envelopes and CC-payment envelopes (linked to a credit
+      // card account) — neither is a valid manual funding source for a transfer.
+      final envelopes = envelopeRepo == null
+          ? const <Envelope>[]
+          : (await envelopeRepo.watchEnvelopes(budgetId).first)
+                .where((e) => !e.isArchived && e.linkedAccountId == null)
+                .toList();
       if (isClosed) return;
       emit(
         state.copyWith(
           status: TransferFormStatus.loaded,
           accounts: accounts,
+          envelopes: envelopes,
         ),
       );
     } on Exception {
@@ -51,21 +60,69 @@ class TransferFormCubit extends Cubit<TransferFormState> {
     required String toAccountId,
     required int amountCents,
     required DateTime date,
+    String? envelopeId,
   }) async {
+    if (state.accounts.isEmpty) {
+      emit(
+        state.copyWith(
+          status: TransferFormStatus.failure,
+          errorMessage: 'Accounts not loaded yet. Please retry.',
+        ),
+      );
+      return;
+    }
+
+    final fromAccount = state.accounts
+        .where((a) => a.id == fromAccountId)
+        .firstOrNull;
+    final toAccount = state.accounts
+        .where((a) => a.id == toAccountId)
+        .firstOrNull;
+
+    // A transfer OUT to an off-budget account leaves the budget, so it is
+    // categorized against an envelope (reduces that envelope's available).
+    // (The inverse — off->on raising Ready to Assign — is a separate change:
+    // it needs delete-time income reversal, so it is intentionally not handled
+    // here yet.)
+    final fromOnBudget = fromAccount?.isOnBudget ?? true;
+    final toOnBudget = toAccount?.isOnBudget ?? true;
+    final isOutToOffBudget = fromOnBudget && !toOnBudget;
+
+    if (isOutToOffBudget && envelopeId == null) {
+      emit(
+        state.copyWith(
+          status: TransferFormStatus.failure,
+          errorMessage: 'Select an envelope to fund this transfer.',
+        ),
+      );
+      return;
+    }
+
     emit(state.copyWith(status: TransferFormStatus.submitting));
     try {
       final transferPairId = const Uuid().v4();
+      final fromCurrency = fromAccount?.currency ?? 'USD';
+      final toCurrency = toAccount?.currency ?? 'USD';
+      // Each leg snapshots its own account's displayFxRate so the
+      // base_currency_amount is correct per leg, even for cross-currency
+      // transfers (e.g. USD → INR via Wise).
+      final fromRate = fromAccount?.displayFxRate ?? 1.0;
+      final toRate = toAccount?.displayFxRate ?? 1.0;
 
       // Create outgoing transaction (from account — negative amount).
+      // For an on->off-budget transfer the outgoing leg carries the funding
+      // envelope so the spent trigger reduces that envelope's available.
       await _transactionRepository.createTransaction(
         budgetId: budgetId,
         accountId: fromAccountId,
         type: 'transfer',
         amount: -amountCents,
-        currency: 'USD',
+        currency: fromCurrency,
+        exchangeRate: fromRate,
         date: date,
         createdBy: userId,
         transferPairId: transferPairId,
+        envelopeId: isOutToOffBudget ? envelopeId : null,
       );
 
       // Create incoming transaction (to account).
@@ -74,7 +131,8 @@ class TransferFormCubit extends Cubit<TransferFormState> {
         accountId: toAccountId,
         type: 'transfer',
         amount: amountCents,
-        currency: 'USD',
+        currency: toCurrency,
+        exchangeRate: toRate,
         date: date,
         createdBy: userId,
         transferPairId: transferPairId,
@@ -89,17 +147,25 @@ class TransferFormCubit extends Cubit<TransferFormState> {
 
       // When paying a CC bill, refresh allocations so BudgetBloc recomputes
       // CC Payment available from the new transaction in local storage.
-      final toAccount = state.accounts
-          .where((a) => a.id == toAccountId)
-          .firstOrNull;
       if (toAccount != null &&
           isCreditCard(toAccount.type) &&
           _envelopeRepository != null &&
           budgetPeriodId != null) {
         try {
-          await _envelopeRepository!.refreshAllocations(budgetPeriodId!);
+          await _envelopeRepository.refreshAllocations(budgetPeriodId!);
         } on Exception {
           // Best-effort.
+        }
+      }
+
+      // on->off: pull the server-recalculated envelope spent into local cache.
+      if (isOutToOffBudget &&
+          _envelopeRepository != null &&
+          budgetPeriodId != null) {
+        try {
+          await _envelopeRepository.refreshAllocations(budgetPeriodId!);
+        } on Exception {
+          // Best-effort; next full sync reconciles.
         }
       }
 

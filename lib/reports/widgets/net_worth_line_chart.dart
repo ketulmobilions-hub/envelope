@@ -1,4 +1,5 @@
 import 'package:envelope/reports/widgets/report_helpers.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -24,6 +25,7 @@ class _NetWorthLineChartState extends State<NetWorthLineChart> {
   Widget build(BuildContext context) {
     if (widget.snapshots.isEmpty) return const SizedBox.shrink();
 
+    final symbol = currencySymbol(context);
     final sorted = [...widget.snapshots]
       ..sort((a, b) => a.date.compareTo(b.date));
 
@@ -104,7 +106,7 @@ class _NetWorthLineChartState extends State<NetWorthLineChart> {
                         ),
                       ),
                       TextSpan(
-                        text: _formatCurrency(spots[0].y),
+                        text: _formatCurrency(spots[0].y, symbol),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -125,7 +127,7 @@ class _NetWorthLineChartState extends State<NetWorthLineChart> {
                         ),
                       ),
                       TextSpan(
-                        text: _formatCurrency(spots[1].y),
+                        text: _formatCurrency(spots[1].y, symbol),
                         style: TextStyle(
                           color: AppColors.income,
                           fontSize: 12,
@@ -146,7 +148,7 @@ class _NetWorthLineChartState extends State<NetWorthLineChart> {
                         ),
                       ),
                       TextSpan(
-                        text: _formatCurrency(spots[2].y),
+                        text: _formatCurrency(spots[2].y, symbol),
                         style: TextStyle(
                           color: AppColors.expense,
                           fontSize: 12,
@@ -208,7 +210,7 @@ class _NetWorthLineChartState extends State<NetWorthLineChart> {
                 reservedSize: 60,
                 interval: yInterval,
                 getTitlesWidget: (value, meta) => Text(
-                  _compactCurrency(value),
+                  _compactCurrency(value, symbol),
                   style: const TextStyle(
                     fontSize: 10,
                     color: AppColors.secondaryText,
@@ -293,9 +295,9 @@ class _NetWorthLineChartState extends State<NetWorthLineChart> {
   }
 }
 
-/// Formats a dollar value as compact currency (e.g. $1.2K, $1.5M).
-String _formatCurrency(double value) {
-  final prefix = value < 0 ? '-\$' : '\$';
+/// Formats a value as compact currency (e.g. ₹1.2K, $1.5M) using [symbol].
+String _formatCurrency(double value, String symbol) {
+  final prefix = value < 0 ? '-$symbol' : symbol;
   final abs = value.abs();
   if (abs >= 1000000) {
     return '$prefix${(abs / 1000000).toStringAsFixed(1)}M';
@@ -307,7 +309,8 @@ String _formatCurrency(double value) {
 }
 
 /// Compact currency without sign for axis labels.
-String _compactCurrency(double value) => _formatCurrency(value);
+String _compactCurrency(double value, String symbol) =>
+    _formatCurrency(value, symbol);
 
 /// Returns a "nice" interval for grid lines — rounded to a power of 10.
 double _niceInterval(double raw) {

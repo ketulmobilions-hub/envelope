@@ -26,6 +26,8 @@ mixin _$BudgetPeriodDto {
   int get totalIncome;
   @JsonKey(name: 'total_allocated')
   int get totalAllocated;
+  @JsonKey(name: 'carried_rta')
+  int get carriedRta;
   @JsonKey(name: 'is_closed')
   bool get isClosed;
 
@@ -59,6 +61,8 @@ mixin _$BudgetPeriodDto {
                 other.totalIncome == totalIncome) &&
             (identical(other.totalAllocated, totalAllocated) ||
                 other.totalAllocated == totalAllocated) &&
+            (identical(other.carriedRta, carriedRta) ||
+                other.carriedRta == carriedRta) &&
             (identical(other.isClosed, isClosed) ||
                 other.isClosed == isClosed));
   }
@@ -74,12 +78,13 @@ mixin _$BudgetPeriodDto {
     createdAt,
     totalIncome,
     totalAllocated,
+    carriedRta,
     isClosed,
   );
 
   @override
   String toString() {
-    return 'BudgetPeriodDto(id: $id, budgetId: $budgetId, startDate: $startDate, endDate: $endDate, createdAt: $createdAt, totalIncome: $totalIncome, totalAllocated: $totalAllocated, isClosed: $isClosed)';
+    return 'BudgetPeriodDto(id: $id, budgetId: $budgetId, startDate: $startDate, endDate: $endDate, createdAt: $createdAt, totalIncome: $totalIncome, totalAllocated: $totalAllocated, carriedRta: $carriedRta, isClosed: $isClosed)';
   }
 }
 
@@ -98,6 +103,7 @@ abstract mixin class $BudgetPeriodDtoCopyWith<$Res> {
     @JsonKey(name: 'created_at') DateTime createdAt,
     @JsonKey(name: 'total_income') int totalIncome,
     @JsonKey(name: 'total_allocated') int totalAllocated,
+    @JsonKey(name: 'carried_rta') int carriedRta,
     @JsonKey(name: 'is_closed') bool isClosed,
   });
 }
@@ -122,6 +128,7 @@ class _$BudgetPeriodDtoCopyWithImpl<$Res>
     Object? createdAt = null,
     Object? totalIncome = null,
     Object? totalAllocated = null,
+    Object? carriedRta = null,
     Object? isClosed = null,
   }) {
     return _then(
@@ -153,6 +160,10 @@ class _$BudgetPeriodDtoCopyWithImpl<$Res>
         totalAllocated: null == totalAllocated
             ? _self.totalAllocated
             : totalAllocated // ignore: cast_nullable_to_non_nullable
+                  as int,
+        carriedRta: null == carriedRta
+            ? _self.carriedRta
+            : carriedRta // ignore: cast_nullable_to_non_nullable
                   as int,
         isClosed: null == isClosed
             ? _self.isClosed
@@ -264,6 +275,7 @@ extension BudgetPeriodDtoPatterns on BudgetPeriodDto {
       @JsonKey(name: 'created_at') DateTime createdAt,
       @JsonKey(name: 'total_income') int totalIncome,
       @JsonKey(name: 'total_allocated') int totalAllocated,
+      @JsonKey(name: 'carried_rta') int carriedRta,
       @JsonKey(name: 'is_closed') bool isClosed,
     )?
     $default, {
@@ -280,6 +292,7 @@ extension BudgetPeriodDtoPatterns on BudgetPeriodDto {
           _that.createdAt,
           _that.totalIncome,
           _that.totalAllocated,
+          _that.carriedRta,
           _that.isClosed,
         );
       case _:
@@ -310,6 +323,7 @@ extension BudgetPeriodDtoPatterns on BudgetPeriodDto {
       @JsonKey(name: 'created_at') DateTime createdAt,
       @JsonKey(name: 'total_income') int totalIncome,
       @JsonKey(name: 'total_allocated') int totalAllocated,
+      @JsonKey(name: 'carried_rta') int carriedRta,
       @JsonKey(name: 'is_closed') bool isClosed,
     )
     $default,
@@ -325,6 +339,7 @@ extension BudgetPeriodDtoPatterns on BudgetPeriodDto {
           _that.createdAt,
           _that.totalIncome,
           _that.totalAllocated,
+          _that.carriedRta,
           _that.isClosed,
         );
       case _:
@@ -354,6 +369,7 @@ extension BudgetPeriodDtoPatterns on BudgetPeriodDto {
       @JsonKey(name: 'created_at') DateTime createdAt,
       @JsonKey(name: 'total_income') int totalIncome,
       @JsonKey(name: 'total_allocated') int totalAllocated,
+      @JsonKey(name: 'carried_rta') int carriedRta,
       @JsonKey(name: 'is_closed') bool isClosed,
     )?
     $default,
@@ -369,6 +385,7 @@ extension BudgetPeriodDtoPatterns on BudgetPeriodDto {
           _that.createdAt,
           _that.totalIncome,
           _that.totalAllocated,
+          _that.carriedRta,
           _that.isClosed,
         );
       case _:
@@ -388,6 +405,7 @@ class _BudgetPeriodDto implements BudgetPeriodDto {
     @JsonKey(name: 'created_at') required this.createdAt,
     @JsonKey(name: 'total_income') this.totalIncome = 0,
     @JsonKey(name: 'total_allocated') this.totalAllocated = 0,
+    @JsonKey(name: 'carried_rta') this.carriedRta = 0,
     @JsonKey(name: 'is_closed') this.isClosed = false,
   });
   factory _BudgetPeriodDto.fromJson(Map<String, dynamic> json) =>
@@ -413,6 +431,9 @@ class _BudgetPeriodDto implements BudgetPeriodDto {
   @override
   @JsonKey(name: 'total_allocated')
   final int totalAllocated;
+  @override
+  @JsonKey(name: 'carried_rta')
+  final int carriedRta;
   @override
   @JsonKey(name: 'is_closed')
   final bool isClosed;
@@ -447,6 +468,8 @@ class _BudgetPeriodDto implements BudgetPeriodDto {
                 other.totalIncome == totalIncome) &&
             (identical(other.totalAllocated, totalAllocated) ||
                 other.totalAllocated == totalAllocated) &&
+            (identical(other.carriedRta, carriedRta) ||
+                other.carriedRta == carriedRta) &&
             (identical(other.isClosed, isClosed) ||
                 other.isClosed == isClosed));
   }
@@ -462,12 +485,13 @@ class _BudgetPeriodDto implements BudgetPeriodDto {
     createdAt,
     totalIncome,
     totalAllocated,
+    carriedRta,
     isClosed,
   );
 
   @override
   String toString() {
-    return 'BudgetPeriodDto(id: $id, budgetId: $budgetId, startDate: $startDate, endDate: $endDate, createdAt: $createdAt, totalIncome: $totalIncome, totalAllocated: $totalAllocated, isClosed: $isClosed)';
+    return 'BudgetPeriodDto(id: $id, budgetId: $budgetId, startDate: $startDate, endDate: $endDate, createdAt: $createdAt, totalIncome: $totalIncome, totalAllocated: $totalAllocated, carriedRta: $carriedRta, isClosed: $isClosed)';
   }
 }
 
@@ -488,6 +512,7 @@ abstract mixin class _$BudgetPeriodDtoCopyWith<$Res>
     @JsonKey(name: 'created_at') DateTime createdAt,
     @JsonKey(name: 'total_income') int totalIncome,
     @JsonKey(name: 'total_allocated') int totalAllocated,
+    @JsonKey(name: 'carried_rta') int carriedRta,
     @JsonKey(name: 'is_closed') bool isClosed,
   });
 }
@@ -512,6 +537,7 @@ class __$BudgetPeriodDtoCopyWithImpl<$Res>
     Object? createdAt = null,
     Object? totalIncome = null,
     Object? totalAllocated = null,
+    Object? carriedRta = null,
     Object? isClosed = null,
   }) {
     return _then(
@@ -543,6 +569,10 @@ class __$BudgetPeriodDtoCopyWithImpl<$Res>
         totalAllocated: null == totalAllocated
             ? _self.totalAllocated
             : totalAllocated // ignore: cast_nullable_to_non_nullable
+                  as int,
+        carriedRta: null == carriedRta
+            ? _self.carriedRta
+            : carriedRta // ignore: cast_nullable_to_non_nullable
                   as int,
         isClosed: null == isClosed
             ? _self.isClosed

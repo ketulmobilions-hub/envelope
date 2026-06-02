@@ -5,5 +5,6 @@ export 'goals_dao.dart';
 export 'recurring_dao.dart';
 export 'reports_dao.dart';
 export 'sync_dao.dart';
+export 'transaction_templates_dao.dart';
 export 'transactions_dao.dart';
 export 'users_dao.dart';

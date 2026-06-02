@@ -1,4 +1,5 @@
 import 'package:account_repository/account_repository.dart';
+import 'package:auth_repository/auth_repository.dart';
 import 'package:bloc/bloc.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/accounts/utils/cc_payments_group.dart';
@@ -22,19 +23,25 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     required EnvelopeRepository envelopeRepository,
     required AccountRepository accountRepository,
     required BudgetRepository budgetRepository,
+    required AuthRepository authRepository,
     required String userId,
+    DateTime Function()? now,
   }) : _prefs = sharedPreferences,
        _envelopeRepository = envelopeRepository,
        _accountRepository = accountRepository,
        _budgetRepository = budgetRepository,
+       _authRepository = authRepository,
        _userId = userId,
+       _now = now ?? DateTime.now,
        super(const OnboardingState());
 
   final SharedPreferences _prefs;
   final EnvelopeRepository _envelopeRepository;
   final AccountRepository _accountRepository;
   final BudgetRepository _budgetRepository;
+  final AuthRepository _authRepository;
   final String _userId;
+  final DateTime Function() _now;
 
   /// Returns whether onboarding has been completed (user has a budget).
   static bool isOnboardingComplete(SharedPreferences prefs) {
@@ -150,28 +157,6 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     emit(state.copyWith(categoryGroups: groups));
   }
 
-  /// Sets the allocation amount for an envelope.
-  ///
-  /// Uses a composite key `groupIndex:envelopeName` to avoid collisions
-  /// when multiple groups have envelopes with the same name.
-  void setAllocation(
-    int groupIndex,
-    String envelopeName,
-    double amount,
-  ) {
-    final key = '$groupIndex:$envelopeName';
-    emit(
-      state.copyWith(
-        allocations: {...state.allocations, key: amount},
-      ),
-    );
-  }
-
-  /// Returns the allocation for a specific envelope.
-  double getAllocation(int groupIndex, String envelopeName) {
-    return state.allocations['$groupIndex:$envelopeName'] ?? 0;
-  }
-
   /// Returns a validation error for the current step, or null if valid.
   OnboardingError? _validateCurrentStep() {
     return switch (state.currentStep) {
@@ -194,29 +179,54 @@ class OnboardingCubit extends Cubit<OnboardingState> {
   Future<void> completeOnboarding() async {
     emit(state.copyWith(status: OnboardingStatus.submitting));
     try {
+      // Persist the selected base currency on the user profile so the rest
+      // of the app (settings, formatters reading AuthBloc) reflects it.
+      await _authRepository.updateProfile(baseCurrency: state.baseCurrency);
+
+      // Normalize each account's starting balance to cents up front so the
+      // clamp/rounding is applied identically when seeding the budget's
+      // `openingBalance` and when creating each account row.
+      // startingBalance is stored as cents (int) — use .round() to handle
+      // floating-point imprecision from the double input.
+      final accountsWithCents = state.accounts.map((account) {
+        final clampedBalance = account.startingBalance.clamp(
+          -maxDollarAmount,
+          maxDollarAmount,
+        );
+        return (account: account, balanceCents: (clampedBalance * 100).round());
+      }).toList();
+
+      // Compute the period-agnostic seed cash (sum of on-budget account
+      // starting balances in cents). It is stored on the budget as
+      // `openingBalance` so it remains available in any period — including
+      // backdated periods auto-created later — rather than being trapped on
+      // the onboarding month's `totalIncome` (issue #80).
+      var openingBalance = 0;
+      for (final entry in accountsWithCents) {
+        if (!entry.account.isOnBudget) continue;
+        if (entry.balanceCents > 0) {
+          openingBalance += entry.balanceCents;
+        }
+      }
+
+      final now = _now();
+
       // Create the budget first — RLS policies require a budget row to exist
       // before accounts/envelopes can reference it.
       final budget = await _budgetRepository.createBudget(
         name: 'My Budget',
         baseCurrency: state.baseCurrency,
         ownerId: _userId,
+        openingBalance: openingBalance,
+        openingDate: DateTime(now.year, now.month),
       );
       final budgetId = budget.id;
 
       // Create accounts.
-      // startingBalance is stored as cents (int) — use .round() to handle
-      // floating-point imprecision from the double input.
-      var totalStartingBalance = 0;
       final ccAccounts = <({String accountId, String cardName})>[];
-      for (final account in state.accounts) {
-        final clampedBalance = account.startingBalance.clamp(
-          -maxDollarAmount,
-          maxDollarAmount,
-        );
-        final balanceCents = (clampedBalance * 100).round();
-        if (account.isOnBudget && balanceCents > 0) {
-          totalStartingBalance += balanceCents;
-        }
+      for (final entry in accountsWithCents) {
+        final account = entry.account;
+        final balanceCents = entry.balanceCents;
         final created = await _accountRepository.createAccount(
           budgetId: budgetId,
           name: account.name,
@@ -243,24 +253,21 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       }
 
       // Create the initial budget period for the current month.
-      // totalIncome is seeded with the sum of all account starting balances
-      // so that "Ready to Assign" reflects money available to budget.
-      final now = DateTime.now();
+      // totalIncome is 0 — the seed cash lives on `Budget.openingBalance`
+      // and is added to RTA in whichever period contains `openingDate`
+      // (issue #80).
       final periodStart = DateTime(now.year, now.month);
       final periodEnd = DateTime(
         now.year,
         now.month + 1,
       ).subtract(const Duration(days: 1));
-      final period = await _budgetRepository.createBudgetPeriod(
+      await _budgetRepository.createBudgetPeriod(
         budgetId: budgetId,
         startDate: periodStart,
         endDate: periodEnd,
-        totalIncome: totalStartingBalance,
       );
 
-      // Create category groups and their envelopes, persisting any
-      // allocations the user set during the onboarding allocation step.
-      var groupIndex = 0;
+      // Create category groups and their envelopes.
       for (final group in state.categoryGroups) {
         final createdGroup = await _envelopeRepository.createCategoryGroup(
           budgetId: budgetId,
@@ -268,24 +275,12 @@ class OnboardingCubit extends Cubit<OnboardingState> {
         );
 
         for (final envelopeName in group.envelopes) {
-          final createdEnvelope = await _envelopeRepository.createEnvelope(
+          await _envelopeRepository.createEnvelope(
             categoryGroupId: createdGroup.id,
             budgetId: budgetId,
             name: envelopeName,
           );
-
-          final key = '$groupIndex:$envelopeName';
-          final allocationAmount = state.allocations[key] ?? 0;
-          if (allocationAmount > 0) {
-            final amountCents = (allocationAmount * 100).round();
-            await _envelopeRepository.allocate(
-              envelopeId: createdEnvelope.id,
-              budgetPeriodId: period.id,
-              amount: amountCents,
-            );
-          }
         }
-        groupIndex++;
       }
 
       // Create CC Payments group + linked payment envelopes AFTER the user's

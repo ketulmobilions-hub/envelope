@@ -1,0 +1,28 @@
+---
+import Waitlist from "./Waitlist.astro";
+---
+
+<section class="max-w-6xl mx-auto px-6 pt-16 pb-20 md:pt-24 md:pb-28">
+  <div class="grid md:grid-cols-2 gap-12 items-center">
+    <div>
+      <p class="inline-block bg-cream-dark text-brown text-xs font-semibold tracking-wider uppercase px-3 py-1 rounded-full mb-6">
+        Coming soon · Join the waitlist
+      </p>
+      <h1 class="text-4xl md:text-6xl font-bold text-brown leading-tight tracking-tight">
+        Every dollar.<br />Every job.
+      </h1>
+      <p class="mt-6 text-lg text-charcoal/80 max-w-lg leading-relaxed">
+        Envelope is a zero-based budgeting app for iOS, Android, and the web. Assign every dollar a purpose before you spend it.
+      </p>
+      <div class="mt-8" id="waitlist">
+        <Waitlist />
+      </div>
+    </div>
+    <div class="relative">
+      <div class="aspect-[9/16] max-w-sm mx-auto bg-gradient-to-br from-terracotta to-brown rounded-3xl shadow-2xl flex items-center justify-center">
+        <img src="/logo.svg" alt="Envelope app" width="120" height="120" class="opacity-90" />
+      </div>
+      <p class="text-center text-xs text-muted mt-3">App screenshot placeholder</p>
+    </div>
+  </div>
+</section>

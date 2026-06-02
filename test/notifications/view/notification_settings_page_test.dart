@@ -85,7 +85,11 @@ void main() {
       expect(find.text('Shared Budget Activity'), findsOneWidget);
       expect(find.text('Email Notifications'), findsOneWidget);
       expect(find.text('Enable Email Notifications'), findsOneWidget);
-      expect(find.byType(SwitchListTile), findsNWidgets(7));
+      expect(find.text('Bill Reminder Emails'), findsOneWidget);
+      // Push section (enable + 5 sub-toggles) plus the visible email toggles.
+      // The final "Weekly Budget Summary" tile sits below the test viewport,
+      // so 8 SwitchListTiles are laid out and matched.
+      expect(find.byType(SwitchListTile), findsNWidgets(8));
     });
 
     testWidgets('hides sub-toggles when push is disabled', (tester) async {
@@ -103,8 +107,9 @@ void main() {
         ),
       );
 
-      // Only push toggle + email toggle should show (2 total).
-      expect(find.byType(SwitchListTile), findsNWidgets(2));
+      // Push sub-toggles are hidden, but the email section stays expanded:
+      // push toggle + email toggle + 2 email sub-toggles (4 total).
+      expect(find.byType(SwitchListTile), findsNWidgets(4));
       expect(find.text('Overspend Alerts'), findsNothing);
     });
   });

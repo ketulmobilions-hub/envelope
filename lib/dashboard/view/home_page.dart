@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/app/routes/app_router.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/dashboard/bloc/bloc.dart';
@@ -7,9 +8,11 @@ import 'package:envelope/dashboard/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
 import 'package:envelope/recurring/cubit/recurring_check_cubit.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/widgets/confirm_delete_dialog.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/sync/sync.dart';
+import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -45,8 +48,11 @@ class HomePage extends StatelessWidget {
           create: (_) {
             final cubit = RecurringCheckCubit(
               transactionRepository: context.read<TransactionRepository>(),
+              budgetRepository: context.read<BudgetRepository>(),
+              envelopeRepository: context.read<EnvelopeRepository>(),
               budgetId: budgetId,
               userId: userId,
+              nowProvider: context.read<AppClock>().now,
             );
             unawaited(cubit.check());
             return cubit;
@@ -60,6 +66,7 @@ class HomePage extends StatelessWidget {
             transactionRepository: context.read(),
             sharingRepository: context.read<SharingRepository>(),
             budgetId: budgetId,
+            now: context.read<AppClock>().now,
           )..add(const DashboardStarted()),
         ),
       ],
@@ -285,6 +292,16 @@ class _HomeView extends StatelessWidget {
                   // Ready to Assign
                   DashboardReadyToAssignCard(
                     readyToAssign: state.readyToAssign,
+                    carriedRta: state.selectedPeriod?.carriedRta ?? 0,
+                    period: state.selectedPeriod,
+                    hasPreviousPeriod: state.hasPreviousPeriod,
+                    hasNextPeriod: state.hasNextPeriod,
+                    onPreviousPeriod: () => context.read<DashboardBloc>().add(
+                      const DashboardPreviousPeriodRequested(),
+                    ),
+                    onNextPeriod: () => context.read<DashboardBloc>().add(
+                      const DashboardNextPeriodRequested(),
+                    ),
                     onTap: () => context.push(
                       '${AppRoutes.budget}?budgetId=$budgetId',
                     ),

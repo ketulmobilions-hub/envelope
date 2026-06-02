@@ -14,6 +14,7 @@ abstract class BudgetPeriodDto with _$BudgetPeriodDto {
     @JsonKey(name: 'created_at') required DateTime createdAt,
     @JsonKey(name: 'total_income') @Default(0) int totalIncome,
     @JsonKey(name: 'total_allocated') @Default(0) int totalAllocated,
+    @JsonKey(name: 'carried_rta') @Default(0) int carriedRta,
     @JsonKey(name: 'is_closed') @Default(false) bool isClosed,
   }) = _BudgetPeriodDto;
 

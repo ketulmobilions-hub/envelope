@@ -4,7 +4,15 @@ import 'package:account_repository/account_repository.dart';
 import 'package:auth_repository/auth_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/app/app.dart';
+import 'package:envelope/shared/services/app_clock.dart';
+import 'package:envelope_api_client/envelope_api_client.dart';
+import 'package:envelope_local_storage/envelope_local_storage.dart'
+    as storage;
 import 'package:envelope_repository/envelope_repository.dart';
+import 'package:firebase_core/firebase_core.dart';
+// Test-only Firebase core mocks; provided transitively by firebase_core.
+// ignore: depend_on_referenced_packages
+import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:goal_repository/goal_repository.dart';
 import 'package:mocktail/mocktail.dart';
@@ -40,11 +48,22 @@ class MockSubscriptionRepository extends Mock
 
 class MockSyncRepository extends Mock implements SyncRepository {}
 
+class MockEnvelopeApiClient extends Mock implements EnvelopeApiClient {}
+
+class MockAppDatabase extends Mock implements storage.AppDatabase {}
+
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('App', () {
     late MockAuthRepository authRepository;
     late MockSyncRepository syncRepository;
     late SharedPreferences prefs;
+
+    setUpAll(() async {
+      setupFirebaseCoreMocks();
+      await Firebase.initializeApp();
+    });
 
     setUp(() async {
       authRepository = MockAuthRepository();
@@ -63,6 +82,7 @@ void main() {
     testWidgets('renders AppView', (tester) async {
       await tester.pumpWidget(
         App(
+          appClock: AppClock(prefs),
           authRepository: authRepository,
           accountRepository: MockAccountRepository(),
           budgetRepository: MockBudgetRepository(),
@@ -75,6 +95,8 @@ void main() {
           subscriptionRepository: MockSubscriptionRepository(),
           syncRepository: syncRepository,
           sharedPreferences: prefs,
+          apiClient: MockEnvelopeApiClient(),
+          localDatabase: MockAppDatabase(),
         ),
       );
       await tester.pump();

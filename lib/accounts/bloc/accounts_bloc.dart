@@ -152,20 +152,21 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   ) async {
     try {
       final account = event.account;
+      final baseStartingBalance = account.startingBalanceInBase;
       if (account.isArchived) {
         await _accountRepository.unarchiveAccount(account.id);
-        if (account.isOnBudget && account.startingBalance != 0) {
+        if (account.isOnBudget && baseStartingBalance != 0) {
           await _budgetRepository.addIncomeToCurrentPeriod(
             budgetId: _budgetId,
-            amount: account.startingBalance,
+            amount: baseStartingBalance,
           );
         }
       } else {
         await _accountRepository.archiveAccount(account.id);
-        if (account.isOnBudget && account.startingBalance != 0) {
+        if (account.isOnBudget && baseStartingBalance != 0) {
           await _budgetRepository.addIncomeToCurrentPeriod(
             budgetId: _budgetId,
-            amount: -account.startingBalance,
+            amount: -baseStartingBalance,
           );
         }
       }
@@ -189,10 +190,11 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
         (a) => a.id == event.accountId,
       );
       await _accountRepository.deleteAccount(event.accountId);
-      if (account.isOnBudget && account.startingBalance != 0) {
+      final baseStartingBalance = account.startingBalanceInBase;
+      if (account.isOnBudget && baseStartingBalance != 0) {
         await _budgetRepository.addIncomeToCurrentPeriod(
           budgetId: _budgetId,
-          amount: -account.startingBalance,
+          amount: -baseStartingBalance,
         );
       }
       final repo = _envelopeRepository;

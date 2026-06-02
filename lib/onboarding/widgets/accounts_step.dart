@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:envelope/accounts/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/cubit.dart';
+import 'package:envelope/onboarding/data/currencies.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/shared/widgets/app_option_picker.dart';
 import 'package:flutter/material.dart';
@@ -47,13 +48,19 @@ class AccountsStep extends StatelessWidget {
                     final balance = account.startingBalance
                         .abs()
                         .toStringAsFixed(2);
+                    final accountSymbol = supportedCurrencies
+                        .firstWhere(
+                          (c) => c.code == account.currency,
+                          orElse: () => supportedCurrencies.first,
+                        )
+                        .symbol;
                     return Card(
                       child: ListTile(
                         title: Text(account.name),
                         subtitle: Text(
                           '${_localizedOnboardingType(l10n, account.type)}'
                           ' • ${account.currency}'
-                          ' • \$$balance'
+                          ' • $accountSymbol$balance'
                           '${account.isOnBudget ? '' : ' • '
                                     '${l10n.accountsOffBudgetIndicator}'}',
                         ),
@@ -158,9 +165,16 @@ class _AddAccountSheetState extends State<_AddAccountSheet> {
     final name = _nameController.text.trim();
     if (name.isEmpty) return;
 
+    final maxAmountLabel = '${supportedCurrencies.firstWhere(
+      (c) => c.code == widget.baseCurrency,
+      orElse: () => supportedCurrencies.first,
+    ).symbol}999,999,999.99';
+
     var startingBalance = double.tryParse(_balanceController.text) ?? 0;
     if (startingBalance.abs() > maxDollarAmount) {
-      setState(() => _balanceError = l10n.accountsBalanceTooLarge);
+      setState(
+        () => _balanceError = l10n.accountsBalanceTooLarge(maxAmountLabel),
+      );
       return;
     }
     if (isCreditCard(_selectedType) && startingBalance > 0) {
@@ -172,7 +186,11 @@ class _AddAccountSheetState extends State<_AddAccountSheet> {
         _creditLimitController.text.trim().isNotEmpty) {
       final parsed = parseCents(_creditLimitController.text);
       if (parsed == null || parsed < 0) {
-        setState(() => _creditLimitError = l10n.accountsCreditLimitTooLarge);
+        setState(
+          () => _creditLimitError = l10n.accountsCreditLimitTooLarge(
+            maxAmountLabel,
+          ),
+        );
         return;
       }
       creditLimitCents = parsed;
@@ -194,7 +212,7 @@ class _AddAccountSheetState extends State<_AddAccountSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final symbol = currencySymbol(context);
+    final symbol = currencySymbolFromCode(widget.baseCurrency);
     final isCC = isCreditCard(_selectedType);
 
     return Padding(

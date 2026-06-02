@@ -15,6 +15,7 @@ abstract class Account with _$Account {
     required DateTime updatedAt,
     @Default(0) int startingBalance,
     @Default(0) int currentBalance,
+    @Default(1.0) double displayFxRate,
     @Default(false) bool isArchived,
     @Default(true) bool isOnBudget,
   }) = _Account;

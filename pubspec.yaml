@@ -40,6 +40,7 @@ dependencies:
     path: packages/notification_repository
   package_info_plus: ^8.0.0
   path_provider: ^2.1.0
+  provider: ^6.1.2
   report_repository:
     path: packages/report_repository
   share_plus: ^10.1.4
@@ -60,6 +61,7 @@ dev_dependencies:
   bloc_lint: ^0.3.7
   bloc_test: ^10.0.0
   bloc_tools: ^0.1.0-dev.22
+  drift: ^2.26.0
   flutter_test:
     sdk: flutter
   mocktail: ^1.0.4

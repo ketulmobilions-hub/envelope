@@ -27,6 +27,18 @@ mixin _$Goal {
   int get currentAmount;
   bool get isCompleted;
 
+  /// Annual percentage rate in basis points (e.g. 1799 = 17.99%).
+  /// Only meaningful for `debt_payoff` goals; null for other types.
+  int? get aprBps;
+
+  /// Lender-required minimum monthly payment in cents.
+  /// Only meaningful for `debt_payoff` goals; null for other types.
+  int? get minPaymentCents;
+
+  /// User-defined priority order used by auto-assign to distribute the
+  /// Ready-to-Assign pool. Lower values are funded first; ties break by id.
+  int get sortOrder;
+
   /// Create a copy of Goal
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -64,7 +76,12 @@ mixin _$Goal {
             (identical(other.currentAmount, currentAmount) ||
                 other.currentAmount == currentAmount) &&
             (identical(other.isCompleted, isCompleted) ||
-                other.isCompleted == isCompleted));
+                other.isCompleted == isCompleted) &&
+            (identical(other.aprBps, aprBps) || other.aprBps == aprBps) &&
+            (identical(other.minPaymentCents, minPaymentCents) ||
+                other.minPaymentCents == minPaymentCents) &&
+            (identical(other.sortOrder, sortOrder) ||
+                other.sortOrder == sortOrder));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -84,11 +101,14 @@ mixin _$Goal {
     monthlyContribution,
     currentAmount,
     isCompleted,
+    aprBps,
+    minPaymentCents,
+    sortOrder,
   );
 
   @override
   String toString() {
-    return 'Goal(id: $id, budgetId: $budgetId, type: $type, name: $name, createdAt: $createdAt, updatedAt: $updatedAt, envelopeId: $envelopeId, accountId: $accountId, targetAmount: $targetAmount, targetDate: $targetDate, monthlyContribution: $monthlyContribution, currentAmount: $currentAmount, isCompleted: $isCompleted)';
+    return 'Goal(id: $id, budgetId: $budgetId, type: $type, name: $name, createdAt: $createdAt, updatedAt: $updatedAt, envelopeId: $envelopeId, accountId: $accountId, targetAmount: $targetAmount, targetDate: $targetDate, monthlyContribution: $monthlyContribution, currentAmount: $currentAmount, isCompleted: $isCompleted, aprBps: $aprBps, minPaymentCents: $minPaymentCents, sortOrder: $sortOrder)';
   }
 }
 
@@ -111,6 +131,9 @@ abstract mixin class $GoalCopyWith<$Res> {
     int? monthlyContribution,
     int currentAmount,
     bool isCompleted,
+    int? aprBps,
+    int? minPaymentCents,
+    int sortOrder,
   });
 }
 
@@ -139,6 +162,9 @@ class _$GoalCopyWithImpl<$Res> implements $GoalCopyWith<$Res> {
     Object? monthlyContribution = freezed,
     Object? currentAmount = null,
     Object? isCompleted = null,
+    Object? aprBps = freezed,
+    Object? minPaymentCents = freezed,
+    Object? sortOrder = null,
   }) {
     return _then(
       _self.copyWith(
@@ -194,6 +220,18 @@ class _$GoalCopyWithImpl<$Res> implements $GoalCopyWith<$Res> {
             ? _self.isCompleted
             : isCompleted // ignore: cast_nullable_to_non_nullable
                   as bool,
+        aprBps: freezed == aprBps
+            ? _self.aprBps
+            : aprBps // ignore: cast_nullable_to_non_nullable
+                  as int?,
+        minPaymentCents: freezed == minPaymentCents
+            ? _self.minPaymentCents
+            : minPaymentCents // ignore: cast_nullable_to_non_nullable
+                  as int?,
+        sortOrder: null == sortOrder
+            ? _self.sortOrder
+            : sortOrder // ignore: cast_nullable_to_non_nullable
+                  as int,
       ),
     );
   }
@@ -304,6 +342,9 @@ extension GoalPatterns on Goal {
       int? monthlyContribution,
       int currentAmount,
       bool isCompleted,
+      int? aprBps,
+      int? minPaymentCents,
+      int sortOrder,
     )?
     $default, {
     required TResult orElse(),
@@ -325,6 +366,9 @@ extension GoalPatterns on Goal {
           _that.monthlyContribution,
           _that.currentAmount,
           _that.isCompleted,
+          _that.aprBps,
+          _that.minPaymentCents,
+          _that.sortOrder,
         );
       case _:
         return orElse();
@@ -360,6 +404,9 @@ extension GoalPatterns on Goal {
       int? monthlyContribution,
       int currentAmount,
       bool isCompleted,
+      int? aprBps,
+      int? minPaymentCents,
+      int sortOrder,
     )
     $default,
   ) {
@@ -380,6 +427,9 @@ extension GoalPatterns on Goal {
           _that.monthlyContribution,
           _that.currentAmount,
           _that.isCompleted,
+          _that.aprBps,
+          _that.minPaymentCents,
+          _that.sortOrder,
         );
       case _:
         throw StateError('Unexpected subclass');
@@ -414,6 +464,9 @@ extension GoalPatterns on Goal {
       int? monthlyContribution,
       int currentAmount,
       bool isCompleted,
+      int? aprBps,
+      int? minPaymentCents,
+      int sortOrder,
     )?
     $default,
   ) {
@@ -434,6 +487,9 @@ extension GoalPatterns on Goal {
           _that.monthlyContribution,
           _that.currentAmount,
           _that.isCompleted,
+          _that.aprBps,
+          _that.minPaymentCents,
+          _that.sortOrder,
         );
       case _:
         return null;
@@ -458,6 +514,9 @@ class _Goal implements Goal {
     this.monthlyContribution,
     this.currentAmount = 0,
     this.isCompleted = false,
+    this.aprBps,
+    this.minPaymentCents,
+    this.sortOrder = 0,
   });
   factory _Goal.fromJson(Map<String, dynamic> json) => _$GoalFromJson(json);
 
@@ -489,6 +548,22 @@ class _Goal implements Goal {
   @override
   @JsonKey()
   final bool isCompleted;
+
+  /// Annual percentage rate in basis points (e.g. 1799 = 17.99%).
+  /// Only meaningful for `debt_payoff` goals; null for other types.
+  @override
+  final int? aprBps;
+
+  /// Lender-required minimum monthly payment in cents.
+  /// Only meaningful for `debt_payoff` goals; null for other types.
+  @override
+  final int? minPaymentCents;
+
+  /// User-defined priority order used by auto-assign to distribute the
+  /// Ready-to-Assign pool. Lower values are funded first; ties break by id.
+  @override
+  @JsonKey()
+  final int sortOrder;
 
   /// Create a copy of Goal
   /// with the given fields replaced by the non-null parameter values.
@@ -530,7 +605,12 @@ class _Goal implements Goal {
             (identical(other.currentAmount, currentAmount) ||
                 other.currentAmount == currentAmount) &&
             (identical(other.isCompleted, isCompleted) ||
-                other.isCompleted == isCompleted));
+                other.isCompleted == isCompleted) &&
+            (identical(other.aprBps, aprBps) || other.aprBps == aprBps) &&
+            (identical(other.minPaymentCents, minPaymentCents) ||
+                other.minPaymentCents == minPaymentCents) &&
+            (identical(other.sortOrder, sortOrder) ||
+                other.sortOrder == sortOrder));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -550,11 +630,14 @@ class _Goal implements Goal {
     monthlyContribution,
     currentAmount,
     isCompleted,
+    aprBps,
+    minPaymentCents,
+    sortOrder,
   );
 
   @override
   String toString() {
-    return 'Goal(id: $id, budgetId: $budgetId, type: $type, name: $name, createdAt: $createdAt, updatedAt: $updatedAt, envelopeId: $envelopeId, accountId: $accountId, targetAmount: $targetAmount, targetDate: $targetDate, monthlyContribution: $monthlyContribution, currentAmount: $currentAmount, isCompleted: $isCompleted)';
+    return 'Goal(id: $id, budgetId: $budgetId, type: $type, name: $name, createdAt: $createdAt, updatedAt: $updatedAt, envelopeId: $envelopeId, accountId: $accountId, targetAmount: $targetAmount, targetDate: $targetDate, monthlyContribution: $monthlyContribution, currentAmount: $currentAmount, isCompleted: $isCompleted, aprBps: $aprBps, minPaymentCents: $minPaymentCents, sortOrder: $sortOrder)';
   }
 }
 
@@ -578,6 +661,9 @@ abstract mixin class _$GoalCopyWith<$Res> implements $GoalCopyWith<$Res> {
     int? monthlyContribution,
     int currentAmount,
     bool isCompleted,
+    int? aprBps,
+    int? minPaymentCents,
+    int sortOrder,
   });
 }
 
@@ -606,6 +692,9 @@ class __$GoalCopyWithImpl<$Res> implements _$GoalCopyWith<$Res> {
     Object? monthlyContribution = freezed,
     Object? currentAmount = null,
     Object? isCompleted = null,
+    Object? aprBps = freezed,
+    Object? minPaymentCents = freezed,
+    Object? sortOrder = null,
   }) {
     return _then(
       _Goal(
@@ -661,6 +750,18 @@ class __$GoalCopyWithImpl<$Res> implements _$GoalCopyWith<$Res> {
             ? _self.isCompleted
             : isCompleted // ignore: cast_nullable_to_non_nullable
                   as bool,
+        aprBps: freezed == aprBps
+            ? _self.aprBps
+            : aprBps // ignore: cast_nullable_to_non_nullable
+                  as int?,
+        minPaymentCents: freezed == minPaymentCents
+            ? _self.minPaymentCents
+            : minPaymentCents // ignore: cast_nullable_to_non_nullable
+                  as int?,
+        sortOrder: null == sortOrder
+            ? _self.sortOrder
+            : sortOrder // ignore: cast_nullable_to_non_nullable
+                  as int,
       ),
     );
   }

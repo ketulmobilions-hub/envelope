@@ -13,6 +13,7 @@ abstract class RecurringRuleDto with _$RecurringRuleDto {
     required String type,
     required int amount,
     required String currency,
+    @JsonKey(name: 'exchange_rate') @Default(1.0) double exchangeRate,
     required String frequency,
     @JsonKey(name: 'start_date') required DateTime startDate,
     @JsonKey(name: 'next_occurrence') required DateTime nextOccurrence,

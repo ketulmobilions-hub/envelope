@@ -5,13 +5,16 @@ import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/dashboard/dashboard.dart';
 import 'package:envelope/dashboard/widgets/widgets.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/sync/bloc/bloc.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sharing_repository/sharing_repository.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 
 import '../../helpers/helpers.dart';
@@ -31,6 +34,8 @@ class _MockBudgetRepository extends Mock implements BudgetRepository {}
 
 class _MockEnvelopeRepository extends Mock implements EnvelopeRepository {}
 
+class _MockSharingRepository extends Mock implements SharingRepository {}
+
 void main() {
   late SyncBloc syncBloc;
   late AuthBloc authBloc;
@@ -38,7 +43,9 @@ void main() {
   late AccountRepository accountRepository;
   late BudgetRepository budgetRepository;
   late EnvelopeRepository envelopeRepository;
+  late SharingRepository sharingRepository;
   late SharedPreferences prefs;
+  late AppClock appClock;
 
   final now = DateTime(2024);
 
@@ -49,11 +56,19 @@ void main() {
     accountRepository = _MockAccountRepository();
     budgetRepository = _MockBudgetRepository();
     envelopeRepository = _MockEnvelopeRepository();
+    sharingRepository = _MockSharingRepository();
 
     SharedPreferences.setMockInitialValues(
       {'active_budget_id': 'test-budget-id'},
     );
     prefs = await SharedPreferences.getInstance();
+    appClock = AppClock(prefs);
+
+    // SharingRepository realtime subscription is filtered via whereType, so
+    // a null channel keeps DashboardBloc's subscribe step a no-op in tests.
+    when(
+      () => sharingRepository.subscribeToBudgetChanges(any()),
+    ).thenReturn(null);
 
     when(() => syncBloc.state).thenReturn(const SyncBlocState());
     when(() => authBloc.state).thenReturn(
@@ -69,6 +84,9 @@ void main() {
     );
 
     // Repository stubs for DashboardBloc and RecurringCheckCubit
+    when(
+      () => budgetRepository.watchBudget(any()),
+    ).thenAnswer((_) => const Stream<Budget>.empty());
     when(
       () => budgetRepository.watchBudgetPeriods(any()),
     ).thenAnswer((_) => Stream.value([]));
@@ -107,6 +125,16 @@ void main() {
     when(
       () => transactionRepository.watchBillReminders(any()),
     ).thenAnswer((_) => Stream.value([]));
+
+    // DashboardBloc merges these remote-change streams on start.
+    when(() => accountRepository.onRemoteChange)
+        .thenAnswer((_) => const Stream<void>.empty());
+    when(() => budgetRepository.onRemoteChange)
+        .thenAnswer((_) => const Stream<void>.empty());
+    when(() => envelopeRepository.onRemoteChange)
+        .thenAnswer((_) => const Stream<void>.empty());
+    when(() => transactionRepository.onRemoteChange)
+        .thenAnswer((_) => const Stream<void>.empty());
   });
 
   Widget buildSubject() {
@@ -114,6 +142,7 @@ void main() {
       providers: [
         BlocProvider<SyncBloc>.value(value: syncBloc),
         BlocProvider<AuthBloc>.value(value: authBloc),
+        ChangeNotifierProvider<AppClock>.value(value: appClock),
       ],
       child: MultiRepositoryProvider(
         providers: [
@@ -129,6 +158,9 @@ void main() {
           ),
           RepositoryProvider<EnvelopeRepository>.value(
             value: envelopeRepository,
+          ),
+          RepositoryProvider<SharingRepository>.value(
+            value: sharingRepository,
           ),
         ],
         child: const HomePage(),
@@ -160,6 +192,12 @@ void main() {
         when(
           () => budgetRepository.calculateReadyToAssign(any()),
         ).thenAnswer((_) async => 50000);
+        when(
+          () => budgetRepository.ensureCurrentPeriod(
+            any(),
+            asOf: any(named: 'asOf'),
+          ),
+        ).thenAnswer((_) async {});
         when(
           () => envelopeRepository.watchAllocations(any()),
         ).thenAnswer((_) => Stream.value([]));

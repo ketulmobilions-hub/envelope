@@ -30,6 +30,14 @@ mixin _$BudgetDto {
   @JsonKey(name: 'is_archived')
   bool get isArchived;
 
+  /// Seed cash (cents) — sum of on-budget account starting balances.
+  @JsonKey(name: 'opening_balance')
+  int get openingBalance;
+
+  /// Date the opening balance is anchored to.
+  @JsonKey(name: 'opening_date')
+  DateTime? get openingDate;
+
   /// Create a copy of BudgetDto
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -59,7 +67,11 @@ mixin _$BudgetDto {
             (identical(other.periodStartDay, periodStartDay) ||
                 other.periodStartDay == periodStartDay) &&
             (identical(other.isArchived, isArchived) ||
-                other.isArchived == isArchived));
+                other.isArchived == isArchived) &&
+            (identical(other.openingBalance, openingBalance) ||
+                other.openingBalance == openingBalance) &&
+            (identical(other.openingDate, openingDate) ||
+                other.openingDate == openingDate));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -75,11 +87,13 @@ mixin _$BudgetDto {
     periodType,
     periodStartDay,
     isArchived,
+    openingBalance,
+    openingDate,
   );
 
   @override
   String toString() {
-    return 'BudgetDto(id: $id, ownerId: $ownerId, name: $name, baseCurrency: $baseCurrency, createdAt: $createdAt, updatedAt: $updatedAt, periodType: $periodType, periodStartDay: $periodStartDay, isArchived: $isArchived)';
+    return 'BudgetDto(id: $id, ownerId: $ownerId, name: $name, baseCurrency: $baseCurrency, createdAt: $createdAt, updatedAt: $updatedAt, periodType: $periodType, periodStartDay: $periodStartDay, isArchived: $isArchived, openingBalance: $openingBalance, openingDate: $openingDate)';
   }
 }
 
@@ -98,6 +112,8 @@ abstract mixin class $BudgetDtoCopyWith<$Res> {
     @JsonKey(name: 'period_type') String periodType,
     @JsonKey(name: 'period_start_day') int periodStartDay,
     @JsonKey(name: 'is_archived') bool isArchived,
+    @JsonKey(name: 'opening_balance') int openingBalance,
+    @JsonKey(name: 'opening_date') DateTime? openingDate,
   });
 }
 
@@ -122,6 +138,8 @@ class _$BudgetDtoCopyWithImpl<$Res> implements $BudgetDtoCopyWith<$Res> {
     Object? periodType = null,
     Object? periodStartDay = null,
     Object? isArchived = null,
+    Object? openingBalance = null,
+    Object? openingDate = freezed,
   }) {
     return _then(
       _self.copyWith(
@@ -161,6 +179,14 @@ class _$BudgetDtoCopyWithImpl<$Res> implements $BudgetDtoCopyWith<$Res> {
             ? _self.isArchived
             : isArchived // ignore: cast_nullable_to_non_nullable
                   as bool,
+        openingBalance: null == openingBalance
+            ? _self.openingBalance
+            : openingBalance // ignore: cast_nullable_to_non_nullable
+                  as int,
+        openingDate: freezed == openingDate
+            ? _self.openingDate
+            : openingDate // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
       ),
     );
   }
@@ -269,6 +295,8 @@ extension BudgetDtoPatterns on BudgetDto {
       @JsonKey(name: 'period_type') String periodType,
       @JsonKey(name: 'period_start_day') int periodStartDay,
       @JsonKey(name: 'is_archived') bool isArchived,
+      @JsonKey(name: 'opening_balance') int openingBalance,
+      @JsonKey(name: 'opening_date') DateTime? openingDate,
     )?
     $default, {
     required TResult orElse(),
@@ -286,6 +314,8 @@ extension BudgetDtoPatterns on BudgetDto {
           _that.periodType,
           _that.periodStartDay,
           _that.isArchived,
+          _that.openingBalance,
+          _that.openingDate,
         );
       case _:
         return orElse();
@@ -317,6 +347,8 @@ extension BudgetDtoPatterns on BudgetDto {
       @JsonKey(name: 'period_type') String periodType,
       @JsonKey(name: 'period_start_day') int periodStartDay,
       @JsonKey(name: 'is_archived') bool isArchived,
+      @JsonKey(name: 'opening_balance') int openingBalance,
+      @JsonKey(name: 'opening_date') DateTime? openingDate,
     )
     $default,
   ) {
@@ -333,6 +365,8 @@ extension BudgetDtoPatterns on BudgetDto {
           _that.periodType,
           _that.periodStartDay,
           _that.isArchived,
+          _that.openingBalance,
+          _that.openingDate,
         );
       case _:
         throw StateError('Unexpected subclass');
@@ -363,6 +397,8 @@ extension BudgetDtoPatterns on BudgetDto {
       @JsonKey(name: 'period_type') String periodType,
       @JsonKey(name: 'period_start_day') int periodStartDay,
       @JsonKey(name: 'is_archived') bool isArchived,
+      @JsonKey(name: 'opening_balance') int openingBalance,
+      @JsonKey(name: 'opening_date') DateTime? openingDate,
     )?
     $default,
   ) {
@@ -379,6 +415,8 @@ extension BudgetDtoPatterns on BudgetDto {
           _that.periodType,
           _that.periodStartDay,
           _that.isArchived,
+          _that.openingBalance,
+          _that.openingDate,
         );
       case _:
         return null;
@@ -399,6 +437,8 @@ class _BudgetDto implements BudgetDto {
     @JsonKey(name: 'period_type') this.periodType = 'monthly',
     @JsonKey(name: 'period_start_day') this.periodStartDay = 1,
     @JsonKey(name: 'is_archived') this.isArchived = false,
+    @JsonKey(name: 'opening_balance') this.openingBalance = 0,
+    @JsonKey(name: 'opening_date') this.openingDate,
   });
   factory _BudgetDto.fromJson(Map<String, dynamic> json) =>
       _$BudgetDtoFromJson(json);
@@ -428,6 +468,16 @@ class _BudgetDto implements BudgetDto {
   @override
   @JsonKey(name: 'is_archived')
   final bool isArchived;
+
+  /// Seed cash (cents) — sum of on-budget account starting balances.
+  @override
+  @JsonKey(name: 'opening_balance')
+  final int openingBalance;
+
+  /// Date the opening balance is anchored to.
+  @override
+  @JsonKey(name: 'opening_date')
+  final DateTime? openingDate;
 
   /// Create a copy of BudgetDto
   /// with the given fields replaced by the non-null parameter values.
@@ -461,7 +511,11 @@ class _BudgetDto implements BudgetDto {
             (identical(other.periodStartDay, periodStartDay) ||
                 other.periodStartDay == periodStartDay) &&
             (identical(other.isArchived, isArchived) ||
-                other.isArchived == isArchived));
+                other.isArchived == isArchived) &&
+            (identical(other.openingBalance, openingBalance) ||
+                other.openingBalance == openingBalance) &&
+            (identical(other.openingDate, openingDate) ||
+                other.openingDate == openingDate));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -477,11 +531,13 @@ class _BudgetDto implements BudgetDto {
     periodType,
     periodStartDay,
     isArchived,
+    openingBalance,
+    openingDate,
   );
 
   @override
   String toString() {
-    return 'BudgetDto(id: $id, ownerId: $ownerId, name: $name, baseCurrency: $baseCurrency, createdAt: $createdAt, updatedAt: $updatedAt, periodType: $periodType, periodStartDay: $periodStartDay, isArchived: $isArchived)';
+    return 'BudgetDto(id: $id, ownerId: $ownerId, name: $name, baseCurrency: $baseCurrency, createdAt: $createdAt, updatedAt: $updatedAt, periodType: $periodType, periodStartDay: $periodStartDay, isArchived: $isArchived, openingBalance: $openingBalance, openingDate: $openingDate)';
   }
 }
 
@@ -504,6 +560,8 @@ abstract mixin class _$BudgetDtoCopyWith<$Res>
     @JsonKey(name: 'period_type') String periodType,
     @JsonKey(name: 'period_start_day') int periodStartDay,
     @JsonKey(name: 'is_archived') bool isArchived,
+    @JsonKey(name: 'opening_balance') int openingBalance,
+    @JsonKey(name: 'opening_date') DateTime? openingDate,
   });
 }
 
@@ -528,6 +586,8 @@ class __$BudgetDtoCopyWithImpl<$Res> implements _$BudgetDtoCopyWith<$Res> {
     Object? periodType = null,
     Object? periodStartDay = null,
     Object? isArchived = null,
+    Object? openingBalance = null,
+    Object? openingDate = freezed,
   }) {
     return _then(
       _BudgetDto(
@@ -567,6 +627,14 @@ class __$BudgetDtoCopyWithImpl<$Res> implements _$BudgetDtoCopyWith<$Res> {
             ? _self.isArchived
             : isArchived // ignore: cast_nullable_to_non_nullable
                   as bool,
+        openingBalance: null == openingBalance
+            ? _self.openingBalance
+            : openingBalance // ignore: cast_nullable_to_non_nullable
+                  as int,
+        openingDate: freezed == openingDate
+            ? _self.openingDate
+            : openingDate // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
       ),
     );
   }

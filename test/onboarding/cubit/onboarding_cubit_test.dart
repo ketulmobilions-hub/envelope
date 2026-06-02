@@ -1,4 +1,5 @@
 import 'package:account_repository/account_repository.dart';
+import 'package:auth_repository/auth_repository.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/onboarding/cubit/cubit.dart';
@@ -13,12 +14,15 @@ class MockAccountRepository extends Mock implements AccountRepository {}
 
 class MockBudgetRepository extends Mock implements BudgetRepository {}
 
+class MockAuthRepository extends Mock implements AuthRepository {}
+
 void main() {
   group('OnboardingCubit', () {
     late SharedPreferences prefs;
     late MockEnvelopeRepository envelopeRepository;
     late MockAccountRepository accountRepository;
     late MockBudgetRepository budgetRepository;
+    late MockAuthRepository authRepository;
 
     const testUserId = 'test-user-id';
     const testBudgetId = 'test-budget-id';
@@ -29,6 +33,12 @@ void main() {
       envelopeRepository = MockEnvelopeRepository();
       accountRepository = MockAccountRepository();
       budgetRepository = MockBudgetRepository();
+      authRepository = MockAuthRepository();
+      when(
+        () => authRepository.updateProfile(
+          baseCurrency: any(named: 'baseCurrency'),
+        ),
+      ).thenAnswer((_) async {});
     });
 
     OnboardingCubit buildCubit() => OnboardingCubit(
@@ -36,6 +46,7 @@ void main() {
       envelopeRepository: envelopeRepository,
       accountRepository: accountRepository,
       budgetRepository: budgetRepository,
+      authRepository: authRepository,
       userId: testUserId,
     );
 
@@ -50,7 +61,6 @@ void main() {
       expect(cubit.state.baseCurrency, 'USD');
       expect(cubit.state.accounts, isEmpty);
       expect(cubit.state.categoryGroups, defaultCategoryGroups);
-      expect(cubit.state.allocations, isEmpty);
     });
 
     group('step navigation', () {
@@ -85,10 +95,16 @@ void main() {
       );
 
       blocTest<OnboardingCubit, OnboardingState>(
-        'nextStep does not advance past allocation',
+        'nextStep does not advance past envelopes',
         build: buildCubit,
         seed: () => const OnboardingState(
-          currentStep: OnboardingStep.allocation,
+          currentStep: OnboardingStep.envelopes,
+          categoryGroups: [
+            OnboardingCategoryGroup(
+              name: 'Needs',
+              envelopes: ['Rent'],
+            ),
+          ],
         ),
         act: (cubit) => cubit.nextStep(),
         expect: () => <OnboardingState>[],
@@ -109,6 +125,19 @@ void main() {
                 (s) => s.status,
                 'status',
                 OnboardingStatus.failure,
+              )
+              .having(
+                (s) => s.error,
+                'error',
+                OnboardingError.accountRequired,
+              ),
+          // Production emits a transient failure then resets to initial
+          // (keeping the error) so the UI can react to a one-shot error.
+          isA<OnboardingState>()
+              .having(
+                (s) => s.status,
+                'status',
+                OnboardingStatus.initial,
               )
               .having(
                 (s) => s.error,
@@ -168,30 +197,22 @@ void main() {
                 'error',
                 OnboardingError.envelopeRequired,
               ),
+          // Production emits a transient failure then resets to initial
+          // (keeping the error) so the UI can react to a one-shot error.
+          isA<OnboardingState>()
+              .having(
+                (s) => s.status,
+                'status',
+                OnboardingStatus.initial,
+              )
+              .having(
+                (s) => s.error,
+                'error',
+                OnboardingError.envelopeRequired,
+              ),
         ],
       );
 
-      blocTest<OnboardingCubit, OnboardingState>(
-        'nextStep advances on envelopes step with envelopes',
-        build: buildCubit,
-        seed: () => const OnboardingState(
-          currentStep: OnboardingStep.envelopes,
-          categoryGroups: [
-            OnboardingCategoryGroup(
-              name: 'Needs',
-              envelopes: ['Rent'],
-            ),
-          ],
-        ),
-        act: (cubit) => cubit.nextStep(),
-        expect: () => [
-          isA<OnboardingState>().having(
-            (s) => s.currentStep,
-            'currentStep',
-            OnboardingStep.allocation,
-          ),
-        ],
-      );
     });
 
     group('currency selection', () {
@@ -379,31 +400,6 @@ void main() {
       );
     });
 
-    group('allocation', () {
-      blocTest<OnboardingCubit, OnboardingState>(
-        'setAllocation updates allocation map with composite key',
-        build: buildCubit,
-        act: (cubit) => cubit.setAllocation(0, 'Rent', 1500),
-        expect: () => [
-          const OnboardingState(
-            allocations: {'0:Rent': 1500},
-          ),
-        ],
-      );
-
-      blocTest<OnboardingCubit, OnboardingState>(
-        'getAllocation returns value for composite key',
-        build: buildCubit,
-        seed: () => const OnboardingState(
-          allocations: {'0:Rent': 1500},
-        ),
-        verify: (cubit) {
-          expect(cubit.getAllocation(0, 'Rent'), 1500);
-          expect(cubit.getAllocation(1, 'Rent'), 0);
-        },
-      );
-    });
-
     group('completeOnboarding', () {
       final now = DateTime.now();
 
@@ -413,6 +409,8 @@ void main() {
             name: any(named: 'name'),
             baseCurrency: any(named: 'baseCurrency'),
             ownerId: any(named: 'ownerId'),
+            openingBalance: any(named: 'openingBalance'),
+            openingDate: any(named: 'openingDate'),
           ),
         ).thenAnswer(
           (_) async => Budget(
@@ -533,6 +531,8 @@ void main() {
               name: 'My Budget',
               baseCurrency: 'USD',
               ownerId: testUserId,
+              openingBalance: 150050,
+              openingDate: any(named: 'openingDate'),
             ),
           ).called(1);
           verify(
@@ -564,7 +564,8 @@ void main() {
               name: 'Groceries',
             ),
           ).called(1);
-          expect(prefs.getBool('onboarding_complete'), isTrue);
+          // Onboarding completion is now tracked by persisting the active
+          // budget id (used by isOnboardingComplete), not a boolean flag.
           expect(prefs.getString('active_budget_id'), testBudgetId);
         },
       );
@@ -1064,6 +1065,129 @@ void main() {
           ],
         );
       });
+
+      group('opening balance (issue #80)', () {
+        // Fixed clock so we can assert openingDate exactly. May 15 2026
+        // means openingDate must be the start of May 2026.
+        final fixedNow = DateTime(2026, 5, 15);
+        final expectedOpeningDate = DateTime(2026, 5);
+
+        OnboardingCubit buildWithFixedClock() => OnboardingCubit(
+          sharedPreferences: prefs,
+          envelopeRepository: envelopeRepository,
+          accountRepository: accountRepository,
+          budgetRepository: budgetRepository,
+          authRepository: authRepository,
+          userId: testUserId,
+          now: () => fixedNow,
+        );
+
+        blocTest<OnboardingCubit, OnboardingState>(
+          'writes openingBalance from on-budget account starting balances and '
+          'seeds the initial period with totalIncome=0',
+          build: () {
+            stubCreateBudget();
+            when(
+              () => accountRepository.createAccount(
+                budgetId: any(named: 'budgetId'),
+                name: any(named: 'name'),
+                type: any(named: 'type'),
+                currency: any(named: 'currency'),
+                startingBalance: any(named: 'startingBalance'),
+                isOnBudget: any(named: 'isOnBudget'),
+              ),
+            ).thenAnswer(
+              (_) async => Account(
+                id: 'acc-1',
+                budgetId: testBudgetId,
+                name: 'Checking',
+                type: 'checking',
+                currency: 'USD',
+                createdAt: now,
+                updatedAt: now,
+              ),
+            );
+            when(
+              () => envelopeRepository.createCategoryGroup(
+                budgetId: any(named: 'budgetId'),
+                name: any(named: 'name'),
+              ),
+            ).thenAnswer(
+              (_) async => CategoryGroup(
+                id: 'group-1',
+                budgetId: testBudgetId,
+                name: 'Needs',
+                createdAt: now,
+              ),
+            );
+            when(
+              () => envelopeRepository.createEnvelope(
+                categoryGroupId: any(named: 'categoryGroupId'),
+                budgetId: any(named: 'budgetId'),
+                name: any(named: 'name'),
+              ),
+            ).thenAnswer(
+              (_) async => Envelope(
+                id: 'env-1',
+                categoryGroupId: 'group-1',
+                budgetId: testBudgetId,
+                name: 'Rent',
+                createdAt: now,
+              ),
+            );
+            return buildWithFixedClock();
+          },
+          seed: () => const OnboardingState(
+            accounts: [
+              // On-budget: contributes to openingBalance.
+              OnboardingAccount(
+                name: 'Checking',
+                type: 'checking',
+                currency: 'USD',
+                startingBalance: 100000,
+              ),
+              // Off-budget: must NOT contribute.
+              OnboardingAccount(
+                name: 'Brokerage',
+                type: 'investment',
+                currency: 'USD',
+                startingBalance: 50000,
+                isOnBudget: false,
+              ),
+            ],
+            categoryGroups: [
+              OnboardingCategoryGroup(
+                name: 'Needs',
+                envelopes: ['Rent'],
+              ),
+            ],
+          ),
+          act: (cubit) => cubit.completeOnboarding(),
+          verify: (_) {
+            // openingBalance = $100,000 only (off-budget excluded).
+            // openingDate = start of the month of `now` (May 1 2026).
+            verify(
+              () => budgetRepository.createBudget(
+                name: 'My Budget',
+                baseCurrency: 'USD',
+                ownerId: testUserId,
+                openingBalance: 10000000,
+                openingDate: expectedOpeningDate,
+              ),
+            ).called(1);
+            // Seed period has zero income; opening balance lives on the
+            // budget instead.
+            verify(
+              () => budgetRepository.createBudgetPeriod(
+                budgetId: testBudgetId,
+                startDate: expectedOpeningDate,
+                endDate: DateTime(2026, 5, 31),
+                totalIncome: 0,
+              ),
+            ).called(1);
+          },
+        );
+      });
     });
 
     group('isOnboardingComplete', () {
@@ -1073,7 +1197,8 @@ void main() {
       });
 
       test('returns true when flag is set', () async {
-        await prefs.setBool('onboarding_complete', true);
+        // Completion is now derived from a persisted active budget id.
+        await prefs.setString(activeBudgetIdKey, testBudgetId);
         final result = OnboardingCubit.isOnboardingComplete(prefs);
         expect(result, isTrue);
       });

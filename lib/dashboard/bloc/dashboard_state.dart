@@ -23,9 +23,17 @@ final class EnvelopeSummary extends Equatable {
 
   int get allocated => allocation?.allocatedAmount ?? 0;
 
+  int get rollover => allocation?.rolloverAmount ?? 0;
+
+  /// Total funds budgeted for this envelope this period — fresh allocation
+  /// plus any rolled-over balance from prior periods. Use this as the "of N"
+  /// denominator in display, not [allocated] alone, otherwise pure-rollover
+  /// envelopes (allocated=0) read as "X of 0".
+  int get budgeted => allocated + rollover;
+
   int get spent => allocation?.spentAmount ?? spentFromTransactions;
 
-  int get available => allocated - spent + (allocation?.rolloverAmount ?? 0);
+  int get available => allocated - spent + rollover;
   bool get isOverspent => available < 0;
 
   @override
@@ -42,6 +50,7 @@ final class DashboardState extends Equatable {
     this.status = DashboardStatus.initial,
     this.error,
     this.selectedPeriod,
+    this.periods = const [],
     this.readyToAssign = 0,
     this.accounts = const [],
     this.envelopes = const [],
@@ -56,7 +65,27 @@ final class DashboardState extends Equatable {
   final DashboardStatus status;
   final DashboardError? error;
   final BudgetPeriod? selectedPeriod;
+
+  /// All budget periods (unsorted as received). Use [sortedPeriods] for
+  /// chronological order and the period-navigation getters.
+  final List<BudgetPeriod> periods;
   final int readyToAssign;
+
+  /// Periods sorted oldest-first, for previous/next navigation.
+  List<BudgetPeriod> get sortedPeriods =>
+      [...periods]..sort((a, b) => a.startDate.compareTo(b.startDate));
+
+  int get _selectedIndex =>
+      sortedPeriods.indexWhere((p) => p.id == selectedPeriod?.id);
+
+  /// Whether an older period exists to navigate back to.
+  bool get hasPreviousPeriod => _selectedIndex > 0;
+
+  /// Whether a newer period exists to navigate forward to.
+  bool get hasNextPeriod {
+    final idx = _selectedIndex;
+    return idx >= 0 && idx < sortedPeriods.length - 1;
+  }
   final List<Account> accounts;
   final List<Envelope> envelopes;
   final List<CategoryGroup> categoryGroups;
@@ -73,10 +102,14 @@ final class DashboardState extends Equatable {
 
   final bool hasRemoteUpdate;
 
-  /// Sum of non-archived account balances.
-  int get totalBalance => accounts
-      .where((a) => !a.isArchived)
-      .fold(0, (sum, a) => sum + a.currentBalance);
+  /// Sum of non-archived account balances, converted to the budget's base
+  /// currency via each account's `displayFxRate`. For accounts whose currency
+  /// matches the budget base, the rate defaults to 1.0 and conversion is a
+  /// no-op.
+  int get totalBalance => accounts.where((a) => !a.isArchived).fold(
+    0,
+    (sum, a) => sum + (a.currentBalance * a.displayFxRate).round(),
+  );
 
   /// Envelope summaries paired with their allocations and group names.
   List<EnvelopeSummary> get envelopeSummaries {
@@ -92,11 +125,17 @@ final class DashboardState extends Equatable {
     final spentMap = <String, int>{};
     if (period != null) {
       for (final t in transactions) {
-        if (t.type == 'expense' &&
-            t.envelopeId != null &&
-            !t.date.isBefore(period.startDate) &&
-            !t.date.isAfter(period.endDate)) {
+        if (t.envelopeId == null ||
+            t.date.isBefore(period.startDate) ||
+            t.date.isAfter(period.endDate)) {
+          continue;
+        }
+        if (t.type == 'expense') {
           spentMap[t.envelopeId!] = (spentMap[t.envelopeId!] ?? 0) + t.amount;
+        } else if (t.type == 'transfer' && t.amount < 0) {
+          // Categorized transfer OUT to an off-budget account counts as spend
+          // (outgoing leg amount is negative, so subtract to add).
+          spentMap[t.envelopeId!] = (spentMap[t.envelopeId!] ?? 0) - t.amount;
         }
       }
     }
@@ -130,6 +169,7 @@ final class DashboardState extends Equatable {
     DashboardStatus? status,
     Object? error = _sentinel,
     Object? selectedPeriod = _sentinel,
+    List<BudgetPeriod>? periods,
     int? readyToAssign,
     List<Account>? accounts,
     List<Envelope>? envelopes,
@@ -146,6 +186,7 @@ final class DashboardState extends Equatable {
       selectedPeriod: selectedPeriod == _sentinel
           ? this.selectedPeriod
           : selectedPeriod as BudgetPeriod?,
+      periods: periods ?? this.periods,
       readyToAssign: readyToAssign ?? this.readyToAssign,
       accounts: accounts ?? this.accounts,
       envelopes: envelopes ?? this.envelopes,
@@ -165,6 +206,7 @@ final class DashboardState extends Equatable {
     status,
     error,
     selectedPeriod,
+    periods,
     readyToAssign,
     accounts,
     envelopes,

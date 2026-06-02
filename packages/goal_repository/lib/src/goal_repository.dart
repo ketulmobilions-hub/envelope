@@ -31,6 +31,8 @@ class GoalRepository {
     int? targetAmount,
     DateTime? targetDate,
     int? monthlyContribution,
+    int? aprBps,
+    int? minPaymentCents,
   }) async {
     try {
       final dto = GoalDto(
@@ -43,6 +45,8 @@ class GoalRepository {
         targetAmount: targetAmount,
         targetDate: targetDate,
         monthlyContribution: monthlyContribution,
+        aprBps: aprBps,
+        minPaymentCents: minPaymentCents,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -96,6 +100,30 @@ class GoalRepository {
       await _cacheGoal(updated);
     } on EnvelopeApiException catch (e) {
       throw GoalException('Failed to update goal', error: e);
+    }
+  }
+
+  /// Reorders goals by assigning each id its index in [orderedIds] as the
+  /// new `sortOrder`. Ids not present in the input retain their existing
+  /// order; callers should pass a complete list of active goal ids.
+  ///
+  /// Updates are pushed sequentially. On the first failure the loop aborts
+  /// and rethrows as a [GoalException]; goals already updated keep their
+  /// new sortOrder (partial-apply semantics).
+  Future<void> reorderGoals(List<String> orderedIds) async {
+    try {
+      for (var i = 0; i < orderedIds.length; i++) {
+        final id = orderedIds[i];
+        final current = await getGoal(id);
+        if (current.sortOrder == i) continue;
+        await updateGoal(
+          current.copyWith(sortOrder: i, updatedAt: DateTime.now()),
+        );
+      }
+    } on GoalException {
+      rethrow;
+    } on EnvelopeApiException catch (e) {
+      throw GoalException('Failed to reorder goals', error: e);
     }
   }
 
@@ -262,6 +290,9 @@ class GoalRepository {
       monthlyContribution: dto.monthlyContribution,
       currentAmount: dto.currentAmount,
       isCompleted: dto.isCompleted,
+      aprBps: dto.aprBps,
+      minPaymentCents: dto.minPaymentCents,
+      sortOrder: dto.sortOrder,
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
     );
@@ -280,6 +311,9 @@ class GoalRepository {
       monthlyContribution: row.monthlyContribution,
       currentAmount: row.currentAmount,
       isCompleted: row.isCompleted,
+      aprBps: row.aprBps,
+      minPaymentCents: row.minPaymentCents,
+      sortOrder: row.sortOrder,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     );
@@ -298,6 +332,9 @@ class GoalRepository {
       monthlyContribution: goal.monthlyContribution,
       currentAmount: goal.currentAmount,
       isCompleted: goal.isCompleted,
+      aprBps: goal.aprBps,
+      minPaymentCents: goal.minPaymentCents,
+      sortOrder: goal.sortOrder,
       createdAt: goal.createdAt,
       updatedAt: goal.updatedAt,
     );
@@ -320,6 +357,9 @@ class GoalRepository {
       monthlyContribution: Value(dto.monthlyContribution),
       currentAmount: Value(dto.currentAmount),
       isCompleted: Value(dto.isCompleted),
+      aprBps: Value(dto.aprBps),
+      minPaymentCents: Value(dto.minPaymentCents),
+      sortOrder: Value(dto.sortOrder),
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
     );

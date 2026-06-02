@@ -1,5 +1,36 @@
+import 'package:account_repository/account_repository.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:flutter/material.dart';
+
+/// Conversion helpers for a single [Account].
+extension AccountBaseCurrency on Account {
+  /// Returns the account's `startingBalance` expressed in the budget's base
+  /// currency cents, applying the account's `displayFxRate`.
+  ///
+  /// Used by callers that mutate `budget_periods.total_income`, which is
+  /// stored in base-currency cents. For accounts whose currency matches the
+  /// base, `displayFxRate` defaults to 1.0 and the value is unchanged.
+  ///
+  /// Note: `displayFxRate` is `real` (single-precision) in Postgres and
+  /// `double` in Dart. For starting balances near the bigint cents max,
+  /// minor precision loss is possible.
+  int get startingBalanceInBase =>
+      (startingBalance * displayFxRate).round();
+}
+
+/// Currency lookup helpers on a list of [Account].
+extension AccountListCurrency on List<Account> {
+  /// Returns the currency of the account whose id matches [accountId],
+  /// falling back to [fallback] (default `'USD'`) if no match is found.
+  ///
+  /// Callers that have a budget context should validate the list is non-empty
+  /// before relying on the fallback — an empty accounts list at submit time
+  /// usually indicates a load race that should be surfaced as a form error.
+  String currencyForAccountId(String? accountId, {String fallback = 'USD'}) {
+    if (accountId == null) return fallback;
+    return where((a) => a.id == accountId).firstOrNull?.currency ?? fallback;
+  }
+}
 
 /// Returns the localized display name for an account type.
 String localizedAccountType(String type, AppLocalizations l10n) {

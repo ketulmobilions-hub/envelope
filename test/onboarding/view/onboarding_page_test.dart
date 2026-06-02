@@ -7,11 +7,13 @@ import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/cubit.dart';
 import 'package:envelope/onboarding/view/onboarding_page.dart';
 import 'package:envelope/onboarding/widgets/widgets.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MockOnboardingCubit extends MockCubit<OnboardingState>
@@ -23,6 +25,8 @@ class MockAccountRepository extends Mock implements AccountRepository {}
 
 class MockBudgetRepository extends Mock implements BudgetRepository {}
 
+class MockAuthRepository extends Mock implements AuthRepository {}
+
 class MockAuthBloc extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
 
 void main() {
@@ -31,6 +35,7 @@ void main() {
     late MockEnvelopeRepository envelopeRepository;
     late MockAccountRepository accountRepository;
     late MockBudgetRepository budgetRepository;
+    late MockAuthRepository authRepository;
     late MockAuthBloc authBloc;
 
     setUp(() async {
@@ -39,6 +44,7 @@ void main() {
       envelopeRepository = MockEnvelopeRepository();
       accountRepository = MockAccountRepository();
       budgetRepository = MockBudgetRepository();
+      authRepository = MockAuthRepository();
       authBloc = MockAuthBloc();
 
       final now = DateTime.now();
@@ -69,6 +75,10 @@ void main() {
             RepositoryProvider<BudgetRepository>.value(
               value: budgetRepository,
             ),
+            RepositoryProvider<AuthRepository>.value(
+              value: authRepository,
+            ),
+            ChangeNotifierProvider<AppClock>.value(value: AppClock(prefs)),
           ],
           child: BlocProvider<AuthBloc>.value(
             value: authBloc,
@@ -142,17 +152,6 @@ void main() {
       expect(find.byType(EnvelopesStep), findsOneWidget);
     });
 
-    testWidgets('renders AllocationStep on allocation step', (tester) async {
-      when(() => cubit.state).thenReturn(
-        const OnboardingState(
-          currentStep: OnboardingStep.allocation,
-        ),
-      );
-      await tester.pumpWidget(buildSubject());
-      await tester.pumpAndSettle();
-      expect(find.byType(AllocationStep), findsOneWidget);
-    });
-
     testWidgets('shows progress indicator on non-welcome steps', (
       tester,
     ) async {
@@ -201,6 +200,21 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Continue'));
       verify(() => cubit.nextStep()).called(1);
+    });
+
+    testWidgets('bottom button on envelopes step calls completeOnboarding', (
+      tester,
+    ) async {
+      when(() => cubit.state).thenReturn(
+        const OnboardingState(
+          currentStep: OnboardingStep.envelopes,
+        ),
+      );
+      when(() => cubit.completeOnboarding()).thenAnswer((_) async {});
+      await tester.pumpWidget(buildSubject());
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Complete Setup'));
+      verify(() => cubit.completeOnboarding()).called(1);
     });
 
     testWidgets('shows snackbar on failure with error', (tester) async {

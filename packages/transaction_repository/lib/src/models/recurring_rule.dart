@@ -12,6 +12,7 @@ abstract class RecurringRule with _$RecurringRule {
     required String type,
     required int amount,
     required String currency,
+    @Default(1.0) double exchangeRate,
     required String frequency,
     required DateTime startDate,
     required DateTime nextOccurrence,

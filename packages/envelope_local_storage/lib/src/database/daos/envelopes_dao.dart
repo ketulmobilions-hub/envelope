@@ -141,6 +141,12 @@ class EnvelopesDao extends DatabaseAccessor<AppDatabase>
     envelopeAllocations,
   )..where((t) => t.budgetPeriodId.equals(budgetPeriodId))).watch();
 
+  Stream<List<EnvelopeAllocation>> watchAllocationsByEnvelopeId(
+    String envelopeId,
+  ) => (select(
+    envelopeAllocations,
+  )..where((t) => t.envelopeId.equals(envelopeId))).watch();
+
   Future<int> insertAllocation(
     EnvelopeAllocationsCompanion allocation, {
     InsertMode mode = InsertMode.insert,

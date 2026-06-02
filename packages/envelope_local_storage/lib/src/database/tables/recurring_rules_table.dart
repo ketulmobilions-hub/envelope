@@ -8,6 +8,8 @@ class RecurringRules extends Table {
   TextColumn get type => text()();
   IntColumn get amount => integer()();
   TextColumn get currency => text()();
+  RealColumn get exchangeRate =>
+      real().named('exchange_rate').withDefault(const Constant(1))();
   TextColumn get payee => text().nullable()();
   TextColumn get notes => text().nullable()();
   TextColumn get frequency => text()();

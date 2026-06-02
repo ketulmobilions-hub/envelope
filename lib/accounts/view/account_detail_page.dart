@@ -5,13 +5,12 @@ import 'package:envelope/accounts/view/account_form_page.dart';
 import 'package:envelope/accounts/widgets/account_helpers.dart';
 import 'package:envelope/accounts/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/transactions/bloc/bloc.dart';
-import 'package:envelope/transactions/cubit/cubit.dart';
-import 'package:envelope/transactions/view/transaction_form_page.dart';
+import 'package:envelope/transactions/view/quick_add_transaction_sheet.dart';
 import 'package:envelope/transactions/widgets/widgets.dart';
-import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -259,7 +258,9 @@ class AccountDetailPage extends StatelessWidget {
                     final raw = double.tryParse(controller.text.trim());
                     if (raw != null && raw.abs() > maxDollarAmount) {
                       setDialogState(
-                        () => balanceError = l10n.accountsBalanceTooLarge,
+                        () => balanceError = l10n.accountsBalanceTooLarge(
+                          '${symbol}999,999,999.99',
+                        ),
                       );
                       return;
                     }
@@ -370,10 +371,11 @@ class _AccountTransactionsList extends StatelessWidget {
   Future<void> _openEdit(BuildContext context, Transaction transaction) async {
     final bloc = context.read<TransactionsBloc>();
     final budgetRepository = context.read<BudgetRepository>();
+    final appClock = context.read<AppClock>();
     final periods = await budgetRepository.watchBudgetPeriods(budgetId).first;
     String? periodId;
     if (periods.isNotEmpty) {
-      final now = DateTime.now();
+      final now = appClock.now();
       final current = periods.firstWhere(
         (p) =>
             !p.isClosed &&
@@ -385,22 +387,12 @@ class _AccountTransactionsList extends StatelessWidget {
       periodId = current.id;
     }
     if (!context.mounted) return;
-    final result = await Navigator.of(context).push<bool>(
-      MaterialPageRoute<bool>(
-        builder: (_) => BlocProvider(
-          create: (_) => TransactionFormCubit(
-            transactionRepository: context.read<TransactionRepository>(),
-            accountRepository: context.read<AccountRepository>(),
-            envelopeRepository: context.read<EnvelopeRepository>(),
-            budgetRepository: context.read<BudgetRepository>(),
-            budgetId: budgetId,
-            userId: transaction.createdBy,
-            budgetPeriodId: periodId,
-            transaction: transaction,
-          ),
-          child: TransactionFormPage(transaction: transaction),
-        ),
-      ),
+    final result = await showTransactionFormSheet(
+      context,
+      budgetId: budgetId,
+      budgetPeriodId: periodId,
+      userId: transaction.createdBy,
+      transaction: transaction,
     );
     if (result == true && context.mounted) {
       bloc.add(const TransactionsRefreshRequested());

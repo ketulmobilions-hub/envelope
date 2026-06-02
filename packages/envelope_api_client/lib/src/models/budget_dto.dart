@@ -16,6 +16,12 @@ abstract class BudgetDto with _$BudgetDto {
     @JsonKey(name: 'period_type') @Default('monthly') String periodType,
     @JsonKey(name: 'period_start_day') @Default(1) int periodStartDay,
     @JsonKey(name: 'is_archived') @Default(false) bool isArchived,
+
+    /// Seed cash (cents) — sum of on-budget account starting balances.
+    @JsonKey(name: 'opening_balance') @Default(0) int openingBalance,
+
+    /// Date the opening balance is anchored to.
+    @JsonKey(name: 'opening_date') DateTime? openingDate,
   }) = _BudgetDto;
 
   factory BudgetDto.fromJson(Map<String, dynamic> json) =>

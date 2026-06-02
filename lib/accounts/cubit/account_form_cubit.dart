@@ -49,10 +49,15 @@ class AccountFormCubit extends Cubit<AccountFormState> {
     required int balanceCents,
     required String currency,
     required bool isOnBudget,
+    double displayFxRate = 1.0,
     int? creditLimitCents,
   }) async {
     emit(state.copyWith(status: AccountFormStatus.submitting));
     try {
+      // Account balance is stored in the account's native currency. Income
+      // additions to the budget period must be expressed in base currency.
+      int toBase(int amountInAccountCcy) =>
+          (amountInAccountCcy * displayFxRate).round();
       if (isEditing) {
         final oldAccount = account!;
         final balanceDelta = balanceCents - oldAccount.startingBalance;
@@ -62,6 +67,7 @@ class AccountFormCubit extends Cubit<AccountFormState> {
           startingBalance: balanceCents,
           currentBalance: oldAccount.currentBalance + balanceDelta,
           currency: currency,
+          displayFxRate: displayFxRate,
           isOnBudget: isOnBudget,
           updatedAt: DateTime.now(),
         );
@@ -81,19 +87,21 @@ class AccountFormCubit extends Cubit<AccountFormState> {
             if (isOnBudget && balanceCents > 0) {
               await _budgetRepository.addIncomeToCurrentPeriod(
                 budgetId: budgetId,
-                amount: balanceCents,
+                amount: toBase(balanceCents),
               );
             } else if (!isOnBudget && oldAccount.startingBalance > 0) {
               await _budgetRepository.addIncomeToCurrentPeriod(
                 budgetId: budgetId,
-                amount: -oldAccount.startingBalance,
+                amount: -(oldAccount.startingBalance *
+                        oldAccount.displayFxRate)
+                    .round(),
               );
             }
           } else if (isOnBudget && balanceDelta != 0) {
             // Balance changed while staying on-budget: adjust by delta.
             await _budgetRepository.addIncomeToCurrentPeriod(
               budgetId: budgetId,
-              amount: balanceDelta,
+              amount: toBase(balanceDelta),
             );
           }
         }
@@ -103,6 +111,7 @@ class AccountFormCubit extends Cubit<AccountFormState> {
           name: name,
           type: type,
           currency: currency,
+          displayFxRate: displayFxRate,
           startingBalance: balanceCents,
           isOnBudget: isOnBudget,
         );
@@ -110,7 +119,7 @@ class AccountFormCubit extends Cubit<AccountFormState> {
         if (balanceCents != 0 && isOnBudget && _budgetRepository != null) {
           await _budgetRepository.addIncomeToCurrentPeriod(
             budgetId: budgetId,
-            amount: balanceCents,
+            amount: toBase(balanceCents),
           );
         }
 

@@ -1,8 +1,10 @@
 import 'package:account_repository/account_repository.dart';
+import 'package:envelope/auth/auth.dart';
 import 'package:envelope/transactions/widgets/timeline_date_header.dart';
 import 'package:envelope/transactions/widgets/timeline_transaction_tile.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 
 /// A date header followed by a group of transactions for that date.
@@ -19,6 +21,7 @@ class TransactionDateGroup extends StatelessWidget {
     this.onTap,
     this.onEdit,
     this.onDelete,
+    this.onDuplicate,
     super.key,
   });
 
@@ -31,9 +34,15 @@ class TransactionDateGroup extends StatelessWidget {
   final ValueChanged<Transaction>? onTap;
   final ValueChanged<Transaction>? onEdit;
   final ValueChanged<Transaction>? onDelete;
+  final ValueChanged<Transaction>? onDuplicate;
 
   @override
   Widget build(BuildContext context) {
+    // Select narrowly so the group only rebuilds when base currency changes,
+    // not on every AuthBloc emission (token refresh, profile update).
+    final baseCurrency = context.select<AuthBloc, String>(
+      (b) => b.state.user?.baseCurrency ?? 'USD',
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -41,6 +50,7 @@ class TransactionDateGroup extends StatelessWidget {
         for (var i = 0; i < transactions.length; i++)
           TimelineTransactionTile(
             transaction: transactions[i],
+            baseCurrency: baseCurrency,
             isLast: i == transactions.length - 1,
             transferLabel: _transferLabel(transactions[i]),
             envelopeName: _envelopeName(transactions[i]),
@@ -48,6 +58,7 @@ class TransactionDateGroup extends StatelessWidget {
             onTap: () => onTap?.call(transactions[i]),
             onEdit: () => onEdit?.call(transactions[i]),
             onDelete: () => onDelete?.call(transactions[i]),
+            onDuplicate: () => onDuplicate?.call(transactions[i]),
           ),
       ],
     );

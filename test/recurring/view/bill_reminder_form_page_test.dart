@@ -1,6 +1,11 @@
+import 'package:auth_repository/auth_repository.dart';
+import 'package:bloc_test/bloc_test.dart';
+import 'package:envelope/auth/auth.dart';
 import 'package:envelope/recurring/view/bill_reminder_form_page.dart';
+import 'package:envelope/shared/widgets/app_option_picker.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:transaction_repository/transaction_repository.dart';
@@ -11,28 +16,51 @@ class MockTransactionRepository extends Mock implements TransactionRepository {}
 
 class MockEnvelopeRepository extends Mock implements EnvelopeRepository {}
 
+class _MockAuthBloc extends MockBloc<AuthEvent, AuthState>
+    implements AuthBloc {}
+
 void main() {
   late MockTransactionRepository transactionRepository;
   late MockEnvelopeRepository envelopeRepository;
+  late AuthBloc authBloc;
 
   final now = DateTime(2024);
 
   setUp(() {
     transactionRepository = MockTransactionRepository();
     envelopeRepository = MockEnvelopeRepository();
+    authBloc = _MockAuthBloc();
 
     when(
       () => envelopeRepository.watchEnvelopes('budget-1'),
     ).thenAnswer((_) => Stream.value([]));
+
+    when(() => authBloc.state).thenReturn(
+      AuthState.authenticated(
+        User(
+          id: 'u1',
+          email: 't@t.com',
+          displayName: 'T',
+          createdAt: now,
+          updatedAt: now,
+        ),
+      ),
+    );
   });
+
+  Widget wrap(Widget child) {
+    return BlocProvider<AuthBloc>.value(value: authBloc, child: child);
+  }
 
   group('BillReminderFormPage', () {
     testWidgets('renders create form', (tester) async {
       await tester.pumpApp(
-        BillReminderFormPage(
-          transactionRepository: transactionRepository,
-          envelopeRepository: envelopeRepository,
-          budgetId: 'budget-1',
+        wrap(
+          BillReminderFormPage(
+            transactionRepository: transactionRepository,
+            envelopeRepository: envelopeRepository,
+            budgetId: 'budget-1',
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -43,18 +71,20 @@ void main() {
 
     testWidgets('renders edit form', (tester) async {
       await tester.pumpApp(
-        BillReminderFormPage(
-          transactionRepository: transactionRepository,
-          envelopeRepository: envelopeRepository,
-          budgetId: 'budget-1',
-          reminder: BillReminder(
-            id: 'bill-1',
+        wrap(
+          BillReminderFormPage(
+            transactionRepository: transactionRepository,
+            envelopeRepository: envelopeRepository,
             budgetId: 'budget-1',
-            name: 'Electricity',
-            estimatedAmount: 12000,
-            dueDay: 15,
-            frequency: 'monthly',
-            createdAt: now,
+            reminder: BillReminder(
+              id: 'bill-1',
+              budgetId: 'budget-1',
+              name: 'Electricity',
+              estimatedAmount: 12000,
+              dueDay: 15,
+              frequency: 'monthly',
+              createdAt: now,
+            ),
           ),
         ),
       );
@@ -67,10 +97,12 @@ void main() {
 
     testWidgets('validates required fields', (tester) async {
       await tester.pumpApp(
-        BillReminderFormPage(
-          transactionRepository: transactionRepository,
-          envelopeRepository: envelopeRepository,
-          budgetId: 'budget-1',
+        wrap(
+          BillReminderFormPage(
+            transactionRepository: transactionRepository,
+            envelopeRepository: envelopeRepository,
+            budgetId: 'budget-1',
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -83,24 +115,28 @@ void main() {
 
     testWidgets('shows frequency dropdown', (tester) async {
       await tester.pumpApp(
-        BillReminderFormPage(
-          transactionRepository: transactionRepository,
-          envelopeRepository: envelopeRepository,
-          budgetId: 'budget-1',
+        wrap(
+          BillReminderFormPage(
+            transactionRepository: transactionRepository,
+            envelopeRepository: envelopeRepository,
+            budgetId: 'budget-1',
+          ),
         ),
       );
       await tester.pumpAndSettle();
 
       expect(find.text('Frequency'), findsOneWidget);
-      expect(find.byType(DropdownButtonFormField<String>), findsWidgets);
+      expect(find.byType(AppOptionPicker<String>), findsWidgets);
     });
 
     testWidgets('shows reminder days field', (tester) async {
       await tester.pumpApp(
-        BillReminderFormPage(
-          transactionRepository: transactionRepository,
-          envelopeRepository: envelopeRepository,
-          budgetId: 'budget-1',
+        wrap(
+          BillReminderFormPage(
+            transactionRepository: transactionRepository,
+            envelopeRepository: envelopeRepository,
+            budgetId: 'budget-1',
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -132,10 +168,12 @@ void main() {
       );
 
       await tester.pumpApp(
-        BillReminderFormPage(
-          transactionRepository: transactionRepository,
-          envelopeRepository: envelopeRepository,
-          budgetId: 'budget-1',
+        wrap(
+          BillReminderFormPage(
+            transactionRepository: transactionRepository,
+            envelopeRepository: envelopeRepository,
+            budgetId: 'budget-1',
+          ),
         ),
       );
       await tester.pumpAndSettle();

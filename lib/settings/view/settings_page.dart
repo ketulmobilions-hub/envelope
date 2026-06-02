@@ -1,17 +1,26 @@
+import 'dart:async';
+
 import 'package:auth_repository/auth_repository.dart';
+import 'package:budget_repository/budget_repository.dart';
+import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/app/routes/app_router.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/notifications/notifications.dart';
-import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
-import 'package:envelope/onboarding/data/currencies.dart';
 import 'package:envelope/settings/cubit/cubit.dart';
+import 'package:envelope/shared/feature_flags.dart';
+import 'package:envelope/shared/services/app_clock.dart';
+import 'package:envelope/shared/widgets/currency_picker_sheet.dart';
+import 'package:envelope/shared/widgets/undo_snackbar.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope_api_client/envelope_api_client.dart';
-import 'package:envelope_local_storage/envelope_local_storage.dart' hide User;
+import 'package:envelope_local_storage/envelope_local_storage.dart' show AppDatabase;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:notification_repository/notification_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -96,12 +105,13 @@ class _SettingsView extends StatelessWidget {
                     ),
                     const Divider(),
                     _SectionHeader(title: l10n.settingsPreferences),
-                    ListTile(
-                      leading: const Icon(Icons.currency_exchange),
-                      title: Text(l10n.settingsBaseCurrency),
-                      subtitle: Text(user.baseCurrency),
-                      onTap: () => _showCurrencyPicker(context, user),
-                    ),
+                    if (kMultiCurrencyEnabled)
+                      ListTile(
+                        leading: const Icon(Icons.currency_exchange),
+                        title: Text(l10n.settingsBaseCurrency),
+                        subtitle: Text(user.baseCurrency),
+                        onTap: () => _showCurrencyPicker(context, user),
+                      ),
                     _ThemeSelector(currentMode: user.themeMode),
                     ListTile(
                       leading: const Icon(Icons.notifications_outlined),
@@ -119,6 +129,15 @@ class _SettingsView extends StatelessWidget {
                         ),
                       ),
                     ),
+                    ListTile(
+                      leading: const Icon(Icons.bookmarks_outlined),
+                      title: Text(l10n.settingsTemplates),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.go(AppRoutes.templates),
+                    ),
+                    const Divider(),
+                    _SectionHeader(title: l10n.settingsBudget),
+                    const OpeningBalanceTile(),
                     const Divider(),
                     _SectionHeader(title: l10n.settingsData),
                     ListTile(
@@ -184,6 +203,11 @@ class _SettingsView extends StatelessWidget {
                         Uri.parse('https://envelope.app/terms'),
                       ),
                     ),
+                    if (kDebugMode) ...[
+                      const Divider(),
+                      _SectionHeader(title: l10n.settingsDebugSection),
+                      const _DebugClockTiles(),
+                    ],
                     const SizedBox(height: 32),
                   ],
                 );
@@ -295,15 +319,20 @@ class _SettingsView extends StatelessWidget {
     );
   }
 
-  void _showCurrencyPicker(BuildContext context, User user) {
-    showModalBottomSheet<void>(
+  Future<void> _showCurrencyPicker(BuildContext context, User user) async {
+    final l10n = context.l10n;
+    final code = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      builder: (sheetContext) => BlocProvider.value(
-        value: context.read<SettingsCubit>(),
-        child: _CurrencyPickerSheet(baseCurrency: user.baseCurrency),
+      builder: (_) => CurrencyPickerSheet(
+        initialCode: user.baseCurrency,
+        title: l10n.settingsBaseCurrency,
+        warning: l10n.settingsCurrencyWarning,
       ),
     );
+    if (code != null && context.mounted) {
+      await context.read<SettingsCubit>().updateBaseCurrency(code);
+    }
   }
 
   void _showSignOutDialog(BuildContext context) {
@@ -473,99 +502,148 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _CurrencyPickerSheet extends StatefulWidget {
-  const _CurrencyPickerSheet({required this.baseCurrency});
-
-  final String baseCurrency;
+/// Read-only display of the budget's seed cash (issue #80, phase 5).
+///
+/// Reactively rebuilds when `Budget.openingBalance` / `Budget.openingDate`
+/// shift (e.g. after `BudgetRepository.autoCreatePreviousPeriod` shifts the
+/// anchor on a back-dated transaction). Hidden when no active budget exists
+/// (e.g. mid-onboarding).
+class OpeningBalanceTile extends StatelessWidget {
+  const OpeningBalanceTile({super.key});
 
   @override
-  State<_CurrencyPickerSheet> createState() => _CurrencyPickerSheetState();
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final budgetId =
+        context.read<SharedPreferences>().getString(activeBudgetIdKey);
+    if (budgetId == null || budgetId.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return StreamBuilder<Budget>(
+      stream: context.read<BudgetRepository>().watchBudget(budgetId),
+      builder: (context, snapshot) {
+        // Suppress the flicker between subscription and first emission: render
+        // an empty subtitle rather than the "Not configured" legacy state.
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
+          return ListTile(
+            leading: const Icon(Icons.savings_outlined),
+            title: Text(l10n.settingsOpeningBalance),
+            subtitle: const Text(''),
+          );
+        }
+        final budget = snapshot.data;
+        final openingDate = budget?.openingDate;
+        final configured = budget != null && openingDate != null;
+        return ListTile(
+          leading: const Icon(Icons.savings_outlined),
+          title: Text(l10n.settingsOpeningBalance),
+          subtitle: Text(
+            configured
+                ? '${_formatAmount(budget.openingBalance, budget.baseCurrency)}'
+                    ' · '
+                    '${l10n.settingsOpeningBalanceSubtitle(
+                    _formatDate(openingDate),
+                  )}'
+                : l10n.settingsOpeningBalanceUnset,
+          ),
+        );
+      },
+    );
+  }
+
+  static String _formatAmount(int cents, String currencyCode) {
+    return formatCents(cents, symbol: currencySymbolFromCode(currencyCode));
+  }
+
+  static String _formatDate(DateTime date) =>
+      DateFormat.yMMMd().format(date);
 }
 
-class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
-  String _searchQuery = '';
+class _DebugClockTiles extends StatefulWidget {
+  const _DebugClockTiles();
 
-  List<CurrencyInfo> get _filteredCurrencies {
-    if (_searchQuery.isEmpty) return supportedCurrencies;
-    final query = _searchQuery.toLowerCase();
-    return supportedCurrencies
-        .where(
-          (c) =>
-              c.code.toLowerCase().contains(query) ||
-              c.name.toLowerCase().contains(query),
-        )
-        .toList();
+  @override
+  State<_DebugClockTiles> createState() => _DebugClockTilesState();
+}
+
+class _DebugClockTilesState extends State<_DebugClockTiles> {
+  late final AppClock _appClock;
+
+  @override
+  void initState() {
+    super.initState();
+    _appClock = context.read<AppClock>();
+    _appClock.addListener(_onClockChanged);
+  }
+
+  @override
+  void dispose() {
+    _appClock.removeListener(_onClockChanged);
+    super.dispose();
+  }
+
+  void _onClockChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _pickDate() async {
+    final current = _appClock.now();
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: current,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (pickedDate == null || !mounted) return;
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(current),
+    );
+    if (pickedTime == null) return;
+    await _appClock.setOverride(
+      DateTime(
+        pickedDate.year,
+        pickedDate.month,
+        pickedDate.day,
+        pickedTime.hour,
+        pickedTime.minute,
+      ),
+    );
+  }
+
+  String _formatNow() {
+    final n = _appClock.now();
+    return '${n.year.toString().padLeft(4, '0')}-'
+        '${n.month.toString().padLeft(2, '0')}-'
+        '${n.day.toString().padLeft(2, '0')} '
+        '${n.hour.toString().padLeft(2, '0')}:'
+        '${n.minute.toString().padLeft(2, '0')}';
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: SizedBox(
-        height: MediaQuery.of(context).size.height * 0.6,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                l10n.settingsBaseCurrency,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                l10n.settingsCurrencyWarning,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: l10n.onboardingCurrencySearch,
-                  prefixIcon: const Icon(Icons.search),
-                ),
-                onChanged: (value) => setState(() => _searchQuery = value),
-              ),
-            ),
-            if (_filteredCurrencies.isEmpty)
-              const Expanded(
-                child: Center(child: Text('No currencies found')),
-              )
-            else
-              Flexible(
-                child: ListView.builder(
-                  itemCount: _filteredCurrencies.length,
-                  itemBuilder: (_, index) {
-                    final currency = _filteredCurrencies[index];
-                    final isSelected = currency.code == widget.baseCurrency;
-                    return ListTile(
-                      dense: true,
-                      visualDensity: VisualDensity.compact,
-                      title: Text(
-                        '${currency.symbol} ${currency.code}'
-                        ' - ${currency.name}',
-                        style: const TextStyle(fontSize: 15),
-                      ),
-                      trailing: isSelected ? const Icon(Icons.check) : null,
-                      onTap: () {
-                        context.read<SettingsCubit>().updateBaseCurrency(
-                          currency.code,
-                        );
-                        Navigator.pop(context);
-                      },
-                    );
-                  },
-                ),
-              ),
-          ],
+    final hasOverride = _appClock.hasOverride;
+    return Column(
+      children: [
+        ListTile(
+          leading: const Icon(Icons.schedule_outlined),
+          title: Text(l10n.settingsDebugSimulatedDate),
+          subtitle: Text(
+            hasOverride ? _formatNow() : l10n.settingsDebugSimulatedDateOff,
+          ),
+          trailing: const Icon(Icons.edit_outlined),
+          onTap: _pickDate,
         ),
-      ),
+        if (hasOverride)
+          ListTile(
+            leading: const Icon(Icons.history_toggle_off),
+            title: Text(l10n.settingsDebugClearSimulatedDate),
+            onTap: () => unawaited(_appClock.clearOverride()),
+          ),
+      ],
     );
   }
 }

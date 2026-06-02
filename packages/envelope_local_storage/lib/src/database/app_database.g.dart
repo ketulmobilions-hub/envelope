@@ -608,6 +608,29 @@ class $BudgetsTable extends Budgets with TableInfo<$BudgetsTable, Budget> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _openingBalanceMeta = const VerificationMeta(
+    'openingBalance',
+  );
+  @override
+  late final GeneratedColumn<int> openingBalance = GeneratedColumn<int>(
+    'opening_balance',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _openingDateMeta = const VerificationMeta(
+    'openingDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> openingDate = GeneratedColumn<DateTime>(
+    'opening_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -639,6 +662,8 @@ class $BudgetsTable extends Budgets with TableInfo<$BudgetsTable, Budget> {
     periodStartDay,
     baseCurrency,
     isArchived,
+    openingBalance,
+    openingDate,
     createdAt,
     updatedAt,
   ];
@@ -707,6 +732,24 @@ class $BudgetsTable extends Budgets with TableInfo<$BudgetsTable, Budget> {
         isArchived.isAcceptableOrUnknown(data['is_archived']!, _isArchivedMeta),
       );
     }
+    if (data.containsKey('opening_balance')) {
+      context.handle(
+        _openingBalanceMeta,
+        openingBalance.isAcceptableOrUnknown(
+          data['opening_balance']!,
+          _openingBalanceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('opening_date')) {
+      context.handle(
+        _openingDateMeta,
+        openingDate.isAcceptableOrUnknown(
+          data['opening_date']!,
+          _openingDateMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -760,6 +803,14 @@ class $BudgetsTable extends Budgets with TableInfo<$BudgetsTable, Budget> {
         DriftSqlType.bool,
         data['${effectivePrefix}is_archived'],
       )!,
+      openingBalance: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}opening_balance'],
+      )!,
+      openingDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}opening_date'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -785,6 +836,8 @@ class Budget extends DataClass implements Insertable<Budget> {
   final int periodStartDay;
   final String baseCurrency;
   final bool isArchived;
+  final int openingBalance;
+  final DateTime? openingDate;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Budget({
@@ -795,6 +848,8 @@ class Budget extends DataClass implements Insertable<Budget> {
     required this.periodStartDay,
     required this.baseCurrency,
     required this.isArchived,
+    required this.openingBalance,
+    this.openingDate,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -808,6 +863,10 @@ class Budget extends DataClass implements Insertable<Budget> {
     map['period_start_day'] = Variable<int>(periodStartDay);
     map['base_currency'] = Variable<String>(baseCurrency);
     map['is_archived'] = Variable<bool>(isArchived);
+    map['opening_balance'] = Variable<int>(openingBalance);
+    if (!nullToAbsent || openingDate != null) {
+      map['opening_date'] = Variable<DateTime>(openingDate);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -822,6 +881,10 @@ class Budget extends DataClass implements Insertable<Budget> {
       periodStartDay: Value(periodStartDay),
       baseCurrency: Value(baseCurrency),
       isArchived: Value(isArchived),
+      openingBalance: Value(openingBalance),
+      openingDate: openingDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(openingDate),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -840,6 +903,8 @@ class Budget extends DataClass implements Insertable<Budget> {
       periodStartDay: serializer.fromJson<int>(json['periodStartDay']),
       baseCurrency: serializer.fromJson<String>(json['baseCurrency']),
       isArchived: serializer.fromJson<bool>(json['isArchived']),
+      openingBalance: serializer.fromJson<int>(json['openingBalance']),
+      openingDate: serializer.fromJson<DateTime?>(json['openingDate']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -855,6 +920,8 @@ class Budget extends DataClass implements Insertable<Budget> {
       'periodStartDay': serializer.toJson<int>(periodStartDay),
       'baseCurrency': serializer.toJson<String>(baseCurrency),
       'isArchived': serializer.toJson<bool>(isArchived),
+      'openingBalance': serializer.toJson<int>(openingBalance),
+      'openingDate': serializer.toJson<DateTime?>(openingDate),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -868,6 +935,8 @@ class Budget extends DataClass implements Insertable<Budget> {
     int? periodStartDay,
     String? baseCurrency,
     bool? isArchived,
+    int? openingBalance,
+    Value<DateTime?> openingDate = const Value.absent(),
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => Budget(
@@ -878,6 +947,8 @@ class Budget extends DataClass implements Insertable<Budget> {
     periodStartDay: periodStartDay ?? this.periodStartDay,
     baseCurrency: baseCurrency ?? this.baseCurrency,
     isArchived: isArchived ?? this.isArchived,
+    openingBalance: openingBalance ?? this.openingBalance,
+    openingDate: openingDate.present ? openingDate.value : this.openingDate,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -898,6 +969,12 @@ class Budget extends DataClass implements Insertable<Budget> {
       isArchived: data.isArchived.present
           ? data.isArchived.value
           : this.isArchived,
+      openingBalance: data.openingBalance.present
+          ? data.openingBalance.value
+          : this.openingBalance,
+      openingDate: data.openingDate.present
+          ? data.openingDate.value
+          : this.openingDate,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -913,6 +990,8 @@ class Budget extends DataClass implements Insertable<Budget> {
           ..write('periodStartDay: $periodStartDay, ')
           ..write('baseCurrency: $baseCurrency, ')
           ..write('isArchived: $isArchived, ')
+          ..write('openingBalance: $openingBalance, ')
+          ..write('openingDate: $openingDate, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -928,6 +1007,8 @@ class Budget extends DataClass implements Insertable<Budget> {
     periodStartDay,
     baseCurrency,
     isArchived,
+    openingBalance,
+    openingDate,
     createdAt,
     updatedAt,
   );
@@ -942,6 +1023,8 @@ class Budget extends DataClass implements Insertable<Budget> {
           other.periodStartDay == this.periodStartDay &&
           other.baseCurrency == this.baseCurrency &&
           other.isArchived == this.isArchived &&
+          other.openingBalance == this.openingBalance &&
+          other.openingDate == this.openingDate &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -954,6 +1037,8 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
   final Value<int> periodStartDay;
   final Value<String> baseCurrency;
   final Value<bool> isArchived;
+  final Value<int> openingBalance;
+  final Value<DateTime?> openingDate;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -965,6 +1050,8 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
     this.periodStartDay = const Value.absent(),
     this.baseCurrency = const Value.absent(),
     this.isArchived = const Value.absent(),
+    this.openingBalance = const Value.absent(),
+    this.openingDate = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -977,6 +1064,8 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
     this.periodStartDay = const Value.absent(),
     required String baseCurrency,
     this.isArchived = const Value.absent(),
+    this.openingBalance = const Value.absent(),
+    this.openingDate = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
@@ -994,6 +1083,8 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
     Expression<int>? periodStartDay,
     Expression<String>? baseCurrency,
     Expression<bool>? isArchived,
+    Expression<int>? openingBalance,
+    Expression<DateTime>? openingDate,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -1006,6 +1097,8 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
       if (periodStartDay != null) 'period_start_day': periodStartDay,
       if (baseCurrency != null) 'base_currency': baseCurrency,
       if (isArchived != null) 'is_archived': isArchived,
+      if (openingBalance != null) 'opening_balance': openingBalance,
+      if (openingDate != null) 'opening_date': openingDate,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -1020,6 +1113,8 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
     Value<int>? periodStartDay,
     Value<String>? baseCurrency,
     Value<bool>? isArchived,
+    Value<int>? openingBalance,
+    Value<DateTime?>? openingDate,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
@@ -1032,6 +1127,8 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
       periodStartDay: periodStartDay ?? this.periodStartDay,
       baseCurrency: baseCurrency ?? this.baseCurrency,
       isArchived: isArchived ?? this.isArchived,
+      openingBalance: openingBalance ?? this.openingBalance,
+      openingDate: openingDate ?? this.openingDate,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -1062,6 +1159,12 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
     if (isArchived.present) {
       map['is_archived'] = Variable<bool>(isArchived.value);
     }
+    if (openingBalance.present) {
+      map['opening_balance'] = Variable<int>(openingBalance.value);
+    }
+    if (openingDate.present) {
+      map['opening_date'] = Variable<DateTime>(openingDate.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -1084,6 +1187,8 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
           ..write('periodStartDay: $periodStartDay, ')
           ..write('baseCurrency: $baseCurrency, ')
           ..write('isArchived: $isArchived, ')
+          ..write('openingBalance: $openingBalance, ')
+          ..write('openingDate: $openingDate, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -1628,6 +1733,18 @@ class $BudgetPeriodsTable extends BudgetPeriods
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _carriedRtaMeta = const VerificationMeta(
+    'carriedRta',
+  );
+  @override
+  late final GeneratedColumn<int> carriedRta = GeneratedColumn<int>(
+    'carried_rta',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _isClosedMeta = const VerificationMeta(
     'isClosed',
   );
@@ -1662,6 +1779,7 @@ class $BudgetPeriodsTable extends BudgetPeriods
     endDate,
     totalIncome,
     totalAllocated,
+    carriedRta,
     isClosed,
     createdAt,
   ];
@@ -1724,6 +1842,12 @@ class $BudgetPeriodsTable extends BudgetPeriods
         ),
       );
     }
+    if (data.containsKey('carried_rta')) {
+      context.handle(
+        _carriedRtaMeta,
+        carriedRta.isAcceptableOrUnknown(data['carried_rta']!, _carriedRtaMeta),
+      );
+    }
     if (data.containsKey('is_closed')) {
       context.handle(
         _isClosedMeta,
@@ -1771,6 +1895,10 @@ class $BudgetPeriodsTable extends BudgetPeriods
         DriftSqlType.int,
         data['${effectivePrefix}total_allocated'],
       )!,
+      carriedRta: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}carried_rta'],
+      )!,
       isClosed: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_closed'],
@@ -1795,6 +1923,7 @@ class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
   final DateTime endDate;
   final int totalIncome;
   final int totalAllocated;
+  final int carriedRta;
   final bool isClosed;
   final DateTime createdAt;
   const BudgetPeriod({
@@ -1804,6 +1933,7 @@ class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
     required this.endDate,
     required this.totalIncome,
     required this.totalAllocated,
+    required this.carriedRta,
     required this.isClosed,
     required this.createdAt,
   });
@@ -1816,6 +1946,7 @@ class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
     map['end_date'] = Variable<DateTime>(endDate);
     map['total_income'] = Variable<int>(totalIncome);
     map['total_allocated'] = Variable<int>(totalAllocated);
+    map['carried_rta'] = Variable<int>(carriedRta);
     map['is_closed'] = Variable<bool>(isClosed);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -1829,6 +1960,7 @@ class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
       endDate: Value(endDate),
       totalIncome: Value(totalIncome),
       totalAllocated: Value(totalAllocated),
+      carriedRta: Value(carriedRta),
       isClosed: Value(isClosed),
       createdAt: Value(createdAt),
     );
@@ -1846,6 +1978,7 @@ class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
       endDate: serializer.fromJson<DateTime>(json['endDate']),
       totalIncome: serializer.fromJson<int>(json['totalIncome']),
       totalAllocated: serializer.fromJson<int>(json['totalAllocated']),
+      carriedRta: serializer.fromJson<int>(json['carriedRta']),
       isClosed: serializer.fromJson<bool>(json['isClosed']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -1860,6 +1993,7 @@ class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
       'endDate': serializer.toJson<DateTime>(endDate),
       'totalIncome': serializer.toJson<int>(totalIncome),
       'totalAllocated': serializer.toJson<int>(totalAllocated),
+      'carriedRta': serializer.toJson<int>(carriedRta),
       'isClosed': serializer.toJson<bool>(isClosed),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -1872,6 +2006,7 @@ class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
     DateTime? endDate,
     int? totalIncome,
     int? totalAllocated,
+    int? carriedRta,
     bool? isClosed,
     DateTime? createdAt,
   }) => BudgetPeriod(
@@ -1881,6 +2016,7 @@ class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
     endDate: endDate ?? this.endDate,
     totalIncome: totalIncome ?? this.totalIncome,
     totalAllocated: totalAllocated ?? this.totalAllocated,
+    carriedRta: carriedRta ?? this.carriedRta,
     isClosed: isClosed ?? this.isClosed,
     createdAt: createdAt ?? this.createdAt,
   );
@@ -1896,6 +2032,9 @@ class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
       totalAllocated: data.totalAllocated.present
           ? data.totalAllocated.value
           : this.totalAllocated,
+      carriedRta: data.carriedRta.present
+          ? data.carriedRta.value
+          : this.carriedRta,
       isClosed: data.isClosed.present ? data.isClosed.value : this.isClosed,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -1910,6 +2049,7 @@ class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
           ..write('endDate: $endDate, ')
           ..write('totalIncome: $totalIncome, ')
           ..write('totalAllocated: $totalAllocated, ')
+          ..write('carriedRta: $carriedRta, ')
           ..write('isClosed: $isClosed, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -1924,6 +2064,7 @@ class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
     endDate,
     totalIncome,
     totalAllocated,
+    carriedRta,
     isClosed,
     createdAt,
   );
@@ -1937,6 +2078,7 @@ class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
           other.endDate == this.endDate &&
           other.totalIncome == this.totalIncome &&
           other.totalAllocated == this.totalAllocated &&
+          other.carriedRta == this.carriedRta &&
           other.isClosed == this.isClosed &&
           other.createdAt == this.createdAt);
 }
@@ -1948,6 +2090,7 @@ class BudgetPeriodsCompanion extends UpdateCompanion<BudgetPeriod> {
   final Value<DateTime> endDate;
   final Value<int> totalIncome;
   final Value<int> totalAllocated;
+  final Value<int> carriedRta;
   final Value<bool> isClosed;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
@@ -1958,6 +2101,7 @@ class BudgetPeriodsCompanion extends UpdateCompanion<BudgetPeriod> {
     this.endDate = const Value.absent(),
     this.totalIncome = const Value.absent(),
     this.totalAllocated = const Value.absent(),
+    this.carriedRta = const Value.absent(),
     this.isClosed = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1969,6 +2113,7 @@ class BudgetPeriodsCompanion extends UpdateCompanion<BudgetPeriod> {
     required DateTime endDate,
     this.totalIncome = const Value.absent(),
     this.totalAllocated = const Value.absent(),
+    this.carriedRta = const Value.absent(),
     this.isClosed = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
@@ -1984,6 +2129,7 @@ class BudgetPeriodsCompanion extends UpdateCompanion<BudgetPeriod> {
     Expression<DateTime>? endDate,
     Expression<int>? totalIncome,
     Expression<int>? totalAllocated,
+    Expression<int>? carriedRta,
     Expression<bool>? isClosed,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
@@ -1995,6 +2141,7 @@ class BudgetPeriodsCompanion extends UpdateCompanion<BudgetPeriod> {
       if (endDate != null) 'end_date': endDate,
       if (totalIncome != null) 'total_income': totalIncome,
       if (totalAllocated != null) 'total_allocated': totalAllocated,
+      if (carriedRta != null) 'carried_rta': carriedRta,
       if (isClosed != null) 'is_closed': isClosed,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
@@ -2008,6 +2155,7 @@ class BudgetPeriodsCompanion extends UpdateCompanion<BudgetPeriod> {
     Value<DateTime>? endDate,
     Value<int>? totalIncome,
     Value<int>? totalAllocated,
+    Value<int>? carriedRta,
     Value<bool>? isClosed,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
@@ -2019,6 +2167,7 @@ class BudgetPeriodsCompanion extends UpdateCompanion<BudgetPeriod> {
       endDate: endDate ?? this.endDate,
       totalIncome: totalIncome ?? this.totalIncome,
       totalAllocated: totalAllocated ?? this.totalAllocated,
+      carriedRta: carriedRta ?? this.carriedRta,
       isClosed: isClosed ?? this.isClosed,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
@@ -2046,6 +2195,9 @@ class BudgetPeriodsCompanion extends UpdateCompanion<BudgetPeriod> {
     if (totalAllocated.present) {
       map['total_allocated'] = Variable<int>(totalAllocated.value);
     }
+    if (carriedRta.present) {
+      map['carried_rta'] = Variable<int>(carriedRta.value);
+    }
     if (isClosed.present) {
       map['is_closed'] = Variable<bool>(isClosed.value);
     }
@@ -2067,6 +2219,7 @@ class BudgetPeriodsCompanion extends UpdateCompanion<BudgetPeriod> {
           ..write('endDate: $endDate, ')
           ..write('totalIncome: $totalIncome, ')
           ..write('totalAllocated: $totalAllocated, ')
+          ..write('carriedRta: $carriedRta, ')
           ..write('isClosed: $isClosed, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
@@ -2153,6 +2306,18 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _displayFxRateMeta = const VerificationMeta(
+    'displayFxRate',
+  );
+  @override
+  late final GeneratedColumn<double> displayFxRate = GeneratedColumn<double>(
+    'display_fx_rate',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
   static const VerificationMeta _isArchivedMeta = const VerificationMeta(
     'isArchived',
   );
@@ -2214,6 +2379,7 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     startingBalance,
     currentBalance,
     currency,
+    displayFxRate,
     isArchived,
     isOnBudget,
     createdAt,
@@ -2286,6 +2452,15 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     } else if (isInserting) {
       context.missing(_currencyMeta);
     }
+    if (data.containsKey('display_fx_rate')) {
+      context.handle(
+        _displayFxRateMeta,
+        displayFxRate.isAcceptableOrUnknown(
+          data['display_fx_rate']!,
+          _displayFxRateMeta,
+        ),
+      );
+    }
     if (data.containsKey('is_archived')) {
       context.handle(
         _isArchivedMeta,
@@ -2354,6 +2529,10 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         DriftSqlType.string,
         data['${effectivePrefix}currency'],
       )!,
+      displayFxRate: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}display_fx_rate'],
+      )!,
       isArchived: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_archived'],
@@ -2387,6 +2566,7 @@ class Account extends DataClass implements Insertable<Account> {
   final int startingBalance;
   final int currentBalance;
   final String currency;
+  final double displayFxRate;
   final bool isArchived;
   final bool isOnBudget;
   final DateTime createdAt;
@@ -2399,6 +2579,7 @@ class Account extends DataClass implements Insertable<Account> {
     required this.startingBalance,
     required this.currentBalance,
     required this.currency,
+    required this.displayFxRate,
     required this.isArchived,
     required this.isOnBudget,
     required this.createdAt,
@@ -2414,6 +2595,7 @@ class Account extends DataClass implements Insertable<Account> {
     map['starting_balance'] = Variable<int>(startingBalance);
     map['current_balance'] = Variable<int>(currentBalance);
     map['currency'] = Variable<String>(currency);
+    map['display_fx_rate'] = Variable<double>(displayFxRate);
     map['is_archived'] = Variable<bool>(isArchived);
     map['is_on_budget'] = Variable<bool>(isOnBudget);
     map['created_at'] = Variable<DateTime>(createdAt);
@@ -2430,6 +2612,7 @@ class Account extends DataClass implements Insertable<Account> {
       startingBalance: Value(startingBalance),
       currentBalance: Value(currentBalance),
       currency: Value(currency),
+      displayFxRate: Value(displayFxRate),
       isArchived: Value(isArchived),
       isOnBudget: Value(isOnBudget),
       createdAt: Value(createdAt),
@@ -2450,6 +2633,7 @@ class Account extends DataClass implements Insertable<Account> {
       startingBalance: serializer.fromJson<int>(json['startingBalance']),
       currentBalance: serializer.fromJson<int>(json['currentBalance']),
       currency: serializer.fromJson<String>(json['currency']),
+      displayFxRate: serializer.fromJson<double>(json['displayFxRate']),
       isArchived: serializer.fromJson<bool>(json['isArchived']),
       isOnBudget: serializer.fromJson<bool>(json['isOnBudget']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
@@ -2467,6 +2651,7 @@ class Account extends DataClass implements Insertable<Account> {
       'startingBalance': serializer.toJson<int>(startingBalance),
       'currentBalance': serializer.toJson<int>(currentBalance),
       'currency': serializer.toJson<String>(currency),
+      'displayFxRate': serializer.toJson<double>(displayFxRate),
       'isArchived': serializer.toJson<bool>(isArchived),
       'isOnBudget': serializer.toJson<bool>(isOnBudget),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -2482,6 +2667,7 @@ class Account extends DataClass implements Insertable<Account> {
     int? startingBalance,
     int? currentBalance,
     String? currency,
+    double? displayFxRate,
     bool? isArchived,
     bool? isOnBudget,
     DateTime? createdAt,
@@ -2494,6 +2680,7 @@ class Account extends DataClass implements Insertable<Account> {
     startingBalance: startingBalance ?? this.startingBalance,
     currentBalance: currentBalance ?? this.currentBalance,
     currency: currency ?? this.currency,
+    displayFxRate: displayFxRate ?? this.displayFxRate,
     isArchived: isArchived ?? this.isArchived,
     isOnBudget: isOnBudget ?? this.isOnBudget,
     createdAt: createdAt ?? this.createdAt,
@@ -2512,6 +2699,9 @@ class Account extends DataClass implements Insertable<Account> {
           ? data.currentBalance.value
           : this.currentBalance,
       currency: data.currency.present ? data.currency.value : this.currency,
+      displayFxRate: data.displayFxRate.present
+          ? data.displayFxRate.value
+          : this.displayFxRate,
       isArchived: data.isArchived.present
           ? data.isArchived.value
           : this.isArchived,
@@ -2533,6 +2723,7 @@ class Account extends DataClass implements Insertable<Account> {
           ..write('startingBalance: $startingBalance, ')
           ..write('currentBalance: $currentBalance, ')
           ..write('currency: $currency, ')
+          ..write('displayFxRate: $displayFxRate, ')
           ..write('isArchived: $isArchived, ')
           ..write('isOnBudget: $isOnBudget, ')
           ..write('createdAt: $createdAt, ')
@@ -2550,6 +2741,7 @@ class Account extends DataClass implements Insertable<Account> {
     startingBalance,
     currentBalance,
     currency,
+    displayFxRate,
     isArchived,
     isOnBudget,
     createdAt,
@@ -2566,6 +2758,7 @@ class Account extends DataClass implements Insertable<Account> {
           other.startingBalance == this.startingBalance &&
           other.currentBalance == this.currentBalance &&
           other.currency == this.currency &&
+          other.displayFxRate == this.displayFxRate &&
           other.isArchived == this.isArchived &&
           other.isOnBudget == this.isOnBudget &&
           other.createdAt == this.createdAt &&
@@ -2580,6 +2773,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
   final Value<int> startingBalance;
   final Value<int> currentBalance;
   final Value<String> currency;
+  final Value<double> displayFxRate;
   final Value<bool> isArchived;
   final Value<bool> isOnBudget;
   final Value<DateTime> createdAt;
@@ -2593,6 +2787,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     this.startingBalance = const Value.absent(),
     this.currentBalance = const Value.absent(),
     this.currency = const Value.absent(),
+    this.displayFxRate = const Value.absent(),
     this.isArchived = const Value.absent(),
     this.isOnBudget = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -2607,6 +2802,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     this.startingBalance = const Value.absent(),
     this.currentBalance = const Value.absent(),
     required String currency,
+    this.displayFxRate = const Value.absent(),
     this.isArchived = const Value.absent(),
     this.isOnBudget = const Value.absent(),
     required DateTime createdAt,
@@ -2627,6 +2823,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Expression<int>? startingBalance,
     Expression<int>? currentBalance,
     Expression<String>? currency,
+    Expression<double>? displayFxRate,
     Expression<bool>? isArchived,
     Expression<bool>? isOnBudget,
     Expression<DateTime>? createdAt,
@@ -2641,6 +2838,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       if (startingBalance != null) 'starting_balance': startingBalance,
       if (currentBalance != null) 'current_balance': currentBalance,
       if (currency != null) 'currency': currency,
+      if (displayFxRate != null) 'display_fx_rate': displayFxRate,
       if (isArchived != null) 'is_archived': isArchived,
       if (isOnBudget != null) 'is_on_budget': isOnBudget,
       if (createdAt != null) 'created_at': createdAt,
@@ -2657,6 +2855,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Value<int>? startingBalance,
     Value<int>? currentBalance,
     Value<String>? currency,
+    Value<double>? displayFxRate,
     Value<bool>? isArchived,
     Value<bool>? isOnBudget,
     Value<DateTime>? createdAt,
@@ -2671,6 +2870,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       startingBalance: startingBalance ?? this.startingBalance,
       currentBalance: currentBalance ?? this.currentBalance,
       currency: currency ?? this.currency,
+      displayFxRate: displayFxRate ?? this.displayFxRate,
       isArchived: isArchived ?? this.isArchived,
       isOnBudget: isOnBudget ?? this.isOnBudget,
       createdAt: createdAt ?? this.createdAt,
@@ -2703,6 +2903,9 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     if (currency.present) {
       map['currency'] = Variable<String>(currency.value);
     }
+    if (displayFxRate.present) {
+      map['display_fx_rate'] = Variable<double>(displayFxRate.value);
+    }
     if (isArchived.present) {
       map['is_archived'] = Variable<bool>(isArchived.value);
     }
@@ -2731,6 +2934,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
           ..write('startingBalance: $startingBalance, ')
           ..write('currentBalance: $currentBalance, ')
           ..write('currency: $currency, ')
+          ..write('displayFxRate: $displayFxRate, ')
           ..write('isArchived: $isArchived, ')
           ..write('isOnBudget: $isOnBudget, ')
           ..write('createdAt: $createdAt, ')
@@ -4395,6 +4599,17 @@ class $TransactionsTable extends Transactions
     requiredDuringInsert: false,
     defaultValue: const Constant(1),
   );
+  static const VerificationMeta _baseCurrencyAmountMeta =
+      const VerificationMeta('baseCurrencyAmount');
+  @override
+  late final GeneratedColumn<int> baseCurrencyAmount = GeneratedColumn<int>(
+    'base_currency_amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _payeeMeta = const VerificationMeta('payee');
   @override
   late final GeneratedColumn<String> payee = GeneratedColumn<String>(
@@ -4513,6 +4728,7 @@ class $TransactionsTable extends Transactions
     amount,
     currency,
     exchangeRate,
+    baseCurrencyAmount,
     payee,
     notes,
     date,
@@ -4593,6 +4809,15 @@ class $TransactionsTable extends Transactions
         exchangeRate.isAcceptableOrUnknown(
           data['exchange_rate']!,
           _exchangeRateMeta,
+        ),
+      );
+    }
+    if (data.containsKey('base_currency_amount')) {
+      context.handle(
+        _baseCurrencyAmountMeta,
+        baseCurrencyAmount.isAcceptableOrUnknown(
+          data['base_currency_amount']!,
+          _baseCurrencyAmountMeta,
         ),
       );
     }
@@ -4714,6 +4939,10 @@ class $TransactionsTable extends Transactions
         DriftSqlType.double,
         data['${effectivePrefix}exchange_rate'],
       )!,
+      baseCurrencyAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}base_currency_amount'],
+      )!,
       payee: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}payee'],
@@ -4772,6 +5001,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   final int amount;
   final String currency;
   final double exchangeRate;
+  final int baseCurrencyAmount;
   final String? payee;
   final String? notes;
   final DateTime date;
@@ -4791,6 +5021,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     required this.amount,
     required this.currency,
     required this.exchangeRate,
+    required this.baseCurrencyAmount,
     this.payee,
     this.notes,
     required this.date,
@@ -4815,6 +5046,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     map['amount'] = Variable<int>(amount);
     map['currency'] = Variable<String>(currency);
     map['exchange_rate'] = Variable<double>(exchangeRate);
+    map['base_currency_amount'] = Variable<int>(baseCurrencyAmount);
     if (!nullToAbsent || payee != null) {
       map['payee'] = Variable<String>(payee);
     }
@@ -4850,6 +5082,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       amount: Value(amount),
       currency: Value(currency),
       exchangeRate: Value(exchangeRate),
+      baseCurrencyAmount: Value(baseCurrencyAmount),
       payee: payee == null && nullToAbsent
           ? const Value.absent()
           : Value(payee),
@@ -4887,6 +5120,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       amount: serializer.fromJson<int>(json['amount']),
       currency: serializer.fromJson<String>(json['currency']),
       exchangeRate: serializer.fromJson<double>(json['exchangeRate']),
+      baseCurrencyAmount: serializer.fromJson<int>(json['baseCurrencyAmount']),
       payee: serializer.fromJson<String?>(json['payee']),
       notes: serializer.fromJson<String?>(json['notes']),
       date: serializer.fromJson<DateTime>(json['date']),
@@ -4911,6 +5145,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'amount': serializer.toJson<int>(amount),
       'currency': serializer.toJson<String>(currency),
       'exchangeRate': serializer.toJson<double>(exchangeRate),
+      'baseCurrencyAmount': serializer.toJson<int>(baseCurrencyAmount),
       'payee': serializer.toJson<String?>(payee),
       'notes': serializer.toJson<String?>(notes),
       'date': serializer.toJson<DateTime>(date),
@@ -4933,6 +5168,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     int? amount,
     String? currency,
     double? exchangeRate,
+    int? baseCurrencyAmount,
     Value<String?> payee = const Value.absent(),
     Value<String?> notes = const Value.absent(),
     DateTime? date,
@@ -4952,6 +5188,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     amount: amount ?? this.amount,
     currency: currency ?? this.currency,
     exchangeRate: exchangeRate ?? this.exchangeRate,
+    baseCurrencyAmount: baseCurrencyAmount ?? this.baseCurrencyAmount,
     payee: payee.present ? payee.value : this.payee,
     notes: notes.present ? notes.value : this.notes,
     date: date ?? this.date,
@@ -4981,6 +5218,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       exchangeRate: data.exchangeRate.present
           ? data.exchangeRate.value
           : this.exchangeRate,
+      baseCurrencyAmount: data.baseCurrencyAmount.present
+          ? data.baseCurrencyAmount.value
+          : this.baseCurrencyAmount,
       payee: data.payee.present ? data.payee.value : this.payee,
       notes: data.notes.present ? data.notes.value : this.notes,
       date: data.date.present ? data.date.value : this.date,
@@ -5011,6 +5251,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('amount: $amount, ')
           ..write('currency: $currency, ')
           ..write('exchangeRate: $exchangeRate, ')
+          ..write('baseCurrencyAmount: $baseCurrencyAmount, ')
           ..write('payee: $payee, ')
           ..write('notes: $notes, ')
           ..write('date: $date, ')
@@ -5035,6 +5276,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     amount,
     currency,
     exchangeRate,
+    baseCurrencyAmount,
     payee,
     notes,
     date,
@@ -5058,6 +5300,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.amount == this.amount &&
           other.currency == this.currency &&
           other.exchangeRate == this.exchangeRate &&
+          other.baseCurrencyAmount == this.baseCurrencyAmount &&
           other.payee == this.payee &&
           other.notes == this.notes &&
           other.date == this.date &&
@@ -5079,6 +5322,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<int> amount;
   final Value<String> currency;
   final Value<double> exchangeRate;
+  final Value<int> baseCurrencyAmount;
   final Value<String?> payee;
   final Value<String?> notes;
   final Value<DateTime> date;
@@ -5099,6 +5343,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.amount = const Value.absent(),
     this.currency = const Value.absent(),
     this.exchangeRate = const Value.absent(),
+    this.baseCurrencyAmount = const Value.absent(),
     this.payee = const Value.absent(),
     this.notes = const Value.absent(),
     this.date = const Value.absent(),
@@ -5120,6 +5365,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     required int amount,
     required String currency,
     this.exchangeRate = const Value.absent(),
+    this.baseCurrencyAmount = const Value.absent(),
     this.payee = const Value.absent(),
     this.notes = const Value.absent(),
     required DateTime date,
@@ -5150,6 +5396,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<int>? amount,
     Expression<String>? currency,
     Expression<double>? exchangeRate,
+    Expression<int>? baseCurrencyAmount,
     Expression<String>? payee,
     Expression<String>? notes,
     Expression<DateTime>? date,
@@ -5171,6 +5418,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (amount != null) 'amount': amount,
       if (currency != null) 'currency': currency,
       if (exchangeRate != null) 'exchange_rate': exchangeRate,
+      if (baseCurrencyAmount != null)
+        'base_currency_amount': baseCurrencyAmount,
       if (payee != null) 'payee': payee,
       if (notes != null) 'notes': notes,
       if (date != null) 'date': date,
@@ -5194,6 +5443,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Value<int>? amount,
     Value<String>? currency,
     Value<double>? exchangeRate,
+    Value<int>? baseCurrencyAmount,
     Value<String?>? payee,
     Value<String?>? notes,
     Value<DateTime>? date,
@@ -5215,6 +5465,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       amount: amount ?? this.amount,
       currency: currency ?? this.currency,
       exchangeRate: exchangeRate ?? this.exchangeRate,
+      baseCurrencyAmount: baseCurrencyAmount ?? this.baseCurrencyAmount,
       payee: payee ?? this.payee,
       notes: notes ?? this.notes,
       date: date ?? this.date,
@@ -5255,6 +5506,9 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     }
     if (exchangeRate.present) {
       map['exchange_rate'] = Variable<double>(exchangeRate.value);
+    }
+    if (baseCurrencyAmount.present) {
+      map['base_currency_amount'] = Variable<int>(baseCurrencyAmount.value);
     }
     if (payee.present) {
       map['payee'] = Variable<String>(payee.value);
@@ -5303,6 +5557,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
           ..write('amount: $amount, ')
           ..write('currency: $currency, ')
           ..write('exchangeRate: $exchangeRate, ')
+          ..write('baseCurrencyAmount: $baseCurrencyAmount, ')
           ..write('payee: $payee, ')
           ..write('notes: $notes, ')
           ..write('date: $date, ')
@@ -5629,6 +5884,866 @@ class TransactionSplitsCompanion extends UpdateCompanion<TransactionSplit> {
           ..write('transactionId: $transactionId, ')
           ..write('envelopeId: $envelopeId, ')
           ..write('amount: $amount, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $TransactionTemplatesTable extends TransactionTemplates
+    with TableInfo<$TransactionTemplatesTable, TransactionTemplate> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TransactionTemplatesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _budgetIdMeta = const VerificationMeta(
+    'budgetId',
+  );
+  @override
+  late final GeneratedColumn<String> budgetId = GeneratedColumn<String>(
+    'budget_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+    'account_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _envelopeIdMeta = const VerificationMeta(
+    'envelopeId',
+  );
+  @override
+  late final GeneratedColumn<String> envelopeId = GeneratedColumn<String>(
+    'envelope_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _amountCentsMeta = const VerificationMeta(
+    'amountCents',
+  );
+  @override
+  late final GeneratedColumn<int> amountCents = GeneratedColumn<int>(
+    'amount_cents',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _payeeMeta = const VerificationMeta('payee');
+  @override
+  late final GeneratedColumn<String> payee = GeneratedColumn<String>(
+    'payee',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _currencyMeta = const VerificationMeta(
+    'currency',
+  );
+  @override
+  late final GeneratedColumn<String> currency = GeneratedColumn<String>(
+    'currency',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tagIdsJsonMeta = const VerificationMeta(
+    'tagIdsJson',
+  );
+  @override
+  late final GeneratedColumn<String> tagIdsJson = GeneratedColumn<String>(
+    'tag_ids_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    budgetId,
+    name,
+    type,
+    accountId,
+    envelopeId,
+    amountCents,
+    payee,
+    notes,
+    currency,
+    tagIdsJson,
+    sortOrder,
+    createdAt,
+    updatedAt,
+    deletedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'transaction_templates';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TransactionTemplate> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('budget_id')) {
+      context.handle(
+        _budgetIdMeta,
+        budgetId.isAcceptableOrUnknown(data['budget_id']!, _budgetIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_budgetIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    }
+    if (data.containsKey('envelope_id')) {
+      context.handle(
+        _envelopeIdMeta,
+        envelopeId.isAcceptableOrUnknown(data['envelope_id']!, _envelopeIdMeta),
+      );
+    }
+    if (data.containsKey('amount_cents')) {
+      context.handle(
+        _amountCentsMeta,
+        amountCents.isAcceptableOrUnknown(
+          data['amount_cents']!,
+          _amountCentsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('payee')) {
+      context.handle(
+        _payeeMeta,
+        payee.isAcceptableOrUnknown(data['payee']!, _payeeMeta),
+      );
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    if (data.containsKey('currency')) {
+      context.handle(
+        _currencyMeta,
+        currency.isAcceptableOrUnknown(data['currency']!, _currencyMeta),
+      );
+    }
+    if (data.containsKey('tag_ids_json')) {
+      context.handle(
+        _tagIdsJsonMeta,
+        tagIdsJson.isAcceptableOrUnknown(
+          data['tag_ids_json']!,
+          _tagIdsJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  TransactionTemplate map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TransactionTemplate(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      budgetId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}budget_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      type: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type'],
+      )!,
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_id'],
+      ),
+      envelopeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}envelope_id'],
+      ),
+      amountCents: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}amount_cents'],
+      ),
+      payee: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payee'],
+      ),
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+      currency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}currency'],
+      ),
+      tagIdsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tag_ids_json'],
+      ),
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+    );
+  }
+
+  @override
+  $TransactionTemplatesTable createAlias(String alias) {
+    return $TransactionTemplatesTable(attachedDatabase, alias);
+  }
+}
+
+class TransactionTemplate extends DataClass
+    implements Insertable<TransactionTemplate> {
+  final String id;
+  final String budgetId;
+  final String name;
+  final String type;
+  final String? accountId;
+  final String? envelopeId;
+  final int? amountCents;
+  final String? payee;
+  final String? notes;
+  final String? currency;
+  final String? tagIdsJson;
+  final int sortOrder;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final DateTime? deletedAt;
+  const TransactionTemplate({
+    required this.id,
+    required this.budgetId,
+    required this.name,
+    required this.type,
+    this.accountId,
+    this.envelopeId,
+    this.amountCents,
+    this.payee,
+    this.notes,
+    this.currency,
+    this.tagIdsJson,
+    required this.sortOrder,
+    required this.createdAt,
+    required this.updatedAt,
+    this.deletedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['budget_id'] = Variable<String>(budgetId);
+    map['name'] = Variable<String>(name);
+    map['type'] = Variable<String>(type);
+    if (!nullToAbsent || accountId != null) {
+      map['account_id'] = Variable<String>(accountId);
+    }
+    if (!nullToAbsent || envelopeId != null) {
+      map['envelope_id'] = Variable<String>(envelopeId);
+    }
+    if (!nullToAbsent || amountCents != null) {
+      map['amount_cents'] = Variable<int>(amountCents);
+    }
+    if (!nullToAbsent || payee != null) {
+      map['payee'] = Variable<String>(payee);
+    }
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    if (!nullToAbsent || currency != null) {
+      map['currency'] = Variable<String>(currency);
+    }
+    if (!nullToAbsent || tagIdsJson != null) {
+      map['tag_ids_json'] = Variable<String>(tagIdsJson);
+    }
+    map['sort_order'] = Variable<int>(sortOrder);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    return map;
+  }
+
+  TransactionTemplatesCompanion toCompanion(bool nullToAbsent) {
+    return TransactionTemplatesCompanion(
+      id: Value(id),
+      budgetId: Value(budgetId),
+      name: Value(name),
+      type: Value(type),
+      accountId: accountId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accountId),
+      envelopeId: envelopeId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(envelopeId),
+      amountCents: amountCents == null && nullToAbsent
+          ? const Value.absent()
+          : Value(amountCents),
+      payee: payee == null && nullToAbsent
+          ? const Value.absent()
+          : Value(payee),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+      currency: currency == null && nullToAbsent
+          ? const Value.absent()
+          : Value(currency),
+      tagIdsJson: tagIdsJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tagIdsJson),
+      sortOrder: Value(sortOrder),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+    );
+  }
+
+  factory TransactionTemplate.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TransactionTemplate(
+      id: serializer.fromJson<String>(json['id']),
+      budgetId: serializer.fromJson<String>(json['budgetId']),
+      name: serializer.fromJson<String>(json['name']),
+      type: serializer.fromJson<String>(json['type']),
+      accountId: serializer.fromJson<String?>(json['accountId']),
+      envelopeId: serializer.fromJson<String?>(json['envelopeId']),
+      amountCents: serializer.fromJson<int?>(json['amountCents']),
+      payee: serializer.fromJson<String?>(json['payee']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      currency: serializer.fromJson<String?>(json['currency']),
+      tagIdsJson: serializer.fromJson<String?>(json['tagIdsJson']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'budgetId': serializer.toJson<String>(budgetId),
+      'name': serializer.toJson<String>(name),
+      'type': serializer.toJson<String>(type),
+      'accountId': serializer.toJson<String?>(accountId),
+      'envelopeId': serializer.toJson<String?>(envelopeId),
+      'amountCents': serializer.toJson<int?>(amountCents),
+      'payee': serializer.toJson<String?>(payee),
+      'notes': serializer.toJson<String?>(notes),
+      'currency': serializer.toJson<String?>(currency),
+      'tagIdsJson': serializer.toJson<String?>(tagIdsJson),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+    };
+  }
+
+  TransactionTemplate copyWith({
+    String? id,
+    String? budgetId,
+    String? name,
+    String? type,
+    Value<String?> accountId = const Value.absent(),
+    Value<String?> envelopeId = const Value.absent(),
+    Value<int?> amountCents = const Value.absent(),
+    Value<String?> payee = const Value.absent(),
+    Value<String?> notes = const Value.absent(),
+    Value<String?> currency = const Value.absent(),
+    Value<String?> tagIdsJson = const Value.absent(),
+    int? sortOrder,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    Value<DateTime?> deletedAt = const Value.absent(),
+  }) => TransactionTemplate(
+    id: id ?? this.id,
+    budgetId: budgetId ?? this.budgetId,
+    name: name ?? this.name,
+    type: type ?? this.type,
+    accountId: accountId.present ? accountId.value : this.accountId,
+    envelopeId: envelopeId.present ? envelopeId.value : this.envelopeId,
+    amountCents: amountCents.present ? amountCents.value : this.amountCents,
+    payee: payee.present ? payee.value : this.payee,
+    notes: notes.present ? notes.value : this.notes,
+    currency: currency.present ? currency.value : this.currency,
+    tagIdsJson: tagIdsJson.present ? tagIdsJson.value : this.tagIdsJson,
+    sortOrder: sortOrder ?? this.sortOrder,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+  );
+  TransactionTemplate copyWithCompanion(TransactionTemplatesCompanion data) {
+    return TransactionTemplate(
+      id: data.id.present ? data.id.value : this.id,
+      budgetId: data.budgetId.present ? data.budgetId.value : this.budgetId,
+      name: data.name.present ? data.name.value : this.name,
+      type: data.type.present ? data.type.value : this.type,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      envelopeId: data.envelopeId.present
+          ? data.envelopeId.value
+          : this.envelopeId,
+      amountCents: data.amountCents.present
+          ? data.amountCents.value
+          : this.amountCents,
+      payee: data.payee.present ? data.payee.value : this.payee,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      currency: data.currency.present ? data.currency.value : this.currency,
+      tagIdsJson: data.tagIdsJson.present
+          ? data.tagIdsJson.value
+          : this.tagIdsJson,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TransactionTemplate(')
+          ..write('id: $id, ')
+          ..write('budgetId: $budgetId, ')
+          ..write('name: $name, ')
+          ..write('type: $type, ')
+          ..write('accountId: $accountId, ')
+          ..write('envelopeId: $envelopeId, ')
+          ..write('amountCents: $amountCents, ')
+          ..write('payee: $payee, ')
+          ..write('notes: $notes, ')
+          ..write('currency: $currency, ')
+          ..write('tagIdsJson: $tagIdsJson, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    budgetId,
+    name,
+    type,
+    accountId,
+    envelopeId,
+    amountCents,
+    payee,
+    notes,
+    currency,
+    tagIdsJson,
+    sortOrder,
+    createdAt,
+    updatedAt,
+    deletedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TransactionTemplate &&
+          other.id == this.id &&
+          other.budgetId == this.budgetId &&
+          other.name == this.name &&
+          other.type == this.type &&
+          other.accountId == this.accountId &&
+          other.envelopeId == this.envelopeId &&
+          other.amountCents == this.amountCents &&
+          other.payee == this.payee &&
+          other.notes == this.notes &&
+          other.currency == this.currency &&
+          other.tagIdsJson == this.tagIdsJson &&
+          other.sortOrder == this.sortOrder &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.deletedAt == this.deletedAt);
+}
+
+class TransactionTemplatesCompanion
+    extends UpdateCompanion<TransactionTemplate> {
+  final Value<String> id;
+  final Value<String> budgetId;
+  final Value<String> name;
+  final Value<String> type;
+  final Value<String?> accountId;
+  final Value<String?> envelopeId;
+  final Value<int?> amountCents;
+  final Value<String?> payee;
+  final Value<String?> notes;
+  final Value<String?> currency;
+  final Value<String?> tagIdsJson;
+  final Value<int> sortOrder;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<DateTime?> deletedAt;
+  final Value<int> rowid;
+  const TransactionTemplatesCompanion({
+    this.id = const Value.absent(),
+    this.budgetId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.type = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.envelopeId = const Value.absent(),
+    this.amountCents = const Value.absent(),
+    this.payee = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.currency = const Value.absent(),
+    this.tagIdsJson = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TransactionTemplatesCompanion.insert({
+    required String id,
+    required String budgetId,
+    required String name,
+    required String type,
+    this.accountId = const Value.absent(),
+    this.envelopeId = const Value.absent(),
+    this.amountCents = const Value.absent(),
+    this.payee = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.currency = const Value.absent(),
+    this.tagIdsJson = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.deletedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       budgetId = Value(budgetId),
+       name = Value(name),
+       type = Value(type),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<TransactionTemplate> custom({
+    Expression<String>? id,
+    Expression<String>? budgetId,
+    Expression<String>? name,
+    Expression<String>? type,
+    Expression<String>? accountId,
+    Expression<String>? envelopeId,
+    Expression<int>? amountCents,
+    Expression<String>? payee,
+    Expression<String>? notes,
+    Expression<String>? currency,
+    Expression<String>? tagIdsJson,
+    Expression<int>? sortOrder,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? deletedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (budgetId != null) 'budget_id': budgetId,
+      if (name != null) 'name': name,
+      if (type != null) 'type': type,
+      if (accountId != null) 'account_id': accountId,
+      if (envelopeId != null) 'envelope_id': envelopeId,
+      if (amountCents != null) 'amount_cents': amountCents,
+      if (payee != null) 'payee': payee,
+      if (notes != null) 'notes': notes,
+      if (currency != null) 'currency': currency,
+      if (tagIdsJson != null) 'tag_ids_json': tagIdsJson,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TransactionTemplatesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? budgetId,
+    Value<String>? name,
+    Value<String>? type,
+    Value<String?>? accountId,
+    Value<String?>? envelopeId,
+    Value<int?>? amountCents,
+    Value<String?>? payee,
+    Value<String?>? notes,
+    Value<String?>? currency,
+    Value<String?>? tagIdsJson,
+    Value<int>? sortOrder,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<DateTime?>? deletedAt,
+    Value<int>? rowid,
+  }) {
+    return TransactionTemplatesCompanion(
+      id: id ?? this.id,
+      budgetId: budgetId ?? this.budgetId,
+      name: name ?? this.name,
+      type: type ?? this.type,
+      accountId: accountId ?? this.accountId,
+      envelopeId: envelopeId ?? this.envelopeId,
+      amountCents: amountCents ?? this.amountCents,
+      payee: payee ?? this.payee,
+      notes: notes ?? this.notes,
+      currency: currency ?? this.currency,
+      tagIdsJson: tagIdsJson ?? this.tagIdsJson,
+      sortOrder: sortOrder ?? this.sortOrder,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (budgetId.present) {
+      map['budget_id'] = Variable<String>(budgetId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (envelopeId.present) {
+      map['envelope_id'] = Variable<String>(envelopeId.value);
+    }
+    if (amountCents.present) {
+      map['amount_cents'] = Variable<int>(amountCents.value);
+    }
+    if (payee.present) {
+      map['payee'] = Variable<String>(payee.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (currency.present) {
+      map['currency'] = Variable<String>(currency.value);
+    }
+    if (tagIdsJson.present) {
+      map['tag_ids_json'] = Variable<String>(tagIdsJson.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TransactionTemplatesCompanion(')
+          ..write('id: $id, ')
+          ..write('budgetId: $budgetId, ')
+          ..write('name: $name, ')
+          ..write('type: $type, ')
+          ..write('accountId: $accountId, ')
+          ..write('envelopeId: $envelopeId, ')
+          ..write('amountCents: $amountCents, ')
+          ..write('payee: $payee, ')
+          ..write('notes: $notes, ')
+          ..write('currency: $currency, ')
+          ..write('tagIdsJson: $tagIdsJson, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -6186,6 +7301,18 @@ class $RecurringRulesTable extends RecurringRules
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _exchangeRateMeta = const VerificationMeta(
+    'exchangeRate',
+  );
+  @override
+  late final GeneratedColumn<double> exchangeRate = GeneratedColumn<double>(
+    'exchange_rate',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
   static const VerificationMeta _payeeMeta = const VerificationMeta('payee');
   @override
   late final GeneratedColumn<String> payee = GeneratedColumn<String>(
@@ -6321,6 +7448,7 @@ class $RecurringRulesTable extends RecurringRules
     type,
     amount,
     currency,
+    exchangeRate,
     payee,
     notes,
     frequency,
@@ -6395,6 +7523,15 @@ class $RecurringRulesTable extends RecurringRules
       );
     } else if (isInserting) {
       context.missing(_currencyMeta);
+    }
+    if (data.containsKey('exchange_rate')) {
+      context.handle(
+        _exchangeRateMeta,
+        exchangeRate.isAcceptableOrUnknown(
+          data['exchange_rate']!,
+          _exchangeRateMeta,
+        ),
+      );
     }
     if (data.containsKey('payee')) {
       context.handle(
@@ -6513,6 +7650,10 @@ class $RecurringRulesTable extends RecurringRules
         DriftSqlType.string,
         data['${effectivePrefix}currency'],
       )!,
+      exchangeRate: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}exchange_rate'],
+      )!,
       payee: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}payee'],
@@ -6574,6 +7715,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
   final String type;
   final int amount;
   final String currency;
+  final double exchangeRate;
   final String? payee;
   final String? notes;
   final String frequency;
@@ -6593,6 +7735,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     required this.type,
     required this.amount,
     required this.currency,
+    required this.exchangeRate,
     this.payee,
     this.notes,
     required this.frequency,
@@ -6617,6 +7760,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     map['type'] = Variable<String>(type);
     map['amount'] = Variable<int>(amount);
     map['currency'] = Variable<String>(currency);
+    map['exchange_rate'] = Variable<double>(exchangeRate);
     if (!nullToAbsent || payee != null) {
       map['payee'] = Variable<String>(payee);
     }
@@ -6652,6 +7796,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
       type: Value(type),
       amount: Value(amount),
       currency: Value(currency),
+      exchangeRate: Value(exchangeRate),
       payee: payee == null && nullToAbsent
           ? const Value.absent()
           : Value(payee),
@@ -6689,6 +7834,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
       type: serializer.fromJson<String>(json['type']),
       amount: serializer.fromJson<int>(json['amount']),
       currency: serializer.fromJson<String>(json['currency']),
+      exchangeRate: serializer.fromJson<double>(json['exchangeRate']),
       payee: serializer.fromJson<String?>(json['payee']),
       notes: serializer.fromJson<String?>(json['notes']),
       frequency: serializer.fromJson<String>(json['frequency']),
@@ -6713,6 +7859,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
       'type': serializer.toJson<String>(type),
       'amount': serializer.toJson<int>(amount),
       'currency': serializer.toJson<String>(currency),
+      'exchangeRate': serializer.toJson<double>(exchangeRate),
       'payee': serializer.toJson<String?>(payee),
       'notes': serializer.toJson<String?>(notes),
       'frequency': serializer.toJson<String>(frequency),
@@ -6735,6 +7882,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     String? type,
     int? amount,
     String? currency,
+    double? exchangeRate,
     Value<String?> payee = const Value.absent(),
     Value<String?> notes = const Value.absent(),
     String? frequency,
@@ -6754,6 +7902,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     type: type ?? this.type,
     amount: amount ?? this.amount,
     currency: currency ?? this.currency,
+    exchangeRate: exchangeRate ?? this.exchangeRate,
     payee: payee.present ? payee.value : this.payee,
     notes: notes.present ? notes.value : this.notes,
     frequency: frequency ?? this.frequency,
@@ -6779,6 +7928,9 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
       type: data.type.present ? data.type.value : this.type,
       amount: data.amount.present ? data.amount.value : this.amount,
       currency: data.currency.present ? data.currency.value : this.currency,
+      exchangeRate: data.exchangeRate.present
+          ? data.exchangeRate.value
+          : this.exchangeRate,
       payee: data.payee.present ? data.payee.value : this.payee,
       notes: data.notes.present ? data.notes.value : this.notes,
       frequency: data.frequency.present ? data.frequency.value : this.frequency,
@@ -6809,6 +7961,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
           ..write('type: $type, ')
           ..write('amount: $amount, ')
           ..write('currency: $currency, ')
+          ..write('exchangeRate: $exchangeRate, ')
           ..write('payee: $payee, ')
           ..write('notes: $notes, ')
           ..write('frequency: $frequency, ')
@@ -6833,6 +7986,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
     type,
     amount,
     currency,
+    exchangeRate,
     payee,
     notes,
     frequency,
@@ -6856,6 +8010,7 @@ class RecurringRule extends DataClass implements Insertable<RecurringRule> {
           other.type == this.type &&
           other.amount == this.amount &&
           other.currency == this.currency &&
+          other.exchangeRate == this.exchangeRate &&
           other.payee == this.payee &&
           other.notes == this.notes &&
           other.frequency == this.frequency &&
@@ -6877,6 +8032,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
   final Value<String> type;
   final Value<int> amount;
   final Value<String> currency;
+  final Value<double> exchangeRate;
   final Value<String?> payee;
   final Value<String?> notes;
   final Value<String> frequency;
@@ -6897,6 +8053,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
     this.type = const Value.absent(),
     this.amount = const Value.absent(),
     this.currency = const Value.absent(),
+    this.exchangeRate = const Value.absent(),
     this.payee = const Value.absent(),
     this.notes = const Value.absent(),
     this.frequency = const Value.absent(),
@@ -6918,6 +8075,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
     required String type,
     required int amount,
     required String currency,
+    this.exchangeRate = const Value.absent(),
     this.payee = const Value.absent(),
     this.notes = const Value.absent(),
     required String frequency,
@@ -6948,6 +8106,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
     Expression<String>? type,
     Expression<int>? amount,
     Expression<String>? currency,
+    Expression<double>? exchangeRate,
     Expression<String>? payee,
     Expression<String>? notes,
     Expression<String>? frequency,
@@ -6969,6 +8128,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
       if (type != null) 'type': type,
       if (amount != null) 'amount': amount,
       if (currency != null) 'currency': currency,
+      if (exchangeRate != null) 'exchange_rate': exchangeRate,
       if (payee != null) 'payee': payee,
       if (notes != null) 'notes': notes,
       if (frequency != null) 'frequency': frequency,
@@ -6992,6 +8152,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
     Value<String>? type,
     Value<int>? amount,
     Value<String>? currency,
+    Value<double>? exchangeRate,
     Value<String?>? payee,
     Value<String?>? notes,
     Value<String>? frequency,
@@ -7013,6 +8174,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
       type: type ?? this.type,
       amount: amount ?? this.amount,
       currency: currency ?? this.currency,
+      exchangeRate: exchangeRate ?? this.exchangeRate,
       payee: payee ?? this.payee,
       notes: notes ?? this.notes,
       frequency: frequency ?? this.frequency,
@@ -7051,6 +8213,9 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
     }
     if (currency.present) {
       map['currency'] = Variable<String>(currency.value);
+    }
+    if (exchangeRate.present) {
+      map['exchange_rate'] = Variable<double>(exchangeRate.value);
     }
     if (payee.present) {
       map['payee'] = Variable<String>(payee.value);
@@ -7101,6 +8266,7 @@ class RecurringRulesCompanion extends UpdateCompanion<RecurringRule> {
           ..write('type: $type, ')
           ..write('amount: $amount, ')
           ..write('currency: $currency, ')
+          ..write('exchangeRate: $exchangeRate, ')
           ..write('payee: $payee, ')
           ..write('notes: $notes, ')
           ..write('frequency: $frequency, ')
@@ -8443,6 +9609,38 @@ class $GoalsTable extends Goals with TableInfo<$GoalsTable, Goal> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _aprBpsMeta = const VerificationMeta('aprBps');
+  @override
+  late final GeneratedColumn<int> aprBps = GeneratedColumn<int>(
+    'apr_bps',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _minPaymentCentsMeta = const VerificationMeta(
+    'minPaymentCents',
+  );
+  @override
+  late final GeneratedColumn<int> minPaymentCents = GeneratedColumn<int>(
+    'min_payment_cents',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -8478,6 +9676,9 @@ class $GoalsTable extends Goals with TableInfo<$GoalsTable, Goal> {
     monthlyContribution,
     currentAmount,
     isCompleted,
+    aprBps,
+    minPaymentCents,
+    sortOrder,
     createdAt,
     updatedAt,
   ];
@@ -8576,6 +9777,27 @@ class $GoalsTable extends Goals with TableInfo<$GoalsTable, Goal> {
         ),
       );
     }
+    if (data.containsKey('apr_bps')) {
+      context.handle(
+        _aprBpsMeta,
+        aprBps.isAcceptableOrUnknown(data['apr_bps']!, _aprBpsMeta),
+      );
+    }
+    if (data.containsKey('min_payment_cents')) {
+      context.handle(
+        _minPaymentCentsMeta,
+        minPaymentCents.isAcceptableOrUnknown(
+          data['min_payment_cents']!,
+          _minPaymentCentsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -8645,6 +9867,18 @@ class $GoalsTable extends Goals with TableInfo<$GoalsTable, Goal> {
         DriftSqlType.bool,
         data['${effectivePrefix}is_completed'],
       )!,
+      aprBps: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}apr_bps'],
+      ),
+      minPaymentCents: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}min_payment_cents'],
+      ),
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -8674,6 +9908,9 @@ class Goal extends DataClass implements Insertable<Goal> {
   final int? monthlyContribution;
   final int currentAmount;
   final bool isCompleted;
+  final int? aprBps;
+  final int? minPaymentCents;
+  final int sortOrder;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Goal({
@@ -8688,6 +9925,9 @@ class Goal extends DataClass implements Insertable<Goal> {
     this.monthlyContribution,
     required this.currentAmount,
     required this.isCompleted,
+    this.aprBps,
+    this.minPaymentCents,
+    required this.sortOrder,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -8715,6 +9955,13 @@ class Goal extends DataClass implements Insertable<Goal> {
     }
     map['current_amount'] = Variable<int>(currentAmount);
     map['is_completed'] = Variable<bool>(isCompleted);
+    if (!nullToAbsent || aprBps != null) {
+      map['apr_bps'] = Variable<int>(aprBps);
+    }
+    if (!nullToAbsent || minPaymentCents != null) {
+      map['min_payment_cents'] = Variable<int>(minPaymentCents);
+    }
+    map['sort_order'] = Variable<int>(sortOrder);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -8743,6 +9990,13 @@ class Goal extends DataClass implements Insertable<Goal> {
           : Value(monthlyContribution),
       currentAmount: Value(currentAmount),
       isCompleted: Value(isCompleted),
+      aprBps: aprBps == null && nullToAbsent
+          ? const Value.absent()
+          : Value(aprBps),
+      minPaymentCents: minPaymentCents == null && nullToAbsent
+          ? const Value.absent()
+          : Value(minPaymentCents),
+      sortOrder: Value(sortOrder),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -8767,6 +10021,9 @@ class Goal extends DataClass implements Insertable<Goal> {
       ),
       currentAmount: serializer.fromJson<int>(json['currentAmount']),
       isCompleted: serializer.fromJson<bool>(json['isCompleted']),
+      aprBps: serializer.fromJson<int?>(json['aprBps']),
+      minPaymentCents: serializer.fromJson<int?>(json['minPaymentCents']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -8786,6 +10043,9 @@ class Goal extends DataClass implements Insertable<Goal> {
       'monthlyContribution': serializer.toJson<int?>(monthlyContribution),
       'currentAmount': serializer.toJson<int>(currentAmount),
       'isCompleted': serializer.toJson<bool>(isCompleted),
+      'aprBps': serializer.toJson<int?>(aprBps),
+      'minPaymentCents': serializer.toJson<int?>(minPaymentCents),
+      'sortOrder': serializer.toJson<int>(sortOrder),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -8803,6 +10063,9 @@ class Goal extends DataClass implements Insertable<Goal> {
     Value<int?> monthlyContribution = const Value.absent(),
     int? currentAmount,
     bool? isCompleted,
+    Value<int?> aprBps = const Value.absent(),
+    Value<int?> minPaymentCents = const Value.absent(),
+    int? sortOrder,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => Goal(
@@ -8819,6 +10082,11 @@ class Goal extends DataClass implements Insertable<Goal> {
         : this.monthlyContribution,
     currentAmount: currentAmount ?? this.currentAmount,
     isCompleted: isCompleted ?? this.isCompleted,
+    aprBps: aprBps.present ? aprBps.value : this.aprBps,
+    minPaymentCents: minPaymentCents.present
+        ? minPaymentCents.value
+        : this.minPaymentCents,
+    sortOrder: sortOrder ?? this.sortOrder,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -8847,6 +10115,11 @@ class Goal extends DataClass implements Insertable<Goal> {
       isCompleted: data.isCompleted.present
           ? data.isCompleted.value
           : this.isCompleted,
+      aprBps: data.aprBps.present ? data.aprBps.value : this.aprBps,
+      minPaymentCents: data.minPaymentCents.present
+          ? data.minPaymentCents.value
+          : this.minPaymentCents,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -8866,6 +10139,9 @@ class Goal extends DataClass implements Insertable<Goal> {
           ..write('monthlyContribution: $monthlyContribution, ')
           ..write('currentAmount: $currentAmount, ')
           ..write('isCompleted: $isCompleted, ')
+          ..write('aprBps: $aprBps, ')
+          ..write('minPaymentCents: $minPaymentCents, ')
+          ..write('sortOrder: $sortOrder, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -8885,6 +10161,9 @@ class Goal extends DataClass implements Insertable<Goal> {
     monthlyContribution,
     currentAmount,
     isCompleted,
+    aprBps,
+    minPaymentCents,
+    sortOrder,
     createdAt,
     updatedAt,
   );
@@ -8903,6 +10182,9 @@ class Goal extends DataClass implements Insertable<Goal> {
           other.monthlyContribution == this.monthlyContribution &&
           other.currentAmount == this.currentAmount &&
           other.isCompleted == this.isCompleted &&
+          other.aprBps == this.aprBps &&
+          other.minPaymentCents == this.minPaymentCents &&
+          other.sortOrder == this.sortOrder &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -8919,6 +10201,9 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
   final Value<int?> monthlyContribution;
   final Value<int> currentAmount;
   final Value<bool> isCompleted;
+  final Value<int?> aprBps;
+  final Value<int?> minPaymentCents;
+  final Value<int> sortOrder;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -8934,6 +10219,9 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
     this.monthlyContribution = const Value.absent(),
     this.currentAmount = const Value.absent(),
     this.isCompleted = const Value.absent(),
+    this.aprBps = const Value.absent(),
+    this.minPaymentCents = const Value.absent(),
+    this.sortOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -8950,6 +10238,9 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
     this.monthlyContribution = const Value.absent(),
     this.currentAmount = const Value.absent(),
     this.isCompleted = const Value.absent(),
+    this.aprBps = const Value.absent(),
+    this.minPaymentCents = const Value.absent(),
+    this.sortOrder = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
@@ -8971,6 +10262,9 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
     Expression<int>? monthlyContribution,
     Expression<int>? currentAmount,
     Expression<bool>? isCompleted,
+    Expression<int>? aprBps,
+    Expression<int>? minPaymentCents,
+    Expression<int>? sortOrder,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -8988,6 +10282,9 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
         'monthly_contribution': monthlyContribution,
       if (currentAmount != null) 'current_amount': currentAmount,
       if (isCompleted != null) 'is_completed': isCompleted,
+      if (aprBps != null) 'apr_bps': aprBps,
+      if (minPaymentCents != null) 'min_payment_cents': minPaymentCents,
+      if (sortOrder != null) 'sort_order': sortOrder,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -9006,6 +10303,9 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
     Value<int?>? monthlyContribution,
     Value<int>? currentAmount,
     Value<bool>? isCompleted,
+    Value<int?>? aprBps,
+    Value<int?>? minPaymentCents,
+    Value<int>? sortOrder,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
@@ -9022,6 +10322,9 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
       monthlyContribution: monthlyContribution ?? this.monthlyContribution,
       currentAmount: currentAmount ?? this.currentAmount,
       isCompleted: isCompleted ?? this.isCompleted,
+      aprBps: aprBps ?? this.aprBps,
+      minPaymentCents: minPaymentCents ?? this.minPaymentCents,
+      sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -9064,6 +10367,15 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
     if (isCompleted.present) {
       map['is_completed'] = Variable<bool>(isCompleted.value);
     }
+    if (aprBps.present) {
+      map['apr_bps'] = Variable<int>(aprBps.value);
+    }
+    if (minPaymentCents.present) {
+      map['min_payment_cents'] = Variable<int>(minPaymentCents.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -9090,6 +10402,9 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
           ..write('monthlyContribution: $monthlyContribution, ')
           ..write('currentAmount: $currentAmount, ')
           ..write('isCompleted: $isCompleted, ')
+          ..write('aprBps: $aprBps, ')
+          ..write('minPaymentCents: $minPaymentCents, ')
+          ..write('sortOrder: $sortOrder, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -12466,6 +13781,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $TransactionsTable transactions = $TransactionsTable(this);
   late final $TransactionSplitsTable transactionSplits =
       $TransactionSplitsTable(this);
+  late final $TransactionTemplatesTable transactionTemplates =
+      $TransactionTemplatesTable(this);
   late final $TagsTable tags = $TagsTable(this);
   late final $TransactionTagsTable transactionTags = $TransactionTagsTable(
     this,
@@ -12494,6 +13811,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final TransactionsDao transactionsDao = TransactionsDao(
     this as AppDatabase,
   );
+  late final TransactionTemplatesDao transactionTemplatesDao =
+      TransactionTemplatesDao(this as AppDatabase);
   late final RecurringDao recurringDao = RecurringDao(this as AppDatabase);
   late final GoalsDao goalsDao = GoalsDao(this as AppDatabase);
   late final ReportsDao reportsDao = ReportsDao(this as AppDatabase);
@@ -12513,6 +13832,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     envelopeAllocations,
     transactions,
     transactionSplits,
+    transactionTemplates,
     tags,
     transactionTags,
     recurringRules,
@@ -12795,6 +14115,8 @@ typedef $$BudgetsTableCreateCompanionBuilder =
       Value<int> periodStartDay,
       required String baseCurrency,
       Value<bool> isArchived,
+      Value<int> openingBalance,
+      Value<DateTime?> openingDate,
       required DateTime createdAt,
       required DateTime updatedAt,
       Value<int> rowid,
@@ -12808,6 +14130,8 @@ typedef $$BudgetsTableUpdateCompanionBuilder =
       Value<int> periodStartDay,
       Value<String> baseCurrency,
       Value<bool> isArchived,
+      Value<int> openingBalance,
+      Value<DateTime?> openingDate,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
@@ -12854,6 +14178,16 @@ class $$BudgetsTableFilterComposer
 
   ColumnFilters<bool> get isArchived => $composableBuilder(
     column: $table.isArchived,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get openingBalance => $composableBuilder(
+    column: $table.openingBalance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get openingDate => $composableBuilder(
+    column: $table.openingDate,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -12912,6 +14246,16 @@ class $$BudgetsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get openingBalance => $composableBuilder(
+    column: $table.openingBalance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get openingDate => $composableBuilder(
+    column: $table.openingDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -12961,6 +14305,16 @@ class $$BudgetsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get openingBalance => $composableBuilder(
+    column: $table.openingBalance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get openingDate => $composableBuilder(
+    column: $table.openingDate,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -13003,6 +14357,8 @@ class $$BudgetsTableTableManager
                 Value<int> periodStartDay = const Value.absent(),
                 Value<String> baseCurrency = const Value.absent(),
                 Value<bool> isArchived = const Value.absent(),
+                Value<int> openingBalance = const Value.absent(),
+                Value<DateTime?> openingDate = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -13014,6 +14370,8 @@ class $$BudgetsTableTableManager
                 periodStartDay: periodStartDay,
                 baseCurrency: baseCurrency,
                 isArchived: isArchived,
+                openingBalance: openingBalance,
+                openingDate: openingDate,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -13027,6 +14385,8 @@ class $$BudgetsTableTableManager
                 Value<int> periodStartDay = const Value.absent(),
                 required String baseCurrency,
                 Value<bool> isArchived = const Value.absent(),
+                Value<int> openingBalance = const Value.absent(),
+                Value<DateTime?> openingDate = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -13038,6 +14398,8 @@ class $$BudgetsTableTableManager
                 periodStartDay: periodStartDay,
                 baseCurrency: baseCurrency,
                 isArchived: isArchived,
+                openingBalance: openingBalance,
+                openingDate: openingDate,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -13314,6 +14676,7 @@ typedef $$BudgetPeriodsTableCreateCompanionBuilder =
       required DateTime endDate,
       Value<int> totalIncome,
       Value<int> totalAllocated,
+      Value<int> carriedRta,
       Value<bool> isClosed,
       required DateTime createdAt,
       Value<int> rowid,
@@ -13326,6 +14689,7 @@ typedef $$BudgetPeriodsTableUpdateCompanionBuilder =
       Value<DateTime> endDate,
       Value<int> totalIncome,
       Value<int> totalAllocated,
+      Value<int> carriedRta,
       Value<bool> isClosed,
       Value<DateTime> createdAt,
       Value<int> rowid,
@@ -13367,6 +14731,11 @@ class $$BudgetPeriodsTableFilterComposer
 
   ColumnFilters<int> get totalAllocated => $composableBuilder(
     column: $table.totalAllocated,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get carriedRta => $composableBuilder(
+    column: $table.carriedRta,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13420,6 +14789,11 @@ class $$BudgetPeriodsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get carriedRta => $composableBuilder(
+    column: $table.carriedRta,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isClosed => $composableBuilder(
     column: $table.isClosed,
     builder: (column) => ColumnOrderings(column),
@@ -13459,6 +14833,11 @@ class $$BudgetPeriodsTableAnnotationComposer
 
   GeneratedColumn<int> get totalAllocated => $composableBuilder(
     column: $table.totalAllocated,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get carriedRta => $composableBuilder(
+    column: $table.carriedRta,
     builder: (column) => column,
   );
 
@@ -13506,6 +14885,7 @@ class $$BudgetPeriodsTableTableManager
                 Value<DateTime> endDate = const Value.absent(),
                 Value<int> totalIncome = const Value.absent(),
                 Value<int> totalAllocated = const Value.absent(),
+                Value<int> carriedRta = const Value.absent(),
                 Value<bool> isClosed = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -13516,6 +14896,7 @@ class $$BudgetPeriodsTableTableManager
                 endDate: endDate,
                 totalIncome: totalIncome,
                 totalAllocated: totalAllocated,
+                carriedRta: carriedRta,
                 isClosed: isClosed,
                 createdAt: createdAt,
                 rowid: rowid,
@@ -13528,6 +14909,7 @@ class $$BudgetPeriodsTableTableManager
                 required DateTime endDate,
                 Value<int> totalIncome = const Value.absent(),
                 Value<int> totalAllocated = const Value.absent(),
+                Value<int> carriedRta = const Value.absent(),
                 Value<bool> isClosed = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
@@ -13538,6 +14920,7 @@ class $$BudgetPeriodsTableTableManager
                 endDate: endDate,
                 totalIncome: totalIncome,
                 totalAllocated: totalAllocated,
+                carriedRta: carriedRta,
                 isClosed: isClosed,
                 createdAt: createdAt,
                 rowid: rowid,
@@ -13576,6 +14959,7 @@ typedef $$AccountsTableCreateCompanionBuilder =
       Value<int> startingBalance,
       Value<int> currentBalance,
       required String currency,
+      Value<double> displayFxRate,
       Value<bool> isArchived,
       Value<bool> isOnBudget,
       required DateTime createdAt,
@@ -13591,6 +14975,7 @@ typedef $$AccountsTableUpdateCompanionBuilder =
       Value<int> startingBalance,
       Value<int> currentBalance,
       Value<String> currency,
+      Value<double> displayFxRate,
       Value<bool> isArchived,
       Value<bool> isOnBudget,
       Value<DateTime> createdAt,
@@ -13639,6 +15024,11 @@ class $$AccountsTableFilterComposer
 
   ColumnFilters<String> get currency => $composableBuilder(
     column: $table.currency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get displayFxRate => $composableBuilder(
+    column: $table.displayFxRate,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13707,6 +15097,11 @@ class $$AccountsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get displayFxRate => $composableBuilder(
+    column: $table.displayFxRate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get isArchived => $composableBuilder(
     column: $table.isArchived,
     builder: (column) => ColumnOrderings(column),
@@ -13762,6 +15157,11 @@ class $$AccountsTableAnnotationComposer
   GeneratedColumn<String> get currency =>
       $composableBuilder(column: $table.currency, builder: (column) => column);
 
+  GeneratedColumn<double> get displayFxRate => $composableBuilder(
+    column: $table.displayFxRate,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get isArchived => $composableBuilder(
     column: $table.isArchived,
     builder: (column) => column,
@@ -13814,6 +15214,7 @@ class $$AccountsTableTableManager
                 Value<int> startingBalance = const Value.absent(),
                 Value<int> currentBalance = const Value.absent(),
                 Value<String> currency = const Value.absent(),
+                Value<double> displayFxRate = const Value.absent(),
                 Value<bool> isArchived = const Value.absent(),
                 Value<bool> isOnBudget = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -13827,6 +15228,7 @@ class $$AccountsTableTableManager
                 startingBalance: startingBalance,
                 currentBalance: currentBalance,
                 currency: currency,
+                displayFxRate: displayFxRate,
                 isArchived: isArchived,
                 isOnBudget: isOnBudget,
                 createdAt: createdAt,
@@ -13842,6 +15244,7 @@ class $$AccountsTableTableManager
                 Value<int> startingBalance = const Value.absent(),
                 Value<int> currentBalance = const Value.absent(),
                 required String currency,
+                Value<double> displayFxRate = const Value.absent(),
                 Value<bool> isArchived = const Value.absent(),
                 Value<bool> isOnBudget = const Value.absent(),
                 required DateTime createdAt,
@@ -13855,6 +15258,7 @@ class $$AccountsTableTableManager
                 startingBalance: startingBalance,
                 currentBalance: currentBalance,
                 currency: currency,
+                displayFxRate: displayFxRate,
                 isArchived: isArchived,
                 isOnBudget: isOnBudget,
                 createdAt: createdAt,
@@ -14694,6 +16098,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       required int amount,
       required String currency,
       Value<double> exchangeRate,
+      Value<int> baseCurrencyAmount,
       Value<String?> payee,
       Value<String?> notes,
       required DateTime date,
@@ -14716,6 +16121,7 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<int> amount,
       Value<String> currency,
       Value<double> exchangeRate,
+      Value<int> baseCurrencyAmount,
       Value<String?> payee,
       Value<String?> notes,
       Value<DateTime> date,
@@ -14775,6 +16181,11 @@ class $$TransactionsTableFilterComposer
 
   ColumnFilters<double> get exchangeRate => $composableBuilder(
     column: $table.exchangeRate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get baseCurrencyAmount => $composableBuilder(
+    column: $table.baseCurrencyAmount,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -14878,6 +16289,11 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get baseCurrencyAmount => $composableBuilder(
+    column: $table.baseCurrencyAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get payee => $composableBuilder(
     column: $table.payee,
     builder: (column) => ColumnOrderings(column),
@@ -14966,6 +16382,11 @@ class $$TransactionsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get baseCurrencyAmount => $composableBuilder(
+    column: $table.baseCurrencyAmount,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get payee =>
       $composableBuilder(column: $table.payee, builder: (column) => column);
 
@@ -15042,6 +16463,7 @@ class $$TransactionsTableTableManager
                 Value<int> amount = const Value.absent(),
                 Value<String> currency = const Value.absent(),
                 Value<double> exchangeRate = const Value.absent(),
+                Value<int> baseCurrencyAmount = const Value.absent(),
                 Value<String?> payee = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<DateTime> date = const Value.absent(),
@@ -15062,6 +16484,7 @@ class $$TransactionsTableTableManager
                 amount: amount,
                 currency: currency,
                 exchangeRate: exchangeRate,
+                baseCurrencyAmount: baseCurrencyAmount,
                 payee: payee,
                 notes: notes,
                 date: date,
@@ -15084,6 +16507,7 @@ class $$TransactionsTableTableManager
                 required int amount,
                 required String currency,
                 Value<double> exchangeRate = const Value.absent(),
+                Value<int> baseCurrencyAmount = const Value.absent(),
                 Value<String?> payee = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 required DateTime date,
@@ -15104,6 +16528,7 @@ class $$TransactionsTableTableManager
                 amount: amount,
                 currency: currency,
                 exchangeRate: exchangeRate,
+                baseCurrencyAmount: baseCurrencyAmount,
                 payee: payee,
                 notes: notes,
                 date: date,
@@ -15337,6 +16762,418 @@ typedef $$TransactionSplitsTableProcessedTableManager =
         >,
       ),
       TransactionSplit,
+      PrefetchHooks Function()
+    >;
+typedef $$TransactionTemplatesTableCreateCompanionBuilder =
+    TransactionTemplatesCompanion Function({
+      required String id,
+      required String budgetId,
+      required String name,
+      required String type,
+      Value<String?> accountId,
+      Value<String?> envelopeId,
+      Value<int?> amountCents,
+      Value<String?> payee,
+      Value<String?> notes,
+      Value<String?> currency,
+      Value<String?> tagIdsJson,
+      Value<int> sortOrder,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<DateTime?> deletedAt,
+      Value<int> rowid,
+    });
+typedef $$TransactionTemplatesTableUpdateCompanionBuilder =
+    TransactionTemplatesCompanion Function({
+      Value<String> id,
+      Value<String> budgetId,
+      Value<String> name,
+      Value<String> type,
+      Value<String?> accountId,
+      Value<String?> envelopeId,
+      Value<int?> amountCents,
+      Value<String?> payee,
+      Value<String?> notes,
+      Value<String?> currency,
+      Value<String?> tagIdsJson,
+      Value<int> sortOrder,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<DateTime?> deletedAt,
+      Value<int> rowid,
+    });
+
+class $$TransactionTemplatesTableFilterComposer
+    extends Composer<_$AppDatabase, $TransactionTemplatesTable> {
+  $$TransactionTemplatesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get budgetId => $composableBuilder(
+    column: $table.budgetId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get envelopeId => $composableBuilder(
+    column: $table.envelopeId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get amountCents => $composableBuilder(
+    column: $table.amountCents,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payee => $composableBuilder(
+    column: $table.payee,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tagIdsJson => $composableBuilder(
+    column: $table.tagIdsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$TransactionTemplatesTableOrderingComposer
+    extends Composer<_$AppDatabase, $TransactionTemplatesTable> {
+  $$TransactionTemplatesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get budgetId => $composableBuilder(
+    column: $table.budgetId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get envelopeId => $composableBuilder(
+    column: $table.envelopeId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get amountCents => $composableBuilder(
+    column: $table.amountCents,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payee => $composableBuilder(
+    column: $table.payee,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tagIdsJson => $composableBuilder(
+    column: $table.tagIdsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TransactionTemplatesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TransactionTemplatesTable> {
+  $$TransactionTemplatesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get budgetId =>
+      $composableBuilder(column: $table.budgetId, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get accountId =>
+      $composableBuilder(column: $table.accountId, builder: (column) => column);
+
+  GeneratedColumn<String> get envelopeId => $composableBuilder(
+    column: $table.envelopeId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get amountCents => $composableBuilder(
+    column: $table.amountCents,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get payee =>
+      $composableBuilder(column: $table.payee, builder: (column) => column);
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<String> get currency =>
+      $composableBuilder(column: $table.currency, builder: (column) => column);
+
+  GeneratedColumn<String> get tagIdsJson => $composableBuilder(
+    column: $table.tagIdsJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+}
+
+class $$TransactionTemplatesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $TransactionTemplatesTable,
+          TransactionTemplate,
+          $$TransactionTemplatesTableFilterComposer,
+          $$TransactionTemplatesTableOrderingComposer,
+          $$TransactionTemplatesTableAnnotationComposer,
+          $$TransactionTemplatesTableCreateCompanionBuilder,
+          $$TransactionTemplatesTableUpdateCompanionBuilder,
+          (
+            TransactionTemplate,
+            BaseReferences<
+              _$AppDatabase,
+              $TransactionTemplatesTable,
+              TransactionTemplate
+            >,
+          ),
+          TransactionTemplate,
+          PrefetchHooks Function()
+        > {
+  $$TransactionTemplatesTableTableManager(
+    _$AppDatabase db,
+    $TransactionTemplatesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TransactionTemplatesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TransactionTemplatesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$TransactionTemplatesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> budgetId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> type = const Value.absent(),
+                Value<String?> accountId = const Value.absent(),
+                Value<String?> envelopeId = const Value.absent(),
+                Value<int?> amountCents = const Value.absent(),
+                Value<String?> payee = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<String?> currency = const Value.absent(),
+                Value<String?> tagIdsJson = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TransactionTemplatesCompanion(
+                id: id,
+                budgetId: budgetId,
+                name: name,
+                type: type,
+                accountId: accountId,
+                envelopeId: envelopeId,
+                amountCents: amountCents,
+                payee: payee,
+                notes: notes,
+                currency: currency,
+                tagIdsJson: tagIdsJson,
+                sortOrder: sortOrder,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String budgetId,
+                required String name,
+                required String type,
+                Value<String?> accountId = const Value.absent(),
+                Value<String?> envelopeId = const Value.absent(),
+                Value<int?> amountCents = const Value.absent(),
+                Value<String?> payee = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<String?> currency = const Value.absent(),
+                Value<String?> tagIdsJson = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TransactionTemplatesCompanion.insert(
+                id: id,
+                budgetId: budgetId,
+                name: name,
+                type: type,
+                accountId: accountId,
+                envelopeId: envelopeId,
+                amountCents: amountCents,
+                payee: payee,
+                notes: notes,
+                currency: currency,
+                tagIdsJson: tagIdsJson,
+                sortOrder: sortOrder,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deletedAt: deletedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$TransactionTemplatesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $TransactionTemplatesTable,
+      TransactionTemplate,
+      $$TransactionTemplatesTableFilterComposer,
+      $$TransactionTemplatesTableOrderingComposer,
+      $$TransactionTemplatesTableAnnotationComposer,
+      $$TransactionTemplatesTableCreateCompanionBuilder,
+      $$TransactionTemplatesTableUpdateCompanionBuilder,
+      (
+        TransactionTemplate,
+        BaseReferences<
+          _$AppDatabase,
+          $TransactionTemplatesTable,
+          TransactionTemplate
+        >,
+      ),
+      TransactionTemplate,
       PrefetchHooks Function()
     >;
 typedef $$TagsTableCreateCompanionBuilder =
@@ -15653,6 +17490,7 @@ typedef $$RecurringRulesTableCreateCompanionBuilder =
       required String type,
       required int amount,
       required String currency,
+      Value<double> exchangeRate,
       Value<String?> payee,
       Value<String?> notes,
       required String frequency,
@@ -15675,6 +17513,7 @@ typedef $$RecurringRulesTableUpdateCompanionBuilder =
       Value<String> type,
       Value<int> amount,
       Value<String> currency,
+      Value<double> exchangeRate,
       Value<String?> payee,
       Value<String?> notes,
       Value<String> frequency,
@@ -15730,6 +17569,11 @@ class $$RecurringRulesTableFilterComposer
 
   ColumnFilters<String> get currency => $composableBuilder(
     column: $table.currency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get exchangeRate => $composableBuilder(
+    column: $table.exchangeRate,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -15833,6 +17677,11 @@ class $$RecurringRulesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get exchangeRate => $composableBuilder(
+    column: $table.exchangeRate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get payee => $composableBuilder(
     column: $table.payee,
     builder: (column) => ColumnOrderings(column),
@@ -15921,6 +17770,11 @@ class $$RecurringRulesTableAnnotationComposer
   GeneratedColumn<String> get currency =>
       $composableBuilder(column: $table.currency, builder: (column) => column);
 
+  GeneratedColumn<double> get exchangeRate => $composableBuilder(
+    column: $table.exchangeRate,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get payee =>
       $composableBuilder(column: $table.payee, builder: (column) => column);
 
@@ -16001,6 +17855,7 @@ class $$RecurringRulesTableTableManager
                 Value<String> type = const Value.absent(),
                 Value<int> amount = const Value.absent(),
                 Value<String> currency = const Value.absent(),
+                Value<double> exchangeRate = const Value.absent(),
                 Value<String?> payee = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 Value<String> frequency = const Value.absent(),
@@ -16021,6 +17876,7 @@ class $$RecurringRulesTableTableManager
                 type: type,
                 amount: amount,
                 currency: currency,
+                exchangeRate: exchangeRate,
                 payee: payee,
                 notes: notes,
                 frequency: frequency,
@@ -16043,6 +17899,7 @@ class $$RecurringRulesTableTableManager
                 required String type,
                 required int amount,
                 required String currency,
+                Value<double> exchangeRate = const Value.absent(),
                 Value<String?> payee = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
                 required String frequency,
@@ -16063,6 +17920,7 @@ class $$RecurringRulesTableTableManager
                 type: type,
                 amount: amount,
                 currency: currency,
+                exchangeRate: exchangeRate,
                 payee: payee,
                 notes: notes,
                 frequency: frequency,
@@ -16799,6 +18657,9 @@ typedef $$GoalsTableCreateCompanionBuilder =
       Value<int?> monthlyContribution,
       Value<int> currentAmount,
       Value<bool> isCompleted,
+      Value<int?> aprBps,
+      Value<int?> minPaymentCents,
+      Value<int> sortOrder,
       required DateTime createdAt,
       required DateTime updatedAt,
       Value<int> rowid,
@@ -16816,6 +18677,9 @@ typedef $$GoalsTableUpdateCompanionBuilder =
       Value<int?> monthlyContribution,
       Value<int> currentAmount,
       Value<bool> isCompleted,
+      Value<int?> aprBps,
+      Value<int?> minPaymentCents,
+      Value<int> sortOrder,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
@@ -16881,6 +18745,21 @@ class $$GoalsTableFilterComposer extends Composer<_$AppDatabase, $GoalsTable> {
 
   ColumnFilters<bool> get isCompleted => $composableBuilder(
     column: $table.isCompleted,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get aprBps => $composableBuilder(
+    column: $table.aprBps,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get minPaymentCents => $composableBuilder(
+    column: $table.minPaymentCents,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -16959,6 +18838,21 @@ class $$GoalsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get aprBps => $composableBuilder(
+    column: $table.aprBps,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get minPaymentCents => $composableBuilder(
+    column: $table.minPaymentCents,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -17024,6 +18918,17 @@ class $$GoalsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get aprBps =>
+      $composableBuilder(column: $table.aprBps, builder: (column) => column);
+
+  GeneratedColumn<int> get minPaymentCents => $composableBuilder(
+    column: $table.minPaymentCents,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -17070,6 +18975,9 @@ class $$GoalsTableTableManager
                 Value<int?> monthlyContribution = const Value.absent(),
                 Value<int> currentAmount = const Value.absent(),
                 Value<bool> isCompleted = const Value.absent(),
+                Value<int?> aprBps = const Value.absent(),
+                Value<int?> minPaymentCents = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -17085,6 +18993,9 @@ class $$GoalsTableTableManager
                 monthlyContribution: monthlyContribution,
                 currentAmount: currentAmount,
                 isCompleted: isCompleted,
+                aprBps: aprBps,
+                minPaymentCents: minPaymentCents,
+                sortOrder: sortOrder,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -17102,6 +19013,9 @@ class $$GoalsTableTableManager
                 Value<int?> monthlyContribution = const Value.absent(),
                 Value<int> currentAmount = const Value.absent(),
                 Value<bool> isCompleted = const Value.absent(),
+                Value<int?> aprBps = const Value.absent(),
+                Value<int?> minPaymentCents = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -17117,6 +19031,9 @@ class $$GoalsTableTableManager
                 monthlyContribution: monthlyContribution,
                 currentAmount: currentAmount,
                 isCompleted: isCompleted,
+                aprBps: aprBps,
+                minPaymentCents: minPaymentCents,
+                sortOrder: sortOrder,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -18915,6 +20832,8 @@ class $AppDatabaseManager {
       $$TransactionsTableTableManager(_db, _db.transactions);
   $$TransactionSplitsTableTableManager get transactionSplits =>
       $$TransactionSplitsTableTableManager(_db, _db.transactionSplits);
+  $$TransactionTemplatesTableTableManager get transactionTemplates =>
+      $$TransactionTemplatesTableTableManager(_db, _db.transactionTemplates);
   $$TagsTableTableManager get tags => $$TagsTableTableManager(_db, _db.tags);
   $$TransactionTagsTableTableManager get transactionTags =>
       $$TransactionTagsTableTableManager(_db, _db.transactionTags);
