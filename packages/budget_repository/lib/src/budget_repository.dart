@@ -185,6 +185,120 @@ class BudgetRepository {
     }
   }
 
+  /// Per-budget serialization queue for [refreshOpeningBalanceForBudget].
+  /// Prevents lost-update races when account edits arrive concurrently from
+  /// multiple cubits (e.g. account form + archive bloc at the same time):
+  /// each call waits for the prior one on the same budget to finish before
+  /// it reads accounts + budget. Same-budget refreshes serialize; different
+  /// budgets remain parallel.
+  final Map<String, Future<void>> _openingBalanceRefreshQueue = {};
+
+  /// Recomputes `Budget.openingBalance` from the current set of on-budget,
+  /// non-archived accounts and triggers a carry-forward cascade so the change
+  /// propagates through `carriedRta` (issue #81).
+  ///
+  /// Sum rule mirrors onboarding (see `OnboardingCubit.completeOnboarding`):
+  /// each on-budget account contributes its `startingBalance` clamped at zero
+  /// (negative starting balances do NOT count as seed cash — they're
+  /// pre-existing debt the user must clear).
+  ///
+  /// Only `startingBalance` changes affect the seed cash — `currentBalance`
+  /// edits (e.g. `AccountRepository.reconcileAccount`) do NOT require this
+  /// refresh because the seed is anchored to onboarding-time balances.
+  ///
+  /// `openingDate` is preserved. If it is `null` (legacy budget never
+  /// onboarded with seed cash) the function still updates `openingBalance`
+  /// but skips the cascade — phase 3 RTA logic requires an anchor date to
+  /// fold the contribution in. Archived accounts are intentionally ignored:
+  /// they may have contributed at onboarding but should not change
+  /// `openingBalance` post-archive (product decision deferred from #80; see
+  /// PR comments on #81 for context).
+  ///
+  // TODO(#80-fx): FX-convert per-account `startingBalance` to base currency
+  // before summing. Currently sums native cents to match onboarding; under-
+  // or over-counts when accounts use different currencies. Same gap exists
+  // in `OnboardingCubit`; fix both together.
+  Future<void> refreshOpeningBalanceForBudget(String budgetId) async {
+    final prior = _openingBalanceRefreshQueue[budgetId];
+    final completer = Completer<void>();
+    _openingBalanceRefreshQueue[budgetId] = completer.future;
+    if (prior != null) {
+      try {
+        await prior;
+      } on Object {
+        // Prior caller's error is theirs to handle; we still proceed so
+        // a transient failure doesn't permanently block this budget.
+      }
+    }
+    try {
+      await _doRefreshOpeningBalance(budgetId);
+      completer.complete();
+    } on Object catch (e, st) {
+      completer.completeError(e, st);
+      rethrow;
+    } finally {
+      if (identical(_openingBalanceRefreshQueue[budgetId], completer.future)) {
+        _openingBalanceRefreshQueue.remove(budgetId);
+      }
+    }
+  }
+
+  Future<void> _doRefreshOpeningBalance(String budgetId) async {
+    try {
+      final budget = await getBudget(budgetId);
+      final accounts = await _localDatabase.accountsDao
+          .getAccountsByBudgetId(budgetId);
+
+      var sum = 0;
+      for (final a in accounts) {
+        if (!a.isOnBudget || a.isArchived) continue;
+        if (a.startingBalance > 0) sum += a.startingBalance;
+      }
+      if (sum == budget.openingBalance) return;
+
+      await updateBudget(
+        budget.copyWith(openingBalance: sum, updatedAt: DateTime.now()),
+      );
+
+      final openingDate = budget.openingDate;
+      if (openingDate == null) {
+        // Legacy budget shape (phase-7 backfill skipped this row because its
+        // earliest period had no income, or this is a never-onboarded
+        // budget). `openingBalance` is recorded for downstream visibility
+        // but the cascade has no anchor period to fold it into — RTA stays
+        // on the old `total_income` model until `openingDate` is set.
+        return;
+      }
+
+      // Recompute cascade starting from the period that anchors the seed
+      // cash — that's the period whose RTA picks up the new contribution
+      // first. Downstream periods read its updated `carriedRta`.
+      final periods = await _localDatabase.budgetsDao.getPeriodsByBudgetId(
+        budgetId,
+      );
+      if (periods.isEmpty) return;
+      final anchor = periodForDate<storage.BudgetPeriod>(
+        openingDate,
+        periods,
+        startDate: (p) => p.startDate,
+        endDate: (p) => p.endDate,
+      );
+      if (anchor == null) return;
+
+      await recomputeCarryForwardFrom(
+        budgetId: budgetId,
+        fromPeriodId: anchor.id,
+      );
+    } on BudgetException {
+      rethrow;
+    } on Exception catch (e) {
+      throw BudgetException(
+        'Failed to refresh opening balance',
+        error: e,
+      );
+    }
+  }
+
   /// Fetches budgets from the API and syncs to local storage.
   Future<void> refreshBudgets(String ownerId) async {
     try {

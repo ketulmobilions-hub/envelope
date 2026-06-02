@@ -48,6 +48,9 @@ void main() {
         amount: any(named: 'amount'),
       ),
     ).thenAnswer((_) async {});
+    when(
+      () => budgetRepository.refreshOpeningBalanceForBudget(any()),
+    ).thenAnswer((_) async {});
   });
 
   group('AccountsBloc', () {
@@ -121,6 +124,16 @@ void main() {
       act: (bloc) => bloc.add(AccountArchiveToggled(testAccounts.first)),
       verify: (_) {
         verify(() => accountRepository.archiveAccount('acc-1')).called(1);
+        // Issue #81: archive shifts seed cash → refresh + cascade.
+        verify(
+          () => budgetRepository.refreshOpeningBalanceForBudget('budget-1'),
+        ).called(1);
+        verifyNever(
+          () => budgetRepository.addIncomeToCurrentPeriod(
+            budgetId: any(named: 'budgetId'),
+            amount: any(named: 'amount'),
+          ),
+        );
       },
     );
 
@@ -144,6 +157,9 @@ void main() {
       ),
       verify: (_) {
         verify(() => accountRepository.unarchiveAccount('acc-1')).called(1);
+        verify(
+          () => budgetRepository.refreshOpeningBalanceForBudget('budget-1'),
+        ).called(1);
       },
     );
 
@@ -218,6 +234,10 @@ void main() {
       act: (bloc) => bloc.add(const AccountDeleted('acc-1')),
       verify: (_) {
         verify(() => accountRepository.deleteAccount('acc-1')).called(1);
+        // Issue #81: delete shrinks seed cash → refresh + cascade.
+        verify(
+          () => budgetRepository.refreshOpeningBalanceForBudget('budget-1'),
+        ).called(1);
       },
     );
 
