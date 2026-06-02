@@ -68,7 +68,6 @@ class EnvelopeDetailPage extends StatelessWidget {
     final linkedId = state.envelope.linkedAccountId!;
     final budgetId = state.envelope.budgetId;
     final userId = context.read<AuthBloc>().state.user?.id ?? '';
-    final budgetPeriodId = state.currentPeriodId;
     final accounts = await context
         .read<AccountRepository>()
         .watchAccounts(budgetId)
@@ -86,7 +85,6 @@ class EnvelopeDetailPage extends StatelessWidget {
       accounts: accounts,
       budgetId: budgetId,
       userId: userId,
-      budgetPeriodId: budgetPeriodId,
       ccPaymentEnvelopeId: state.envelope.id,
     );
   }
@@ -261,10 +259,9 @@ class _EnvelopeAppBarState extends State<_EnvelopeAppBar>
     final symbol = currencySymbol(context);
     final state = widget.state;
     final envelope = state.envelope;
-    final currentGroup = state.currentGroup;
-    final available = currentGroup?.available ?? 0;
-    final allocated = currentGroup?.allocated ?? 0;
-    final spent = currentGroup?.spent ?? 0;
+    final available = state.available;
+    final allocated = state.allocated;
+    final spent = state.spent;
 
     return SliverAppBar(
       expandedHeight: 210,
@@ -537,11 +534,9 @@ class _EnvelopeContentState extends State<_EnvelopeContent>
                 BlocBuilder<EnvelopeDetailCubit, EnvelopeDetailState>(
                   buildWhen: (prev, curr) =>
                       prev.transactions != curr.transactions ||
-                      prev.allocations != curr.allocations ||
-                      prev.periods != curr.periods ||
-                      prev.currentPeriodId != curr.currentPeriodId,
+                      prev.allocation != curr.allocation,
                   builder: (context, state) {
-                    final groups = state.groups;
+                    final groups = state.monthGroups;
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -576,10 +571,8 @@ class _EnvelopeContentState extends State<_EnvelopeContent>
                           )
                         else
                           for (final group in groups)
-                            _PeriodSection(
+                            _MonthSection(
                               group: group,
-                              isCurrent:
-                                  group.period?.id == state.currentPeriodId,
                               envelopeColor: widget.envelopeColor,
                               hideFigures: state.isCreditCardEnvelope,
                             ),
@@ -659,94 +652,48 @@ class _HeaderDetail extends StatelessWidget {
 bool _sameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
 
-class _PeriodSection extends StatelessWidget {
-  const _PeriodSection({
+class _MonthSection extends StatelessWidget {
+  const _MonthSection({
     required this.group,
-    required this.isCurrent,
     required this.envelopeColor,
     this.hideFigures = false,
   });
 
-  final EnvelopePeriodGroup group;
-  final bool isCurrent;
+  final EnvelopeMonthGroup group;
   final Color envelopeColor;
 
-  /// When true (CC Payment envelope), the allocated/spent/available row is
-  /// omitted — those figures aren't meaningful for a credit-card envelope.
+  /// When true (CC Payment envelope), the spent figure is omitted — it isn't
+  /// meaningful for a credit-card envelope.
   final bool hideFigures;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
-    final period = group.period;
     final transactions = group.transactions;
     final mutedStyle = theme.textTheme.bodyMedium?.copyWith(
       color: AppColors.onPrimary.withValues(alpha: 0.85),
     );
-    final periodLabel = period == null
-        ? l10n.envelopesDetailPeriodUncategorized
-        : l10n.envelopesDetailPeriodRange(
-            DateFormat.yMMMd().format(period.startDate),
-            DateFormat.yMMMd().format(period.endDate),
-          );
+    final monthLabel = DateFormat.yMMMM().format(group.month);
 
     return Padding(
       padding: const EdgeInsets.only(top: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  periodLabel,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.6,
-                    color: AppColors.onPrimary,
-                  ),
-                ),
-              ),
-              if (isCurrent)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.onPrimary.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    l10n.envelopesDetailPeriodCurrent.toUpperCase(),
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: AppColors.onPrimary,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
-            ],
+          Text(
+            monthLabel,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.6,
+              color: AppColors.onPrimary,
+            ),
           ),
-          if (period != null && !hideFigures) ...[
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _HeaderDetail(
-                  label: l10n.envelopesDetailAllocated,
-                  amount: group.allocated,
-                ),
-                _HeaderDetail(
-                  label: l10n.envelopesDetailSpent,
-                  amount: group.spent,
-                ),
-                _HeaderDetail(
-                  label: l10n.envelopesDetailAvailable,
-                  amount: group.available,
-                ),
-              ],
+          if (!hideFigures) ...[
+            const SizedBox(height: 4),
+            _HeaderDetail(
+              label: l10n.envelopesDetailSpent,
+              amount: group.spent,
             ),
           ],
           const SizedBox(height: 8),

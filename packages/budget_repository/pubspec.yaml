@@ -12,6 +12,8 @@ dependencies:
     path: ../envelope_api_client
   envelope_local_storage:
     path: ../envelope_local_storage
+  envelope_repository:
+    path: ../envelope_repository
   freezed_annotation: ^3.0.0
   json_annotation: ^4.9.0
   supabase_flutter: ^2.9.0

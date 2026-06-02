@@ -17,8 +17,14 @@ abstract class BudgetDto with _$BudgetDto {
     @JsonKey(name: 'period_start_day') @Default(1) int periodStartDay,
     @JsonKey(name: 'is_archived') @Default(false) bool isArchived,
 
-    /// Seed cash (cents) — sum of on-budget account starting balances.
+    /// Legacy seed cash + migrated historical income (cents). Set during
+    /// onboarding and never overwritten by routine account-balance refresh.
     @JsonKey(name: 'opening_balance') @Default(0) int openingBalance,
+
+    /// Cached sum of on-budget account starting balances (cents). Kept in
+    /// sync by the client whenever an account's starting balance changes.
+    @JsonKey(name: 'account_seed_balance') @Default(0)
+    int accountSeedBalance,
 
     /// Date the opening balance is anchored to.
     @JsonKey(name: 'opening_date') DateTime? openingDate,

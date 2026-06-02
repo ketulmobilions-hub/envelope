@@ -131,11 +131,14 @@ class _TransferDialogState extends State<_TransferDialog> {
                 final cents = _parseCents(v ?? '');
                 if (cents <= 0) return l10n.budgetTransferAmountRequired;
                 final from = _fromAllocation;
+                final spent = from == null
+                    ? 0
+                    : (context.read<BudgetBloc>().state.spentByEnvelope[from
+                              .envelopeId] ??
+                          0);
                 final availableCents = from == null
                     ? 0
-                    : from.allocatedAmount -
-                          from.spentAmount +
-                          from.rolloverAmount;
+                    : from.allocatedAmount - spent;
                 if (cents > availableCents) {
                   return l10n.budgetTransferInsufficientFunds;
                 }

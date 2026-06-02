@@ -46,6 +46,149 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
   Future<int> deleteTransaction(String id) =>
       (delete(transactions)..where((t) => t.id.equals(id))).go();
 
+  /// Sums `base_currency_amount` of all income transactions for [budgetId].
+  /// Excludes soft-deleted rows.
+  Future<int> sumIncomeByBudgetId(String budgetId) async {
+    final sumExp = transactions.baseCurrencyAmount.sum();
+    final query = selectOnly(transactions)
+      ..addColumns([sumExp])
+      ..where(
+        transactions.budgetId.equals(budgetId) &
+            transactions.type.equals('income') &
+            transactions.deletedAt.isNull(),
+      );
+    final row = await query.getSingleOrNull();
+    return row?.read(sumExp)?.toInt() ?? 0;
+  }
+
+  /// Streams the running income total for [budgetId].
+  Stream<int> watchIncomeByBudgetId(String budgetId) {
+    final sumExp = transactions.baseCurrencyAmount.sum();
+    final query = selectOnly(transactions)
+      ..addColumns([sumExp])
+      ..where(
+        transactions.budgetId.equals(budgetId) &
+            transactions.type.equals('income') &
+            transactions.deletedAt.isNull(),
+      );
+    return query.watchSingleOrNull().map(
+      (row) => row?.read(sumExp)?.toInt() ?? 0,
+    );
+  }
+
+  /// Sums every expense amount charged against [envelopeId], including
+  /// split-mode contributions. Parent transactions whose `envelopeId == X`
+  /// AND parent splits whose `envelopeId == X` (with their split amount
+  /// scaled to the parent's exchange rate) both count.
+  Future<int> sumExpensesByEnvelopeId(String envelopeId) async {
+    // Direct (non-split) expense rows.
+    final sumDirect = transactions.baseCurrencyAmount.sum();
+    final directQuery = selectOnly(transactions)
+      ..addColumns([sumDirect])
+      ..where(
+        transactions.envelopeId.equals(envelopeId) &
+            transactions.type.equals('expense') &
+            transactions.deletedAt.isNull(),
+      );
+    final directRow = await directQuery.getSingleOrNull();
+    final direct = directRow?.read(sumDirect)?.toInt() ?? 0;
+
+    // Split contributions: split.amount * parent.exchange_rate so the result
+    // is in the budget's base currency.
+    final splitContribution =
+        (transactionSplits.amount.cast<double>() * transactions.exchangeRate)
+            .sum();
+    final splitQuery =
+        selectOnly(transactionSplits).join([
+            innerJoin(
+              transactions,
+              transactions.id.equalsExp(transactionSplits.transactionId),
+            ),
+          ])
+          ..addColumns([splitContribution])
+          ..where(
+            transactionSplits.envelopeId.equals(envelopeId) &
+                transactions.type.equals('expense') &
+                transactions.deletedAt.isNull(),
+          );
+    final splitRow = await splitQuery.getSingleOrNull();
+    final splits = (splitRow?.read(splitContribution) ?? 0).round();
+
+    return direct + splits;
+  }
+
+  /// Streams a per-envelope expense total for [budgetId], including split
+  /// contributions. Returns a `Map<envelopeId, totalCents>` updated on any
+  /// transactions / transaction_splits change in the budget.
+  Stream<Map<String, int>> watchExpensesByEnvelopeForBudget(String budgetId) {
+    return attachedDatabase
+        .tableUpdates(
+          TableUpdateQuery.onAllTables({transactions, transactionSplits}),
+        )
+        .asyncMap((_) => _computeExpensesByEnvelope(budgetId))
+        .distinct(_mapEquals);
+  }
+
+  Future<Map<String, int>> _computeExpensesByEnvelope(String budgetId) async {
+    final result = <String, int>{};
+
+    // Direct (non-split) expenses grouped by envelope_id.
+    final directSum = transactions.baseCurrencyAmount.sum();
+    final directQuery = selectOnly(transactions)
+      ..addColumns([transactions.envelopeId, directSum])
+      ..where(
+        transactions.budgetId.equals(budgetId) &
+            transactions.type.equals('expense') &
+            transactions.deletedAt.isNull() &
+            transactions.envelopeId.isNotNull(),
+      )
+      ..groupBy([transactions.envelopeId]);
+    for (final row in await directQuery.get()) {
+      final envId = row.read(transactions.envelopeId);
+      final total = row.read(directSum)?.toInt() ?? 0;
+      if (envId != null && total != 0) {
+        result.update(envId, (v) => v + total, ifAbsent: () => total);
+      }
+    }
+
+    // Split contributions: split.amount * parent.exchange_rate, grouped by
+    // splits.envelope_id.
+    final splitSum =
+        (transactionSplits.amount.cast<double>() * transactions.exchangeRate)
+            .sum();
+    final splitQuery =
+        selectOnly(transactionSplits).join([
+            innerJoin(
+              transactions,
+              transactions.id.equalsExp(transactionSplits.transactionId),
+            ),
+          ])
+          ..addColumns([transactionSplits.envelopeId, splitSum])
+          ..where(
+            transactions.budgetId.equals(budgetId) &
+                transactions.type.equals('expense') &
+                transactions.deletedAt.isNull(),
+          )
+          ..groupBy([transactionSplits.envelopeId]);
+    for (final row in await splitQuery.get()) {
+      final envId = row.read(transactionSplits.envelopeId);
+      final total = (row.read(splitSum) ?? 0).round();
+      if (envId != null && total != 0) {
+        result.update(envId, (v) => v + total, ifAbsent: () => total);
+      }
+    }
+
+    return result;
+  }
+
+  static bool _mapEquals(Map<String, int> a, Map<String, int> b) {
+    if (a.length != b.length) return false;
+    for (final entry in a.entries) {
+      if (b[entry.key] != entry.value) return false;
+    }
+    return true;
+  }
+
   // Transaction Splits CRUD
   Future<List<TransactionSplit>> getSplitsByTransactionId(
     String transactionId,

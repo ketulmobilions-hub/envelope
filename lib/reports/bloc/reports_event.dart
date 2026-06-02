@@ -36,14 +36,18 @@ final class TrendReportRequested extends ReportsEvent {
   List<Object?> get props => [months];
 }
 
-/// Request a budget vs actual report for the given period.
+/// Request a budget vs actual report for the given date range.
 final class BudgetVsActualReportRequested extends ReportsEvent {
-  const BudgetVsActualReportRequested({required this.periodId});
+  const BudgetVsActualReportRequested({
+    required this.startDate,
+    required this.endDate,
+  });
 
-  final String periodId;
+  final DateTime startDate;
+  final DateTime endDate;
 
   @override
-  List<Object?> get props => [periodId];
+  List<Object?> get props => [startDate, endDate];
 }
 
 /// Request the net worth history.
@@ -88,16 +92,6 @@ final class ReportsExportRequested extends ReportsEvent {
 
   @override
   List<Object?> get props => [format, reportType];
-}
-
-/// Internal event when budget periods stream emits.
-final class _PeriodsUpdated extends ReportsEvent {
-  const _PeriodsUpdated(this.periods);
-
-  final List<BudgetPeriod> periods;
-
-  @override
-  List<Object?> get props => [periods];
 }
 
 /// Share an exported file.

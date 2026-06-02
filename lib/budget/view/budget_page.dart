@@ -4,7 +4,6 @@ import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/budget/bloc/bloc.dart';
 import 'package:envelope/budget/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
-import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +26,6 @@ class BudgetPage extends StatelessWidget {
         goalRepository: context.read<GoalRepository>(),
         transactionRepository: context.read<TransactionRepository>(),
         budgetId: budgetId,
-        now: context.read<AppClock>().now,
       )..add(const BudgetStarted()),
       child: BudgetView(budgetId: budgetId),
     );
@@ -57,7 +55,6 @@ class _BudgetViewState extends State<BudgetView> {
           BudgetError.allocationFailed => l10n.budgetErrorAllocationFailed,
           BudgetError.transferFailed => l10n.budgetErrorTransferFailed,
           BudgetError.templateFailed => l10n.budgetErrorTemplateFailed,
-          BudgetError.periodFailed => l10n.budgetErrorPeriodFailed,
         };
         showAppSnackBar(context, SnackBar(content: Text(message)));
       },
@@ -96,13 +93,12 @@ class _BudgetViewState extends State<BudgetView> {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (state.periods.isEmpty) {
+            if (state.envelopes.isEmpty && state.categoryGroups.isEmpty) {
               return _EmptyState(budgetId: widget.budgetId);
             }
 
             return Column(
               children: [
-                const PeriodSelector(),
                 const ReadyToAssignCard(),
                 Expanded(
                   child: RefreshIndicator(

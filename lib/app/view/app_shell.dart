@@ -120,19 +120,9 @@ class _AppShellState extends State<AppShell>
     final budgetId =
         context.read<SharedPreferences>().getString(activeBudgetIdKey) ?? '';
 
-    final appClock = context.read<AppClock>();
-    final periodId = await _getCurrentPeriodId(
-      context.read<BudgetRepository>(),
-      budgetId,
-      now: appClock.now(),
-    );
-
-    if (!context.mounted) return;
-
     await showTransactionFormSheet(
       context,
       budgetId: budgetId,
-      budgetPeriodId: periodId,
       userId: user.id,
       initialType: initialType,
       initialTemplate: initialTemplate,
@@ -164,18 +154,9 @@ class _AppShellState extends State<AppShell>
 
     final budgetId =
         context.read<SharedPreferences>().getString(activeBudgetIdKey) ?? '';
-    final appClock = context.read<AppClock>();
-    final periodId = await _getCurrentPeriodId(
-      context.read<BudgetRepository>(),
-      budgetId,
-      now: appClock.now(),
-    );
-
-    if (!context.mounted) return;
     await showTransferFormSheet(
       context,
       budgetId: budgetId,
-      budgetPeriodId: periodId,
       userId: user.id,
     );
   }
@@ -415,26 +396,3 @@ class _NavigateTabIntent extends Intent {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/// Resolves the current (open) budget period ID.
-Future<String?> _getCurrentPeriodId(
-  BudgetRepository budgetRepository,
-  String budgetId, {
-  DateTime? now,
-}) async {
-  try {
-    final periods = await budgetRepository.watchBudgetPeriods(budgetId).first;
-    if (periods.isEmpty) return null;
-    final effectiveNow = now ?? DateTime.now();
-    final current = periods.firstWhere(
-      (p) =>
-          !p.isClosed &&
-          !p.startDate.isAfter(effectiveNow) &&
-          !p.endDate.isBefore(effectiveNow),
-      orElse: () =>
-          periods.where((p) => !p.isClosed).lastOrNull ?? periods.last,
-    );
-    return current.id;
-  } on Exception {
-    return null;
-  }
-}

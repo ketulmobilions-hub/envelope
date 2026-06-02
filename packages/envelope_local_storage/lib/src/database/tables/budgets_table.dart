@@ -13,6 +13,8 @@ class Budgets extends Table {
       boolean().named('is_archived').withDefault(const Constant(false))();
   IntColumn get openingBalance =>
       integer().named('opening_balance').withDefault(const Constant(0))();
+  IntColumn get accountSeedBalance =>
+      integer().named('account_seed_balance').withDefault(const Constant(0))();
   DateTimeColumn get openingDate =>
       dateTime().named('opening_date').nullable()();
   DateTimeColumn get createdAt => dateTime().named('created_at')();

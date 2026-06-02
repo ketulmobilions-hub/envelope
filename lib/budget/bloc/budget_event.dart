@@ -12,31 +12,7 @@ final class BudgetStarted extends BudgetEvent {
   const BudgetStarted();
 }
 
-/// Internal event when the budget row stream emits. Used to refresh derived
-/// values (RTA) when `openingBalance` / `openingDate` changes — e.g. after
-/// [BudgetRepository.autoCreatePreviousPeriod] shifts the seed-cash anchor.
-final class _BudgetUpdated extends BudgetEvent {
-  const _BudgetUpdated(this.budget, this.generation);
-
-  final Budget budget;
-  final int generation;
-
-  @override
-  List<Object?> get props => [budget, generation];
-}
-
-/// Internal event when the budget periods stream emits.
-final class _PeriodsUpdated extends BudgetEvent {
-  const _PeriodsUpdated(this.periods, this.generation);
-
-  final List<BudgetPeriod> periods;
-  final int generation;
-
-  @override
-  List<Object?> get props => [periods, generation];
-}
-
-/// Internal event when the allocations stream emits for the selected period.
+/// Internal event when the allocations stream emits.
 final class _AllocationsUpdated extends BudgetEvent {
   const _AllocationsUpdated(this.allocations, this.generation);
 
@@ -69,9 +45,7 @@ final class _EnvelopesUpdated extends BudgetEvent {
   List<Object?> get props => [envelopes, generation];
 }
 
-/// Internal event when the transactions stream emits. Triggers a recompute of
-/// the derived CC Payment envelope availability, which depends on credit-card
-/// charge/payment history rather than stored allocations.
+/// Internal event when transactions stream emits — triggers spent recompute.
 final class _TransactionsChanged extends BudgetEvent {
   const _TransactionsChanged(this.generation);
 
@@ -79,6 +53,17 @@ final class _TransactionsChanged extends BudgetEvent {
 
   @override
   List<Object?> get props => [generation];
+}
+
+/// Internal event when the per-envelope spent map emits.
+final class _SpentByEnvelopeUpdated extends BudgetEvent {
+  const _SpentByEnvelopeUpdated(this.spentByEnvelope, this.generation);
+
+  final Map<String, int> spentByEnvelope;
+  final int generation;
+
+  @override
+  List<Object?> get props => [spentByEnvelope, generation];
 }
 
 /// Internal event when the templates stream emits.
@@ -92,8 +77,7 @@ final class _TemplatesUpdated extends BudgetEvent {
   List<Object?> get props => [templates, generation];
 }
 
-/// Internal event when the goals stream emits. Drives the "needed this month"
-/// chip on envelope rows by exposing each envelope's linked goals.
+/// Internal event when the goals stream emits.
 final class _GoalsUpdated extends BudgetEvent {
   const _GoalsUpdated(this.goals, this.generation);
 
@@ -104,6 +88,17 @@ final class _GoalsUpdated extends BudgetEvent {
   List<Object?> get props => [goals, generation];
 }
 
+/// Internal event when the Ready-to-Assign stream emits.
+final class _ReadyToAssignUpdated extends BudgetEvent {
+  const _ReadyToAssignUpdated(this.readyToAssign, this.generation);
+
+  final int readyToAssign;
+  final int generation;
+
+  @override
+  List<Object?> get props => [readyToAssign, generation];
+}
+
 /// Internal event when any stream errors.
 final class _BudgetStreamError extends BudgetEvent {
   const _BudgetStreamError();
@@ -112,16 +107,6 @@ final class _BudgetStreamError extends BudgetEvent {
 /// Pull latest data from the API.
 final class BudgetRefreshRequested extends BudgetEvent {
   const BudgetRefreshRequested();
-}
-
-/// Navigate to the previous budget period.
-final class BudgetPreviousPeriodRequested extends BudgetEvent {
-  const BudgetPreviousPeriodRequested();
-}
-
-/// Navigate to the next budget period.
-final class BudgetNextPeriodRequested extends BudgetEvent {
-  const BudgetNextPeriodRequested();
 }
 
 /// User typed a new allocation amount for an envelope (local only, unsaved).
@@ -159,7 +144,7 @@ final class EnvelopeTransferRequested extends BudgetEvent {
   List<Object?> get props => [fromAllocationId, toAllocationId, amount];
 }
 
-/// Apply an allocation template to the selected period.
+/// Apply an allocation template to the budget.
 final class AllocationTemplateApplied extends BudgetEvent {
   const AllocationTemplateApplied({
     required this.templateId,
@@ -205,9 +190,4 @@ final class AllocationTemplateDeleted extends BudgetEvent {
 
   @override
   List<Object?> get props => [templateId];
-}
-
-/// Copy allocations from the previous period into the selected period.
-final class BudgetDuplicateFromPreviousPeriodRequested extends BudgetEvent {
-  const BudgetDuplicateFromPreviousPeriodRequested();
 }

@@ -310,10 +310,8 @@ class _EnvelopesViewState extends State<EnvelopesView> {
           create: (_) => EnvelopeDetailCubit(
             envelopeRepository: context.read<EnvelopeRepository>(),
             transactionRepository: context.read<TransactionRepository>(),
-            budgetRepository: context.read<BudgetRepository>(),
             accountRepository: context.read<AccountRepository>(),
             envelope: envelope,
-            now: context.read<AppClock>().now,
           ),
           child: EnvelopeDetailPage(categoryGroups: activeGroups),
         ),

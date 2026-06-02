@@ -69,7 +69,7 @@ class GoalDetailCubit extends Cubit<GoalDetailState> {
     _allocationsSubscription = null;
     _transactionsSubscription = null;
     _accountsSubscription = null;
-    _envelopeAllocations = const [];
+    _envelopeAllocation = null;
     _envelopeTransactions = const [];
     _linkedAccountBalance = null;
   }
@@ -107,11 +107,11 @@ class GoalDetailCubit extends Cubit<GoalDetailState> {
 
   StreamSubscription<List<GoalContribution>>? _contributionsSubscription;
   StreamSubscription<List<Envelope>>? _envelopesSubscription;
-  StreamSubscription<List<EnvelopeAllocation>>? _allocationsSubscription;
+  StreamSubscription<EnvelopeAllocation?>? _allocationsSubscription;
   StreamSubscription<List<Transaction>>? _transactionsSubscription;
   StreamSubscription<List<Account>>? _accountsSubscription;
 
-  List<EnvelopeAllocation> _envelopeAllocations = const [];
+  EnvelopeAllocation? _envelopeAllocation;
   List<Transaction> _envelopeTransactions = const [];
   int? _linkedAccountBalance;
 
@@ -143,26 +143,24 @@ class GoalDetailCubit extends Cubit<GoalDetailState> {
         });
 
     _allocationsSubscription = _envelopeRepository
-        .watchAllocationsForEnvelope(envelopeId)
-        .listen((allocs) {
-          _envelopeAllocations = allocs;
+        .watchAllocationByEnvelopeId(envelopeId)
+        .listen((alloc) {
+          _envelopeAllocation = alloc;
           _recompute();
         });
 
-    if (state.goal.type == 'debt_payoff') {
-      _transactionsSubscription = _transactionRepository
-          .watchTransactions(budgetId: budgetId, envelopeId: envelopeId)
-          .listen((txs) {
-            _envelopeTransactions = txs;
-            _recompute();
-          });
-    }
+    _transactionsSubscription = _transactionRepository
+        .watchTransactions(budgetId: budgetId, envelopeId: envelopeId)
+        .listen((txs) {
+          _envelopeTransactions = txs;
+          _recompute();
+        });
   }
 
   void _recompute() {
     final amount = GoalProgressCalculator.compute(
       goal: state.goal,
-      envelopeAllocations: _envelopeAllocations,
+      envelopeAllocation: _envelopeAllocation,
       envelopeTransactions: _envelopeTransactions,
       accountBalance: _linkedAccountBalance,
     );

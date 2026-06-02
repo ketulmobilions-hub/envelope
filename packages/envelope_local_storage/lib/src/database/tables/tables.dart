@@ -4,7 +4,6 @@ export 'allocation_template_items_table.dart';
 export 'allocation_templates_table.dart';
 export 'bill_reminders_table.dart';
 export 'budget_members_table.dart';
-export 'budget_periods_table.dart';
 export 'budgets_table.dart';
 export 'category_groups_table.dart';
 export 'debt_accounts_table.dart';

@@ -16,16 +16,10 @@ mixin _$EnvelopeAllocationDto {
   String get id;
   @JsonKey(name: 'envelope_id')
   String get envelopeId;
-  @JsonKey(name: 'budget_period_id')
-  String get budgetPeriodId;
   @JsonKey(name: 'created_at')
   DateTime get createdAt;
   @JsonKey(name: 'allocated_amount')
   int get allocatedAmount;
-  @JsonKey(name: 'spent_amount')
-  int get spentAmount;
-  @JsonKey(name: 'rollover_amount')
-  int get rolloverAmount;
 
   /// Create a copy of EnvelopeAllocationDto
   /// with the given fields replaced by the non-null parameter values.
@@ -48,34 +42,20 @@ mixin _$EnvelopeAllocationDto {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.envelopeId, envelopeId) ||
                 other.envelopeId == envelopeId) &&
-            (identical(other.budgetPeriodId, budgetPeriodId) ||
-                other.budgetPeriodId == budgetPeriodId) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.allocatedAmount, allocatedAmount) ||
-                other.allocatedAmount == allocatedAmount) &&
-            (identical(other.spentAmount, spentAmount) ||
-                other.spentAmount == spentAmount) &&
-            (identical(other.rolloverAmount, rolloverAmount) ||
-                other.rolloverAmount == rolloverAmount));
+                other.allocatedAmount == allocatedAmount));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-    runtimeType,
-    id,
-    envelopeId,
-    budgetPeriodId,
-    createdAt,
-    allocatedAmount,
-    spentAmount,
-    rolloverAmount,
-  );
+  int get hashCode =>
+      Object.hash(runtimeType, id, envelopeId, createdAt, allocatedAmount);
 
   @override
   String toString() {
-    return 'EnvelopeAllocationDto(id: $id, envelopeId: $envelopeId, budgetPeriodId: $budgetPeriodId, createdAt: $createdAt, allocatedAmount: $allocatedAmount, spentAmount: $spentAmount, rolloverAmount: $rolloverAmount)';
+    return 'EnvelopeAllocationDto(id: $id, envelopeId: $envelopeId, createdAt: $createdAt, allocatedAmount: $allocatedAmount)';
   }
 }
 
@@ -89,11 +69,8 @@ abstract mixin class $EnvelopeAllocationDtoCopyWith<$Res> {
   $Res call({
     String id,
     @JsonKey(name: 'envelope_id') String envelopeId,
-    @JsonKey(name: 'budget_period_id') String budgetPeriodId,
     @JsonKey(name: 'created_at') DateTime createdAt,
     @JsonKey(name: 'allocated_amount') int allocatedAmount,
-    @JsonKey(name: 'spent_amount') int spentAmount,
-    @JsonKey(name: 'rollover_amount') int rolloverAmount,
   });
 }
 
@@ -112,11 +89,8 @@ class _$EnvelopeAllocationDtoCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? envelopeId = null,
-    Object? budgetPeriodId = null,
     Object? createdAt = null,
     Object? allocatedAmount = null,
-    Object? spentAmount = null,
-    Object? rolloverAmount = null,
   }) {
     return _then(
       _self.copyWith(
@@ -128,10 +102,6 @@ class _$EnvelopeAllocationDtoCopyWithImpl<$Res>
             ? _self.envelopeId
             : envelopeId // ignore: cast_nullable_to_non_nullable
                   as String,
-        budgetPeriodId: null == budgetPeriodId
-            ? _self.budgetPeriodId
-            : budgetPeriodId // ignore: cast_nullable_to_non_nullable
-                  as String,
         createdAt: null == createdAt
             ? _self.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
@@ -139,14 +109,6 @@ class _$EnvelopeAllocationDtoCopyWithImpl<$Res>
         allocatedAmount: null == allocatedAmount
             ? _self.allocatedAmount
             : allocatedAmount // ignore: cast_nullable_to_non_nullable
-                  as int,
-        spentAmount: null == spentAmount
-            ? _self.spentAmount
-            : spentAmount // ignore: cast_nullable_to_non_nullable
-                  as int,
-        rolloverAmount: null == rolloverAmount
-            ? _self.rolloverAmount
-            : rolloverAmount // ignore: cast_nullable_to_non_nullable
                   as int,
       ),
     );
@@ -249,11 +211,8 @@ extension EnvelopeAllocationDtoPatterns on EnvelopeAllocationDto {
     TResult Function(
       String id,
       @JsonKey(name: 'envelope_id') String envelopeId,
-      @JsonKey(name: 'budget_period_id') String budgetPeriodId,
       @JsonKey(name: 'created_at') DateTime createdAt,
       @JsonKey(name: 'allocated_amount') int allocatedAmount,
-      @JsonKey(name: 'spent_amount') int spentAmount,
-      @JsonKey(name: 'rollover_amount') int rolloverAmount,
     )?
     $default, {
     required TResult orElse(),
@@ -264,11 +223,8 @@ extension EnvelopeAllocationDtoPatterns on EnvelopeAllocationDto {
         return $default(
           _that.id,
           _that.envelopeId,
-          _that.budgetPeriodId,
           _that.createdAt,
           _that.allocatedAmount,
-          _that.spentAmount,
-          _that.rolloverAmount,
         );
       case _:
         return orElse();
@@ -293,11 +249,8 @@ extension EnvelopeAllocationDtoPatterns on EnvelopeAllocationDto {
     TResult Function(
       String id,
       @JsonKey(name: 'envelope_id') String envelopeId,
-      @JsonKey(name: 'budget_period_id') String budgetPeriodId,
       @JsonKey(name: 'created_at') DateTime createdAt,
       @JsonKey(name: 'allocated_amount') int allocatedAmount,
-      @JsonKey(name: 'spent_amount') int spentAmount,
-      @JsonKey(name: 'rollover_amount') int rolloverAmount,
     )
     $default,
   ) {
@@ -307,11 +260,8 @@ extension EnvelopeAllocationDtoPatterns on EnvelopeAllocationDto {
         return $default(
           _that.id,
           _that.envelopeId,
-          _that.budgetPeriodId,
           _that.createdAt,
           _that.allocatedAmount,
-          _that.spentAmount,
-          _that.rolloverAmount,
         );
       case _:
         throw StateError('Unexpected subclass');
@@ -335,11 +285,8 @@ extension EnvelopeAllocationDtoPatterns on EnvelopeAllocationDto {
     TResult? Function(
       String id,
       @JsonKey(name: 'envelope_id') String envelopeId,
-      @JsonKey(name: 'budget_period_id') String budgetPeriodId,
       @JsonKey(name: 'created_at') DateTime createdAt,
       @JsonKey(name: 'allocated_amount') int allocatedAmount,
-      @JsonKey(name: 'spent_amount') int spentAmount,
-      @JsonKey(name: 'rollover_amount') int rolloverAmount,
     )?
     $default,
   ) {
@@ -349,11 +296,8 @@ extension EnvelopeAllocationDtoPatterns on EnvelopeAllocationDto {
         return $default(
           _that.id,
           _that.envelopeId,
-          _that.budgetPeriodId,
           _that.createdAt,
           _that.allocatedAmount,
-          _that.spentAmount,
-          _that.rolloverAmount,
         );
       case _:
         return null;
@@ -367,11 +311,8 @@ class _EnvelopeAllocationDto implements EnvelopeAllocationDto {
   const _EnvelopeAllocationDto({
     required this.id,
     @JsonKey(name: 'envelope_id') required this.envelopeId,
-    @JsonKey(name: 'budget_period_id') required this.budgetPeriodId,
     @JsonKey(name: 'created_at') required this.createdAt,
     @JsonKey(name: 'allocated_amount') this.allocatedAmount = 0,
-    @JsonKey(name: 'spent_amount') this.spentAmount = 0,
-    @JsonKey(name: 'rollover_amount') this.rolloverAmount = 0,
   });
   factory _EnvelopeAllocationDto.fromJson(Map<String, dynamic> json) =>
       _$EnvelopeAllocationDtoFromJson(json);
@@ -382,20 +323,11 @@ class _EnvelopeAllocationDto implements EnvelopeAllocationDto {
   @JsonKey(name: 'envelope_id')
   final String envelopeId;
   @override
-  @JsonKey(name: 'budget_period_id')
-  final String budgetPeriodId;
-  @override
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
   @override
   @JsonKey(name: 'allocated_amount')
   final int allocatedAmount;
-  @override
-  @JsonKey(name: 'spent_amount')
-  final int spentAmount;
-  @override
-  @JsonKey(name: 'rollover_amount')
-  final int rolloverAmount;
 
   /// Create a copy of EnvelopeAllocationDto
   /// with the given fields replaced by the non-null parameter values.
@@ -421,34 +353,20 @@ class _EnvelopeAllocationDto implements EnvelopeAllocationDto {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.envelopeId, envelopeId) ||
                 other.envelopeId == envelopeId) &&
-            (identical(other.budgetPeriodId, budgetPeriodId) ||
-                other.budgetPeriodId == budgetPeriodId) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.allocatedAmount, allocatedAmount) ||
-                other.allocatedAmount == allocatedAmount) &&
-            (identical(other.spentAmount, spentAmount) ||
-                other.spentAmount == spentAmount) &&
-            (identical(other.rolloverAmount, rolloverAmount) ||
-                other.rolloverAmount == rolloverAmount));
+                other.allocatedAmount == allocatedAmount));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-    runtimeType,
-    id,
-    envelopeId,
-    budgetPeriodId,
-    createdAt,
-    allocatedAmount,
-    spentAmount,
-    rolloverAmount,
-  );
+  int get hashCode =>
+      Object.hash(runtimeType, id, envelopeId, createdAt, allocatedAmount);
 
   @override
   String toString() {
-    return 'EnvelopeAllocationDto(id: $id, envelopeId: $envelopeId, budgetPeriodId: $budgetPeriodId, createdAt: $createdAt, allocatedAmount: $allocatedAmount, spentAmount: $spentAmount, rolloverAmount: $rolloverAmount)';
+    return 'EnvelopeAllocationDto(id: $id, envelopeId: $envelopeId, createdAt: $createdAt, allocatedAmount: $allocatedAmount)';
   }
 }
 
@@ -464,11 +382,8 @@ abstract mixin class _$EnvelopeAllocationDtoCopyWith<$Res>
   $Res call({
     String id,
     @JsonKey(name: 'envelope_id') String envelopeId,
-    @JsonKey(name: 'budget_period_id') String budgetPeriodId,
     @JsonKey(name: 'created_at') DateTime createdAt,
     @JsonKey(name: 'allocated_amount') int allocatedAmount,
-    @JsonKey(name: 'spent_amount') int spentAmount,
-    @JsonKey(name: 'rollover_amount') int rolloverAmount,
   });
 }
 
@@ -487,11 +402,8 @@ class __$EnvelopeAllocationDtoCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? envelopeId = null,
-    Object? budgetPeriodId = null,
     Object? createdAt = null,
     Object? allocatedAmount = null,
-    Object? spentAmount = null,
-    Object? rolloverAmount = null,
   }) {
     return _then(
       _EnvelopeAllocationDto(
@@ -503,10 +415,6 @@ class __$EnvelopeAllocationDtoCopyWithImpl<$Res>
             ? _self.envelopeId
             : envelopeId // ignore: cast_nullable_to_non_nullable
                   as String,
-        budgetPeriodId: null == budgetPeriodId
-            ? _self.budgetPeriodId
-            : budgetPeriodId // ignore: cast_nullable_to_non_nullable
-                  as String,
         createdAt: null == createdAt
             ? _self.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
@@ -514,14 +422,6 @@ class __$EnvelopeAllocationDtoCopyWithImpl<$Res>
         allocatedAmount: null == allocatedAmount
             ? _self.allocatedAmount
             : allocatedAmount // ignore: cast_nullable_to_non_nullable
-                  as int,
-        spentAmount: null == spentAmount
-            ? _self.spentAmount
-            : spentAmount // ignore: cast_nullable_to_non_nullable
-                  as int,
-        rolloverAmount: null == rolloverAmount
-            ? _self.rolloverAmount
-            : rolloverAmount // ignore: cast_nullable_to_non_nullable
                   as int,
       ),
     );
