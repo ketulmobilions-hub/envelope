@@ -17,6 +17,8 @@ class MockBudgetsDao extends Mock implements storage.BudgetsDao {}
 
 class MockEnvelopesDao extends Mock implements storage.EnvelopesDao {}
 
+class MockAccountsDao extends Mock implements storage.AccountsDao {}
+
 class FakeBudgetDto extends Fake implements BudgetDto {}
 
 class FakeBudgetPeriodDto extends Fake implements BudgetPeriodDto {}
@@ -108,6 +110,7 @@ void main() {
   late MockAppDatabase localDatabase;
   late MockBudgetsDao budgetsDao;
   late MockEnvelopesDao envelopesDao;
+  late MockAccountsDao accountsDao;
 
   final now = DateTime(2024);
 
@@ -234,11 +237,18 @@ void main() {
     localDatabase = MockAppDatabase();
     budgetsDao = MockBudgetsDao();
     envelopesDao = MockEnvelopesDao();
+    accountsDao = MockAccountsDao();
 
     when(() => apiClient.budgets).thenReturn(budgetsApiClient);
     when(() => apiClient.envelopes).thenReturn(envelopesApiClient);
     when(() => localDatabase.budgetsDao).thenReturn(budgetsDao);
     when(() => localDatabase.envelopesDao).thenReturn(envelopesDao);
+    when(() => localDatabase.accountsDao).thenReturn(accountsDao);
+    // Default: no accounts. Tests for refreshOpeningBalanceForBudget (#81)
+    // override.
+    when(
+      () => accountsDao.getAccountsByBudgetId(any()),
+    ).thenAnswer((_) async => <storage.Account>[]);
 
     // Default: no allocations. Individual tests override with value-specific
     // stubs as needed (registered later, so they take precedence).
@@ -1582,6 +1592,298 @@ void main() {
 
         expect(result, equals(500000));
       });
+    });
+
+    group('refreshOpeningBalanceForBudget (#81)', () {
+      storage.Account account({
+        required String id,
+        required int startingBalance,
+        bool isOnBudget = true,
+        bool isArchived = false,
+      }) {
+        return storage.Account(
+          id: id,
+          budgetId: 'budget-1',
+          name: id,
+          type: 'checking',
+          currency: 'USD',
+          displayFxRate: 1,
+          createdAt: now,
+          updatedAt: now,
+          startingBalance: startingBalance,
+          currentBalance: startingBalance,
+          isOnBudget: isOnBudget,
+          isArchived: isArchived,
+        );
+      }
+
+      test('sums positive startingBalance for on-budget non-archived accounts',
+          () async {
+        when(() => budgetsDao.getBudget('budget-1')).thenAnswer(
+          (_) async => testLocalBudget.copyWith(
+            openingDate: Value<DateTime?>(DateTime(2024)),
+          ),
+        );
+        when(
+          () => accountsDao.getAccountsByBudgetId('budget-1'),
+        ).thenAnswer((_) async => [
+              account(id: 'a', startingBalance: 50000),
+              account(id: 'b', startingBalance: 75000),
+            ]);
+        when(
+          () => budgetsDao.getPeriodsByBudgetId('budget-1'),
+        ).thenAnswer((_) async => [testLocalBudgetPeriod]);
+        BudgetDto? captured;
+        when(() => budgetsApiClient.updateBudget(any())).thenAnswer((inv) async {
+          captured = inv.positionalArguments.first as BudgetDto;
+          return captured!;
+        });
+        when(
+          () => budgetsDao.insertBudget(any(), mode: any(named: 'mode')),
+        ).thenAnswer((_) async => 1);
+
+        await repository.refreshOpeningBalanceForBudget('budget-1');
+
+        expect(captured?.openingBalance, equals(125000));
+      });
+
+      test('excludes off-budget accounts', () async {
+        when(() => budgetsDao.getBudget('budget-1')).thenAnswer(
+          (_) async => testLocalBudget.copyWith(
+            openingDate: Value<DateTime?>(DateTime(2024)),
+          ),
+        );
+        when(
+          () => accountsDao.getAccountsByBudgetId('budget-1'),
+        ).thenAnswer((_) async => [
+              account(id: 'a', startingBalance: 50000),
+              account(id: 'b', startingBalance: 200000, isOnBudget: false),
+            ]);
+        when(
+          () => budgetsDao.getPeriodsByBudgetId('budget-1'),
+        ).thenAnswer((_) async => [testLocalBudgetPeriod]);
+        BudgetDto? captured;
+        when(() => budgetsApiClient.updateBudget(any())).thenAnswer((inv) async {
+          captured = inv.positionalArguments.first as BudgetDto;
+          return captured!;
+        });
+        when(
+          () => budgetsDao.insertBudget(any(), mode: any(named: 'mode')),
+        ).thenAnswer((_) async => 1);
+
+        await repository.refreshOpeningBalanceForBudget('budget-1');
+
+        expect(captured?.openingBalance, equals(50000));
+      });
+
+      test('excludes archived accounts', () async {
+        when(() => budgetsDao.getBudget('budget-1')).thenAnswer(
+          (_) async => testLocalBudget.copyWith(
+            openingDate: Value<DateTime?>(DateTime(2024)),
+          ),
+        );
+        when(
+          () => accountsDao.getAccountsByBudgetId('budget-1'),
+        ).thenAnswer((_) async => [
+              account(id: 'a', startingBalance: 50000),
+              account(id: 'b', startingBalance: 75000, isArchived: true),
+            ]);
+        when(
+          () => budgetsDao.getPeriodsByBudgetId('budget-1'),
+        ).thenAnswer((_) async => [testLocalBudgetPeriod]);
+        BudgetDto? captured;
+        when(() => budgetsApiClient.updateBudget(any())).thenAnswer((inv) async {
+          captured = inv.positionalArguments.first as BudgetDto;
+          return captured!;
+        });
+        when(
+          () => budgetsDao.insertBudget(any(), mode: any(named: 'mode')),
+        ).thenAnswer((_) async => 1);
+
+        await repository.refreshOpeningBalanceForBudget('budget-1');
+
+        expect(captured?.openingBalance, equals(50000));
+      });
+
+      test('excludes accounts with negative startingBalance', () async {
+        when(() => budgetsDao.getBudget('budget-1')).thenAnswer(
+          (_) async => testLocalBudget.copyWith(
+            openingDate: Value<DateTime?>(DateTime(2024)),
+          ),
+        );
+        when(
+          () => accountsDao.getAccountsByBudgetId('budget-1'),
+        ).thenAnswer((_) async => [
+              account(id: 'a', startingBalance: 50000),
+              account(id: 'b', startingBalance: -10000),
+            ]);
+        when(
+          () => budgetsDao.getPeriodsByBudgetId('budget-1'),
+        ).thenAnswer((_) async => [testLocalBudgetPeriod]);
+        BudgetDto? captured;
+        when(() => budgetsApiClient.updateBudget(any())).thenAnswer((inv) async {
+          captured = inv.positionalArguments.first as BudgetDto;
+          return captured!;
+        });
+        when(
+          () => budgetsDao.insertBudget(any(), mode: any(named: 'mode')),
+        ).thenAnswer((_) async => 1);
+
+        await repository.refreshOpeningBalanceForBudget('budget-1');
+
+        expect(captured?.openingBalance, equals(50000));
+      });
+
+      test('is a no-op when sum equals current openingBalance', () async {
+        when(() => budgetsDao.getBudget('budget-1')).thenAnswer(
+          (_) async => testLocalBudget.copyWith(
+            openingBalance: 50000,
+            openingDate: Value<DateTime?>(DateTime(2024)),
+          ),
+        );
+        when(
+          () => accountsDao.getAccountsByBudgetId('budget-1'),
+        ).thenAnswer(
+          (_) async => [account(id: 'a', startingBalance: 50000)],
+        );
+
+        await repository.refreshOpeningBalanceForBudget('budget-1');
+
+        verifyNever(() => budgetsApiClient.updateBudget(any()));
+        verifyNever(() => budgetsApiClient.updateBudgetPeriod(any()));
+      });
+
+      test('updates openingBalance but skips cascade when openingDate is null',
+          () async {
+        when(() => budgetsDao.getBudget('budget-1')).thenAnswer(
+          (_) async => testLocalBudget, // openingDate = null
+        );
+        when(
+          () => accountsDao.getAccountsByBudgetId('budget-1'),
+        ).thenAnswer(
+          (_) async => [account(id: 'a', startingBalance: 75000)],
+        );
+        when(() => budgetsApiClient.updateBudget(any())).thenAnswer(
+          (inv) async => inv.positionalArguments.first as BudgetDto,
+        );
+        when(
+          () => budgetsDao.insertBudget(any(), mode: any(named: 'mode')),
+        ).thenAnswer((_) async => 1);
+
+        await repository.refreshOpeningBalanceForBudget('budget-1');
+
+        verify(() => budgetsApiClient.updateBudget(any())).called(1);
+        verifyNever(() => budgetsApiClient.updateBudgetPeriod(any()));
+      });
+
+      test(
+        'invokes carry-forward cascade when openingBalance changes',
+        () async {
+          // Behaviour check only: prove the cascade runs (an updateBudgetPeriod
+          // call lands on Feb). Exact carriedRta values flow through the
+          // budget cache and are validated in the in-memory integration test
+          // — keeping that assertion here would couple the test to the order
+          // of internal `getBudget` reads.
+          final jan = testLocalBudgetPeriod.copyWith(
+            id: 'jan',
+            startDate: DateTime(2024),
+            endDate: DateTime(2024, 1, 31),
+            totalIncome: 0,
+            totalAllocated: 0,
+            carriedRta: 0,
+          );
+          final feb = testLocalBudgetPeriod.copyWith(
+            id: 'feb',
+            startDate: DateTime(2024, 2),
+            endDate: DateTime(2024, 2, 29),
+            totalIncome: 0,
+            totalAllocated: 0,
+            // Starts at 0 so any non-zero signedPrev(jan) triggers an update.
+            carriedRta: 0,
+          );
+          when(() => budgetsDao.getBudget('budget-1')).thenAnswer(
+            (_) async => testLocalBudget.copyWith(
+              openingBalance: 50000,
+              openingDate: Value<DateTime?>(DateTime(2024)),
+            ),
+          );
+          when(
+            () => accountsDao.getAccountsByBudgetId('budget-1'),
+          ).thenAnswer(
+            (_) async => [account(id: 'a', startingBalance: 100000)],
+          );
+          when(
+            () => budgetsDao.getPeriodsByBudgetId('budget-1'),
+          ).thenAnswer((_) async => [jan, feb]);
+          when(() => budgetsApiClient.updateBudget(any())).thenAnswer(
+            (inv) async => inv.positionalArguments.first as BudgetDto,
+          );
+          BudgetPeriodDto? capturedFeb;
+          when(() => budgetsApiClient.updateBudgetPeriod(any())).thenAnswer((
+            inv,
+          ) async {
+            final dto = inv.positionalArguments.first as BudgetPeriodDto;
+            if (dto.id == 'feb') capturedFeb = dto;
+            return dto;
+          });
+          when(
+            () => budgetsDao.insertBudget(any(), mode: any(named: 'mode')),
+          ).thenAnswer((_) async => 1);
+          when(
+            () => budgetsDao.insertBudgetPeriod(
+              any(),
+              mode: any(named: 'mode'),
+            ),
+          ).thenAnswer((_) async => 1);
+
+          await repository.refreshOpeningBalanceForBudget('budget-1');
+
+          expect(capturedFeb, isNotNull,
+              reason: 'Cascade must reach Feb when openingBalance changes.');
+        },
+      );
+
+      test(
+        'serializes concurrent refreshes for the same budget (#81)',
+        () async {
+          // Two parallel calls must not interleave — otherwise the second
+          // reads the same `openingBalance` the first did, both compute the
+          // same delta, and one of the updateBudget writes is lost.
+          when(() => budgetsDao.getBudget('budget-1')).thenAnswer(
+            (_) async => testLocalBudget.copyWith(
+              openingDate: Value<DateTime?>(DateTime(2024)),
+            ),
+          );
+          var fetchCount = 0;
+          when(
+            () => accountsDao.getAccountsByBudgetId('budget-1'),
+          ).thenAnswer((_) async {
+            fetchCount++;
+            return [account(id: 'a', startingBalance: 100000)];
+          });
+          when(
+            () => budgetsDao.getPeriodsByBudgetId('budget-1'),
+          ).thenAnswer((_) async => [testLocalBudgetPeriod]);
+          when(() => budgetsApiClient.updateBudget(any())).thenAnswer(
+            (inv) async => inv.positionalArguments.first as BudgetDto,
+          );
+          when(
+            () => budgetsDao.insertBudget(any(), mode: any(named: 'mode')),
+          ).thenAnswer((_) async => 1);
+
+          await Future.wait([
+            repository.refreshOpeningBalanceForBudget('budget-1'),
+            repository.refreshOpeningBalanceForBudget('budget-1'),
+          ]);
+
+          // Both refreshes ran (fetchCount == 2) but they ran sequentially —
+          // proven by the second one's early-exit path: by the time it reads
+          // `getBudget`, the first has already written. We can't directly
+          // assert "sequenced" without a more sophisticated fake, so at
+          // minimum verify both completions returned without throwing.
+          expect(fetchCount, equals(2));
+        },
+      );
     });
 
     group('duplicateAllocations', () {

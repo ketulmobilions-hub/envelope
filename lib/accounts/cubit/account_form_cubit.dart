@@ -54,10 +54,6 @@ class AccountFormCubit extends Cubit<AccountFormState> {
   }) async {
     emit(state.copyWith(status: AccountFormStatus.submitting));
     try {
-      // Account balance is stored in the account's native currency. Income
-      // additions to the budget period must be expressed in base currency.
-      int toBase(int amountInAccountCcy) =>
-          (amountInAccountCcy * displayFxRate).round();
       if (isEditing) {
         final oldAccount = account!;
         final balanceDelta = balanceCents - oldAccount.startingBalance;
@@ -79,32 +75,6 @@ class AccountFormCubit extends Cubit<AccountFormState> {
             creditLimitCents,
           );
         }
-
-        // Adjust income when isOnBudget or startingBalance changes.
-        if (_budgetRepository != null) {
-          if (oldAccount.isOnBudget != isOnBudget) {
-            // isOnBudget toggled: add or remove the full new balance.
-            if (isOnBudget && balanceCents > 0) {
-              await _budgetRepository.addIncomeToCurrentPeriod(
-                budgetId: budgetId,
-                amount: toBase(balanceCents),
-              );
-            } else if (!isOnBudget && oldAccount.startingBalance > 0) {
-              await _budgetRepository.addIncomeToCurrentPeriod(
-                budgetId: budgetId,
-                amount: -(oldAccount.startingBalance *
-                        oldAccount.displayFxRate)
-                    .round(),
-              );
-            }
-          } else if (isOnBudget && balanceDelta != 0) {
-            // Balance changed while staying on-budget: adjust by delta.
-            await _budgetRepository.addIncomeToCurrentPeriod(
-              budgetId: budgetId,
-              amount: toBase(balanceDelta),
-            );
-          }
-        }
       } else {
         final created = await _accountRepository.createAccount(
           budgetId: budgetId,
@@ -115,13 +85,6 @@ class AccountFormCubit extends Cubit<AccountFormState> {
           startingBalance: balanceCents,
           isOnBudget: isOnBudget,
         );
-
-        if (balanceCents != 0 && isOnBudget && _budgetRepository != null) {
-          await _budgetRepository.addIncomeToCurrentPeriod(
-            budgetId: budgetId,
-            amount: toBase(balanceCents),
-          );
-        }
 
         if (isCreditCard(type)) {
           if (_envelopeRepository != null) {
@@ -137,6 +100,14 @@ class AccountFormCubit extends Cubit<AccountFormState> {
             );
           }
         }
+      }
+
+      // Recompute `Budget.openingBalance` from the current on-budget account
+      // set and cascade `carriedRta` forward (issue #81). Replaces the old
+      // `addIncomeToCurrentPeriod` deltas that wrote against the current
+      // period — the seed cash now lives on the budget row (phase 3 of #80).
+      if (_budgetRepository != null) {
+        await _budgetRepository.refreshOpeningBalanceForBudget(budgetId);
       }
       emit(state.copyWith(status: AccountFormStatus.success));
     } on AccountException catch (e) {

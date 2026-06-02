@@ -152,24 +152,17 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
   ) async {
     try {
       final account = event.account;
-      final baseStartingBalance = account.startingBalanceInBase;
       if (account.isArchived) {
         await _accountRepository.unarchiveAccount(account.id);
-        if (account.isOnBudget && baseStartingBalance != 0) {
-          await _budgetRepository.addIncomeToCurrentPeriod(
-            budgetId: _budgetId,
-            amount: baseStartingBalance,
-          );
-        }
       } else {
         await _accountRepository.archiveAccount(account.id);
-        if (account.isOnBudget && baseStartingBalance != 0) {
-          await _budgetRepository.addIncomeToCurrentPeriod(
-            budgetId: _budgetId,
-            amount: -baseStartingBalance,
-          );
-        }
       }
+      // Recompute `Budget.openingBalance` and re-run the carry-forward
+      // cascade — archived accounts are excluded from the sum, so toggling
+      // shifts the seed cash (issue #81). Replaces the legacy
+      // `addIncomeToCurrentPeriod` deltas which wrote into the current
+      // period's `total_income` (pre-#80-phase-3 model).
+      await _budgetRepository.refreshOpeningBalanceForBudget(_budgetId);
     } on AccountException {
       emit(
         state.copyWith(
@@ -190,13 +183,8 @@ class AccountsBloc extends Bloc<AccountsEvent, AccountsState> {
         (a) => a.id == event.accountId,
       );
       await _accountRepository.deleteAccount(event.accountId);
-      final baseStartingBalance = account.startingBalanceInBase;
-      if (account.isOnBudget && baseStartingBalance != 0) {
-        await _budgetRepository.addIncomeToCurrentPeriod(
-          budgetId: _budgetId,
-          amount: -baseStartingBalance,
-        );
-      }
+      // Recompute seed cash + cascade now the account is gone (#81).
+      await _budgetRepository.refreshOpeningBalanceForBudget(_budgetId);
       final repo = _envelopeRepository;
       if (repo != null && isCreditCard(account.type)) {
         try {
