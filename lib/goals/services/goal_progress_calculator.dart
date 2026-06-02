@@ -4,14 +4,9 @@ import 'package:transaction_repository/transaction_repository.dart';
 
 /// Computes a goal's effective `currentAmount` from envelope state.
 ///
-/// Cross-period: `envelopeAllocations` should contain every allocation row
-/// for the linked envelope across all budget periods. This avoids fragile
-/// current-period detection — `savings_target` sums `allocated - spent` over
-/// all periods, which is mathematically equivalent to `calculateRollover` of
-/// the latest period.
-///
-/// For unlinked goals (`envelopeId == null`), returns the stored
-/// `goal.currentAmount` so manual contributions still apply.
+/// Under the global model, "spent" is derived from transactions instead of a
+/// stored aggregate. Callers pass [envelopeTransactions] so per-envelope
+/// expense totals can be summed where needed (e.g. debt_payoff).
 class GoalProgressCalculator {
   const GoalProgressCalculator._();
 
@@ -19,28 +14,24 @@ class GoalProgressCalculator {
   /// currency. Required for account-linked goals; ignored otherwise.
   static int compute({
     required Goal goal,
-    Iterable<EnvelopeAllocation> envelopeAllocations = const [],
+    EnvelopeAllocation? envelopeAllocation,
     Iterable<Transaction> envelopeTransactions = const [],
     int? accountBalance,
   }) {
     // Account-linked goals track the linked account's balance directly.
-    // Checked first so a goal that somehow has both links prefers the account.
-    // Falls back to the stored amount if the balance is unavailable.
     if (goal.accountId != null) {
       return accountBalance ?? goal.currentAmount;
     }
     if (goal.envelopeId == null) return goal.currentAmount;
     switch (goal.type) {
       case 'savings_target':
-        return envelopeAllocations.fold<int>(
-          0,
-          (sum, a) => sum + a.allocatedAmount - a.spentAmount,
-        );
+        final allocated = envelopeAllocation?.allocatedAmount ?? 0;
+        final spent = envelopeTransactions
+            .where((t) => t.type == 'expense')
+            .fold<int>(0, (sum, t) => sum + t.baseCurrencyAmount);
+        return allocated - spent;
       case 'monthly_contribution':
-        if (envelopeAllocations.isEmpty) return 0;
-        final sorted = envelopeAllocations.toList()
-          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        return sorted.first.allocatedAmount;
+        return envelopeAllocation?.allocatedAmount ?? 0;
       case 'debt_payoff':
         return envelopeTransactions
             .where((t) => t.type == 'expense')

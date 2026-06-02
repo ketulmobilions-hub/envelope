@@ -17,6 +17,7 @@ _Budget _$BudgetFromJson(Map<String, dynamic> json) => _Budget(
   periodStartDay: (json['periodStartDay'] as num?)?.toInt() ?? 1,
   isArchived: json['isArchived'] as bool? ?? false,
   openingBalance: (json['openingBalance'] as num?)?.toInt() ?? 0,
+  accountSeedBalance: (json['accountSeedBalance'] as num?)?.toInt() ?? 0,
   openingDate: json['openingDate'] == null
       ? null
       : DateTime.parse(json['openingDate'] as String),
@@ -33,5 +34,6 @@ Map<String, dynamic> _$BudgetToJson(_Budget instance) => <String, dynamic>{
   'periodStartDay': instance.periodStartDay,
   'isArchived': instance.isArchived,
   'openingBalance': instance.openingBalance,
+  'accountSeedBalance': instance.accountSeedBalance,
   'openingDate': instance.openingDate?.toIso8601String(),
 };

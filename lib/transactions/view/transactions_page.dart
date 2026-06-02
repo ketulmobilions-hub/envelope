@@ -109,18 +109,9 @@ class TransactionsView extends StatelessWidget {
 
   Future<void> _openAddTransaction(BuildContext context) async {
     final bloc = context.read<TransactionsBloc>();
-    final budgetRepository = context.read<BudgetRepository>();
-    final appClock = context.read<AppClock>();
-    final periodId = await _getCurrentPeriodId(
-      budgetRepository,
-      budgetId,
-      now: appClock.now(),
-    );
-    if (!context.mounted) return;
     final result = await showTransactionFormSheet(
       context,
       budgetId: budgetId,
-      budgetPeriodId: periodId,
       userId: context.read<AuthBloc>().state.user?.id ?? '',
     );
     if (result == true && context.mounted) {
@@ -219,18 +210,9 @@ class _TransactionsList extends StatelessWidget {
     Transaction transaction,
   ) async {
     final bloc = context.read<TransactionsBloc>();
-    final budgetRepository = context.read<BudgetRepository>();
-    final appClock = context.read<AppClock>();
-    final periodId = await _getCurrentPeriodId(
-      budgetRepository,
-      budgetId,
-      now: appClock.now(),
-    );
-    if (!context.mounted) return;
     final result = await showTransactionFormSheet(
       context,
       budgetId: budgetId,
-      budgetPeriodId: periodId,
       userId: transaction.createdBy,
       transaction: transaction,
     );
@@ -240,21 +222,13 @@ class _TransactionsList extends StatelessWidget {
   }
 
   /// Opens the add-transaction sheet pre-filled with [transaction]'s values
-  /// (create mode), so the user can review and save a copy. The date defaults
-  /// to today; tags are not carried over. Transfers are excluded at the tile.
+  /// (create mode), so the user can review and save a copy.
   Future<void> _openDuplicateTransaction(
     BuildContext context,
     Transaction transaction,
   ) async {
     final bloc = context.read<TransactionsBloc>();
-    final budgetRepository = context.read<BudgetRepository>();
     final now = context.read<AppClock>().now();
-    final periodId = await _getCurrentPeriodId(
-      budgetRepository,
-      budgetId,
-      now: now,
-    );
-    if (!context.mounted) return;
     final template = TransactionTemplate(
       id: '',
       budgetId: budgetId,
@@ -272,7 +246,6 @@ class _TransactionsList extends StatelessWidget {
     final result = await showTransactionFormSheet(
       context,
       budgetId: budgetId,
-      budgetPeriodId: periodId,
       userId: context.read<AuthBloc>().state.user?.id ?? '',
       initialTemplate: template,
     );
@@ -295,26 +268,3 @@ class _TransactionsList extends StatelessWidget {
   }
 }
 
-/// Resolves the current (open) budget period ID.
-Future<String?> _getCurrentPeriodId(
-  BudgetRepository budgetRepository,
-  String budgetId, {
-  DateTime? now,
-}) async {
-  try {
-    final periods = await budgetRepository.watchBudgetPeriods(budgetId).first;
-    if (periods.isEmpty) return null;
-    final effectiveNow = now ?? DateTime.now();
-    final current = periods.firstWhere(
-      (p) =>
-          !p.isClosed &&
-          !p.startDate.isAfter(effectiveNow) &&
-          !p.endDate.isBefore(effectiveNow),
-      orElse: () =>
-          periods.where((p) => !p.isClosed).lastOrNull ?? periods.last,
-    );
-    return current.id;
-  } on Exception {
-    return null;
-  }
-}

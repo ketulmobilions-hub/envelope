@@ -6,7 +6,6 @@ part of 'budgets_dao.dart';
 mixin _$BudgetsDaoMixin on DatabaseAccessor<AppDatabase> {
   $BudgetsTable get budgets => attachedDatabase.budgets;
   $BudgetMembersTable get budgetMembers => attachedDatabase.budgetMembers;
-  $BudgetPeriodsTable get budgetPeriods => attachedDatabase.budgetPeriods;
   BudgetsDaoManager get managers => BudgetsDaoManager(this);
 }
 
@@ -17,6 +16,4 @@ class BudgetsDaoManager {
       $$BudgetsTableTableManager(_db.attachedDatabase, _db.budgets);
   $$BudgetMembersTableTableManager get budgetMembers =>
       $$BudgetMembersTableTableManager(_db.attachedDatabase, _db.budgetMembers);
-  $$BudgetPeriodsTableTableManager get budgetPeriods =>
-      $$BudgetPeriodsTableTableManager(_db.attachedDatabase, _db.budgetPeriods);
 }

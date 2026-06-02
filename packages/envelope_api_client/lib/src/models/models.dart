@@ -6,7 +6,6 @@ export 'bill_reminder_dto.dart';
 export 'budget_dto.dart';
 export 'budget_invite_dto.dart';
 export 'budget_member_dto.dart';
-export 'budget_period_dto.dart';
 export 'category_group_dto.dart';
 export 'debt_account_dto.dart';
 export 'envelope_allocation_dto.dart';

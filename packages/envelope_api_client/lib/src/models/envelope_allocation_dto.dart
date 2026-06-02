@@ -9,11 +9,8 @@ abstract class EnvelopeAllocationDto with _$EnvelopeAllocationDto {
   const factory EnvelopeAllocationDto({
     required String id,
     @JsonKey(name: 'envelope_id') required String envelopeId,
-    @JsonKey(name: 'budget_period_id') required String budgetPeriodId,
     @JsonKey(name: 'created_at') required DateTime createdAt,
     @JsonKey(name: 'allocated_amount') @Default(0) int allocatedAmount,
-    @JsonKey(name: 'spent_amount') @Default(0) int spentAmount,
-    @JsonKey(name: 'rollover_amount') @Default(0) int rolloverAmount,
   }) = _EnvelopeAllocationDto;
 
   factory EnvelopeAllocationDto.fromJson(Map<String, dynamic> json) =>

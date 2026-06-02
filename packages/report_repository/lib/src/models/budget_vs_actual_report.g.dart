@@ -9,7 +9,7 @@ part of 'budget_vs_actual_report.dart';
 _BudgetVsActualReport _$BudgetVsActualReportFromJson(
   Map<String, dynamic> json,
 ) => _BudgetVsActualReport(
-  budgetPeriodId: json['budgetPeriodId'] as String,
+  budgetId: json['budgetId'] as String,
   startDate: DateTime.parse(json['startDate'] as String),
   endDate: DateTime.parse(json['endDate'] as String),
   totalAllocated: (json['totalAllocated'] as num).toInt(),
@@ -24,7 +24,7 @@ _BudgetVsActualReport _$BudgetVsActualReportFromJson(
 Map<String, dynamic> _$BudgetVsActualReportToJson(
   _BudgetVsActualReport instance,
 ) => <String, dynamic>{
-  'budgetPeriodId': instance.budgetPeriodId,
+  'budgetId': instance.budgetId,
   'startDate': instance.startDate.toIso8601String(),
   'endDate': instance.endDate.toIso8601String(),
   'totalAllocated': instance.totalAllocated,

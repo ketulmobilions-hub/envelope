@@ -82,17 +82,6 @@ Future<void> showBudgetActionsMenu(BuildContext context) {
                         );
                       },
                     ),
-                  if (state.hasPreviousPeriod)
-                    ListTile(
-                      leading: const Icon(Icons.copy_outlined),
-                      title: Text(l10n.budgetDuplicateFromPrevious),
-                      onTap: () {
-                        Navigator.of(sheetContext).pop();
-                        bloc.add(
-                          const BudgetDuplicateFromPreviousPeriodRequested(),
-                        );
-                      },
-                    ),
                 ],
               ),
             );
@@ -151,7 +140,7 @@ Future<void> _showApplyTemplateDialog(
                   bloc.add(
                     AllocationTemplateApplied(
                       templateId: selectedTemplateId,
-                      totalAmount: state.selectedPeriod?.totalIncome ?? 0,
+                      totalAmount: state.readyToAssign,
                     ),
                   );
                 },
