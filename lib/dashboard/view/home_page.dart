@@ -292,7 +292,6 @@ class _HomeView extends StatelessWidget {
                   // Ready to Assign
                   DashboardReadyToAssignCard(
                     readyToAssign: state.readyToAssign,
-                    carriedRta: state.selectedPeriod?.carriedRta ?? 0,
                     period: state.selectedPeriod,
                     hasPreviousPeriod: state.hasPreviousPeriod,
                     hasNextPeriod: state.hasNextPeriod,
