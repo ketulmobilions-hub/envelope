@@ -39,10 +39,14 @@ class QuickAddSpeedDialState extends State<QuickAddSpeedDial>
   late final AnimationController _controller;
   late final Animation<double> _expand;
 
-  /// Transparent full-screen tap target inserted into the [Overlay] while the
-  /// dial is open. Taps anywhere outside the FAB (and its children) hit this
-  /// entry and close the dial — matches Material's SpeedDial dismiss UX.
-  OverlayEntry? _scrim;
+  /// Anchors the overlay-hosted child FABs to the inline main FAB's position.
+  final LayerLink _link = LayerLink();
+
+  /// Full-screen overlay entry hosting the scrim plus the child FABs while
+  /// the dial is open. Children must live above the scrim so their taps win
+  /// the gesture arena — otherwise the scrim's onTap eats the tap and only
+  /// closes the dial without running the action.
+  OverlayEntry? _entry;
 
   bool get _isOpen => _controller.status != AnimationStatus.dismissed;
 
@@ -58,7 +62,7 @@ class QuickAddSpeedDialState extends State<QuickAddSpeedDial>
 
   @override
   void dispose() {
-    _removeScrim();
+    _removeEntry();
     _controller
       ..stop()
       ..dispose();
@@ -69,7 +73,7 @@ class QuickAddSpeedDialState extends State<QuickAddSpeedDial>
     if (_isOpen) {
       close();
     } else {
-      _insertScrim();
+      _insertEntry();
       unawaited(_controller.forward());
     }
   }
@@ -78,28 +82,21 @@ class QuickAddSpeedDialState extends State<QuickAddSpeedDial>
   void close() {
     if (!_isOpen) return;
     unawaited(
-      _controller.reverse().whenComplete(_removeScrim),
+      _controller.reverse().whenComplete(_removeEntry),
     );
   }
 
-  void _insertScrim() {
-    if (_scrim != null) return;
+  void _insertEntry() {
+    if (_entry != null) return;
     final overlay = Overlay.maybeOf(context, rootOverlay: true);
     if (overlay == null) return;
-    _scrim = OverlayEntry(
-      builder: (_) => Positioned.fill(
-        child: GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onTap: close,
-        ),
-      ),
-    );
-    overlay.insert(_scrim!);
+    _entry = OverlayEntry(builder: _buildOverlay);
+    overlay.insert(_entry!);
   }
 
-  void _removeScrim() {
-    _scrim?.remove();
-    _scrim = null;
+  void _removeEntry() {
+    _entry?.remove();
+    _entry = null;
   }
 
   void _onChildTap(VoidCallback action) {
@@ -107,65 +104,90 @@ class QuickAddSpeedDialState extends State<QuickAddSpeedDial>
     action();
   }
 
+  Widget _buildOverlay(BuildContext _) {
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: close,
+          ),
+        ),
+        Positioned(
+          left: 0,
+          top: 0,
+          child: CompositedTransformFollower(
+            link: _link,
+            targetAnchor: Alignment.bottomRight,
+            followerAnchor: Alignment.bottomRight,
+            showWhenUnlinked: false,
+            child: AnimatedBuilder(
+              animation: _expand,
+              builder: (context, _) {
+                final t = _expand.value;
+                return SizedBox(
+                  width: 280,
+                  height: 260,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      _ChildFab(
+                        offsetY: 72 * t,
+                        opacity: t,
+                        icon: Icons.swap_horiz,
+                        label: widget.transferLabel,
+                        heroTag: 'speed_dial_transfer',
+                        onPressed: () => _onChildTap(widget.onTransfer),
+                      ),
+                      _ChildFab(
+                        offsetY: 136 * t,
+                        opacity: t,
+                        icon: Icons.trending_up,
+                        label: widget.incomeLabel,
+                        heroTag: 'speed_dial_income',
+                        onPressed: () => _onChildTap(widget.onIncome),
+                      ),
+                      _ChildFab(
+                        offsetY: 200 * t,
+                        opacity: t,
+                        icon: Icons.shopping_bag_outlined,
+                        label: widget.expenseLabel,
+                        heroTag: 'speed_dial_expense',
+                        onPressed: () => _onChildTap(widget.onExpense),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _expand,
-      builder: (context, _) {
-        final t = _expand.value;
-        return SizedBox(
-          // Width: longest plausible label + gap + small FAB + main FAB.
-          // Height: main FAB (56) + biggest offset (200) + small FAB extent.
-          width: 280,
-          height: 260,
-          child: Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.bottomRight,
-            children: [
-              _ChildFab(
-                offsetY: 72 * t,
-                opacity: t,
-                icon: Icons.swap_horiz,
-                label: widget.transferLabel,
-                heroTag: 'speed_dial_transfer',
-                onPressed: () => _onChildTap(widget.onTransfer),
+    return CompositedTransformTarget(
+      link: _link,
+      child: AnimatedBuilder(
+        animation: _expand,
+        builder: (context, _) {
+          final t = _expand.value;
+          return GestureDetector(
+            onLongPress: widget.onLongPress,
+            child: FloatingActionButton(
+              heroTag: 'speed_dial_main',
+              tooltip: widget.tooltip,
+              onPressed: _toggle,
+              child: Transform.rotate(
+                angle: t * math.pi / 4,
+                child: const Icon(Icons.add),
               ),
-              _ChildFab(
-                offsetY: 136 * t,
-                opacity: t,
-                icon: Icons.trending_up,
-                label: widget.incomeLabel,
-                heroTag: 'speed_dial_income',
-                onPressed: () => _onChildTap(widget.onIncome),
-              ),
-              _ChildFab(
-                offsetY: 200 * t,
-                opacity: t,
-                icon: Icons.shopping_bag_outlined,
-                label: widget.expenseLabel,
-                heroTag: 'speed_dial_expense',
-                onPressed: () => _onChildTap(widget.onExpense),
-              ),
-              Positioned(
-                right: 0,
-                bottom: 0,
-                child: GestureDetector(
-                  onLongPress: widget.onLongPress,
-                  child: FloatingActionButton(
-                    heroTag: 'speed_dial_main',
-                    tooltip: widget.tooltip,
-                    onPressed: _toggle,
-                    child: Transform.rotate(
-                      angle: t * math.pi / 4,
-                      child: const Icon(Icons.add),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+            ),
+          );
+        },
+      ),
     );
   }
 }
