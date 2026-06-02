@@ -39,6 +39,11 @@ class QuickAddSpeedDialState extends State<QuickAddSpeedDial>
   late final AnimationController _controller;
   late final Animation<double> _expand;
 
+  /// Transparent full-screen tap target inserted into the [Overlay] while the
+  /// dial is open. Taps anywhere outside the FAB (and its children) hit this
+  /// entry and close the dial — matches Material's SpeedDial dismiss UX.
+  OverlayEntry? _scrim;
+
   bool get _isOpen => _controller.status != AnimationStatus.dismissed;
 
   @override
@@ -53,6 +58,7 @@ class QuickAddSpeedDialState extends State<QuickAddSpeedDial>
 
   @override
   void dispose() {
+    _removeScrim();
     _controller
       ..stop()
       ..dispose();
@@ -63,6 +69,7 @@ class QuickAddSpeedDialState extends State<QuickAddSpeedDial>
     if (_isOpen) {
       close();
     } else {
+      _insertScrim();
       unawaited(_controller.forward());
     }
   }
@@ -70,7 +77,29 @@ class QuickAddSpeedDialState extends State<QuickAddSpeedDial>
   /// Closes the dial. Public so callers can close on external events.
   void close() {
     if (!_isOpen) return;
-    unawaited(_controller.reverse());
+    unawaited(
+      _controller.reverse().whenComplete(_removeScrim),
+    );
+  }
+
+  void _insertScrim() {
+    if (_scrim != null) return;
+    final overlay = Overlay.maybeOf(context, rootOverlay: true);
+    if (overlay == null) return;
+    _scrim = OverlayEntry(
+      builder: (_) => Positioned.fill(
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: close,
+        ),
+      ),
+    );
+    overlay.insert(_scrim!);
+  }
+
+  void _removeScrim() {
+    _scrim?.remove();
+    _scrim = null;
   }
 
   void _onChildTap(VoidCallback action) {
