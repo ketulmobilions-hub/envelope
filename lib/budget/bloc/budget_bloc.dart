@@ -370,16 +370,20 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
       }
       emit(state.copyWith(localAllocations: const {}));
     } on EnvelopeException {
-      emit(state.copyWith(
-        localAllocations: remaining,
-        status: BudgetStatus.error,
-        error: BudgetError.allocationFailed,
-      ));
-      emit(state.copyWith(
-        localAllocations: remaining,
-        status: BudgetStatus.loaded,
-        error: null,
-      ));
+      emit(
+        state.copyWith(
+          localAllocations: remaining,
+          status: BudgetStatus.error,
+          error: BudgetError.allocationFailed,
+        ),
+      );
+      emit(
+        state.copyWith(
+          localAllocations: remaining,
+          status: BudgetStatus.loaded,
+          error: null,
+        ),
+      );
     }
   }
 
