@@ -34,7 +34,9 @@ class ReportsView extends StatelessWidget {
         appBar: AppBar(title: Text(l10n.reportsTitle)),
         body: BlocBuilder<ReportsBloc, ReportsState>(
           builder: (context, state) {
-            if (state.status == ReportsStatus.initial) {
+            if (state.status == ReportsStatus.initial ||
+                (state.status == ReportsStatus.loading &&
+                    state.budgetPeriods.isEmpty)) {
               return const Center(child: CircularProgressIndicator());
             }
 

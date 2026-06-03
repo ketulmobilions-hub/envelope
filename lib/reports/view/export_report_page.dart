@@ -123,15 +123,15 @@ class ExportReportPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                 ],
-                if (selectedType == ReportType.budgetVsActual) ...[
-                  ReportDateRangeSelector(
-                    startDate: state.startDate ?? DateTime.now(),
-                    endDate: state.endDate ?? DateTime.now(),
-                    onDateRangeSelected: (start, end) {
+                if (selectedType == ReportType.budgetVsActual &&
+                    state.budgetPeriods.isNotEmpty) ...[
+                  ReportPeriodDropdown(
+                    periods: state.budgetPeriods,
+                    selectedPeriodId: state.selectedPeriodId,
+                    onPeriodSelected: (periodId) {
                       context.read<ReportsBloc>().add(
                         BudgetVsActualReportRequested(
-                          startDate: start,
-                          endDate: end,
+                          periodId: periodId,
                         ),
                       );
                     },
@@ -185,14 +185,13 @@ class ExportReportPage extends StatelessWidget {
         }
       case ReportType.budgetVsActual:
         if (state.budgetVsActualReport == null) {
-          final now = DateTime.now();
-          bloc.add(
-            BudgetVsActualReportRequested(
-              startDate: state.startDate ?? DateTime(now.year, now.month),
-              endDate: state.endDate ??
-                  DateTime(now.year, now.month + 1, 0, 23, 59, 59),
-            ),
-          );
+          if (state.selectedPeriodId != null) {
+            bloc.add(
+              BudgetVsActualReportRequested(
+                periodId: state.selectedPeriodId!,
+              ),
+            );
+          }
           return;
         }
       case ReportType.netWorth:

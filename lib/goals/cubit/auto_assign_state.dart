@@ -16,15 +16,18 @@ final class AutoAssignState extends Equatable {
     this.status = AutoAssignStatus.initial,
     this.actions = const [],
     this.rtaCents = 0,
+    this.periodId,
     this.errorMessage,
   });
 
   final AutoAssignStatus status;
   final List<AutoAssignAction> actions;
   final int rtaCents;
+  final String? periodId;
   final String? errorMessage;
 
-  /// Total cents the preview would allocate across all actions.
+  /// Total cents the preview would allocate across all actions. Useful for
+  /// the confirmation dialog summary.
   int get totalAllocatedCents =>
       actions.fold(0, (sum, a) => sum + a.addCents);
 
@@ -32,12 +35,14 @@ final class AutoAssignState extends Equatable {
     AutoAssignStatus? status,
     List<AutoAssignAction>? actions,
     int? rtaCents,
+    Object? periodId = _sentinel,
     Object? errorMessage = _sentinel,
   }) {
     return AutoAssignState(
       status: status ?? this.status,
       actions: actions ?? this.actions,
       rtaCents: rtaCents ?? this.rtaCents,
+      periodId: periodId == _sentinel ? this.periodId : periodId as String?,
       errorMessage: errorMessage == _sentinel
           ? this.errorMessage
           : errorMessage as String?,
@@ -47,5 +52,11 @@ final class AutoAssignState extends Equatable {
   static const Object _sentinel = Object();
 
   @override
-  List<Object?> get props => [status, actions, rtaCents, errorMessage];
+  List<Object?> get props => [
+    status,
+    actions,
+    rtaCents,
+    periodId,
+    errorMessage,
+  ];
 }

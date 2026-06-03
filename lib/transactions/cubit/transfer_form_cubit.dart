@@ -15,6 +15,7 @@ class TransferFormCubit extends Cubit<TransferFormState> {
     required this.budgetId,
     required this.userId,
     EnvelopeRepository? envelopeRepository,
+    this.budgetPeriodId,
   }) : _transactionRepository = transactionRepository,
        _accountRepository = accountRepository,
        _envelopeRepository = envelopeRepository,
@@ -27,6 +28,7 @@ class TransferFormCubit extends Cubit<TransferFormState> {
   final EnvelopeRepository? _envelopeRepository;
   final String budgetId;
   final String userId;
+  final String? budgetPeriodId;
 
   Future<void> _load() async {
     try {
@@ -143,14 +145,25 @@ class TransferFormCubit extends Cubit<TransferFormState> {
         // Best-effort; local cache will be corrected on next full sync.
       }
 
-      // Refresh allocations so BudgetBloc recomputes CC Payment available
-      // (and the on→off envelope's spent) from the new transactions.
-      final needsRefresh = _envelopeRepository != null &&
-          ((toAccount != null && isCreditCard(toAccount.type)) ||
-              isOutToOffBudget);
-      if (needsRefresh) {
+      // When paying a CC bill, refresh allocations so BudgetBloc recomputes
+      // CC Payment available from the new transaction in local storage.
+      if (toAccount != null &&
+          isCreditCard(toAccount.type) &&
+          _envelopeRepository != null &&
+          budgetPeriodId != null) {
         try {
-          await _envelopeRepository.refreshAllocations(budgetId);
+          await _envelopeRepository.refreshAllocations(budgetPeriodId!);
+        } on Exception {
+          // Best-effort.
+        }
+      }
+
+      // on->off: pull the server-recalculated envelope spent into local cache.
+      if (isOutToOffBudget &&
+          _envelopeRepository != null &&
+          budgetPeriodId != null) {
+        try {
+          await _envelopeRepository.refreshAllocations(budgetPeriodId!);
         } on Exception {
           // Best-effort; next full sync reconciles.
         }

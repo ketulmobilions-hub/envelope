@@ -252,9 +252,20 @@ class OnboardingCubit extends Cubit<OnboardingState> {
         }
       }
 
-      // Issue #82: budget periods removed. RTA is global; seed cash lives on
-      // `Budget.openingBalance` and folds into RTA directly. No period to
-      // create here.
+      // Create the initial budget period for the current month.
+      // totalIncome is 0 — the seed cash lives on `Budget.openingBalance`
+      // and is added to RTA in whichever period contains `openingDate`
+      // (issue #80).
+      final periodStart = DateTime(now.year, now.month);
+      final periodEnd = DateTime(
+        now.year,
+        now.month + 1,
+      ).subtract(const Duration(days: 1));
+      await _budgetRepository.createBudgetPeriod(
+        budgetId: budgetId,
+        startDate: periodStart,
+        endDate: periodEnd,
+      );
 
       // Create category groups and their envelopes.
       for (final group in state.categoryGroups) {

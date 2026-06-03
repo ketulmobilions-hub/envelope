@@ -370,9 +370,27 @@ class _AccountTransactionsList extends StatelessWidget {
 
   Future<void> _openEdit(BuildContext context, Transaction transaction) async {
     final bloc = context.read<TransactionsBloc>();
+    final budgetRepository = context.read<BudgetRepository>();
+    final appClock = context.read<AppClock>();
+    final periods = await budgetRepository.watchBudgetPeriods(budgetId).first;
+    String? periodId;
+    if (periods.isNotEmpty) {
+      final now = appClock.now();
+      final current = periods.firstWhere(
+        (p) =>
+            !p.isClosed &&
+            !p.startDate.isAfter(now) &&
+            !p.endDate.isBefore(now),
+        orElse: () =>
+            periods.where((p) => !p.isClosed).lastOrNull ?? periods.last,
+      );
+      periodId = current.id;
+    }
+    if (!context.mounted) return;
     final result = await showTransactionFormSheet(
       context,
       budgetId: budgetId,
+      budgetPeriodId: periodId,
       userId: transaction.createdBy,
       transaction: transaction,
     );

@@ -189,9 +189,40 @@ class RecurringCheckCubit extends Cubit<RecurringCheckState> {
       return false;
     }
 
-    // Issue #82: RTA + envelope spent are derived from transactions, so
-    // creating the transaction above is sufficient — no period or
-    // spent-aggregate updates are needed.
+    // Optimistic local total_income / envelope spent. Awaited (not
+    // unawaited) because the underlying period/envelope row is a
+    // read-modify-write — concurrent calls from a multi-rule catch-up
+    // would lose updates.
+    final budgetRepo = _budgetRepository;
+    final envelopeRepo = _envelopeRepository;
+    if (budgetRepo != null || envelopeRepo != null) {
+      final baseAmount = effectiveBaseCurrencyAmount(created);
+      if (rule.type == 'income' && budgetRepo != null) {
+        try {
+          await budgetRepo.addIncomeToPeriod(
+            budgetId: rule.budgetId,
+            date: postingDate,
+            amount: baseAmount,
+          );
+        } on Exception {
+          // Best-effort; refresh on next check() will reconcile.
+        }
+      } else if (rule.type == 'expense' &&
+          rule.envelopeId != null &&
+          envelopeRepo != null) {
+        try {
+          await envelopeRepo.incrementLocalSpentAmount(
+            envelopeId: rule.envelopeId!,
+            budgetId: rule.budgetId,
+            date: postingDate,
+            baseCurrencyAmount: baseAmount,
+          );
+        } on Exception {
+          // Best-effort.
+        }
+      }
+    }
+
     return true;
   }
 

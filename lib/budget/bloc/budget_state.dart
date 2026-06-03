@@ -3,11 +3,19 @@ part of 'budget_bloc.dart';
 enum BudgetStatus { initial, loading, loaded, error }
 
 /// Error codes for budget operations, translated in the UI layer.
-enum BudgetError { loadFailed, allocationFailed, transferFailed, templateFailed }
+enum BudgetError {
+  loadFailed,
+  allocationFailed,
+  transferFailed,
+  templateFailed,
+  periodFailed,
+}
 
 final class BudgetState extends Equatable {
   BudgetState({
     this.status = BudgetStatus.initial,
+    this.periods = const [],
+    this.selectedPeriod,
     this.allocations = const [],
     this.categoryGroups = const [],
     this.envelopes = const [],
@@ -15,35 +23,37 @@ final class BudgetState extends Equatable {
     this.goals = const [],
     this.readyToAssign = 0,
     this.localAllocations = const {},
-    this.spentByEnvelope = const {},
     this.ccPaymentAvailable = const {},
     this.error,
   });
 
   final BudgetStatus status;
+  final List<BudgetPeriod> periods;
+  final BudgetPeriod? selectedPeriod;
   final List<EnvelopeAllocation> allocations;
   final List<CategoryGroup> categoryGroups;
   final List<Envelope> envelopes;
   final List<AllocationTemplate> templates;
   final List<Goal> goals;
 
-  /// Repository-computed "Ready to Assign" for the budget.
+  /// Server-computed "Ready to Assign" for the selected period.
   final int readyToAssign;
 
   /// Locally-edited allocation amounts (envelopeId → cents) not yet saved.
   final Map<String, int> localAllocations;
-
-  /// Running expense total per envelope (envelopeId → cents). Derived from
-  /// transactions; replaces the dropped `spent_amount` column.
-  final Map<String, int> spentByEnvelope;
 
   /// Derived available balance for CC Payment envelopes (envelopeId → cents).
   final Map<String, int> ccPaymentAvailable;
 
   final BudgetError? error;
 
+  /// Periods sorted chronologically for navigation (memoized per instance).
+  late final List<BudgetPeriod> sortedPeriods = [...periods]
+    ..sort((a, b) => a.startDate.compareTo(b.startDate));
+
   /// Active linked goals grouped by `envelopeId`. Excludes completed goals
-  /// and goals without a linked envelope.
+  /// and goals without a linked envelope (unlinked goals live on the goals
+  /// page). Used to compute the "needed this month" chip per envelope.
   late final Map<String, List<Goal>> goalsByEnvelope = () {
     final map = <String, List<Goal>>{};
     for (final goal in goals) {
@@ -54,7 +64,21 @@ final class BudgetState extends Equatable {
     return map;
   }();
 
+  int get _selectedIndex =>
+      sortedPeriods.indexWhere((p) => p.id == selectedPeriod?.id);
+
+  bool get hasPreviousPeriod => _selectedIndex > 0;
+
+  bool get hasNextPeriod {
+    final idx = _selectedIndex;
+    return idx >= 0 && idx < sortedPeriods.length - 1;
+  }
+
   /// "Ready to Assign" adjusted for locally-edited (unsaved) allocations.
+  ///
+  /// For each locally-edited envelope, subtracts the delta between the local
+  /// amount and the server-known amount. This provides instant UI feedback as
+  /// the user types without any server round-trips.
   int get localReadyToAssign {
     if (localAllocations.isEmpty) return readyToAssign;
     var delta = 0;
@@ -71,8 +95,8 @@ final class BudgetState extends Equatable {
   /// True when the user has allocated more than the available income.
   bool get isOverAllocated => localReadyToAssign < 0;
 
-  /// Active category groups, each paired with their active envelopes and the
-  /// global allocation for each envelope (if any).
+  /// Active category groups, each paired with their active envelopes and
+  /// the current period's allocation for each envelope (if any).
   List<(CategoryGroup, List<(Envelope, EnvelopeAllocation?)>)>
   get groupedAllocations {
     final activeGroups = categoryGroups.where((g) => !g.isArchived).toList()
@@ -98,6 +122,8 @@ final class BudgetState extends Equatable {
 
   BudgetState copyWith({
     BudgetStatus? status,
+    List<BudgetPeriod>? periods,
+    Object? selectedPeriod = _sentinel,
     List<EnvelopeAllocation>? allocations,
     List<CategoryGroup>? categoryGroups,
     List<Envelope>? envelopes,
@@ -105,12 +131,15 @@ final class BudgetState extends Equatable {
     List<Goal>? goals,
     int? readyToAssign,
     Map<String, int>? localAllocations,
-    Map<String, int>? spentByEnvelope,
     Map<String, int>? ccPaymentAvailable,
     Object? error = _sentinel,
   }) {
     return BudgetState(
       status: status ?? this.status,
+      periods: periods ?? this.periods,
+      selectedPeriod: selectedPeriod == _sentinel
+          ? this.selectedPeriod
+          : selectedPeriod as BudgetPeriod?,
       allocations: allocations ?? this.allocations,
       categoryGroups: categoryGroups ?? this.categoryGroups,
       envelopes: envelopes ?? this.envelopes,
@@ -118,7 +147,6 @@ final class BudgetState extends Equatable {
       goals: goals ?? this.goals,
       readyToAssign: readyToAssign ?? this.readyToAssign,
       localAllocations: localAllocations ?? this.localAllocations,
-      spentByEnvelope: spentByEnvelope ?? this.spentByEnvelope,
       ccPaymentAvailable: ccPaymentAvailable ?? this.ccPaymentAvailable,
       error: error == _sentinel ? this.error : error as BudgetError?,
     );
@@ -129,6 +157,8 @@ final class BudgetState extends Equatable {
   @override
   List<Object?> get props => [
     status,
+    periods,
+    selectedPeriod,
     allocations,
     categoryGroups,
     envelopes,
@@ -136,7 +166,6 @@ final class BudgetState extends Equatable {
     goals,
     readyToAssign,
     localAllocations,
-    spentByEnvelope,
     ccPaymentAvailable,
     error,
   ];

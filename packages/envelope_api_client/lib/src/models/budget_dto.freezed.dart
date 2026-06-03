@@ -30,15 +30,9 @@ mixin _$BudgetDto {
   @JsonKey(name: 'is_archived')
   bool get isArchived;
 
-  /// Legacy seed cash + migrated historical income (cents). Set during
-  /// onboarding and never overwritten by routine account-balance refresh.
+  /// Seed cash (cents) — sum of on-budget account starting balances.
   @JsonKey(name: 'opening_balance')
   int get openingBalance;
-
-  /// Cached sum of on-budget account starting balances (cents). Kept in
-  /// sync by the client whenever an account's starting balance changes.
-  @JsonKey(name: 'account_seed_balance')
-  int get accountSeedBalance;
 
   /// Date the opening balance is anchored to.
   @JsonKey(name: 'opening_date')
@@ -76,8 +70,6 @@ mixin _$BudgetDto {
                 other.isArchived == isArchived) &&
             (identical(other.openingBalance, openingBalance) ||
                 other.openingBalance == openingBalance) &&
-            (identical(other.accountSeedBalance, accountSeedBalance) ||
-                other.accountSeedBalance == accountSeedBalance) &&
             (identical(other.openingDate, openingDate) ||
                 other.openingDate == openingDate));
   }
@@ -96,13 +88,12 @@ mixin _$BudgetDto {
     periodStartDay,
     isArchived,
     openingBalance,
-    accountSeedBalance,
     openingDate,
   );
 
   @override
   String toString() {
-    return 'BudgetDto(id: $id, ownerId: $ownerId, name: $name, baseCurrency: $baseCurrency, createdAt: $createdAt, updatedAt: $updatedAt, periodType: $periodType, periodStartDay: $periodStartDay, isArchived: $isArchived, openingBalance: $openingBalance, accountSeedBalance: $accountSeedBalance, openingDate: $openingDate)';
+    return 'BudgetDto(id: $id, ownerId: $ownerId, name: $name, baseCurrency: $baseCurrency, createdAt: $createdAt, updatedAt: $updatedAt, periodType: $periodType, periodStartDay: $periodStartDay, isArchived: $isArchived, openingBalance: $openingBalance, openingDate: $openingDate)';
   }
 }
 
@@ -122,7 +113,6 @@ abstract mixin class $BudgetDtoCopyWith<$Res> {
     @JsonKey(name: 'period_start_day') int periodStartDay,
     @JsonKey(name: 'is_archived') bool isArchived,
     @JsonKey(name: 'opening_balance') int openingBalance,
-    @JsonKey(name: 'account_seed_balance') int accountSeedBalance,
     @JsonKey(name: 'opening_date') DateTime? openingDate,
   });
 }
@@ -149,7 +139,6 @@ class _$BudgetDtoCopyWithImpl<$Res> implements $BudgetDtoCopyWith<$Res> {
     Object? periodStartDay = null,
     Object? isArchived = null,
     Object? openingBalance = null,
-    Object? accountSeedBalance = null,
     Object? openingDate = freezed,
   }) {
     return _then(
@@ -193,10 +182,6 @@ class _$BudgetDtoCopyWithImpl<$Res> implements $BudgetDtoCopyWith<$Res> {
         openingBalance: null == openingBalance
             ? _self.openingBalance
             : openingBalance // ignore: cast_nullable_to_non_nullable
-                  as int,
-        accountSeedBalance: null == accountSeedBalance
-            ? _self.accountSeedBalance
-            : accountSeedBalance // ignore: cast_nullable_to_non_nullable
                   as int,
         openingDate: freezed == openingDate
             ? _self.openingDate
@@ -311,7 +296,6 @@ extension BudgetDtoPatterns on BudgetDto {
       @JsonKey(name: 'period_start_day') int periodStartDay,
       @JsonKey(name: 'is_archived') bool isArchived,
       @JsonKey(name: 'opening_balance') int openingBalance,
-      @JsonKey(name: 'account_seed_balance') int accountSeedBalance,
       @JsonKey(name: 'opening_date') DateTime? openingDate,
     )?
     $default, {
@@ -331,7 +315,6 @@ extension BudgetDtoPatterns on BudgetDto {
           _that.periodStartDay,
           _that.isArchived,
           _that.openingBalance,
-          _that.accountSeedBalance,
           _that.openingDate,
         );
       case _:
@@ -365,7 +348,6 @@ extension BudgetDtoPatterns on BudgetDto {
       @JsonKey(name: 'period_start_day') int periodStartDay,
       @JsonKey(name: 'is_archived') bool isArchived,
       @JsonKey(name: 'opening_balance') int openingBalance,
-      @JsonKey(name: 'account_seed_balance') int accountSeedBalance,
       @JsonKey(name: 'opening_date') DateTime? openingDate,
     )
     $default,
@@ -384,7 +366,6 @@ extension BudgetDtoPatterns on BudgetDto {
           _that.periodStartDay,
           _that.isArchived,
           _that.openingBalance,
-          _that.accountSeedBalance,
           _that.openingDate,
         );
       case _:
@@ -417,7 +398,6 @@ extension BudgetDtoPatterns on BudgetDto {
       @JsonKey(name: 'period_start_day') int periodStartDay,
       @JsonKey(name: 'is_archived') bool isArchived,
       @JsonKey(name: 'opening_balance') int openingBalance,
-      @JsonKey(name: 'account_seed_balance') int accountSeedBalance,
       @JsonKey(name: 'opening_date') DateTime? openingDate,
     )?
     $default,
@@ -436,7 +416,6 @@ extension BudgetDtoPatterns on BudgetDto {
           _that.periodStartDay,
           _that.isArchived,
           _that.openingBalance,
-          _that.accountSeedBalance,
           _that.openingDate,
         );
       case _:
@@ -459,7 +438,6 @@ class _BudgetDto implements BudgetDto {
     @JsonKey(name: 'period_start_day') this.periodStartDay = 1,
     @JsonKey(name: 'is_archived') this.isArchived = false,
     @JsonKey(name: 'opening_balance') this.openingBalance = 0,
-    @JsonKey(name: 'account_seed_balance') this.accountSeedBalance = 0,
     @JsonKey(name: 'opening_date') this.openingDate,
   });
   factory _BudgetDto.fromJson(Map<String, dynamic> json) =>
@@ -491,17 +469,10 @@ class _BudgetDto implements BudgetDto {
   @JsonKey(name: 'is_archived')
   final bool isArchived;
 
-  /// Legacy seed cash + migrated historical income (cents). Set during
-  /// onboarding and never overwritten by routine account-balance refresh.
+  /// Seed cash (cents) — sum of on-budget account starting balances.
   @override
   @JsonKey(name: 'opening_balance')
   final int openingBalance;
-
-  /// Cached sum of on-budget account starting balances (cents). Kept in
-  /// sync by the client whenever an account's starting balance changes.
-  @override
-  @JsonKey(name: 'account_seed_balance')
-  final int accountSeedBalance;
 
   /// Date the opening balance is anchored to.
   @override
@@ -543,8 +514,6 @@ class _BudgetDto implements BudgetDto {
                 other.isArchived == isArchived) &&
             (identical(other.openingBalance, openingBalance) ||
                 other.openingBalance == openingBalance) &&
-            (identical(other.accountSeedBalance, accountSeedBalance) ||
-                other.accountSeedBalance == accountSeedBalance) &&
             (identical(other.openingDate, openingDate) ||
                 other.openingDate == openingDate));
   }
@@ -563,13 +532,12 @@ class _BudgetDto implements BudgetDto {
     periodStartDay,
     isArchived,
     openingBalance,
-    accountSeedBalance,
     openingDate,
   );
 
   @override
   String toString() {
-    return 'BudgetDto(id: $id, ownerId: $ownerId, name: $name, baseCurrency: $baseCurrency, createdAt: $createdAt, updatedAt: $updatedAt, periodType: $periodType, periodStartDay: $periodStartDay, isArchived: $isArchived, openingBalance: $openingBalance, accountSeedBalance: $accountSeedBalance, openingDate: $openingDate)';
+    return 'BudgetDto(id: $id, ownerId: $ownerId, name: $name, baseCurrency: $baseCurrency, createdAt: $createdAt, updatedAt: $updatedAt, periodType: $periodType, periodStartDay: $periodStartDay, isArchived: $isArchived, openingBalance: $openingBalance, openingDate: $openingDate)';
   }
 }
 
@@ -593,7 +561,6 @@ abstract mixin class _$BudgetDtoCopyWith<$Res>
     @JsonKey(name: 'period_start_day') int periodStartDay,
     @JsonKey(name: 'is_archived') bool isArchived,
     @JsonKey(name: 'opening_balance') int openingBalance,
-    @JsonKey(name: 'account_seed_balance') int accountSeedBalance,
     @JsonKey(name: 'opening_date') DateTime? openingDate,
   });
 }
@@ -620,7 +587,6 @@ class __$BudgetDtoCopyWithImpl<$Res> implements _$BudgetDtoCopyWith<$Res> {
     Object? periodStartDay = null,
     Object? isArchived = null,
     Object? openingBalance = null,
-    Object? accountSeedBalance = null,
     Object? openingDate = freezed,
   }) {
     return _then(
@@ -664,10 +630,6 @@ class __$BudgetDtoCopyWithImpl<$Res> implements _$BudgetDtoCopyWith<$Res> {
         openingBalance: null == openingBalance
             ? _self.openingBalance
             : openingBalance // ignore: cast_nullable_to_non_nullable
-                  as int,
-        accountSeedBalance: null == accountSeedBalance
-            ? _self.accountSeedBalance
-            : accountSeedBalance // ignore: cast_nullable_to_non_nullable
                   as int,
         openingDate: freezed == openingDate
             ? _self.openingDate

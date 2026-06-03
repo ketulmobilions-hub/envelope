@@ -209,38 +209,31 @@ class EnvelopesApiClient {
     }
   }
 
-  /// Fetches the single global allocation for an envelope.
-  Future<EnvelopeAllocationDto?> getAllocationByEnvelope(
+  /// Fetches all allocations for a budget period.
+  Future<List<EnvelopeAllocationDto>> getAllocationsByPeriod(
+    String budgetPeriodId,
+  ) async {
+    try {
+      final response = await _supabaseClient
+          .from('envelope_allocations')
+          .select()
+          .eq('budget_period_id', budgetPeriodId);
+      return response.map(EnvelopeAllocationDto.fromJson).toList();
+    } catch (error) {
+      throw EnvelopeApiException.fromPostgrestException(error);
+    }
+  }
+
+  /// Fetches all allocations for an envelope.
+  Future<List<EnvelopeAllocationDto>> getAllocationsByEnvelope(
     String envelopeId,
   ) async {
     try {
       final response = await _supabaseClient
           .from('envelope_allocations')
           .select()
-          .eq('envelope_id', envelopeId)
-          .maybeSingle();
-      if (response == null) return null;
-      return EnvelopeAllocationDto.fromJson(response);
-    } catch (error) {
-      throw EnvelopeApiException.fromPostgrestException(error);
-    }
-  }
-
-  /// Fetches all allocations for a budget (one row per envelope).
-  Future<List<EnvelopeAllocationDto>> getAllocationsByBudget(
-    String budgetId,
-  ) async {
-    try {
-      final response = await _supabaseClient
-          .from('envelope_allocations')
-          .select('*, envelopes!inner(budget_id)')
-          .eq('envelopes.budget_id', budgetId);
-      return response
-          .map((row) {
-            final copy = Map<String, dynamic>.from(row)..remove('envelopes');
-            return EnvelopeAllocationDto.fromJson(copy);
-          })
-          .toList();
+          .eq('envelope_id', envelopeId);
+      return response.map(EnvelopeAllocationDto.fromJson).toList();
     } catch (error) {
       throw EnvelopeApiException.fromPostgrestException(error);
     }
@@ -265,11 +258,7 @@ class EnvelopesApiClient {
     }
   }
 
-  /// Updates an existing envelope allocation. Sends the full DTO; PostgREST
-  /// rewrites every column listed in the payload, so callers should only use
-  /// this when they own the entire current state of the row. Prefer
-  /// [updateAllocatedAmount] for the common case of changing the assigned
-  /// amount, which only touches that one column.
+  /// Updates an existing envelope allocation.
   Future<EnvelopeAllocationDto> updateEnvelopeAllocation(
     EnvelopeAllocationDto allocation,
   ) async {
@@ -278,26 +267,6 @@ class EnvelopesApiClient {
           .from('envelope_allocations')
           .update(allocation.toJson())
           .eq('id', allocation.id)
-          .select()
-          .single();
-      return EnvelopeAllocationDto.fromJson(response);
-    } catch (error) {
-      throw EnvelopeApiException.fromPostgrestException(error);
-    }
-  }
-
-  /// Patches only the `allocated_amount` column of [id]. Avoids the
-  /// read-modify-write window that would clobber concurrent peer writes to
-  /// other columns.
-  Future<EnvelopeAllocationDto> updateAllocatedAmount({
-    required String id,
-    required int allocatedAmount,
-  }) async {
-    try {
-      final response = await _supabaseClient
-          .from('envelope_allocations')
-          .update({'allocated_amount': allocatedAmount})
-          .eq('id', id)
           .select()
           .single();
       return EnvelopeAllocationDto.fromJson(response);

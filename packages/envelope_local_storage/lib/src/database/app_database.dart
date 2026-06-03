@@ -10,6 +10,7 @@ part 'app_database.g.dart';
     Users,
     Budgets,
     BudgetMembers,
+    BudgetPeriods,
     Accounts,
     CategoryGroups,
     Envelopes,
@@ -51,7 +52,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 20;
+  int get schemaVersion => 19;
 
   /// Deletes all rows from every table. Used for account deletion / GDPR.
   Future<void> clearAllTables() async {
@@ -144,14 +145,7 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(transactionTemplates);
       }
       if (from < 17) {
-        // Pre-#82 schema: budget_periods still exists at this point in the
-        // upgrade path (it is dropped in the from < 20 block below). Use raw
-        // SQL because the Drift `budgetPeriods` table accessor was removed
-        // when #82 retired the model.
-        await customStatement(
-          'ALTER TABLE budget_periods '
-          'ADD COLUMN carried_rta INTEGER NOT NULL DEFAULT 0',
-        );
+        await m.addColumn(budgetPeriods, budgetPeriods.carriedRta);
       }
       if (from < 18) {
         // Adds the period-agnostic seed-cash columns to budgets (issue #80).
@@ -172,61 +166,6 @@ class AppDatabase extends _$AppDatabase {
         // the same period that previously sourced the seed via `total_income`
         // — so no `carried_rta` recompute is needed.
         await backfillOpeningBalance(this);
-      }
-      if (from < 20) {
-        // Issue #82: drop budget periods entirely; allocations + RTA go
-        // global. Collapse period-scoped allocations into one row per
-        // envelope (summing allocated_amount), fold per-period income into
-        // opening_balance, snapshot the account-seed total into a new column,
-        // then drop the periods table.
-        await m.addColumn(budgets, budgets.accountSeedBalance);
-
-        // Snapshot the current on-budget account seed total so
-        // refreshOpeningBalanceForBudget can keep that part in sync without
-        // ever overwriting opening_balance.
-        await customStatement(
-          'UPDATE budgets '
-          'SET account_seed_balance = COALESCE(('
-          '  SELECT SUM(CASE WHEN a.starting_balance > 0 '
-          '    THEN a.starting_balance ELSE 0 END) '
-          '  FROM accounts a '
-          '  WHERE a.budget_id = budgets.id '
-          '    AND a.is_on_budget = 1 '
-          '    AND a.is_archived = 0), 0)',
-        );
-
-        // Fold each budget's historical period total_income into
-        // opening_balance so it survives the periods table being dropped.
-        await customStatement(
-          'UPDATE budgets '
-          'SET opening_balance = opening_balance + COALESCE(('
-          '  SELECT SUM(bp.total_income) '
-          '  FROM budget_periods bp '
-          '  WHERE bp.budget_id = budgets.id), 0)',
-        );
-
-        await customStatement(
-          'CREATE TABLE envelope_allocations_tmp ('
-          'id TEXT NOT NULL PRIMARY KEY, '
-          'envelope_id TEXT NOT NULL UNIQUE, '
-          'allocated_amount INTEGER NOT NULL DEFAULT 0, '
-          'created_at INTEGER NOT NULL'
-          ')',
-        );
-        await customStatement(
-          'INSERT INTO envelope_allocations_tmp '
-          '(id, envelope_id, allocated_amount, created_at) '
-          'SELECT MIN(id), envelope_id, '
-          'SUM(allocated_amount), MIN(created_at) '
-          'FROM envelope_allocations '
-          'GROUP BY envelope_id',
-        );
-        await customStatement('DROP TABLE envelope_allocations');
-        await customStatement(
-          'ALTER TABLE envelope_allocations_tmp '
-          'RENAME TO envelope_allocations',
-        );
-        await customStatement('DROP TABLE budget_periods');
       }
     },
   );

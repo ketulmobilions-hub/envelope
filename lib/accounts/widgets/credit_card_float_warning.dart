@@ -1,4 +1,6 @@
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/l10n/l10n.dart';
+import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -51,7 +53,10 @@ class CreditCardFloatWarning extends StatelessWidget {
 
   Future<bool> _isRidingFloat(BuildContext context) async {
     if (accountBalance >= 0) return false; // No debt — no float.
+    // Capture repos before async gaps to avoid stale context access.
     final envelopeRepo = context.read<EnvelopeRepository>();
+    final budgetRepo = context.read<BudgetRepository>();
+    final now = context.read<AppClock>().now();
     try {
       final ccPaymentEnvelope = await envelopeRepo.getEnvelopeByLinkedAccountId(
         accountId,
@@ -59,12 +64,26 @@ class CreditCardFloatWarning extends StatelessWidget {
       );
       if (ccPaymentEnvelope == null) return false;
 
-      final alloc = await envelopeRepo.getEnvelopeAllocation(
-        ccPaymentEnvelope.id,
+      // Find the current budget period.
+      final periods = await budgetRepo.watchBudgetPeriods(budgetId).first;
+      if (periods.isEmpty) return false;
+      final current = periods.firstWhere(
+        (p) =>
+            !p.isClosed &&
+            !p.startDate.isAfter(now) &&
+            !p.endDate.isBefore(now),
+        orElse: () =>
+            periods.where((p) => !p.isClosed).lastOrNull ?? periods.last,
       );
-      final allocated = alloc?.allocatedAmount ?? 0;
-      final spent = await envelopeRepo.sumSpentForEnvelope(ccPaymentEnvelope.id);
-      final reserved = allocated - spent;
+
+      final alloc = await envelopeRepo.getEnvelopeAllocationByEnvelopeAndPeriod(
+        envelopeId: ccPaymentEnvelope.id,
+        budgetPeriodId: current.id,
+      );
+
+      final reserved = alloc != null
+          ? EnvelopeRepository.calculateRollover(alloc)
+          : 0;
       return reserved < accountBalance.abs();
     } on Exception {
       return false;

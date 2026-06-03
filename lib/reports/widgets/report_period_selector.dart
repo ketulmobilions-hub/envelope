@@ -1,3 +1,4 @@
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -59,6 +60,46 @@ class ReportDateRangeSelector extends StatelessWidget {
           style: Theme.of(context).textTheme.bodyMedium,
         ),
       ),
+    );
+  }
+}
+
+/// Budget period dropdown selector.
+class ReportPeriodDropdown extends StatelessWidget {
+  const ReportPeriodDropdown({
+    required this.periods,
+    required this.selectedPeriodId,
+    required this.onPeriodSelected,
+    super.key,
+  });
+
+  final List<BudgetPeriod> periods;
+  final String? selectedPeriodId;
+  final ValueChanged<String> onPeriodSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final formatter = DateFormat.yMMMd();
+
+    return DropdownButtonFormField<String>(
+      decoration: InputDecoration(
+        labelText: l10n.reportsPeriod,
+        border: const OutlineInputBorder(),
+      ),
+      value: selectedPeriodId,
+      items: periods.map((p) {
+        return DropdownMenuItem(
+          value: p.id,
+          child: Text(
+            '${formatter.format(p.startDate)} - ${formatter.format(p.endDate)}',
+            style: const TextStyle(fontSize: 14),
+          ),
+        );
+      }).toList(),
+      onChanged: (value) {
+        if (value != null) onPeriodSelected(value);
+      },
     );
   }
 }

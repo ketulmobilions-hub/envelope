@@ -1,15 +1,16 @@
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/goals/widgets/goal_helpers.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:goal_repository/goal_repository.dart';
 
-/// Funding state of an envelope or goal under the global allocation model.
+/// Funding state of an envelope or goal for the current period.
 ///
 /// Drives the colored badge on allocation rows and goal tiles.
 enum FundingStatus {
-  /// No active target — render no badge.
+  /// No active monthly target — render no badge.
   noTarget,
 
-  /// `spent > allocated` — the envelope is in the red.
+  /// `spent > allocated + rollover` — the envelope is in the red.
   overspent,
 
   /// `allocated < target` but not yet overspent.
@@ -19,56 +20,71 @@ enum FundingStatus {
   fullyFunded,
 }
 
-/// Cross-cutting helper that derives funding state from envelope allocations
-/// and goal targets. Under the global model "needed" is computed once
-/// against the current allocation, not per-period.
+/// Cross-cutting helper that derives funding state for the current period
+/// from envelope allocations and goal targets.
+///
+/// Lives at the app layer to bridge `envelope_repository` and
+/// `goal_repository` without introducing a cross-package dependency.
 class FundingStatusService {
   const FundingStatusService({DateTime Function()? clock}) : _clock = clock;
 
   final DateTime Function()? _clock;
 
-  /// Cents still needed to hit every active linked goal's monthly
+  /// Cents still needed this period to hit every active linked goal's monthly
   /// contribution target, net of [allocatedCents].
+  ///
+  /// Returns 0 when no [linkedGoals] are active or the combined monthly
+  /// target is already covered.
   int neededThisPeriod({
     required int allocatedCents,
     required List<Goal> linkedGoals,
   }) {
-    final target = linkedGoals
+    final targetForPeriod = linkedGoals
         .where((g) => !g.isCompleted)
         .fold<int>(
           0,
           (sum, goal) => sum + monthlyContributionNeeded(goal, clock: _clock),
         );
-    if (target <= 0) return 0;
-    final shortfall = target - allocatedCents;
+    if (targetForPeriod <= 0) return 0;
+
+    final shortfall = targetForPeriod - allocatedCents;
     return shortfall > 0 ? shortfall : 0;
   }
 
-  /// Cents needed for [goal] net of any [contributions] already recorded.
+  /// Cents needed this period for [goal], net of any [contributions]
+  /// recorded within [period].
+  ///
+  /// When [period] is null, returns the gross monthly target.
   int neededThisPeriodForGoal(
     Goal goal, {
     List<GoalContribution> contributions = const [],
+    BudgetPeriod? period,
   }) {
     if (goal.isCompleted) return 0;
     final monthly = monthlyContributionNeeded(goal, clock: _clock);
     if (monthly <= 0) return 0;
-    final contributed = contributions.fold<int>(
-      0,
-      (sum, c) => sum + c.amountCents,
-    );
+    if (period == null) return monthly;
+
+    final contributed = contributions
+        .where(
+          (c) =>
+              !c.createdAt.isBefore(period.startDate) &&
+              c.createdAt.isBefore(period.endDate),
+        )
+        .fold<int>(0, (sum, c) => sum + c.amountCents);
     final remaining = monthly - contributed;
     return remaining > 0 ? remaining : 0;
   }
 
-  /// Classifies an envelope's funding state.
+  /// Classifies an envelope's funding state for the current period using
+  /// linked goals as the source of the monthly target.
   ///
-  /// [spent] is the running expense total for this envelope (derived from
-  /// transactions); pass 0 when unknown to suppress the overspent path.
+  /// Returns [FundingStatus.noTarget] when no active linked goal yields a
+  /// monthly contribution — in that case callers should render no badge.
   FundingStatus classifyEnvelope({
     required int allocatedCents,
     required List<Goal> linkedGoals,
     EnvelopeAllocation? allocation,
-    int spent = 0,
   }) {
     final target = linkedGoals
         .where((g) => !g.isCompleted)
@@ -78,22 +94,29 @@ class FundingStatusService {
         );
     if (target <= 0) return FundingStatus.noTarget;
 
-    if (spent > allocatedCents) return FundingStatus.overspent;
+    final spent = allocation?.spentAmount ?? 0;
+    final rollover = allocation?.rolloverAmount ?? 0;
+    if (spent > allocatedCents + rollover) return FundingStatus.overspent;
 
     return allocatedCents >= target
         ? FundingStatus.fullyFunded
         : FundingStatus.underfunded;
   }
 
-  /// Classifies a goal's funding state.
+  /// Classifies a goal's funding state for the current period.
   FundingStatus classifyGoal(
     Goal goal, {
     List<GoalContribution> contributions = const [],
+    BudgetPeriod? period,
   }) {
     if (goal.isCompleted) return FundingStatus.noTarget;
     final monthly = monthlyContributionNeeded(goal, clock: _clock);
     if (monthly <= 0) return FundingStatus.noTarget;
-    final needed = neededThisPeriodForGoal(goal, contributions: contributions);
+    final needed = neededThisPeriodForGoal(
+      goal,
+      contributions: contributions,
+      period: period,
+    );
     return needed > 0
         ? FundingStatus.underfunded
         : FundingStatus.fullyFunded;

@@ -66,6 +66,7 @@ class HomePage extends StatelessWidget {
             transactionRepository: context.read(),
             sharingRepository: context.read<SharingRepository>(),
             budgetId: budgetId,
+            now: context.read<AppClock>().now,
           )..add(const DashboardStarted()),
         ),
       ],
@@ -291,6 +292,15 @@ class _HomeView extends StatelessWidget {
                   // Ready to Assign
                   DashboardReadyToAssignCard(
                     readyToAssign: state.readyToAssign,
+                    period: state.selectedPeriod,
+                    hasPreviousPeriod: state.hasPreviousPeriod,
+                    hasNextPeriod: state.hasNextPeriod,
+                    onPreviousPeriod: () => context.read<DashboardBloc>().add(
+                      const DashboardPreviousPeriodRequested(),
+                    ),
+                    onNextPeriod: () => context.read<DashboardBloc>().add(
+                      const DashboardNextPeriodRequested(),
+                    ),
                     onTap: () => context.push(
                       '${AppRoutes.budget}?budgetId=$budgetId',
                     ),

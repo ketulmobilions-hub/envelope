@@ -7,9 +7,9 @@ import 'package:goal_repository/goal_repository.dart';
 
 part 'auto_assign_state.dart';
 
-/// Drives the "auto-assign" flow under the global allocation model: gathers
-/// Ready-to-Assign + per-goal needs, asks [AutoAssignPlanner] to build a
-/// distribution, and applies it on confirmation.
+/// Drives the "auto-assign" flow: gathers Ready-to-Assign + per-goal needs
+/// for the current period, asks [AutoAssignPlanner] to build a distribution,
+/// and applies it on confirmation.
 class AutoAssignCubit extends Cubit<AutoAssignState> {
   AutoAssignCubit({
     required BudgetRepository budgetRepository,
@@ -23,6 +23,7 @@ class AutoAssignCubit extends Cubit<AutoAssignState> {
        _goalRepository = goalRepository,
        _budgetId = budgetId,
        _planner = planner,
+       _now = now ?? DateTime.now,
        _fundingStatus = FundingStatusService(clock: now ?? DateTime.now),
        super(const AutoAssignState());
 
@@ -32,12 +33,29 @@ class AutoAssignCubit extends Cubit<AutoAssignState> {
   final String _budgetId;
   final AutoAssignPlanner _planner;
   final FundingStatusService _fundingStatus;
+  final DateTime Function() _now;
 
-  /// Builds a preview distribution.
+  /// Builds a preview distribution. Emits one of:
+  ///   * [AutoAssignStatus.noTargets]      — no active goal has an unmet monthly need
+  ///   * [AutoAssignStatus.insufficientRta] — RTA <= 0
+  ///   * [AutoAssignStatus.preview]         — `actions` populated
+  ///   * [AutoAssignStatus.failure]         — repository error
   Future<void> plan() async {
     emit(state.copyWith(status: AutoAssignStatus.planning, errorMessage: null));
     try {
-      final rta = await _budgetRepository.calculateReadyToAssign(_budgetId);
+      final period = await _resolveCurrentPeriod();
+      if (isClosed) return;
+      if (period == null) {
+        emit(
+          state.copyWith(
+            status: AutoAssignStatus.failure,
+            errorMessage: 'No active budget period.',
+          ),
+        );
+        return;
+      }
+
+      final rta = await _budgetRepository.calculateReadyToAssign(period.id);
       if (isClosed) return;
       if (rta <= 0) {
         emit(state.copyWith(status: AutoAssignStatus.insufficientRta));
@@ -53,9 +71,8 @@ class AutoAssignCubit extends Cubit<AutoAssignState> {
         });
 
       final allocationsByEnvelope = <String, EnvelopeAllocation>{
-        for (final a in await _envelopeRepository
-            .watchAllocationsByBudgetId(_budgetId)
-            .first)
+        for (final a
+            in await _envelopeRepository.watchAllocations(period.id).first)
           a.envelopeId: a,
       };
 
@@ -90,6 +107,7 @@ class AutoAssignCubit extends Cubit<AutoAssignState> {
           status: AutoAssignStatus.preview,
           actions: actions,
           rtaCents: rta,
+          periodId: period.id,
         ),
       );
     } on Exception catch (e) {
@@ -103,17 +121,17 @@ class AutoAssignCubit extends Cubit<AutoAssignState> {
     }
   }
 
-  /// Applies the previewed actions. Continues on individual action failures so
-  /// that as much of the plan as possible lands.
+  /// Applies the previewed [AutoAssignState.actions]. Continues on individual
+  /// action failures so that as much of the plan as possible lands.
   Future<void> apply() async {
     if (state.status != AutoAssignStatus.preview) return;
+    final periodId = state.periodId;
+    if (periodId == null) return;
 
     emit(state.copyWith(status: AutoAssignStatus.applying));
 
     final existing = {
-      for (final a in await _envelopeRepository
-          .watchAllocationsByBudgetId(_budgetId)
-          .first)
+      for (final a in await _envelopeRepository.watchAllocations(periodId).first)
         a.envelopeId: a,
     };
 
@@ -123,13 +141,20 @@ class AutoAssignCubit extends Cubit<AutoAssignState> {
         if (action.envelopeId != null) {
           final envelopeId = action.envelopeId!;
           final current = existing[envelopeId];
-          final newAmount =
-              (current?.allocatedAmount ?? 0) + action.addCents;
-          final updated = await _envelopeRepository.allocate(
-            envelopeId: envelopeId,
-            amount: newAmount,
-          );
-          existing[envelopeId] = updated;
+          if (current != null) {
+            final updated = current.copyWith(
+              allocatedAmount: current.allocatedAmount + action.addCents,
+            );
+            await _envelopeRepository.updateAllocation(updated);
+            existing[envelopeId] = updated;
+          } else {
+            final created = await _envelopeRepository.allocate(
+              envelopeId: envelopeId,
+              budgetPeriodId: periodId,
+              amount: action.addCents,
+            );
+            existing[envelopeId] = created;
+          }
         } else {
           await _goalRepository.addContribution(
             goalId: action.goal.id,
@@ -156,4 +181,18 @@ class AutoAssignCubit extends Cubit<AutoAssignState> {
 
   /// Resets back to initial after a success / failure dialog dismiss.
   void reset() => emit(const AutoAssignState());
+
+  Future<BudgetPeriod?> _resolveCurrentPeriod() async {
+    final periods = await _budgetRepository.watchBudgetPeriods(_budgetId).first;
+    if (periods.isEmpty) return null;
+    final now = _now();
+    final match = periods.where(
+      (p) => !p.startDate.isAfter(now) && !p.endDate.isBefore(now),
+    );
+    if (match.isNotEmpty) return match.first;
+    // Fallback: latest period.
+    return periods.reduce(
+      (a, b) => a.endDate.isAfter(b.endDate) ? a : b,
+    );
+  }
 }

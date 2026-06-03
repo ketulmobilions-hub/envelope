@@ -13,7 +13,7 @@ T _$identity<T>(T value) => value;
 
 /// @nodoc
 mixin _$BudgetVsActualReport {
-  String get budgetId;
+  String get budgetPeriodId;
   DateTime get startDate;
   DateTime get endDate;
   int get totalAllocated;
@@ -38,8 +38,8 @@ mixin _$BudgetVsActualReport {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is BudgetVsActualReport &&
-            (identical(other.budgetId, budgetId) ||
-                other.budgetId == budgetId) &&
+            (identical(other.budgetPeriodId, budgetPeriodId) ||
+                other.budgetPeriodId == budgetPeriodId) &&
             (identical(other.startDate, startDate) ||
                 other.startDate == startDate) &&
             (identical(other.endDate, endDate) || other.endDate == endDate) &&
@@ -54,7 +54,7 @@ mixin _$BudgetVsActualReport {
   @override
   int get hashCode => Object.hash(
     runtimeType,
-    budgetId,
+    budgetPeriodId,
     startDate,
     endDate,
     totalAllocated,
@@ -64,7 +64,7 @@ mixin _$BudgetVsActualReport {
 
   @override
   String toString() {
-    return 'BudgetVsActualReport(budgetId: $budgetId, startDate: $startDate, endDate: $endDate, totalAllocated: $totalAllocated, totalSpent: $totalSpent, items: $items)';
+    return 'BudgetVsActualReport(budgetPeriodId: $budgetPeriodId, startDate: $startDate, endDate: $endDate, totalAllocated: $totalAllocated, totalSpent: $totalSpent, items: $items)';
   }
 }
 
@@ -76,7 +76,7 @@ abstract mixin class $BudgetVsActualReportCopyWith<$Res> {
   ) = _$BudgetVsActualReportCopyWithImpl;
   @useResult
   $Res call({
-    String budgetId,
+    String budgetPeriodId,
     DateTime startDate,
     DateTime endDate,
     int totalAllocated,
@@ -98,7 +98,7 @@ class _$BudgetVsActualReportCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? budgetId = null,
+    Object? budgetPeriodId = null,
     Object? startDate = null,
     Object? endDate = null,
     Object? totalAllocated = null,
@@ -107,9 +107,9 @@ class _$BudgetVsActualReportCopyWithImpl<$Res>
   }) {
     return _then(
       _self.copyWith(
-        budgetId: null == budgetId
-            ? _self.budgetId
-            : budgetId // ignore: cast_nullable_to_non_nullable
+        budgetPeriodId: null == budgetPeriodId
+            ? _self.budgetPeriodId
+            : budgetPeriodId // ignore: cast_nullable_to_non_nullable
                   as String,
         startDate: null == startDate
             ? _self.startDate
@@ -230,7 +230,7 @@ extension BudgetVsActualReportPatterns on BudgetVsActualReport {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
     TResult Function(
-      String budgetId,
+      String budgetPeriodId,
       DateTime startDate,
       DateTime endDate,
       int totalAllocated,
@@ -244,7 +244,7 @@ extension BudgetVsActualReportPatterns on BudgetVsActualReport {
     switch (_that) {
       case _BudgetVsActualReport() when $default != null:
         return $default(
-          _that.budgetId,
+          _that.budgetPeriodId,
           _that.startDate,
           _that.endDate,
           _that.totalAllocated,
@@ -272,7 +272,7 @@ extension BudgetVsActualReportPatterns on BudgetVsActualReport {
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
     TResult Function(
-      String budgetId,
+      String budgetPeriodId,
       DateTime startDate,
       DateTime endDate,
       int totalAllocated,
@@ -285,7 +285,7 @@ extension BudgetVsActualReportPatterns on BudgetVsActualReport {
     switch (_that) {
       case _BudgetVsActualReport():
         return $default(
-          _that.budgetId,
+          _that.budgetPeriodId,
           _that.startDate,
           _that.endDate,
           _that.totalAllocated,
@@ -312,7 +312,7 @@ extension BudgetVsActualReportPatterns on BudgetVsActualReport {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
     TResult? Function(
-      String budgetId,
+      String budgetPeriodId,
       DateTime startDate,
       DateTime endDate,
       int totalAllocated,
@@ -325,7 +325,7 @@ extension BudgetVsActualReportPatterns on BudgetVsActualReport {
     switch (_that) {
       case _BudgetVsActualReport() when $default != null:
         return $default(
-          _that.budgetId,
+          _that.budgetPeriodId,
           _that.startDate,
           _that.endDate,
           _that.totalAllocated,
@@ -342,7 +342,7 @@ extension BudgetVsActualReportPatterns on BudgetVsActualReport {
 @JsonSerializable()
 class _BudgetVsActualReport implements BudgetVsActualReport {
   const _BudgetVsActualReport({
-    required this.budgetId,
+    required this.budgetPeriodId,
     required this.startDate,
     required this.endDate,
     required this.totalAllocated,
@@ -353,7 +353,7 @@ class _BudgetVsActualReport implements BudgetVsActualReport {
       _$BudgetVsActualReportFromJson(json);
 
   @override
-  final String budgetId;
+  final String budgetPeriodId;
   @override
   final DateTime startDate;
   @override
@@ -392,8 +392,8 @@ class _BudgetVsActualReport implements BudgetVsActualReport {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _BudgetVsActualReport &&
-            (identical(other.budgetId, budgetId) ||
-                other.budgetId == budgetId) &&
+            (identical(other.budgetPeriodId, budgetPeriodId) ||
+                other.budgetPeriodId == budgetPeriodId) &&
             (identical(other.startDate, startDate) ||
                 other.startDate == startDate) &&
             (identical(other.endDate, endDate) || other.endDate == endDate) &&
@@ -408,7 +408,7 @@ class _BudgetVsActualReport implements BudgetVsActualReport {
   @override
   int get hashCode => Object.hash(
     runtimeType,
-    budgetId,
+    budgetPeriodId,
     startDate,
     endDate,
     totalAllocated,
@@ -418,7 +418,7 @@ class _BudgetVsActualReport implements BudgetVsActualReport {
 
   @override
   String toString() {
-    return 'BudgetVsActualReport(budgetId: $budgetId, startDate: $startDate, endDate: $endDate, totalAllocated: $totalAllocated, totalSpent: $totalSpent, items: $items)';
+    return 'BudgetVsActualReport(budgetPeriodId: $budgetPeriodId, startDate: $startDate, endDate: $endDate, totalAllocated: $totalAllocated, totalSpent: $totalSpent, items: $items)';
   }
 }
 
@@ -432,7 +432,7 @@ abstract mixin class _$BudgetVsActualReportCopyWith<$Res>
   @override
   @useResult
   $Res call({
-    String budgetId,
+    String budgetPeriodId,
     DateTime startDate,
     DateTime endDate,
     int totalAllocated,
@@ -454,7 +454,7 @@ class __$BudgetVsActualReportCopyWithImpl<$Res>
   @override
   @pragma('vm:prefer-inline')
   $Res call({
-    Object? budgetId = null,
+    Object? budgetPeriodId = null,
     Object? startDate = null,
     Object? endDate = null,
     Object? totalAllocated = null,
@@ -463,9 +463,9 @@ class __$BudgetVsActualReportCopyWithImpl<$Res>
   }) {
     return _then(
       _BudgetVsActualReport(
-        budgetId: null == budgetId
-            ? _self.budgetId
-            : budgetId // ignore: cast_nullable_to_non_nullable
+        budgetPeriodId: null == budgetPeriodId
+            ? _self.budgetPeriodId
+            : budgetPeriodId // ignore: cast_nullable_to_non_nullable
                   as String,
         startDate: null == startDate
             ? _self.startDate

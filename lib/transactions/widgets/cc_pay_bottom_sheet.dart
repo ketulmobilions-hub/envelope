@@ -22,6 +22,7 @@ Future<void> showCCPayBottomSheet(
   required List<Account> accounts,
   required String budgetId,
   required String userId,
+  required String? budgetPeriodId,
   required String ccPaymentEnvelopeId,
 }) async {
   final transactionRepo = context.read<TransactionRepository>();
@@ -42,6 +43,7 @@ Future<void> showCCPayBottomSheet(
         budgetId: budgetId,
         userId: userId,
         envelopeRepository: envelopeRepo,
+        budgetPeriodId: budgetPeriodId,
       ),
       child: _CCPayBottomSheet(
         ccAccountId: ccAccountId,

@@ -111,57 +111,41 @@ class EnvelopesDao extends DatabaseAccessor<AppDatabase>
   Future<int> deleteEnvelope(String id) =>
       (delete(envelopes)..where((t) => t.id.equals(id))).go();
 
-  // Envelope Allocations CRUD (global — one row per envelope)
-  Future<EnvelopeAllocation?> getAllocationByEnvelopeId(String envelopeId) =>
-      (select(envelopeAllocations)
-            ..where((t) => t.envelopeId.equals(envelopeId)))
+  // Envelope Allocations CRUD
+  Future<List<EnvelopeAllocation>> getAllocationsByEnvelopeId(
+    String envelopeId,
+  ) => (select(
+    envelopeAllocations,
+  )..where((t) => t.envelopeId.equals(envelopeId))).get();
+
+  Future<List<EnvelopeAllocation>> getAllocationsByPeriodId(
+    String budgetPeriodId,
+  ) => (select(
+    envelopeAllocations,
+  )..where((t) => t.budgetPeriodId.equals(budgetPeriodId))).get();
+
+  Future<EnvelopeAllocation?> getAllocationByEnvelopeAndPeriod(
+    String envelopeId,
+    String budgetPeriodId,
+  ) =>
+      (select(envelopeAllocations)..where(
+            (t) =>
+                t.envelopeId.equals(envelopeId) &
+                t.budgetPeriodId.equals(budgetPeriodId),
+          ))
           .getSingleOrNull();
 
-  Stream<EnvelopeAllocation?> watchAllocationByEnvelopeId(String envelopeId) =>
-      (select(envelopeAllocations)
-            ..where((t) => t.envelopeId.equals(envelopeId)))
-          .watchSingleOrNull();
+  Stream<List<EnvelopeAllocation>> watchAllocationsByPeriodId(
+    String budgetPeriodId,
+  ) => (select(
+    envelopeAllocations,
+  )..where((t) => t.budgetPeriodId.equals(budgetPeriodId))).watch();
 
-  Future<List<EnvelopeAllocation>> getAllocationsByBudgetId(
-    String budgetId,
-  ) async {
-    final query = select(envelopeAllocations).join([
-      innerJoin(
-        envelopes,
-        envelopes.id.equalsExp(envelopeAllocations.envelopeId),
-      ),
-    ])..where(envelopes.budgetId.equals(budgetId));
-    final rows = await query.get();
-    return rows.map((r) => r.readTable(envelopeAllocations)).toList();
-  }
-
-  Stream<List<EnvelopeAllocation>> watchAllocationsByBudgetId(
-    String budgetId,
-  ) {
-    final query = select(envelopeAllocations).join([
-      innerJoin(
-        envelopes,
-        envelopes.id.equalsExp(envelopeAllocations.envelopeId),
-      ),
-    ])..where(envelopes.budgetId.equals(budgetId));
-    return query.watch().map(
-      (rows) => rows.map((r) => r.readTable(envelopeAllocations)).toList(),
-    );
-  }
-
-  Future<int> sumAllocationsByBudgetId(String budgetId) async {
-    final sumExp = envelopeAllocations.allocatedAmount.sum();
-    final query = selectOnly(envelopeAllocations).join([
-      innerJoin(
-        envelopes,
-        envelopes.id.equalsExp(envelopeAllocations.envelopeId),
-      ),
-    ])
-      ..addColumns([sumExp])
-      ..where(envelopes.budgetId.equals(budgetId));
-    final row = await query.getSingleOrNull();
-    return row?.read(sumExp)?.toInt() ?? 0;
-  }
+  Stream<List<EnvelopeAllocation>> watchAllocationsByEnvelopeId(
+    String envelopeId,
+  ) => (select(
+    envelopeAllocations,
+  )..where((t) => t.envelopeId.equals(envelopeId))).watch();
 
   Future<int> insertAllocation(
     EnvelopeAllocationsCompanion allocation, {

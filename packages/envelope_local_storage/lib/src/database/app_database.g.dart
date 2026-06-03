@@ -620,17 +620,6 @@ class $BudgetsTable extends Budgets with TableInfo<$BudgetsTable, Budget> {
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
-  static const VerificationMeta _accountSeedBalanceMeta =
-      const VerificationMeta('accountSeedBalance');
-  @override
-  late final GeneratedColumn<int> accountSeedBalance = GeneratedColumn<int>(
-    'account_seed_balance',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(0),
-  );
   static const VerificationMeta _openingDateMeta = const VerificationMeta(
     'openingDate',
   );
@@ -674,7 +663,6 @@ class $BudgetsTable extends Budgets with TableInfo<$BudgetsTable, Budget> {
     baseCurrency,
     isArchived,
     openingBalance,
-    accountSeedBalance,
     openingDate,
     createdAt,
     updatedAt,
@@ -753,15 +741,6 @@ class $BudgetsTable extends Budgets with TableInfo<$BudgetsTable, Budget> {
         ),
       );
     }
-    if (data.containsKey('account_seed_balance')) {
-      context.handle(
-        _accountSeedBalanceMeta,
-        accountSeedBalance.isAcceptableOrUnknown(
-          data['account_seed_balance']!,
-          _accountSeedBalanceMeta,
-        ),
-      );
-    }
     if (data.containsKey('opening_date')) {
       context.handle(
         _openingDateMeta,
@@ -828,10 +807,6 @@ class $BudgetsTable extends Budgets with TableInfo<$BudgetsTable, Budget> {
         DriftSqlType.int,
         data['${effectivePrefix}opening_balance'],
       )!,
-      accountSeedBalance: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}account_seed_balance'],
-      )!,
       openingDate: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}opening_date'],
@@ -862,7 +837,6 @@ class Budget extends DataClass implements Insertable<Budget> {
   final String baseCurrency;
   final bool isArchived;
   final int openingBalance;
-  final int accountSeedBalance;
   final DateTime? openingDate;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -875,7 +849,6 @@ class Budget extends DataClass implements Insertable<Budget> {
     required this.baseCurrency,
     required this.isArchived,
     required this.openingBalance,
-    required this.accountSeedBalance,
     this.openingDate,
     required this.createdAt,
     required this.updatedAt,
@@ -891,7 +864,6 @@ class Budget extends DataClass implements Insertable<Budget> {
     map['base_currency'] = Variable<String>(baseCurrency);
     map['is_archived'] = Variable<bool>(isArchived);
     map['opening_balance'] = Variable<int>(openingBalance);
-    map['account_seed_balance'] = Variable<int>(accountSeedBalance);
     if (!nullToAbsent || openingDate != null) {
       map['opening_date'] = Variable<DateTime>(openingDate);
     }
@@ -910,7 +882,6 @@ class Budget extends DataClass implements Insertable<Budget> {
       baseCurrency: Value(baseCurrency),
       isArchived: Value(isArchived),
       openingBalance: Value(openingBalance),
-      accountSeedBalance: Value(accountSeedBalance),
       openingDate: openingDate == null && nullToAbsent
           ? const Value.absent()
           : Value(openingDate),
@@ -933,7 +904,6 @@ class Budget extends DataClass implements Insertable<Budget> {
       baseCurrency: serializer.fromJson<String>(json['baseCurrency']),
       isArchived: serializer.fromJson<bool>(json['isArchived']),
       openingBalance: serializer.fromJson<int>(json['openingBalance']),
-      accountSeedBalance: serializer.fromJson<int>(json['accountSeedBalance']),
       openingDate: serializer.fromJson<DateTime?>(json['openingDate']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -951,7 +921,6 @@ class Budget extends DataClass implements Insertable<Budget> {
       'baseCurrency': serializer.toJson<String>(baseCurrency),
       'isArchived': serializer.toJson<bool>(isArchived),
       'openingBalance': serializer.toJson<int>(openingBalance),
-      'accountSeedBalance': serializer.toJson<int>(accountSeedBalance),
       'openingDate': serializer.toJson<DateTime?>(openingDate),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -967,7 +936,6 @@ class Budget extends DataClass implements Insertable<Budget> {
     String? baseCurrency,
     bool? isArchived,
     int? openingBalance,
-    int? accountSeedBalance,
     Value<DateTime?> openingDate = const Value.absent(),
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -980,7 +948,6 @@ class Budget extends DataClass implements Insertable<Budget> {
     baseCurrency: baseCurrency ?? this.baseCurrency,
     isArchived: isArchived ?? this.isArchived,
     openingBalance: openingBalance ?? this.openingBalance,
-    accountSeedBalance: accountSeedBalance ?? this.accountSeedBalance,
     openingDate: openingDate.present ? openingDate.value : this.openingDate,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -1005,9 +972,6 @@ class Budget extends DataClass implements Insertable<Budget> {
       openingBalance: data.openingBalance.present
           ? data.openingBalance.value
           : this.openingBalance,
-      accountSeedBalance: data.accountSeedBalance.present
-          ? data.accountSeedBalance.value
-          : this.accountSeedBalance,
       openingDate: data.openingDate.present
           ? data.openingDate.value
           : this.openingDate,
@@ -1027,7 +991,6 @@ class Budget extends DataClass implements Insertable<Budget> {
           ..write('baseCurrency: $baseCurrency, ')
           ..write('isArchived: $isArchived, ')
           ..write('openingBalance: $openingBalance, ')
-          ..write('accountSeedBalance: $accountSeedBalance, ')
           ..write('openingDate: $openingDate, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -1045,7 +1008,6 @@ class Budget extends DataClass implements Insertable<Budget> {
     baseCurrency,
     isArchived,
     openingBalance,
-    accountSeedBalance,
     openingDate,
     createdAt,
     updatedAt,
@@ -1062,7 +1024,6 @@ class Budget extends DataClass implements Insertable<Budget> {
           other.baseCurrency == this.baseCurrency &&
           other.isArchived == this.isArchived &&
           other.openingBalance == this.openingBalance &&
-          other.accountSeedBalance == this.accountSeedBalance &&
           other.openingDate == this.openingDate &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
@@ -1077,7 +1038,6 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
   final Value<String> baseCurrency;
   final Value<bool> isArchived;
   final Value<int> openingBalance;
-  final Value<int> accountSeedBalance;
   final Value<DateTime?> openingDate;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -1091,7 +1051,6 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
     this.baseCurrency = const Value.absent(),
     this.isArchived = const Value.absent(),
     this.openingBalance = const Value.absent(),
-    this.accountSeedBalance = const Value.absent(),
     this.openingDate = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -1106,7 +1065,6 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
     required String baseCurrency,
     this.isArchived = const Value.absent(),
     this.openingBalance = const Value.absent(),
-    this.accountSeedBalance = const Value.absent(),
     this.openingDate = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -1126,7 +1084,6 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
     Expression<String>? baseCurrency,
     Expression<bool>? isArchived,
     Expression<int>? openingBalance,
-    Expression<int>? accountSeedBalance,
     Expression<DateTime>? openingDate,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -1141,8 +1098,6 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
       if (baseCurrency != null) 'base_currency': baseCurrency,
       if (isArchived != null) 'is_archived': isArchived,
       if (openingBalance != null) 'opening_balance': openingBalance,
-      if (accountSeedBalance != null)
-        'account_seed_balance': accountSeedBalance,
       if (openingDate != null) 'opening_date': openingDate,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -1159,7 +1114,6 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
     Value<String>? baseCurrency,
     Value<bool>? isArchived,
     Value<int>? openingBalance,
-    Value<int>? accountSeedBalance,
     Value<DateTime?>? openingDate,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -1174,7 +1128,6 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
       baseCurrency: baseCurrency ?? this.baseCurrency,
       isArchived: isArchived ?? this.isArchived,
       openingBalance: openingBalance ?? this.openingBalance,
-      accountSeedBalance: accountSeedBalance ?? this.accountSeedBalance,
       openingDate: openingDate ?? this.openingDate,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -1209,9 +1162,6 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
     if (openingBalance.present) {
       map['opening_balance'] = Variable<int>(openingBalance.value);
     }
-    if (accountSeedBalance.present) {
-      map['account_seed_balance'] = Variable<int>(accountSeedBalance.value);
-    }
     if (openingDate.present) {
       map['opening_date'] = Variable<DateTime>(openingDate.value);
     }
@@ -1238,7 +1188,6 @@ class BudgetsCompanion extends UpdateCompanion<Budget> {
           ..write('baseCurrency: $baseCurrency, ')
           ..write('isArchived: $isArchived, ')
           ..write('openingBalance: $openingBalance, ')
-          ..write('accountSeedBalance: $accountSeedBalance, ')
           ..write('openingDate: $openingDate, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -1705,6 +1654,573 @@ class BudgetMembersCompanion extends UpdateCompanion<BudgetMember> {
           ..write('role: $role, ')
           ..write('invitedVia: $invitedVia, ')
           ..write('acceptedAt: $acceptedAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $BudgetPeriodsTable extends BudgetPeriods
+    with TableInfo<$BudgetPeriodsTable, BudgetPeriod> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BudgetPeriodsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _budgetIdMeta = const VerificationMeta(
+    'budgetId',
+  );
+  @override
+  late final GeneratedColumn<String> budgetId = GeneratedColumn<String>(
+    'budget_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startDateMeta = const VerificationMeta(
+    'startDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> startDate = GeneratedColumn<DateTime>(
+    'start_date',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _endDateMeta = const VerificationMeta(
+    'endDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> endDate = GeneratedColumn<DateTime>(
+    'end_date',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _totalIncomeMeta = const VerificationMeta(
+    'totalIncome',
+  );
+  @override
+  late final GeneratedColumn<int> totalIncome = GeneratedColumn<int>(
+    'total_income',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _totalAllocatedMeta = const VerificationMeta(
+    'totalAllocated',
+  );
+  @override
+  late final GeneratedColumn<int> totalAllocated = GeneratedColumn<int>(
+    'total_allocated',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _carriedRtaMeta = const VerificationMeta(
+    'carriedRta',
+  );
+  @override
+  late final GeneratedColumn<int> carriedRta = GeneratedColumn<int>(
+    'carried_rta',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _isClosedMeta = const VerificationMeta(
+    'isClosed',
+  );
+  @override
+  late final GeneratedColumn<bool> isClosed = GeneratedColumn<bool>(
+    'is_closed',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_closed" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    budgetId,
+    startDate,
+    endDate,
+    totalIncome,
+    totalAllocated,
+    carriedRta,
+    isClosed,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'budget_periods';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<BudgetPeriod> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('budget_id')) {
+      context.handle(
+        _budgetIdMeta,
+        budgetId.isAcceptableOrUnknown(data['budget_id']!, _budgetIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_budgetIdMeta);
+    }
+    if (data.containsKey('start_date')) {
+      context.handle(
+        _startDateMeta,
+        startDate.isAcceptableOrUnknown(data['start_date']!, _startDateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_startDateMeta);
+    }
+    if (data.containsKey('end_date')) {
+      context.handle(
+        _endDateMeta,
+        endDate.isAcceptableOrUnknown(data['end_date']!, _endDateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_endDateMeta);
+    }
+    if (data.containsKey('total_income')) {
+      context.handle(
+        _totalIncomeMeta,
+        totalIncome.isAcceptableOrUnknown(
+          data['total_income']!,
+          _totalIncomeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('total_allocated')) {
+      context.handle(
+        _totalAllocatedMeta,
+        totalAllocated.isAcceptableOrUnknown(
+          data['total_allocated']!,
+          _totalAllocatedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('carried_rta')) {
+      context.handle(
+        _carriedRtaMeta,
+        carriedRta.isAcceptableOrUnknown(data['carried_rta']!, _carriedRtaMeta),
+      );
+    }
+    if (data.containsKey('is_closed')) {
+      context.handle(
+        _isClosedMeta,
+        isClosed.isAcceptableOrUnknown(data['is_closed']!, _isClosedMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  BudgetPeriod map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BudgetPeriod(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      budgetId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}budget_id'],
+      )!,
+      startDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}start_date'],
+      )!,
+      endDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}end_date'],
+      )!,
+      totalIncome: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}total_income'],
+      )!,
+      totalAllocated: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}total_allocated'],
+      )!,
+      carriedRta: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}carried_rta'],
+      )!,
+      isClosed: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_closed'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $BudgetPeriodsTable createAlias(String alias) {
+    return $BudgetPeriodsTable(attachedDatabase, alias);
+  }
+}
+
+class BudgetPeriod extends DataClass implements Insertable<BudgetPeriod> {
+  final String id;
+  final String budgetId;
+  final DateTime startDate;
+  final DateTime endDate;
+  final int totalIncome;
+  final int totalAllocated;
+  final int carriedRta;
+  final bool isClosed;
+  final DateTime createdAt;
+  const BudgetPeriod({
+    required this.id,
+    required this.budgetId,
+    required this.startDate,
+    required this.endDate,
+    required this.totalIncome,
+    required this.totalAllocated,
+    required this.carriedRta,
+    required this.isClosed,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['budget_id'] = Variable<String>(budgetId);
+    map['start_date'] = Variable<DateTime>(startDate);
+    map['end_date'] = Variable<DateTime>(endDate);
+    map['total_income'] = Variable<int>(totalIncome);
+    map['total_allocated'] = Variable<int>(totalAllocated);
+    map['carried_rta'] = Variable<int>(carriedRta);
+    map['is_closed'] = Variable<bool>(isClosed);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  BudgetPeriodsCompanion toCompanion(bool nullToAbsent) {
+    return BudgetPeriodsCompanion(
+      id: Value(id),
+      budgetId: Value(budgetId),
+      startDate: Value(startDate),
+      endDate: Value(endDate),
+      totalIncome: Value(totalIncome),
+      totalAllocated: Value(totalAllocated),
+      carriedRta: Value(carriedRta),
+      isClosed: Value(isClosed),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory BudgetPeriod.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BudgetPeriod(
+      id: serializer.fromJson<String>(json['id']),
+      budgetId: serializer.fromJson<String>(json['budgetId']),
+      startDate: serializer.fromJson<DateTime>(json['startDate']),
+      endDate: serializer.fromJson<DateTime>(json['endDate']),
+      totalIncome: serializer.fromJson<int>(json['totalIncome']),
+      totalAllocated: serializer.fromJson<int>(json['totalAllocated']),
+      carriedRta: serializer.fromJson<int>(json['carriedRta']),
+      isClosed: serializer.fromJson<bool>(json['isClosed']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'budgetId': serializer.toJson<String>(budgetId),
+      'startDate': serializer.toJson<DateTime>(startDate),
+      'endDate': serializer.toJson<DateTime>(endDate),
+      'totalIncome': serializer.toJson<int>(totalIncome),
+      'totalAllocated': serializer.toJson<int>(totalAllocated),
+      'carriedRta': serializer.toJson<int>(carriedRta),
+      'isClosed': serializer.toJson<bool>(isClosed),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  BudgetPeriod copyWith({
+    String? id,
+    String? budgetId,
+    DateTime? startDate,
+    DateTime? endDate,
+    int? totalIncome,
+    int? totalAllocated,
+    int? carriedRta,
+    bool? isClosed,
+    DateTime? createdAt,
+  }) => BudgetPeriod(
+    id: id ?? this.id,
+    budgetId: budgetId ?? this.budgetId,
+    startDate: startDate ?? this.startDate,
+    endDate: endDate ?? this.endDate,
+    totalIncome: totalIncome ?? this.totalIncome,
+    totalAllocated: totalAllocated ?? this.totalAllocated,
+    carriedRta: carriedRta ?? this.carriedRta,
+    isClosed: isClosed ?? this.isClosed,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  BudgetPeriod copyWithCompanion(BudgetPeriodsCompanion data) {
+    return BudgetPeriod(
+      id: data.id.present ? data.id.value : this.id,
+      budgetId: data.budgetId.present ? data.budgetId.value : this.budgetId,
+      startDate: data.startDate.present ? data.startDate.value : this.startDate,
+      endDate: data.endDate.present ? data.endDate.value : this.endDate,
+      totalIncome: data.totalIncome.present
+          ? data.totalIncome.value
+          : this.totalIncome,
+      totalAllocated: data.totalAllocated.present
+          ? data.totalAllocated.value
+          : this.totalAllocated,
+      carriedRta: data.carriedRta.present
+          ? data.carriedRta.value
+          : this.carriedRta,
+      isClosed: data.isClosed.present ? data.isClosed.value : this.isClosed,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BudgetPeriod(')
+          ..write('id: $id, ')
+          ..write('budgetId: $budgetId, ')
+          ..write('startDate: $startDate, ')
+          ..write('endDate: $endDate, ')
+          ..write('totalIncome: $totalIncome, ')
+          ..write('totalAllocated: $totalAllocated, ')
+          ..write('carriedRta: $carriedRta, ')
+          ..write('isClosed: $isClosed, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    budgetId,
+    startDate,
+    endDate,
+    totalIncome,
+    totalAllocated,
+    carriedRta,
+    isClosed,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BudgetPeriod &&
+          other.id == this.id &&
+          other.budgetId == this.budgetId &&
+          other.startDate == this.startDate &&
+          other.endDate == this.endDate &&
+          other.totalIncome == this.totalIncome &&
+          other.totalAllocated == this.totalAllocated &&
+          other.carriedRta == this.carriedRta &&
+          other.isClosed == this.isClosed &&
+          other.createdAt == this.createdAt);
+}
+
+class BudgetPeriodsCompanion extends UpdateCompanion<BudgetPeriod> {
+  final Value<String> id;
+  final Value<String> budgetId;
+  final Value<DateTime> startDate;
+  final Value<DateTime> endDate;
+  final Value<int> totalIncome;
+  final Value<int> totalAllocated;
+  final Value<int> carriedRta;
+  final Value<bool> isClosed;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const BudgetPeriodsCompanion({
+    this.id = const Value.absent(),
+    this.budgetId = const Value.absent(),
+    this.startDate = const Value.absent(),
+    this.endDate = const Value.absent(),
+    this.totalIncome = const Value.absent(),
+    this.totalAllocated = const Value.absent(),
+    this.carriedRta = const Value.absent(),
+    this.isClosed = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  BudgetPeriodsCompanion.insert({
+    required String id,
+    required String budgetId,
+    required DateTime startDate,
+    required DateTime endDate,
+    this.totalIncome = const Value.absent(),
+    this.totalAllocated = const Value.absent(),
+    this.carriedRta = const Value.absent(),
+    this.isClosed = const Value.absent(),
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       budgetId = Value(budgetId),
+       startDate = Value(startDate),
+       endDate = Value(endDate),
+       createdAt = Value(createdAt);
+  static Insertable<BudgetPeriod> custom({
+    Expression<String>? id,
+    Expression<String>? budgetId,
+    Expression<DateTime>? startDate,
+    Expression<DateTime>? endDate,
+    Expression<int>? totalIncome,
+    Expression<int>? totalAllocated,
+    Expression<int>? carriedRta,
+    Expression<bool>? isClosed,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (budgetId != null) 'budget_id': budgetId,
+      if (startDate != null) 'start_date': startDate,
+      if (endDate != null) 'end_date': endDate,
+      if (totalIncome != null) 'total_income': totalIncome,
+      if (totalAllocated != null) 'total_allocated': totalAllocated,
+      if (carriedRta != null) 'carried_rta': carriedRta,
+      if (isClosed != null) 'is_closed': isClosed,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  BudgetPeriodsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? budgetId,
+    Value<DateTime>? startDate,
+    Value<DateTime>? endDate,
+    Value<int>? totalIncome,
+    Value<int>? totalAllocated,
+    Value<int>? carriedRta,
+    Value<bool>? isClosed,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return BudgetPeriodsCompanion(
+      id: id ?? this.id,
+      budgetId: budgetId ?? this.budgetId,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      totalIncome: totalIncome ?? this.totalIncome,
+      totalAllocated: totalAllocated ?? this.totalAllocated,
+      carriedRta: carriedRta ?? this.carriedRta,
+      isClosed: isClosed ?? this.isClosed,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (budgetId.present) {
+      map['budget_id'] = Variable<String>(budgetId.value);
+    }
+    if (startDate.present) {
+      map['start_date'] = Variable<DateTime>(startDate.value);
+    }
+    if (endDate.present) {
+      map['end_date'] = Variable<DateTime>(endDate.value);
+    }
+    if (totalIncome.present) {
+      map['total_income'] = Variable<int>(totalIncome.value);
+    }
+    if (totalAllocated.present) {
+      map['total_allocated'] = Variable<int>(totalAllocated.value);
+    }
+    if (carriedRta.present) {
+      map['carried_rta'] = Variable<int>(carriedRta.value);
+    }
+    if (isClosed.present) {
+      map['is_closed'] = Variable<bool>(isClosed.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BudgetPeriodsCompanion(')
+          ..write('id: $id, ')
+          ..write('budgetId: $budgetId, ')
+          ..write('startDate: $startDate, ')
+          ..write('endDate: $endDate, ')
+          ..write('totalIncome: $totalIncome, ')
+          ..write('totalAllocated: $totalAllocated, ')
+          ..write('carriedRta: $carriedRta, ')
+          ..write('isClosed: $isClosed, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -3538,7 +4054,17 @@ class $EnvelopeAllocationsTable extends EnvelopeAllocations
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _budgetPeriodIdMeta = const VerificationMeta(
+    'budgetPeriodId',
+  );
+  @override
+  late final GeneratedColumn<String> budgetPeriodId = GeneratedColumn<String>(
+    'budget_period_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
   );
   static const VerificationMeta _allocatedAmountMeta = const VerificationMeta(
     'allocatedAmount',
@@ -3546,6 +4072,30 @@ class $EnvelopeAllocationsTable extends EnvelopeAllocations
   @override
   late final GeneratedColumn<int> allocatedAmount = GeneratedColumn<int>(
     'allocated_amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _spentAmountMeta = const VerificationMeta(
+    'spentAmount',
+  );
+  @override
+  late final GeneratedColumn<int> spentAmount = GeneratedColumn<int>(
+    'spent_amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _rolloverAmountMeta = const VerificationMeta(
+    'rolloverAmount',
+  );
+  @override
+  late final GeneratedColumn<int> rolloverAmount = GeneratedColumn<int>(
+    'rollover_amount',
     aliasedName,
     false,
     type: DriftSqlType.int,
@@ -3567,7 +4117,10 @@ class $EnvelopeAllocationsTable extends EnvelopeAllocations
   List<GeneratedColumn> get $columns => [
     id,
     envelopeId,
+    budgetPeriodId,
     allocatedAmount,
+    spentAmount,
+    rolloverAmount,
     createdAt,
   ];
   @override
@@ -3595,12 +4148,41 @@ class $EnvelopeAllocationsTable extends EnvelopeAllocations
     } else if (isInserting) {
       context.missing(_envelopeIdMeta);
     }
+    if (data.containsKey('budget_period_id')) {
+      context.handle(
+        _budgetPeriodIdMeta,
+        budgetPeriodId.isAcceptableOrUnknown(
+          data['budget_period_id']!,
+          _budgetPeriodIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_budgetPeriodIdMeta);
+    }
     if (data.containsKey('allocated_amount')) {
       context.handle(
         _allocatedAmountMeta,
         allocatedAmount.isAcceptableOrUnknown(
           data['allocated_amount']!,
           _allocatedAmountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('spent_amount')) {
+      context.handle(
+        _spentAmountMeta,
+        spentAmount.isAcceptableOrUnknown(
+          data['spent_amount']!,
+          _spentAmountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('rollover_amount')) {
+      context.handle(
+        _rolloverAmountMeta,
+        rolloverAmount.isAcceptableOrUnknown(
+          data['rollover_amount']!,
+          _rolloverAmountMeta,
         ),
       );
     }
@@ -3629,9 +4211,21 @@ class $EnvelopeAllocationsTable extends EnvelopeAllocations
         DriftSqlType.string,
         data['${effectivePrefix}envelope_id'],
       )!,
+      budgetPeriodId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}budget_period_id'],
+      )!,
       allocatedAmount: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}allocated_amount'],
+      )!,
+      spentAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}spent_amount'],
+      )!,
+      rolloverAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}rollover_amount'],
       )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
@@ -3650,12 +4244,18 @@ class EnvelopeAllocation extends DataClass
     implements Insertable<EnvelopeAllocation> {
   final String id;
   final String envelopeId;
+  final String budgetPeriodId;
   final int allocatedAmount;
+  final int spentAmount;
+  final int rolloverAmount;
   final DateTime createdAt;
   const EnvelopeAllocation({
     required this.id,
     required this.envelopeId,
+    required this.budgetPeriodId,
     required this.allocatedAmount,
+    required this.spentAmount,
+    required this.rolloverAmount,
     required this.createdAt,
   });
   @override
@@ -3663,7 +4263,10 @@ class EnvelopeAllocation extends DataClass
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['envelope_id'] = Variable<String>(envelopeId);
+    map['budget_period_id'] = Variable<String>(budgetPeriodId);
     map['allocated_amount'] = Variable<int>(allocatedAmount);
+    map['spent_amount'] = Variable<int>(spentAmount);
+    map['rollover_amount'] = Variable<int>(rolloverAmount);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -3672,7 +4275,10 @@ class EnvelopeAllocation extends DataClass
     return EnvelopeAllocationsCompanion(
       id: Value(id),
       envelopeId: Value(envelopeId),
+      budgetPeriodId: Value(budgetPeriodId),
       allocatedAmount: Value(allocatedAmount),
+      spentAmount: Value(spentAmount),
+      rolloverAmount: Value(rolloverAmount),
       createdAt: Value(createdAt),
     );
   }
@@ -3685,7 +4291,10 @@ class EnvelopeAllocation extends DataClass
     return EnvelopeAllocation(
       id: serializer.fromJson<String>(json['id']),
       envelopeId: serializer.fromJson<String>(json['envelopeId']),
+      budgetPeriodId: serializer.fromJson<String>(json['budgetPeriodId']),
       allocatedAmount: serializer.fromJson<int>(json['allocatedAmount']),
+      spentAmount: serializer.fromJson<int>(json['spentAmount']),
+      rolloverAmount: serializer.fromJson<int>(json['rolloverAmount']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -3695,7 +4304,10 @@ class EnvelopeAllocation extends DataClass
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'envelopeId': serializer.toJson<String>(envelopeId),
+      'budgetPeriodId': serializer.toJson<String>(budgetPeriodId),
       'allocatedAmount': serializer.toJson<int>(allocatedAmount),
+      'spentAmount': serializer.toJson<int>(spentAmount),
+      'rolloverAmount': serializer.toJson<int>(rolloverAmount),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -3703,12 +4315,18 @@ class EnvelopeAllocation extends DataClass
   EnvelopeAllocation copyWith({
     String? id,
     String? envelopeId,
+    String? budgetPeriodId,
     int? allocatedAmount,
+    int? spentAmount,
+    int? rolloverAmount,
     DateTime? createdAt,
   }) => EnvelopeAllocation(
     id: id ?? this.id,
     envelopeId: envelopeId ?? this.envelopeId,
+    budgetPeriodId: budgetPeriodId ?? this.budgetPeriodId,
     allocatedAmount: allocatedAmount ?? this.allocatedAmount,
+    spentAmount: spentAmount ?? this.spentAmount,
+    rolloverAmount: rolloverAmount ?? this.rolloverAmount,
     createdAt: createdAt ?? this.createdAt,
   );
   EnvelopeAllocation copyWithCompanion(EnvelopeAllocationsCompanion data) {
@@ -3717,9 +4335,18 @@ class EnvelopeAllocation extends DataClass
       envelopeId: data.envelopeId.present
           ? data.envelopeId.value
           : this.envelopeId,
+      budgetPeriodId: data.budgetPeriodId.present
+          ? data.budgetPeriodId.value
+          : this.budgetPeriodId,
       allocatedAmount: data.allocatedAmount.present
           ? data.allocatedAmount.value
           : this.allocatedAmount,
+      spentAmount: data.spentAmount.present
+          ? data.spentAmount.value
+          : this.spentAmount,
+      rolloverAmount: data.rolloverAmount.present
+          ? data.rolloverAmount.value
+          : this.rolloverAmount,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -3729,57 +4356,87 @@ class EnvelopeAllocation extends DataClass
     return (StringBuffer('EnvelopeAllocation(')
           ..write('id: $id, ')
           ..write('envelopeId: $envelopeId, ')
+          ..write('budgetPeriodId: $budgetPeriodId, ')
           ..write('allocatedAmount: $allocatedAmount, ')
+          ..write('spentAmount: $spentAmount, ')
+          ..write('rolloverAmount: $rolloverAmount, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, envelopeId, allocatedAmount, createdAt);
+  int get hashCode => Object.hash(
+    id,
+    envelopeId,
+    budgetPeriodId,
+    allocatedAmount,
+    spentAmount,
+    rolloverAmount,
+    createdAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is EnvelopeAllocation &&
           other.id == this.id &&
           other.envelopeId == this.envelopeId &&
+          other.budgetPeriodId == this.budgetPeriodId &&
           other.allocatedAmount == this.allocatedAmount &&
+          other.spentAmount == this.spentAmount &&
+          other.rolloverAmount == this.rolloverAmount &&
           other.createdAt == this.createdAt);
 }
 
 class EnvelopeAllocationsCompanion extends UpdateCompanion<EnvelopeAllocation> {
   final Value<String> id;
   final Value<String> envelopeId;
+  final Value<String> budgetPeriodId;
   final Value<int> allocatedAmount;
+  final Value<int> spentAmount;
+  final Value<int> rolloverAmount;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
   const EnvelopeAllocationsCompanion({
     this.id = const Value.absent(),
     this.envelopeId = const Value.absent(),
+    this.budgetPeriodId = const Value.absent(),
     this.allocatedAmount = const Value.absent(),
+    this.spentAmount = const Value.absent(),
+    this.rolloverAmount = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   EnvelopeAllocationsCompanion.insert({
     required String id,
     required String envelopeId,
+    required String budgetPeriodId,
     this.allocatedAmount = const Value.absent(),
+    this.spentAmount = const Value.absent(),
+    this.rolloverAmount = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        envelopeId = Value(envelopeId),
+       budgetPeriodId = Value(budgetPeriodId),
        createdAt = Value(createdAt);
   static Insertable<EnvelopeAllocation> custom({
     Expression<String>? id,
     Expression<String>? envelopeId,
+    Expression<String>? budgetPeriodId,
     Expression<int>? allocatedAmount,
+    Expression<int>? spentAmount,
+    Expression<int>? rolloverAmount,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (envelopeId != null) 'envelope_id': envelopeId,
+      if (budgetPeriodId != null) 'budget_period_id': budgetPeriodId,
       if (allocatedAmount != null) 'allocated_amount': allocatedAmount,
+      if (spentAmount != null) 'spent_amount': spentAmount,
+      if (rolloverAmount != null) 'rollover_amount': rolloverAmount,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -3788,14 +4445,20 @@ class EnvelopeAllocationsCompanion extends UpdateCompanion<EnvelopeAllocation> {
   EnvelopeAllocationsCompanion copyWith({
     Value<String>? id,
     Value<String>? envelopeId,
+    Value<String>? budgetPeriodId,
     Value<int>? allocatedAmount,
+    Value<int>? spentAmount,
+    Value<int>? rolloverAmount,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
   }) {
     return EnvelopeAllocationsCompanion(
       id: id ?? this.id,
       envelopeId: envelopeId ?? this.envelopeId,
+      budgetPeriodId: budgetPeriodId ?? this.budgetPeriodId,
       allocatedAmount: allocatedAmount ?? this.allocatedAmount,
+      spentAmount: spentAmount ?? this.spentAmount,
+      rolloverAmount: rolloverAmount ?? this.rolloverAmount,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -3810,8 +4473,17 @@ class EnvelopeAllocationsCompanion extends UpdateCompanion<EnvelopeAllocation> {
     if (envelopeId.present) {
       map['envelope_id'] = Variable<String>(envelopeId.value);
     }
+    if (budgetPeriodId.present) {
+      map['budget_period_id'] = Variable<String>(budgetPeriodId.value);
+    }
     if (allocatedAmount.present) {
       map['allocated_amount'] = Variable<int>(allocatedAmount.value);
+    }
+    if (spentAmount.present) {
+      map['spent_amount'] = Variable<int>(spentAmount.value);
+    }
+    if (rolloverAmount.present) {
+      map['rollover_amount'] = Variable<int>(rolloverAmount.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
@@ -3827,7 +4499,10 @@ class EnvelopeAllocationsCompanion extends UpdateCompanion<EnvelopeAllocation> {
     return (StringBuffer('EnvelopeAllocationsCompanion(')
           ..write('id: $id, ')
           ..write('envelopeId: $envelopeId, ')
+          ..write('budgetPeriodId: $budgetPeriodId, ')
           ..write('allocatedAmount: $allocatedAmount, ')
+          ..write('spentAmount: $spentAmount, ')
+          ..write('rolloverAmount: $rolloverAmount, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -13097,6 +13772,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $UsersTable users = $UsersTable(this);
   late final $BudgetsTable budgets = $BudgetsTable(this);
   late final $BudgetMembersTable budgetMembers = $BudgetMembersTable(this);
+  late final $BudgetPeriodsTable budgetPeriods = $BudgetPeriodsTable(this);
   late final $AccountsTable accounts = $AccountsTable(this);
   late final $CategoryGroupsTable categoryGroups = $CategoryGroupsTable(this);
   late final $EnvelopesTable envelopes = $EnvelopesTable(this);
@@ -13149,6 +13825,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     users,
     budgets,
     budgetMembers,
+    budgetPeriods,
     accounts,
     categoryGroups,
     envelopes,
@@ -13439,7 +14116,6 @@ typedef $$BudgetsTableCreateCompanionBuilder =
       required String baseCurrency,
       Value<bool> isArchived,
       Value<int> openingBalance,
-      Value<int> accountSeedBalance,
       Value<DateTime?> openingDate,
       required DateTime createdAt,
       required DateTime updatedAt,
@@ -13455,7 +14131,6 @@ typedef $$BudgetsTableUpdateCompanionBuilder =
       Value<String> baseCurrency,
       Value<bool> isArchived,
       Value<int> openingBalance,
-      Value<int> accountSeedBalance,
       Value<DateTime?> openingDate,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -13508,11 +14183,6 @@ class $$BudgetsTableFilterComposer
 
   ColumnFilters<int> get openingBalance => $composableBuilder(
     column: $table.openingBalance,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get accountSeedBalance => $composableBuilder(
-    column: $table.accountSeedBalance,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13581,11 +14251,6 @@ class $$BudgetsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get accountSeedBalance => $composableBuilder(
-    column: $table.accountSeedBalance,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<DateTime> get openingDate => $composableBuilder(
     column: $table.openingDate,
     builder: (column) => ColumnOrderings(column),
@@ -13645,11 +14310,6 @@ class $$BudgetsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<int> get accountSeedBalance => $composableBuilder(
-    column: $table.accountSeedBalance,
-    builder: (column) => column,
-  );
-
   GeneratedColumn<DateTime> get openingDate => $composableBuilder(
     column: $table.openingDate,
     builder: (column) => column,
@@ -13698,7 +14358,6 @@ class $$BudgetsTableTableManager
                 Value<String> baseCurrency = const Value.absent(),
                 Value<bool> isArchived = const Value.absent(),
                 Value<int> openingBalance = const Value.absent(),
-                Value<int> accountSeedBalance = const Value.absent(),
                 Value<DateTime?> openingDate = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -13712,7 +14371,6 @@ class $$BudgetsTableTableManager
                 baseCurrency: baseCurrency,
                 isArchived: isArchived,
                 openingBalance: openingBalance,
-                accountSeedBalance: accountSeedBalance,
                 openingDate: openingDate,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -13728,7 +14386,6 @@ class $$BudgetsTableTableManager
                 required String baseCurrency,
                 Value<bool> isArchived = const Value.absent(),
                 Value<int> openingBalance = const Value.absent(),
-                Value<int> accountSeedBalance = const Value.absent(),
                 Value<DateTime?> openingDate = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
@@ -13742,7 +14399,6 @@ class $$BudgetsTableTableManager
                 baseCurrency: baseCurrency,
                 isArchived: isArchived,
                 openingBalance: openingBalance,
-                accountSeedBalance: accountSeedBalance,
                 openingDate: openingDate,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -14010,6 +14666,288 @@ typedef $$BudgetMembersTableProcessedTableManager =
         BaseReferences<_$AppDatabase, $BudgetMembersTable, BudgetMember>,
       ),
       BudgetMember,
+      PrefetchHooks Function()
+    >;
+typedef $$BudgetPeriodsTableCreateCompanionBuilder =
+    BudgetPeriodsCompanion Function({
+      required String id,
+      required String budgetId,
+      required DateTime startDate,
+      required DateTime endDate,
+      Value<int> totalIncome,
+      Value<int> totalAllocated,
+      Value<int> carriedRta,
+      Value<bool> isClosed,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$BudgetPeriodsTableUpdateCompanionBuilder =
+    BudgetPeriodsCompanion Function({
+      Value<String> id,
+      Value<String> budgetId,
+      Value<DateTime> startDate,
+      Value<DateTime> endDate,
+      Value<int> totalIncome,
+      Value<int> totalAllocated,
+      Value<int> carriedRta,
+      Value<bool> isClosed,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$BudgetPeriodsTableFilterComposer
+    extends Composer<_$AppDatabase, $BudgetPeriodsTable> {
+  $$BudgetPeriodsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get budgetId => $composableBuilder(
+    column: $table.budgetId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get startDate => $composableBuilder(
+    column: $table.startDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get endDate => $composableBuilder(
+    column: $table.endDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get totalIncome => $composableBuilder(
+    column: $table.totalIncome,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get totalAllocated => $composableBuilder(
+    column: $table.totalAllocated,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get carriedRta => $composableBuilder(
+    column: $table.carriedRta,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isClosed => $composableBuilder(
+    column: $table.isClosed,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$BudgetPeriodsTableOrderingComposer
+    extends Composer<_$AppDatabase, $BudgetPeriodsTable> {
+  $$BudgetPeriodsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get budgetId => $composableBuilder(
+    column: $table.budgetId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get startDate => $composableBuilder(
+    column: $table.startDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get endDate => $composableBuilder(
+    column: $table.endDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get totalIncome => $composableBuilder(
+    column: $table.totalIncome,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get totalAllocated => $composableBuilder(
+    column: $table.totalAllocated,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get carriedRta => $composableBuilder(
+    column: $table.carriedRta,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isClosed => $composableBuilder(
+    column: $table.isClosed,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$BudgetPeriodsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BudgetPeriodsTable> {
+  $$BudgetPeriodsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get budgetId =>
+      $composableBuilder(column: $table.budgetId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get startDate =>
+      $composableBuilder(column: $table.startDate, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get endDate =>
+      $composableBuilder(column: $table.endDate, builder: (column) => column);
+
+  GeneratedColumn<int> get totalIncome => $composableBuilder(
+    column: $table.totalIncome,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get totalAllocated => $composableBuilder(
+    column: $table.totalAllocated,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get carriedRta => $composableBuilder(
+    column: $table.carriedRta,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isClosed =>
+      $composableBuilder(column: $table.isClosed, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$BudgetPeriodsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $BudgetPeriodsTable,
+          BudgetPeriod,
+          $$BudgetPeriodsTableFilterComposer,
+          $$BudgetPeriodsTableOrderingComposer,
+          $$BudgetPeriodsTableAnnotationComposer,
+          $$BudgetPeriodsTableCreateCompanionBuilder,
+          $$BudgetPeriodsTableUpdateCompanionBuilder,
+          (
+            BudgetPeriod,
+            BaseReferences<_$AppDatabase, $BudgetPeriodsTable, BudgetPeriod>,
+          ),
+          BudgetPeriod,
+          PrefetchHooks Function()
+        > {
+  $$BudgetPeriodsTableTableManager(_$AppDatabase db, $BudgetPeriodsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BudgetPeriodsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BudgetPeriodsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BudgetPeriodsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> budgetId = const Value.absent(),
+                Value<DateTime> startDate = const Value.absent(),
+                Value<DateTime> endDate = const Value.absent(),
+                Value<int> totalIncome = const Value.absent(),
+                Value<int> totalAllocated = const Value.absent(),
+                Value<int> carriedRta = const Value.absent(),
+                Value<bool> isClosed = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => BudgetPeriodsCompanion(
+                id: id,
+                budgetId: budgetId,
+                startDate: startDate,
+                endDate: endDate,
+                totalIncome: totalIncome,
+                totalAllocated: totalAllocated,
+                carriedRta: carriedRta,
+                isClosed: isClosed,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String budgetId,
+                required DateTime startDate,
+                required DateTime endDate,
+                Value<int> totalIncome = const Value.absent(),
+                Value<int> totalAllocated = const Value.absent(),
+                Value<int> carriedRta = const Value.absent(),
+                Value<bool> isClosed = const Value.absent(),
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => BudgetPeriodsCompanion.insert(
+                id: id,
+                budgetId: budgetId,
+                startDate: startDate,
+                endDate: endDate,
+                totalIncome: totalIncome,
+                totalAllocated: totalAllocated,
+                carriedRta: carriedRta,
+                isClosed: isClosed,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$BudgetPeriodsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $BudgetPeriodsTable,
+      BudgetPeriod,
+      $$BudgetPeriodsTableFilterComposer,
+      $$BudgetPeriodsTableOrderingComposer,
+      $$BudgetPeriodsTableAnnotationComposer,
+      $$BudgetPeriodsTableCreateCompanionBuilder,
+      $$BudgetPeriodsTableUpdateCompanionBuilder,
+      (
+        BudgetPeriod,
+        BaseReferences<_$AppDatabase, $BudgetPeriodsTable, BudgetPeriod>,
+      ),
+      BudgetPeriod,
       PrefetchHooks Function()
     >;
 typedef $$AccountsTableCreateCompanionBuilder =
@@ -14890,7 +15828,10 @@ typedef $$EnvelopeAllocationsTableCreateCompanionBuilder =
     EnvelopeAllocationsCompanion Function({
       required String id,
       required String envelopeId,
+      required String budgetPeriodId,
       Value<int> allocatedAmount,
+      Value<int> spentAmount,
+      Value<int> rolloverAmount,
       required DateTime createdAt,
       Value<int> rowid,
     });
@@ -14898,7 +15839,10 @@ typedef $$EnvelopeAllocationsTableUpdateCompanionBuilder =
     EnvelopeAllocationsCompanion Function({
       Value<String> id,
       Value<String> envelopeId,
+      Value<String> budgetPeriodId,
       Value<int> allocatedAmount,
+      Value<int> spentAmount,
+      Value<int> rolloverAmount,
       Value<DateTime> createdAt,
       Value<int> rowid,
     });
@@ -14922,8 +15866,23 @@ class $$EnvelopeAllocationsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get budgetPeriodId => $composableBuilder(
+    column: $table.budgetPeriodId,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<int> get allocatedAmount => $composableBuilder(
     column: $table.allocatedAmount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get spentAmount => $composableBuilder(
+    column: $table.spentAmount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get rolloverAmount => $composableBuilder(
+    column: $table.rolloverAmount,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -14952,8 +15911,23 @@ class $$EnvelopeAllocationsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get budgetPeriodId => $composableBuilder(
+    column: $table.budgetPeriodId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get allocatedAmount => $composableBuilder(
     column: $table.allocatedAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get spentAmount => $composableBuilder(
+    column: $table.spentAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get rolloverAmount => $composableBuilder(
+    column: $table.rolloverAmount,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -14980,8 +15954,23 @@ class $$EnvelopeAllocationsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get budgetPeriodId => $composableBuilder(
+    column: $table.budgetPeriodId,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<int> get allocatedAmount => $composableBuilder(
     column: $table.allocatedAmount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get spentAmount => $composableBuilder(
+    column: $table.spentAmount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get rolloverAmount => $composableBuilder(
+    column: $table.rolloverAmount,
     builder: (column) => column,
   );
 
@@ -15034,13 +16023,19 @@ class $$EnvelopeAllocationsTableTableManager
               ({
                 Value<String> id = const Value.absent(),
                 Value<String> envelopeId = const Value.absent(),
+                Value<String> budgetPeriodId = const Value.absent(),
                 Value<int> allocatedAmount = const Value.absent(),
+                Value<int> spentAmount = const Value.absent(),
+                Value<int> rolloverAmount = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => EnvelopeAllocationsCompanion(
                 id: id,
                 envelopeId: envelopeId,
+                budgetPeriodId: budgetPeriodId,
                 allocatedAmount: allocatedAmount,
+                spentAmount: spentAmount,
+                rolloverAmount: rolloverAmount,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -15048,13 +16043,19 @@ class $$EnvelopeAllocationsTableTableManager
               ({
                 required String id,
                 required String envelopeId,
+                required String budgetPeriodId,
                 Value<int> allocatedAmount = const Value.absent(),
+                Value<int> spentAmount = const Value.absent(),
+                Value<int> rolloverAmount = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
               }) => EnvelopeAllocationsCompanion.insert(
                 id: id,
                 envelopeId: envelopeId,
+                budgetPeriodId: budgetPeriodId,
                 allocatedAmount: allocatedAmount,
+                spentAmount: spentAmount,
+                rolloverAmount: rolloverAmount,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -19817,6 +20818,8 @@ class $AppDatabaseManager {
       $$BudgetsTableTableManager(_db, _db.budgets);
   $$BudgetMembersTableTableManager get budgetMembers =>
       $$BudgetMembersTableTableManager(_db, _db.budgetMembers);
+  $$BudgetPeriodsTableTableManager get budgetPeriods =>
+      $$BudgetPeriodsTableTableManager(_db, _db.budgetPeriods);
   $$AccountsTableTableManager get accounts =>
       $$AccountsTableTableManager(_db, _db.accounts);
   $$CategoryGroupsTableTableManager get categoryGroups =>

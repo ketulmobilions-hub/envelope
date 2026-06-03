@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:account_repository/account_repository.dart';
 import 'package:bloc/bloc.dart';
+import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:transaction_repository/transaction_repository.dart';
@@ -12,11 +13,15 @@ class EnvelopeDetailCubit extends Cubit<EnvelopeDetailState> {
   EnvelopeDetailCubit({
     required EnvelopeRepository envelopeRepository,
     required TransactionRepository transactionRepository,
+    required BudgetRepository budgetRepository,
     required AccountRepository accountRepository,
     required Envelope envelope,
+    DateTime Function()? now,
   }) : _envelopeRepository = envelopeRepository,
        _transactionRepository = transactionRepository,
+       _budgetRepository = budgetRepository,
        _accountRepository = accountRepository,
+       _now = now ?? DateTime.now,
        super(EnvelopeDetailState(envelope: envelope)) {
     _transactionSubscription = transactionRepository
         .watchTransactions(
@@ -29,20 +34,28 @@ class EnvelopeDetailCubit extends Cubit<EnvelopeDetailState> {
           emit(state.copyWith(transactions: txns));
         });
 
-    _allocationSubscription = _envelopeRepository
-        .watchAllocationByEnvelopeId(envelope.id)
-        .listen((allocation) {
+    _allocationsSubscription = _envelopeRepository
+        .watchAllocationsForEnvelope(envelope.id)
+        .listen((allocations) {
           if (isClosed) return;
-          emit(state.copyWith(allocation: allocation));
+          emit(state.copyWith(allocations: allocations));
         });
 
-    _spentSubscription = _envelopeRepository
-        .watchSpentByEnvelopeForBudget(envelope.budgetId)
-        .listen((map) {
+    _periodsSubscription = _budgetRepository
+        .watchBudgetPeriods(envelope.budgetId)
+        .listen((periods) {
           if (isClosed) return;
-          emit(state.copyWith(spentTotalCents: map[envelope.id] ?? 0));
+          emit(
+            state.copyWith(
+              periods: periods,
+              currentPeriodId: _selectCurrentPeriodId(periods),
+            ),
+          );
         });
 
+    // CC Payment envelope: track the linked credit-card account's balance and
+    // credit limit so the detail header can show available-credit / due
+    // instead of the (meaningless here) allocated/spent figures.
     final linkedAccountId = envelope.linkedAccountId;
     if (linkedAccountId != null) {
       _accountsSubscription = _accountRepository
@@ -62,10 +75,12 @@ class EnvelopeDetailCubit extends Cubit<EnvelopeDetailState> {
 
   final EnvelopeRepository _envelopeRepository;
   final TransactionRepository _transactionRepository;
+  final BudgetRepository _budgetRepository;
   final AccountRepository _accountRepository;
+  final DateTime Function() _now;
   StreamSubscription<List<Transaction>>? _transactionSubscription;
-  StreamSubscription<EnvelopeAllocation?>? _allocationSubscription;
-  StreamSubscription<Map<String, int>>? _spentSubscription;
+  StreamSubscription<List<BudgetPeriod>>? _periodsSubscription;
+  StreamSubscription<List<EnvelopeAllocation>>? _allocationsSubscription;
   StreamSubscription<List<Account>>? _accountsSubscription;
 
   Future<void> _loadCreditLimit(String accountId) async {
@@ -74,8 +89,26 @@ class EnvelopeDetailCubit extends Cubit<EnvelopeDetailState> {
       if (isClosed) return;
       emit(state.copyWith(ccCreditLimit: debt?.creditLimit));
     } on Exception {
-      // Best-effort.
+      // Best-effort; header falls back to the "due" view without a limit.
     }
+  }
+
+  String? _selectCurrentPeriodId(List<BudgetPeriod> periods) {
+    if (periods.isEmpty) return null;
+    final now = _now();
+    final containing = BudgetRepository.periodForDate<BudgetPeriod>(
+      now,
+      periods,
+      startDate: (p) => p.startDate,
+      endDate: (p) => p.endDate,
+    );
+    if (containing != null) return containing.id;
+    // Fallback mirrors the previous behavior: latest non-closed period, or
+    // the most recent period overall.
+    final sorted = [...periods]
+      ..sort((a, b) => a.startDate.compareTo(b.startDate));
+    final openFallback = sorted.where((p) => !p.isClosed).lastOrNull;
+    return (openFallback ?? sorted.last).id;
   }
 
   Future<void> _refreshTransactions() async {
@@ -86,6 +119,7 @@ class EnvelopeDetailCubit extends Cubit<EnvelopeDetailState> {
     }
   }
 
+  /// Refreshes the envelope data from the repository.
   Future<void> refresh() async {
     try {
       final updated = await _envelopeRepository.getEnvelope(state.envelope.id);
@@ -95,6 +129,8 @@ class EnvelopeDetailCubit extends Cubit<EnvelopeDetailState> {
     }
   }
 
+  /// Deletes the envelope from the repository.
+  /// Returns `true` on success, `false` on failure.
   Future<bool> deleteEnvelope() async {
     try {
       await _envelopeRepository.deleteEnvelope(state.envelope.id);
@@ -107,8 +143,8 @@ class EnvelopeDetailCubit extends Cubit<EnvelopeDetailState> {
   @override
   Future<void> close() async {
     await _transactionSubscription?.cancel();
-    await _allocationSubscription?.cancel();
-    await _spentSubscription?.cancel();
+    await _periodsSubscription?.cancel();
+    await _allocationsSubscription?.cancel();
     await _accountsSubscription?.cancel();
     return super.close();
   }

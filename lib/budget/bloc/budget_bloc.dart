@@ -10,6 +10,10 @@ import 'package:transaction_repository/transaction_repository.dart';
 part 'budget_event.dart';
 part 'budget_state.dart';
 
+/// `(openingBalance, openingDate)` pair — the only `Budget` fields that
+/// affect RTA. Diffed in [BudgetBloc._onBudgetUpdated] to gate refreshes.
+typedef _OpeningAnchor = (int openingBalance, DateTime? openingDate);
+
 class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
   BudgetBloc({
     required BudgetRepository budgetRepository,
@@ -23,18 +27,21 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
        _goalRepository = goalRepository,
        _transactionRepository = transactionRepository,
        _budgetId = budgetId,
+       _now = now ?? DateTime.now,
        super(BudgetState()) {
     on<BudgetStarted>(_onStarted);
+    on<_BudgetUpdated>(_onBudgetUpdated);
+    on<_PeriodsUpdated>(_onPeriodsUpdated);
     on<_AllocationsUpdated>(_onAllocationsUpdated);
     on<_CategoryGroupsUpdated>(_onCategoryGroupsUpdated);
     on<_EnvelopesUpdated>(_onEnvelopesUpdated);
     on<_TransactionsChanged>(_onTransactionsChanged);
-    on<_SpentByEnvelopeUpdated>(_onSpentByEnvelopeUpdated);
     on<_TemplatesUpdated>(_onTemplatesUpdated);
     on<_GoalsUpdated>(_onGoalsUpdated);
-    on<_ReadyToAssignUpdated>(_onReadyToAssignUpdated);
     on<_BudgetStreamError>(_onStreamError);
     on<BudgetRefreshRequested>(_onRefreshRequested);
+    on<BudgetPreviousPeriodRequested>(_onPreviousPeriod);
+    on<BudgetNextPeriodRequested>(_onNextPeriod);
     on<AllocationAmountChanged>(_onAllocationAmountChanged);
     on<AllocationsSaveRequested>(_onAllocationsSaveRequested);
     on<EnvelopeTransferRequested>(_onTransferRequested);
@@ -42,6 +49,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     on<AllocationTemplateCreated>(_onTemplateCreated);
     on<AllocationTemplateUpdated>(_onTemplateUpdated);
     on<AllocationTemplateDeleted>(_onTemplateDeleted);
+    on<BudgetDuplicateFromPreviousPeriodRequested>(_onDuplicateFromPrevious);
   }
 
   final BudgetRepository _budgetRepository;
@@ -49,31 +57,51 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
   final GoalRepository _goalRepository;
   final TransactionRepository _transactionRepository;
   final String _budgetId;
+  final DateTime Function() _now;
 
+  StreamSubscription<Budget>? _budgetSubscription;
+  StreamSubscription<List<BudgetPeriod>>? _periodsSubscription;
   StreamSubscription<List<EnvelopeAllocation>>? _allocationsSubscription;
   StreamSubscription<List<CategoryGroup>>? _groupsSubscription;
   StreamSubscription<List<Envelope>>? _envelopesSubscription;
   StreamSubscription<List<AllocationTemplate>>? _templatesSubscription;
   StreamSubscription<List<Goal>>? _goalsSubscription;
   StreamSubscription<List<Transaction>>? _transactionsSubscription;
-  StreamSubscription<Map<String, int>>? _spentByEnvelopeSubscription;
-  StreamSubscription<int>? _readyToAssignSubscription;
 
-  /// Incremented on each BudgetStarted to discard stale events from prior
-  /// subscriptions.
+  // Incremented on each BudgetStarted to discard stale events from prior
+  // budget-level subscriptions.
   int _generation = 0;
 
-  bool _allocationsReceived = false;
+  // Incremented on each BudgetStarted or period change to discard stale
+  // allocation events from the prior period subscription.
+  int _allocationsGeneration = 0;
+
+  bool _periodsReceived = false;
   bool _groupsReceived = false;
   bool _envelopesReceived = false;
   bool _templatesReceived = false;
 
-  /// True once all four budget-level streams have emitted at least once.
+  // True while waiting for the first allocations emission for the current
+  // period. Prevents status flipping to loaded before allocations arrive.
+  bool _waitingForAllocations = false;
+
+  /// Last observed seed-cash anchor `(openingBalance, openingDate)`. Stored to
+  /// suppress redundant RTA refreshes when an unrelated budget field changes —
+  /// only diffs that affect RTA trigger work.
+  ///
+  /// Reset to `null` in [_onStarted] BEFORE the new subscription is created;
+  /// the generation guard on `_BudgetUpdated` rejects late events from the
+  /// prior subscription, so the reset cannot leak a stale anchor.
+  _OpeningAnchor? _lastOpeningAnchor;
+
+  /// True once all four budget-level streams have emitted at least once AND
+  /// the current period's allocations have been received.
   bool get _isLoaded =>
-      _allocationsReceived &&
+      _periodsReceived &&
       _groupsReceived &&
       _envelopesReceived &&
-      _templatesReceived;
+      _templatesReceived &&
+      !_waitingForAllocations;
 
   Future<void> _onStarted(
     BudgetStarted event,
@@ -82,28 +110,40 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     emit(state.copyWith(status: BudgetStatus.loading));
 
     _generation++;
-    _allocationsReceived = false;
+    _allocationsGeneration++;
+    _periodsReceived = false;
     _groupsReceived = false;
     _envelopesReceived = false;
     _templatesReceived = false;
+    _waitingForAllocations = false;
+    _lastOpeningAnchor = null;
 
     await Future.wait([
+      _budgetSubscription?.cancel() ?? Future<void>.value(),
+      _periodsSubscription?.cancel() ?? Future<void>.value(),
       _allocationsSubscription?.cancel() ?? Future<void>.value(),
       _groupsSubscription?.cancel() ?? Future<void>.value(),
       _envelopesSubscription?.cancel() ?? Future<void>.value(),
       _templatesSubscription?.cancel() ?? Future<void>.value(),
       _goalsSubscription?.cancel() ?? Future<void>.value(),
       _transactionsSubscription?.cancel() ?? Future<void>.value(),
-      _spentByEnvelopeSubscription?.cancel() ?? Future<void>.value(),
-      _readyToAssignSubscription?.cancel() ?? Future<void>.value(),
     ]);
 
     final gen = _generation;
 
-    _allocationsSubscription = _envelopeRepository
-        .watchAllocationsByBudgetId(_budgetId)
+    _budgetSubscription = _budgetRepository.watchBudget(_budgetId).listen(
+      (budget) => add(_BudgetUpdated(budget, gen)),
+      // A transient watch error here only blocks anchor-shift refreshes; the
+      // rest of the budget screen remains usable. Swallow rather than flip
+      // the whole screen to error (matches the "keep previous value" stance
+      // in [_onBudgetUpdated]).
+      onError: (Object _) {},
+    );
+
+    _periodsSubscription = _budgetRepository
+        .watchBudgetPeriods(_budgetId)
         .listen(
-          (allocations) => add(_AllocationsUpdated(allocations, gen)),
+          (periods) => add(_PeriodsUpdated(periods, gen)),
           onError: (Object _) => add(const _BudgetStreamError()),
         );
 
@@ -135,6 +175,10 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
           onError: (Object _) => add(const _BudgetStreamError()),
         );
 
+    // CC Payment availability is derived from credit-card charge/payment
+    // history, so it must recompute whenever transactions change — adding or
+    // deleting a credit-card expense does not touch the stored allocations
+    // this bloc otherwise watches.
     _transactionsSubscription = _transactionRepository
         .watchTransactions(budgetId: _budgetId)
         .listen(
@@ -142,25 +186,11 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
           onError: (Object _) => add(const _BudgetStreamError()),
         );
 
-    _spentByEnvelopeSubscription = _envelopeRepository
-        .watchSpentByEnvelopeForBudget(_budgetId)
-        .listen(
-          (spent) => add(_SpentByEnvelopeUpdated(spent, gen)),
-          onError: (Object _) => add(const _BudgetStreamError()),
-        );
-
-    _readyToAssignSubscription = _budgetRepository
-        .watchReadyToAssign(_budgetId)
-        .listen(
-          (rta) => add(_ReadyToAssignUpdated(rta, gen)),
-          onError: (Object _) {},
-        );
-
     try {
       await Future.wait([
+        _budgetRepository.refreshBudgetPeriods(_budgetId),
         _envelopeRepository.refreshCategoryGroups(_budgetId),
         _envelopeRepository.refreshEnvelopes(_budgetId),
-        _envelopeRepository.refreshAllocations(_budgetId),
         _budgetRepository.refreshAllocationTemplates(_budgetId),
         _goalRepository.refreshGoals(_budgetId),
       ]);
@@ -173,25 +203,128 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     }
   }
 
-  void _onGoalsUpdated(_GoalsUpdated event, Emitter<BudgetState> emit) {
+  void _onGoalsUpdated(
+    _GoalsUpdated event,
+    Emitter<BudgetState> emit,
+  ) {
     if (event.generation != _generation) return;
     emit(state.copyWith(goals: event.goals));
   }
 
-  void _onReadyToAssignUpdated(
-    _ReadyToAssignUpdated event,
+  Future<void> _onBudgetUpdated(
+    _BudgetUpdated event,
     Emitter<BudgetState> emit,
-  ) {
+  ) async {
     if (event.generation != _generation) return;
-    emit(state.copyWith(readyToAssign: event.readyToAssign));
+
+    final anchor = (event.budget.openingBalance, event.budget.openingDate);
+    if (_lastOpeningAnchor == anchor) return;
+    final previousAnchor = _lastOpeningAnchor;
+    _lastOpeningAnchor = anchor;
+
+    // Periods stream not yet emitted → no period to refresh RTA for. The
+    // cache is still updated above so future identical emissions dedup
+    // correctly; `_onAllocationsUpdated` will read the current budget when it
+    // computes the initial RTA, so the new anchor lands without us
+    // recomputing here.
+    final selected = state.selectedPeriod;
+    if (selected == null) return;
+
+    // First non-trivial emission with a selected period — `_onAllocationsUpdated`
+    // already computed RTA against this anchor, no extra refresh needed.
+    if (previousAnchor == null) return;
+
+    try {
+      final readyToAssign = await _budgetRepository.calculateReadyToAssign(
+        selected.id,
+      );
+      emit(state.copyWith(readyToAssign: readyToAssign));
+    } on BudgetException {
+      // Keep previous value.
+    }
+  }
+
+  Future<void> _onPeriodsUpdated(
+    _PeriodsUpdated event,
+    Emitter<BudgetState> emit,
+  ) async {
+    if (event.generation != _generation) return;
+    _periodsReceived = true;
+
+    final sortedPeriods = [...event.periods]
+      ..sort((a, b) => a.startDate.compareTo(b.startDate));
+
+    var selected = state.selectedPeriod;
+    final previousSelectedId = state.selectedPeriod?.id;
+
+    if (selected == null && sortedPeriods.isNotEmpty) {
+      // Auto-select the period that contains today, or fall back to latest.
+      final now = _now();
+      // If the latest period ends before "now", create the missing periods
+      // forward and bail; the watch stream will re-fire this handler with
+      // the new period list.
+      final latest = sortedPeriods.last;
+      if (latest.endDate.isBefore(now)) {
+        try {
+          await _budgetRepository.ensureCurrentPeriod(_budgetId, asOf: now);
+          return;
+        } on BudgetException {
+          // Fall through to existing selection on failure.
+        }
+      }
+      selected = sortedPeriods.firstWhere(
+        (p) => !p.startDate.isAfter(now) && !p.endDate.isBefore(now),
+        orElse: () => sortedPeriods.last,
+      );
+    } else if (selected != null) {
+      // Refresh selected period reference with latest data from stream.
+      final fresh = sortedPeriods
+          .where((p) => p.id == selected!.id)
+          .firstOrNull;
+      if (fresh != null) {
+        selected = fresh;
+      } else if (sortedPeriods.isNotEmpty) {
+        // Period was removed — fall back to latest.
+        selected = sortedPeriods.last;
+      }
+    }
+
+    // Signal that we're waiting for allocations before marking loaded.
+    if (selected != null && selected.id != previousSelectedId) {
+      _waitingForAllocations = true;
+    }
+
+    emit(
+      state.copyWith(
+        status: _isLoaded ? BudgetStatus.loaded : state.status,
+        periods: event.periods,
+        selectedPeriod: selected,
+      ),
+    );
+
+    // Subscribe to allocations when period is determined or changed.
+    if (selected != null && selected.id != previousSelectedId) {
+      await _subscribeToAllocations(selected.id);
+    }
   }
 
   Future<void> _onAllocationsUpdated(
     _AllocationsUpdated event,
     Emitter<BudgetState> emit,
   ) async {
-    if (event.generation != _generation) return;
-    _allocationsReceived = true;
+    if (event.generation != _allocationsGeneration) return;
+    _waitingForAllocations = false;
+
+    var readyToAssign = state.readyToAssign;
+    if (state.selectedPeriod != null) {
+      try {
+        readyToAssign = await _budgetRepository.calculateReadyToAssign(
+          state.selectedPeriod!.id,
+        );
+      } on BudgetException {
+        // Keep previous value on error.
+      }
+    }
 
     final ccAvailable = await _computeCCPaymentAvailable(
       allocations: event.allocations,
@@ -202,6 +335,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
       state.copyWith(
         status: _isLoaded ? BudgetStatus.loaded : state.status,
         allocations: event.allocations,
+        readyToAssign: readyToAssign,
         ccPaymentAvailable: ccAvailable,
       ),
     );
@@ -211,13 +345,10 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     required List<EnvelopeAllocation> allocations,
     required List<Envelope> envelopes,
   }) async {
+    final period = state.selectedPeriod;
+    if (period == null) return const {};
     final ccEnvelopes = envelopes.where((e) => e.linkedAccountId != null);
     final result = <String, int>{};
-    // Bound the charges/payments sum to the current calendar month so the
-    // value tracks this billing cycle rather than the lifetime delta.
-    final now = DateTime.now();
-    final periodStart = DateTime(now.year, now.month);
-    final periodEnd = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
     for (final env in ccEnvelopes) {
       final alloc = allocations
           .where((a) => a.envelopeId == env.id)
@@ -226,11 +357,11 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
         result[env.id] = await _envelopeRepository.calculateCCPaymentAvailable(
           allocation: alloc,
           ccAccountId: env.linkedAccountId!,
-          periodStart: periodStart,
-          periodEnd: periodEnd,
+          periodStart: period.startDate,
+          periodEnd: period.endDate,
         );
       } on Exception {
-        // Best-effort.
+        // Best-effort; fall back to standard calculation.
       }
     }
     return result;
@@ -241,22 +372,11 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     Emitter<BudgetState> emit,
   ) async {
     if (event.generation != _generation) return;
-    // CC payment availability depends on transaction history but uses its
-    // own DAO query, so just trigger the recompute here. spentByEnvelope is
-    // emitted by a separate DAO stream that already folds in splits.
     final ccAvailable = await _computeCCPaymentAvailable(
       allocations: state.allocations,
       envelopes: state.envelopes,
     );
     emit(state.copyWith(ccPaymentAvailable: ccAvailable));
-  }
-
-  void _onSpentByEnvelopeUpdated(
-    _SpentByEnvelopeUpdated event,
-    Emitter<BudgetState> emit,
-  ) {
-    if (event.generation != _generation) return;
-    emit(state.copyWith(spentByEnvelope: event.spentByEnvelope));
   }
 
   void _onCategoryGroupsUpdated(
@@ -306,7 +426,10 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     );
   }
 
-  void _onStreamError(_BudgetStreamError event, Emitter<BudgetState> emit) {
+  void _onStreamError(
+    _BudgetStreamError event,
+    Emitter<BudgetState> emit,
+  ) {
     emit(
       state.copyWith(
         status: BudgetStatus.error,
@@ -322,14 +445,19 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
   ) async {
     emit(state.copyWith(status: BudgetStatus.loading));
     try {
-      await Future.wait([
+      final futures = <Future<void>>[
+        _budgetRepository.refreshBudgetPeriods(_budgetId),
         _envelopeRepository.refreshCategoryGroups(_budgetId),
         _envelopeRepository.refreshEnvelopes(_budgetId),
-        _envelopeRepository.refreshAllocations(_budgetId),
         _budgetRepository.refreshAllocationTemplates(_budgetId),
         _goalRepository.refreshGoals(_budgetId),
-      ]);
-      emit(state.copyWith(status: BudgetStatus.loaded));
+      ];
+      if (state.selectedPeriod != null) {
+        futures.add(
+          _envelopeRepository.refreshAllocations(state.selectedPeriod!.id),
+        );
+      }
+      await Future.wait(futures);
     } on BudgetException {
       emit(state.copyWith(status: BudgetStatus.loaded));
     } on EnvelopeException {
@@ -337,6 +465,46 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     } on GoalException {
       emit(state.copyWith(status: BudgetStatus.loaded));
     }
+  }
+
+  Future<void> _onPreviousPeriod(
+    BudgetPreviousPeriodRequested event,
+    Emitter<BudgetState> emit,
+  ) async {
+    final sorted = state.sortedPeriods;
+    final idx = sorted.indexWhere((p) => p.id == state.selectedPeriod?.id);
+    if (idx <= 0) return;
+
+    final newPeriod = sorted[idx - 1];
+    emit(
+      state.copyWith(
+        selectedPeriod: newPeriod,
+        allocations: const [],
+        localAllocations: const {},
+        readyToAssign: 0,
+      ),
+    );
+    await _subscribeToAllocations(newPeriod.id);
+  }
+
+  Future<void> _onNextPeriod(
+    BudgetNextPeriodRequested event,
+    Emitter<BudgetState> emit,
+  ) async {
+    final sorted = state.sortedPeriods;
+    final idx = sorted.indexWhere((p) => p.id == state.selectedPeriod?.id);
+    if (idx < 0 || idx >= sorted.length - 1) return;
+
+    final newPeriod = sorted[idx + 1];
+    emit(
+      state.copyWith(
+        selectedPeriod: newPeriod,
+        allocations: const [],
+        localAllocations: const {},
+        readyToAssign: 0,
+      ),
+    );
+    await _subscribeToAllocations(newPeriod.id);
   }
 
   void _onAllocationAmountChanged(
@@ -352,24 +520,40 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     AllocationsSaveRequested event,
     Emitter<BudgetState> emit,
   ) async {
-    if (state.localAllocations.isEmpty) return;
+    if (state.selectedPeriod == null || state.localAllocations.isEmpty) return;
 
-    // Track which entries have NOT yet been saved so the user can retry only
-    // the unsaved ones on partial failure.
+    final periodId = state.selectedPeriod!.id;
+
+    // Track which entries have NOT yet been saved so that on partial failure
+    // the user can retry only the unsaved ones.
     final remaining = Map<String, int>.from(state.localAllocations);
 
     try {
       for (final entry in state.localAllocations.entries) {
         final envelopeId = entry.key;
         final amount = entry.value;
-        await _envelopeRepository.allocate(
-          envelopeId: envelopeId,
-          amount: amount,
-        );
+
+        final existing = state.allocations
+            .where((a) => a.envelopeId == envelopeId)
+            .firstOrNull;
+
+        if (existing != null) {
+          await _envelopeRepository.updateAllocation(
+            existing.copyWith(allocatedAmount: amount),
+          );
+        } else {
+          await _envelopeRepository.allocate(
+            envelopeId: envelopeId,
+            budgetPeriodId: periodId,
+            amount: amount,
+          );
+        }
         remaining.remove(envelopeId);
       }
       emit(state.copyWith(localAllocations: const {}));
     } on EnvelopeException {
+      // Preserve only the entries that were not yet written so the user can
+      // retry without re-sending allocations that already succeeded.
       emit(
         state.copyWith(
           localAllocations: remaining,
@@ -412,9 +596,11 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     AllocationTemplateApplied event,
     Emitter<BudgetState> emit,
   ) async {
+    if (state.selectedPeriod == null) return;
     try {
       await _budgetRepository.applyAllocationTemplate(
         templateId: event.templateId,
+        budgetPeriodId: state.selectedPeriod!.id,
         totalAmount: event.totalAmount,
       );
     } on BudgetException {
@@ -483,16 +669,66 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     }
   }
 
+  Future<void> _onDuplicateFromPrevious(
+    BudgetDuplicateFromPreviousPeriodRequested event,
+    Emitter<BudgetState> emit,
+  ) async {
+    if (state.selectedPeriod == null || !state.hasPreviousPeriod) return;
+
+    final sorted = state.sortedPeriods;
+    final idx = sorted.indexWhere((p) => p.id == state.selectedPeriod!.id);
+    final previousPeriodId = sorted[idx - 1].id;
+
+    try {
+      await _budgetRepository.duplicateAllocations(
+        fromPeriodId: previousPeriodId,
+        toPeriodId: state.selectedPeriod!.id,
+      );
+    } on BudgetException {
+      emit(
+        state.copyWith(
+          status: BudgetStatus.error,
+          error: BudgetError.allocationFailed,
+        ),
+      );
+      emit(state.copyWith(status: BudgetStatus.loaded, error: null));
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Private helpers
+  // ---------------------------------------------------------------------------
+
+  Future<void> _subscribeToAllocations(String periodId) async {
+    _waitingForAllocations = true;
+    _allocationsGeneration++;
+    await _allocationsSubscription?.cancel();
+
+    final gen = _allocationsGeneration;
+    _allocationsSubscription = _envelopeRepository
+        .watchAllocations(periodId)
+        .listen(
+          (allocations) => add(_AllocationsUpdated(allocations, gen)),
+          onError: (Object _) => add(const _BudgetStreamError()),
+        );
+
+    try {
+      await _envelopeRepository.refreshAllocations(periodId);
+    } on EnvelopeException {
+      // Local watch will still show cached data.
+    }
+  }
+
   @override
   Future<void> close() async {
+    await _budgetSubscription?.cancel();
+    await _periodsSubscription?.cancel();
     await _allocationsSubscription?.cancel();
     await _groupsSubscription?.cancel();
     await _envelopesSubscription?.cancel();
     await _templatesSubscription?.cancel();
     await _goalsSubscription?.cancel();
     await _transactionsSubscription?.cancel();
-    await _spentByEnvelopeSubscription?.cancel();
-    await _readyToAssignSubscription?.cancel();
     return super.close();
   }
 }

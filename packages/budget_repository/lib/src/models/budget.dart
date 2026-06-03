@@ -16,20 +16,16 @@ abstract class Budget with _$Budget {
     @Default(1) int periodStartDay,
     @Default(false) bool isArchived,
 
-    /// Legacy seed cash plus pre-#82 historical period income (folded by
-    /// migration 00041). Set during onboarding and never overwritten by the
-    /// periodic account-balance refresh. Folds directly into Ready-to-Assign
-    /// alongside [accountSeedBalance].
+    /// Sum of on-budget account starting balances in cents.
+    ///
+    /// Added to "Ready to Assign" in whichever period contains
+    /// [openingDate] and propagates forward via `carriedRta`. This decouples
+    /// seed cash from the onboarding month so backdated transactions can be
+    /// covered by allocations.
     @Default(0) int openingBalance,
 
-    /// Cached sum of on-budget account starting balances (clamped at zero),
-    /// kept in sync by `BudgetRepository.refreshOpeningBalanceForBudget`
-    /// whenever an account's starting balance changes. Distinct from
-    /// [openingBalance] so the legacy seed and migrated historical income
-    /// survive routine account edits.
-    @Default(0) int accountSeedBalance,
-
-    /// Date the opening balance is anchored to.
+    /// Date the opening balance is anchored to. Shifts earlier when a
+    /// period is backfilled before it.
     DateTime? openingDate,
   }) = _Budget;
 

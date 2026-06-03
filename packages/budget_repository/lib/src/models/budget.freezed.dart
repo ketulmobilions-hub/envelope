@@ -23,20 +23,16 @@ mixin _$Budget {
   int get periodStartDay;
   bool get isArchived;
 
-  /// Legacy seed cash plus pre-#82 historical period income (folded by
-  /// migration 00041). Set during onboarding and never overwritten by the
-  /// periodic account-balance refresh. Folds directly into Ready-to-Assign
-  /// alongside [accountSeedBalance].
+  /// Sum of on-budget account starting balances in cents.
+  ///
+  /// Added to "Ready to Assign" in whichever period contains
+  /// [openingDate] and propagates forward via `carriedRta`. This decouples
+  /// seed cash from the onboarding month so backdated transactions can be
+  /// covered by allocations.
   int get openingBalance;
 
-  /// Cached sum of on-budget account starting balances (clamped at zero),
-  /// kept in sync by `BudgetRepository.refreshOpeningBalanceForBudget`
-  /// whenever an account's starting balance changes. Distinct from
-  /// [openingBalance] so the legacy seed and migrated historical income
-  /// survive routine account edits.
-  int get accountSeedBalance;
-
-  /// Date the opening balance is anchored to.
+  /// Date the opening balance is anchored to. Shifts earlier when a
+  /// period is backfilled before it.
   DateTime? get openingDate;
 
   /// Create a copy of Budget
@@ -71,8 +67,6 @@ mixin _$Budget {
                 other.isArchived == isArchived) &&
             (identical(other.openingBalance, openingBalance) ||
                 other.openingBalance == openingBalance) &&
-            (identical(other.accountSeedBalance, accountSeedBalance) ||
-                other.accountSeedBalance == accountSeedBalance) &&
             (identical(other.openingDate, openingDate) ||
                 other.openingDate == openingDate));
   }
@@ -91,13 +85,12 @@ mixin _$Budget {
     periodStartDay,
     isArchived,
     openingBalance,
-    accountSeedBalance,
     openingDate,
   );
 
   @override
   String toString() {
-    return 'Budget(id: $id, ownerId: $ownerId, name: $name, baseCurrency: $baseCurrency, createdAt: $createdAt, updatedAt: $updatedAt, periodType: $periodType, periodStartDay: $periodStartDay, isArchived: $isArchived, openingBalance: $openingBalance, accountSeedBalance: $accountSeedBalance, openingDate: $openingDate)';
+    return 'Budget(id: $id, ownerId: $ownerId, name: $name, baseCurrency: $baseCurrency, createdAt: $createdAt, updatedAt: $updatedAt, periodType: $periodType, periodStartDay: $periodStartDay, isArchived: $isArchived, openingBalance: $openingBalance, openingDate: $openingDate)';
   }
 }
 
@@ -117,7 +110,6 @@ abstract mixin class $BudgetCopyWith<$Res> {
     int periodStartDay,
     bool isArchived,
     int openingBalance,
-    int accountSeedBalance,
     DateTime? openingDate,
   });
 }
@@ -144,7 +136,6 @@ class _$BudgetCopyWithImpl<$Res> implements $BudgetCopyWith<$Res> {
     Object? periodStartDay = null,
     Object? isArchived = null,
     Object? openingBalance = null,
-    Object? accountSeedBalance = null,
     Object? openingDate = freezed,
   }) {
     return _then(
@@ -188,10 +179,6 @@ class _$BudgetCopyWithImpl<$Res> implements $BudgetCopyWith<$Res> {
         openingBalance: null == openingBalance
             ? _self.openingBalance
             : openingBalance // ignore: cast_nullable_to_non_nullable
-                  as int,
-        accountSeedBalance: null == accountSeedBalance
-            ? _self.accountSeedBalance
-            : accountSeedBalance // ignore: cast_nullable_to_non_nullable
                   as int,
         openingDate: freezed == openingDate
             ? _self.openingDate
@@ -306,7 +293,6 @@ extension BudgetPatterns on Budget {
       int periodStartDay,
       bool isArchived,
       int openingBalance,
-      int accountSeedBalance,
       DateTime? openingDate,
     )?
     $default, {
@@ -326,7 +312,6 @@ extension BudgetPatterns on Budget {
           _that.periodStartDay,
           _that.isArchived,
           _that.openingBalance,
-          _that.accountSeedBalance,
           _that.openingDate,
         );
       case _:
@@ -360,7 +345,6 @@ extension BudgetPatterns on Budget {
       int periodStartDay,
       bool isArchived,
       int openingBalance,
-      int accountSeedBalance,
       DateTime? openingDate,
     )
     $default,
@@ -379,7 +363,6 @@ extension BudgetPatterns on Budget {
           _that.periodStartDay,
           _that.isArchived,
           _that.openingBalance,
-          _that.accountSeedBalance,
           _that.openingDate,
         );
       case _:
@@ -412,7 +395,6 @@ extension BudgetPatterns on Budget {
       int periodStartDay,
       bool isArchived,
       int openingBalance,
-      int accountSeedBalance,
       DateTime? openingDate,
     )?
     $default,
@@ -431,7 +413,6 @@ extension BudgetPatterns on Budget {
           _that.periodStartDay,
           _that.isArchived,
           _that.openingBalance,
-          _that.accountSeedBalance,
           _that.openingDate,
         );
       case _:
@@ -454,7 +435,6 @@ class _Budget implements Budget {
     this.periodStartDay = 1,
     this.isArchived = false,
     this.openingBalance = 0,
-    this.accountSeedBalance = 0,
     this.openingDate,
   });
   factory _Budget.fromJson(Map<String, dynamic> json) => _$BudgetFromJson(json);
@@ -481,24 +461,18 @@ class _Budget implements Budget {
   @JsonKey()
   final bool isArchived;
 
-  /// Legacy seed cash plus pre-#82 historical period income (folded by
-  /// migration 00041). Set during onboarding and never overwritten by the
-  /// periodic account-balance refresh. Folds directly into Ready-to-Assign
-  /// alongside [accountSeedBalance].
+  /// Sum of on-budget account starting balances in cents.
+  ///
+  /// Added to "Ready to Assign" in whichever period contains
+  /// [openingDate] and propagates forward via `carriedRta`. This decouples
+  /// seed cash from the onboarding month so backdated transactions can be
+  /// covered by allocations.
   @override
   @JsonKey()
   final int openingBalance;
 
-  /// Cached sum of on-budget account starting balances (clamped at zero),
-  /// kept in sync by `BudgetRepository.refreshOpeningBalanceForBudget`
-  /// whenever an account's starting balance changes. Distinct from
-  /// [openingBalance] so the legacy seed and migrated historical income
-  /// survive routine account edits.
-  @override
-  @JsonKey()
-  final int accountSeedBalance;
-
-  /// Date the opening balance is anchored to.
+  /// Date the opening balance is anchored to. Shifts earlier when a
+  /// period is backfilled before it.
   @override
   final DateTime? openingDate;
 
@@ -537,8 +511,6 @@ class _Budget implements Budget {
                 other.isArchived == isArchived) &&
             (identical(other.openingBalance, openingBalance) ||
                 other.openingBalance == openingBalance) &&
-            (identical(other.accountSeedBalance, accountSeedBalance) ||
-                other.accountSeedBalance == accountSeedBalance) &&
             (identical(other.openingDate, openingDate) ||
                 other.openingDate == openingDate));
   }
@@ -557,13 +529,12 @@ class _Budget implements Budget {
     periodStartDay,
     isArchived,
     openingBalance,
-    accountSeedBalance,
     openingDate,
   );
 
   @override
   String toString() {
-    return 'Budget(id: $id, ownerId: $ownerId, name: $name, baseCurrency: $baseCurrency, createdAt: $createdAt, updatedAt: $updatedAt, periodType: $periodType, periodStartDay: $periodStartDay, isArchived: $isArchived, openingBalance: $openingBalance, accountSeedBalance: $accountSeedBalance, openingDate: $openingDate)';
+    return 'Budget(id: $id, ownerId: $ownerId, name: $name, baseCurrency: $baseCurrency, createdAt: $createdAt, updatedAt: $updatedAt, periodType: $periodType, periodStartDay: $periodStartDay, isArchived: $isArchived, openingBalance: $openingBalance, openingDate: $openingDate)';
   }
 }
 
@@ -584,7 +555,6 @@ abstract mixin class _$BudgetCopyWith<$Res> implements $BudgetCopyWith<$Res> {
     int periodStartDay,
     bool isArchived,
     int openingBalance,
-    int accountSeedBalance,
     DateTime? openingDate,
   });
 }
@@ -611,7 +581,6 @@ class __$BudgetCopyWithImpl<$Res> implements _$BudgetCopyWith<$Res> {
     Object? periodStartDay = null,
     Object? isArchived = null,
     Object? openingBalance = null,
-    Object? accountSeedBalance = null,
     Object? openingDate = freezed,
   }) {
     return _then(
@@ -655,10 +624,6 @@ class __$BudgetCopyWithImpl<$Res> implements _$BudgetCopyWith<$Res> {
         openingBalance: null == openingBalance
             ? _self.openingBalance
             : openingBalance // ignore: cast_nullable_to_non_nullable
-                  as int,
-        accountSeedBalance: null == accountSeedBalance
-            ? _self.accountSeedBalance
-            : accountSeedBalance // ignore: cast_nullable_to_non_nullable
                   as int,
         openingDate: freezed == openingDate
             ? _self.openingDate

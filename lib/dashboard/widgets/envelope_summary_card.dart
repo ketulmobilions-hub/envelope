@@ -362,10 +362,6 @@ class _CategoryGroupSection extends StatelessWidget {
               .firstOrNull
         : null;
 
-    final spentByEnvelope = {
-      for (final s in dashState.envelopeSummaries)
-        s.envelope.id: s.spent,
-    };
     final result = await showCoverOverspendDialog(
       context,
       budgetRepository: context.read<BudgetRepository>(),
@@ -375,7 +371,6 @@ class _CategoryGroupSection extends StatelessWidget {
       overspentAllocation: summary.allocation!,
       overspentEnvelopeName: summary.envelope.name,
       deficitCents: -summary.available,
-      spentByEnvelope: spentByEnvelope,
       readyToAssign: dashState.readyToAssign,
       ccPaymentAllocation: ccPaymentAllocation,
     );
@@ -395,6 +390,7 @@ class _CategoryGroupSection extends StatelessWidget {
     final budgetId =
         context.read<SharedPreferences>().getString(activeBudgetIdKey) ?? '';
     final userId = context.read<AuthBloc>().state.user?.id ?? '';
+    final budgetPeriodId = dashState.selectedPeriod?.id;
     final ccDebtCents = (-ccAccount.currentBalance).clamp(0, maxCentsAmount);
 
     await showCCPayBottomSheet(
@@ -405,6 +401,7 @@ class _CategoryGroupSection extends StatelessWidget {
       accounts: dashState.accounts,
       budgetId: budgetId,
       userId: userId,
+      budgetPeriodId: budgetPeriodId,
       ccPaymentEnvelopeId: ccPaymentEnvelopeId,
     );
 
@@ -428,7 +425,9 @@ class _CategoryGroupSection extends StatelessWidget {
               envelopeRepository: context.read<EnvelopeRepository>(),
               envelope: summary.envelope,
               transactionRepository: context.read<TransactionRepository>(),
+              budgetRepository: context.read<BudgetRepository>(),
               accountRepository: context.read<AccountRepository>(),
+              now: context.read<AppClock>().now,
             ),
             child: EnvelopeDetailPage(
               categoryGroups: categoryGroups,

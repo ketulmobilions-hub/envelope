@@ -6,7 +6,7 @@ part 'budget_vs_actual_report.g.dart';
 @freezed
 abstract class BudgetVsActualReport with _$BudgetVsActualReport {
   const factory BudgetVsActualReport({
-    required String budgetId,
+    required String budgetPeriodId,
     required DateTime startDate,
     required DateTime endDate,
     required int totalAllocated,

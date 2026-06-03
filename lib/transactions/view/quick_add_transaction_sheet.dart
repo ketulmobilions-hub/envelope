@@ -41,6 +41,7 @@ Future<bool?> showTransactionFormSheet(
   BuildContext context, {
   required String budgetId,
   required String userId,
+  String? budgetPeriodId,
   Transaction? transaction,
   String? initialType,
   TransactionTemplate? initialTemplate,
@@ -62,6 +63,7 @@ Future<bool?> showTransactionFormSheet(
         envelopeRepository: ctx.read<EnvelopeRepository>(),
         budgetRepository: ctx.read<BudgetRepository>(),
         budgetId: budgetId,
+        budgetPeriodId: budgetPeriodId,
         userId: userId,
         transaction: transaction,
         now: ctx.read<AppClock>().now,
@@ -407,23 +409,15 @@ class _QuickAddTransactionSheetState extends State<QuickAddTransactionSheet> {
       return;
     }
 
-    final envelopeRepo = context.read<EnvelopeRepository>();
-    final spentByEnvelope = <String, int>{};
-    for (final a in data.allocations) {
-      spentByEnvelope[a.envelopeId] =
-          await envelopeRepo.sumSpentForEnvelope(a.envelopeId);
-    }
-    if (!mounted) return;
     final coverResult = await showCoverOverspendDialog(
       context,
       budgetRepository: context.read<BudgetRepository>(),
-      envelopeRepository: envelopeRepo,
+      envelopeRepository: context.read<EnvelopeRepository>(),
       allocations: data.allocations,
       envelopes: data.envelopes,
       overspentAllocation: data.overspentAllocation,
       overspentEnvelopeName: data.envelopeName,
       deficitCents: data.deficitCents.abs(),
-      spentByEnvelope: spentByEnvelope,
       readyToAssign: data.readyToAssign,
       ccPaymentAllocation: data.ccPaymentAllocation,
     );

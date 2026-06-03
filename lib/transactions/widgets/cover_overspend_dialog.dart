@@ -38,7 +38,6 @@ Future<bool?> showCoverOverspendDialog(
   required EnvelopeAllocation overspentAllocation,
   required String overspentEnvelopeName,
   required int deficitCents,
-  required Map<String, int> spentByEnvelope,
   int readyToAssign = 0,
   EnvelopeAllocation? ccPaymentAllocation,
 }) {
@@ -52,7 +51,6 @@ Future<bool?> showCoverOverspendDialog(
       overspentAllocation: overspentAllocation,
       overspentEnvelopeName: overspentEnvelopeName,
       deficitCents: deficitCents,
-      spentByEnvelope: spentByEnvelope,
       readyToAssign: readyToAssign,
       ccPaymentAllocation: ccPaymentAllocation,
     ),
@@ -73,7 +71,6 @@ class _CoverOverspendDialog extends StatefulWidget {
     required this.overspentEnvelopeName,
     required this.deficitCents,
     required this.readyToAssign,
-    required this.spentByEnvelope,
     this.ccPaymentAllocation,
   });
 
@@ -85,11 +82,7 @@ class _CoverOverspendDialog extends StatefulWidget {
   final String overspentEnvelopeName;
   final int deficitCents;
   final int readyToAssign;
-  final Map<String, int> spentByEnvelope;
   final EnvelopeAllocation? ccPaymentAllocation;
-
-  int availableFor(EnvelopeAllocation a) =>
-      a.allocatedAmount - (spentByEnvelope[a.envelopeId] ?? 0);
 
   @override
   State<_CoverOverspendDialog> createState() => _CoverOverspendDialogState();
@@ -115,7 +108,7 @@ class _CoverOverspendDialogState extends State<_CoverOverspendDialog> {
     final envelopeSources = widget.allocations
         .where((a) {
           if (a.id == widget.overspentAllocation.id) return false;
-          return widget.availableFor(a) > 0;
+          return EnvelopeRepository.calculateRollover(a) > 0;
         })
         .map((a) {
           final env = widget.envelopes
@@ -191,7 +184,7 @@ class _CoverOverspendDialogState extends State<_CoverOverspendDialog> {
                     _EnvelopeSource(:final envelope, :final allocation) => Text(
                       '${envelope.name} '
                       '(${formatCents(
-                        widget.availableFor(allocation),
+                        EnvelopeRepository.calculateRollover(allocation),
                         symbol: symbol,
                       )})',
                     ),
@@ -230,7 +223,10 @@ class _CoverOverspendDialogState extends State<_CoverOverspendDialog> {
                   return l10n.overspendCoverInsufficientFunds;
                 }
                 if (source is _EnvelopeSource &&
-                    cents > widget.availableFor(source.allocation)) {
+                    cents >
+                        EnvelopeRepository.calculateRollover(
+                          source.allocation,
+                        )) {
                   return l10n.overspendCoverInsufficientFunds;
                 }
                 return null;

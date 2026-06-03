@@ -19,6 +19,7 @@ class ReportsPage extends StatelessWidget {
     return BlocProvider(
       create: (_) => ReportsBloc(
         reportRepository: context.read<ReportRepository>(),
+        budgetRepository: context.read<BudgetRepository>(),
         budgetId: budgetId,
         exportFileWriter: platformExportFileWriter,
         fileSharer: platformFileSharer,

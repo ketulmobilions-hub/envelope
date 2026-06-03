@@ -15,8 +15,11 @@ T _$identity<T>(T value) => value;
 mixin _$EnvelopeAllocation {
   String get id;
   String get envelopeId;
+  String get budgetPeriodId;
   DateTime get createdAt;
   int get allocatedAmount;
+  int get spentAmount;
+  int get rolloverAmount;
 
   /// Create a copy of EnvelopeAllocation
   /// with the given fields replaced by the non-null parameter values.
@@ -39,20 +42,34 @@ mixin _$EnvelopeAllocation {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.envelopeId, envelopeId) ||
                 other.envelopeId == envelopeId) &&
+            (identical(other.budgetPeriodId, budgetPeriodId) ||
+                other.budgetPeriodId == budgetPeriodId) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.allocatedAmount, allocatedAmount) ||
-                other.allocatedAmount == allocatedAmount));
+                other.allocatedAmount == allocatedAmount) &&
+            (identical(other.spentAmount, spentAmount) ||
+                other.spentAmount == spentAmount) &&
+            (identical(other.rolloverAmount, rolloverAmount) ||
+                other.rolloverAmount == rolloverAmount));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, envelopeId, createdAt, allocatedAmount);
+  int get hashCode => Object.hash(
+    runtimeType,
+    id,
+    envelopeId,
+    budgetPeriodId,
+    createdAt,
+    allocatedAmount,
+    spentAmount,
+    rolloverAmount,
+  );
 
   @override
   String toString() {
-    return 'EnvelopeAllocation(id: $id, envelopeId: $envelopeId, createdAt: $createdAt, allocatedAmount: $allocatedAmount)';
+    return 'EnvelopeAllocation(id: $id, envelopeId: $envelopeId, budgetPeriodId: $budgetPeriodId, createdAt: $createdAt, allocatedAmount: $allocatedAmount, spentAmount: $spentAmount, rolloverAmount: $rolloverAmount)';
   }
 }
 
@@ -66,8 +83,11 @@ abstract mixin class $EnvelopeAllocationCopyWith<$Res> {
   $Res call({
     String id,
     String envelopeId,
+    String budgetPeriodId,
     DateTime createdAt,
     int allocatedAmount,
+    int spentAmount,
+    int rolloverAmount,
   });
 }
 
@@ -86,8 +106,11 @@ class _$EnvelopeAllocationCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? envelopeId = null,
+    Object? budgetPeriodId = null,
     Object? createdAt = null,
     Object? allocatedAmount = null,
+    Object? spentAmount = null,
+    Object? rolloverAmount = null,
   }) {
     return _then(
       _self.copyWith(
@@ -99,6 +122,10 @@ class _$EnvelopeAllocationCopyWithImpl<$Res>
             ? _self.envelopeId
             : envelopeId // ignore: cast_nullable_to_non_nullable
                   as String,
+        budgetPeriodId: null == budgetPeriodId
+            ? _self.budgetPeriodId
+            : budgetPeriodId // ignore: cast_nullable_to_non_nullable
+                  as String,
         createdAt: null == createdAt
             ? _self.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
@@ -106,6 +133,14 @@ class _$EnvelopeAllocationCopyWithImpl<$Res>
         allocatedAmount: null == allocatedAmount
             ? _self.allocatedAmount
             : allocatedAmount // ignore: cast_nullable_to_non_nullable
+                  as int,
+        spentAmount: null == spentAmount
+            ? _self.spentAmount
+            : spentAmount // ignore: cast_nullable_to_non_nullable
+                  as int,
+        rolloverAmount: null == rolloverAmount
+            ? _self.rolloverAmount
+            : rolloverAmount // ignore: cast_nullable_to_non_nullable
                   as int,
       ),
     );
@@ -208,8 +243,11 @@ extension EnvelopeAllocationPatterns on EnvelopeAllocation {
     TResult Function(
       String id,
       String envelopeId,
+      String budgetPeriodId,
       DateTime createdAt,
       int allocatedAmount,
+      int spentAmount,
+      int rolloverAmount,
     )?
     $default, {
     required TResult orElse(),
@@ -220,8 +258,11 @@ extension EnvelopeAllocationPatterns on EnvelopeAllocation {
         return $default(
           _that.id,
           _that.envelopeId,
+          _that.budgetPeriodId,
           _that.createdAt,
           _that.allocatedAmount,
+          _that.spentAmount,
+          _that.rolloverAmount,
         );
       case _:
         return orElse();
@@ -246,8 +287,11 @@ extension EnvelopeAllocationPatterns on EnvelopeAllocation {
     TResult Function(
       String id,
       String envelopeId,
+      String budgetPeriodId,
       DateTime createdAt,
       int allocatedAmount,
+      int spentAmount,
+      int rolloverAmount,
     )
     $default,
   ) {
@@ -257,8 +301,11 @@ extension EnvelopeAllocationPatterns on EnvelopeAllocation {
         return $default(
           _that.id,
           _that.envelopeId,
+          _that.budgetPeriodId,
           _that.createdAt,
           _that.allocatedAmount,
+          _that.spentAmount,
+          _that.rolloverAmount,
         );
       case _:
         throw StateError('Unexpected subclass');
@@ -282,8 +329,11 @@ extension EnvelopeAllocationPatterns on EnvelopeAllocation {
     TResult? Function(
       String id,
       String envelopeId,
+      String budgetPeriodId,
       DateTime createdAt,
       int allocatedAmount,
+      int spentAmount,
+      int rolloverAmount,
     )?
     $default,
   ) {
@@ -293,8 +343,11 @@ extension EnvelopeAllocationPatterns on EnvelopeAllocation {
         return $default(
           _that.id,
           _that.envelopeId,
+          _that.budgetPeriodId,
           _that.createdAt,
           _that.allocatedAmount,
+          _that.spentAmount,
+          _that.rolloverAmount,
         );
       case _:
         return null;
@@ -308,8 +361,11 @@ class _EnvelopeAllocation implements EnvelopeAllocation {
   const _EnvelopeAllocation({
     required this.id,
     required this.envelopeId,
+    required this.budgetPeriodId,
     required this.createdAt,
     this.allocatedAmount = 0,
+    this.spentAmount = 0,
+    this.rolloverAmount = 0,
   });
   factory _EnvelopeAllocation.fromJson(Map<String, dynamic> json) =>
       _$EnvelopeAllocationFromJson(json);
@@ -319,10 +375,18 @@ class _EnvelopeAllocation implements EnvelopeAllocation {
   @override
   final String envelopeId;
   @override
+  final String budgetPeriodId;
+  @override
   final DateTime createdAt;
   @override
   @JsonKey()
   final int allocatedAmount;
+  @override
+  @JsonKey()
+  final int spentAmount;
+  @override
+  @JsonKey()
+  final int rolloverAmount;
 
   /// Create a copy of EnvelopeAllocation
   /// with the given fields replaced by the non-null parameter values.
@@ -345,20 +409,34 @@ class _EnvelopeAllocation implements EnvelopeAllocation {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.envelopeId, envelopeId) ||
                 other.envelopeId == envelopeId) &&
+            (identical(other.budgetPeriodId, budgetPeriodId) ||
+                other.budgetPeriodId == budgetPeriodId) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             (identical(other.allocatedAmount, allocatedAmount) ||
-                other.allocatedAmount == allocatedAmount));
+                other.allocatedAmount == allocatedAmount) &&
+            (identical(other.spentAmount, spentAmount) ||
+                other.spentAmount == spentAmount) &&
+            (identical(other.rolloverAmount, rolloverAmount) ||
+                other.rolloverAmount == rolloverAmount));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, envelopeId, createdAt, allocatedAmount);
+  int get hashCode => Object.hash(
+    runtimeType,
+    id,
+    envelopeId,
+    budgetPeriodId,
+    createdAt,
+    allocatedAmount,
+    spentAmount,
+    rolloverAmount,
+  );
 
   @override
   String toString() {
-    return 'EnvelopeAllocation(id: $id, envelopeId: $envelopeId, createdAt: $createdAt, allocatedAmount: $allocatedAmount)';
+    return 'EnvelopeAllocation(id: $id, envelopeId: $envelopeId, budgetPeriodId: $budgetPeriodId, createdAt: $createdAt, allocatedAmount: $allocatedAmount, spentAmount: $spentAmount, rolloverAmount: $rolloverAmount)';
   }
 }
 
@@ -374,8 +452,11 @@ abstract mixin class _$EnvelopeAllocationCopyWith<$Res>
   $Res call({
     String id,
     String envelopeId,
+    String budgetPeriodId,
     DateTime createdAt,
     int allocatedAmount,
+    int spentAmount,
+    int rolloverAmount,
   });
 }
 
@@ -394,8 +475,11 @@ class __$EnvelopeAllocationCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? envelopeId = null,
+    Object? budgetPeriodId = null,
     Object? createdAt = null,
     Object? allocatedAmount = null,
+    Object? spentAmount = null,
+    Object? rolloverAmount = null,
   }) {
     return _then(
       _EnvelopeAllocation(
@@ -407,6 +491,10 @@ class __$EnvelopeAllocationCopyWithImpl<$Res>
             ? _self.envelopeId
             : envelopeId // ignore: cast_nullable_to_non_nullable
                   as String,
+        budgetPeriodId: null == budgetPeriodId
+            ? _self.budgetPeriodId
+            : budgetPeriodId // ignore: cast_nullable_to_non_nullable
+                  as String,
         createdAt: null == createdAt
             ? _self.createdAt
             : createdAt // ignore: cast_nullable_to_non_nullable
@@ -414,6 +502,14 @@ class __$EnvelopeAllocationCopyWithImpl<$Res>
         allocatedAmount: null == allocatedAmount
             ? _self.allocatedAmount
             : allocatedAmount // ignore: cast_nullable_to_non_nullable
+                  as int,
+        spentAmount: null == spentAmount
+            ? _self.spentAmount
+            : spentAmount // ignore: cast_nullable_to_non_nullable
+                  as int,
+        rolloverAmount: null == rolloverAmount
+            ? _self.rolloverAmount
+            : rolloverAmount // ignore: cast_nullable_to_non_nullable
                   as int,
       ),
     );

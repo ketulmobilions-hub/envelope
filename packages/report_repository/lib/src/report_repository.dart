@@ -232,41 +232,34 @@ class ReportRepository {
   // Budget vs Actual Report
   // -------------------------------------------------------------------
 
-  /// Gets a budget vs actual report for a date range.
-  ///
-  /// Allocations are global (one row per envelope). "Spent" is derived from
-  /// transactions in the `[startDate, endDate]` window, grouped by envelope.
+  /// Gets a budget vs actual report for a budget period.
   Future<BudgetVsActualReport> getBudgetVsActualReport({
-    required String budgetId,
-    required DateTime startDate,
-    required DateTime endDate,
+    required String budgetPeriodId,
   }) async {
     try {
-      final allocations = await _localDatabase.envelopesDao
-          .getAllocationsByBudgetId(budgetId);
-
-      final envelopes = await _localDatabase.envelopesDao
-          .getEnvelopesByBudgetId(budgetId);
-      final categoryGroups = await _localDatabase.envelopesDao
-          .getCategoryGroupsByBudgetId(budgetId);
-
-      final envelopeMap = {for (final e in envelopes) e.id: e};
-      final groupMap = {for (final g in categoryGroups) g.id: g};
-
-      final allTxns = await _localDatabase.transactionsDao
-          .getTransactionsByBudgetId(budgetId);
-      final spentByEnvelope = <String, int>{};
-      for (final t in allTxns) {
-        if (t.deletedAt != null) continue;
-        if (t.type != 'expense') continue;
-        if (t.envelopeId == null) continue;
-        if (t.date.isBefore(startDate) || t.date.isAfter(endDate)) continue;
-        spentByEnvelope.update(
-          t.envelopeId!,
-          (sum) => sum + t.baseCurrencyAmount,
-          ifAbsent: () => t.baseCurrencyAmount,
+      final period = await _localDatabase.budgetsDao.getBudgetPeriod(
+        budgetPeriodId,
+      );
+      if (period == null) {
+        throw const ReportException(
+          'Budget period not found',
         );
       }
+
+      final allocations = await _localDatabase.envelopesDao
+          .getAllocationsByPeriodId(budgetPeriodId);
+
+      final envelopes = await _localDatabase.envelopesDao
+          .getEnvelopesByBudgetId(period.budgetId);
+      final categoryGroups = await _localDatabase.envelopesDao
+          .getCategoryGroupsByBudgetId(period.budgetId);
+
+      final envelopeMap = {
+        for (final e in envelopes) e.id: e,
+      };
+      final groupMap = {
+        for (final g in categoryGroups) g.id: g,
+      };
 
       var totalAllocated = 0;
       var totalSpent = 0;
@@ -278,9 +271,8 @@ class ReportRepository {
             ? groupMap[envelope.categoryGroupId]
             : null;
 
-        final spent = spentByEnvelope[alloc.envelopeId] ?? 0;
         totalAllocated += alloc.allocatedAmount;
-        totalSpent += spent;
+        totalSpent += alloc.spentAmount;
 
         items.add(
           BudgetVsActualItem(
@@ -288,16 +280,16 @@ class ReportRepository {
             envelopeName: envelope?.name ?? 'Unknown',
             categoryGroupName: group?.name ?? 'Unknown',
             allocated: alloc.allocatedAmount,
-            spent: spent,
-            remaining: alloc.allocatedAmount - spent,
+            spent: alloc.spentAmount,
+            remaining: alloc.allocatedAmount - alloc.spentAmount,
           ),
         );
       }
 
       return BudgetVsActualReport(
-        budgetId: budgetId,
-        startDate: startDate,
-        endDate: endDate,
+        budgetPeriodId: budgetPeriodId,
+        startDate: period.startDate,
+        endDate: period.endDate,
         totalAllocated: totalAllocated,
         totalSpent: totalSpent,
         items: items,

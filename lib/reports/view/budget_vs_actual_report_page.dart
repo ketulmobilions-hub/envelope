@@ -7,16 +7,6 @@ import 'package:envelope/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-DateTime _defaultStart() {
-  final now = DateTime.now();
-  return DateTime(now.year, now.month);
-}
-
-DateTime _defaultEnd() {
-  final now = DateTime.now();
-  return DateTime(now.year, now.month + 1, 0, 23, 59, 59);
-}
-
 /// Budget vs Actual report page with horizontal bar chart.
 class BudgetVsActualReportPage extends StatelessWidget {
   const BudgetVsActualReportPage({super.key});
@@ -29,36 +19,35 @@ class BudgetVsActualReportPage extends StatelessWidget {
       appBar: AppBar(title: Text(l10n.reportsBudgetVsActualTitle)),
       body: BlocBuilder<ReportsBloc, ReportsState>(
         builder: (context, state) {
-          final startDate = state.startDate ?? _defaultStart();
-          final endDate = state.endDate ?? _defaultEnd();
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              ReportDateRangeSelector(
-                startDate: startDate,
-                endDate: endDate,
-                onDateRangeSelected: (start, end) {
-                  context.read<ReportsBloc>().add(
-                    BudgetVsActualReportRequested(
-                      startDate: start,
-                      endDate: end,
-                    ),
-                  );
-                },
-              ),
+              // Period dropdown
+              if (state.budgetPeriods.isNotEmpty)
+                ReportPeriodDropdown(
+                  periods: state.budgetPeriods,
+                  selectedPeriodId: state.selectedPeriodId,
+                  onPeriodSelected: (periodId) {
+                    context.read<ReportsBloc>().add(
+                      BudgetVsActualReportRequested(periodId: periodId),
+                    );
+                  },
+                ),
               const SizedBox(height: 16),
+              // Load button if no report yet
               if (state.budgetVsActualReport == null &&
                   state.status != ReportsStatus.loading)
                 Center(
                   child: FilledButton(
-                    onPressed: () {
-                      context.read<ReportsBloc>().add(
-                        BudgetVsActualReportRequested(
-                          startDate: startDate,
-                          endDate: endDate,
-                        ),
-                      );
-                    },
+                    onPressed: state.selectedPeriodId != null
+                        ? () {
+                            context.read<ReportsBloc>().add(
+                              BudgetVsActualReportRequested(
+                                periodId: state.selectedPeriodId!,
+                              ),
+                            );
+                          }
+                        : null,
                     child: Text(l10n.reportsBudgetVsActualTitle),
                   ),
                 ),

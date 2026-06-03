@@ -535,65 +535,72 @@ class EnvelopeRepository {
   /// Creates an allocation for an envelope in a budget period.
   Future<EnvelopeAllocation> allocate({
     required String envelopeId,
+    required String budgetPeriodId,
     required int amount,
   }) async {
     _beginLocalWrite();
     try {
-      final existing = await _apiClient.envelopes.getAllocationByEnvelope(
-        envelopeId,
+      final dto = EnvelopeAllocationDto(
+        id: '',
+        envelopeId: envelopeId,
+        budgetPeriodId: budgetPeriodId,
+        allocatedAmount: amount,
+        createdAt: DateTime.now(),
       );
-      EnvelopeAllocationDto result;
-      if (existing == null) {
-        final dto = EnvelopeAllocationDto(
-          id: '',
-          envelopeId: envelopeId,
-          allocatedAmount: amount,
-          createdAt: DateTime.now(),
-        );
-        result = await _apiClient.envelopes.createEnvelopeAllocation(dto);
-      } else {
-        result = await _apiClient.envelopes.updateEnvelopeAllocation(
-          existing.copyWith(allocatedAmount: amount),
-        );
-      }
-      await _cacheAllocation(result);
+
+      final created = await _apiClient.envelopes.createEnvelopeAllocation(dto);
+      await _cacheAllocation(created);
       _endLocalWrite();
-      return _mapAllocationFromDto(result);
+      return _mapAllocationFromDto(created);
     } on EnvelopeApiException catch (e) {
       _endLocalWrite();
       throw EnvelopeException(
-        'Failed to set allocation',
+        'Failed to create allocation',
         error: e,
       );
     }
   }
 
-  /// Ensures a \$0 allocation record exists for [envelopeId].
+  /// Ensures a \$0 allocation record exists for [envelopeId] in [budgetPeriodId].
   ///
-  /// No-op if one already exists.
-  Future<void> ensureAllocation({required String envelopeId}) async {
+  /// No-op if one already exists. Called before creating expense transactions
+  /// so the DB spent-amount trigger has a row to update.
+  Future<void> ensureAllocation({
+    required String envelopeId,
+    required String budgetPeriodId,
+  }) async {
     final existing = await _localDatabase.envelopesDao
-        .getAllocationByEnvelopeId(envelopeId);
+        .getAllocationByEnvelopeAndPeriod(envelopeId, budgetPeriodId);
     if (existing != null) return;
-    await allocate(envelopeId: envelopeId, amount: 0);
+    await allocate(
+      envelopeId: envelopeId,
+      budgetPeriodId: budgetPeriodId,
+      amount: 0,
+    );
   }
 
-  /// Gets the global allocation for [envelopeId], or null when missing.
-  Future<EnvelopeAllocation?> getEnvelopeAllocation(String envelopeId) async {
-    final local = await _localDatabase.envelopesDao.getAllocationByEnvelopeId(
-      envelopeId,
-    );
+  /// Gets the allocation for [envelopeId] in [budgetPeriodId], or null.
+  Future<EnvelopeAllocation?> getEnvelopeAllocationByEnvelopeAndPeriod({
+    required String envelopeId,
+    required String budgetPeriodId,
+  }) async {
+    final local = await _localDatabase.envelopesDao
+        .getAllocationByEnvelopeAndPeriod(envelopeId, budgetPeriodId);
     if (local != null) return _mapAllocationFromLocal(local);
     return null;
   }
 
-  /// Watches all allocations for a [budgetId]. One row per envelope.
-  Stream<List<EnvelopeAllocation>> watchAllocationsByBudgetId(
-    String budgetId,
+  /// Watches all allocations for a [budgetPeriodId].
+  ///
+  /// Returns a reactive stream from local storage.
+  Stream<List<EnvelopeAllocation>> watchAllocations(
+    String budgetPeriodId,
   ) {
     return _localDatabase.envelopesDao
-        .watchAllocationsByBudgetId(budgetId)
-        .map((rows) => rows.map(_mapAllocationFromLocal).toList())
+        .watchAllocationsByPeriodId(budgetPeriodId)
+        .map(
+          (rows) => rows.map(_mapAllocationFromLocal).toList(),
+        )
         .handleError(
           (Object error) => throw EnvelopeException(
             'Failed to watch allocations',
@@ -602,34 +609,45 @@ class EnvelopeRepository {
         );
   }
 
-  /// Watches the single allocation row for [envelopeId], or null if missing.
-  Stream<EnvelopeAllocation?> watchAllocationByEnvelopeId(String envelopeId) {
+  /// Watches all allocations for an [envelopeId] across every period.
+  ///
+  /// Returns a reactive stream from local storage. Used by goal-progress
+  /// computation, which sums balances across periods to avoid current-period
+  /// detection mismatches.
+  Stream<List<EnvelopeAllocation>> watchAllocationsForEnvelope(
+    String envelopeId,
+  ) {
     return _localDatabase.envelopesDao
-        .watchAllocationByEnvelopeId(envelopeId)
-        .map((row) => row == null ? null : _mapAllocationFromLocal(row))
+        .watchAllocationsByEnvelopeId(envelopeId)
+        .map(
+          (rows) => rows.map(_mapAllocationFromLocal).toList(),
+        )
         .handleError(
           (Object error) => throw EnvelopeException(
-            'Failed to watch allocation',
+            'Failed to watch allocations for envelope',
             error: error,
           ),
         );
   }
 
-  /// Patches the `allocatedAmount` column on [allocation]'s row. Uses a
-  /// column-targeted PostgREST update so a concurrent peer change to any
-  /// other column is not clobbered by a read-modify-write window.
-  Future<void> updateAllocation(EnvelopeAllocation allocation) async {
+  /// Updates an [allocation].
+  ///
+  /// Sends the update to the API and syncs locally.
+  Future<void> updateAllocation(
+    EnvelopeAllocation allocation,
+  ) async {
     _beginLocalWrite();
     try {
-      final updated = await _apiClient.envelopes.updateAllocatedAmount(
-        id: allocation.id,
-        allocatedAmount: allocation.allocatedAmount,
-      );
+      final dto = _mapAllocationToDto(allocation);
+      final updated = await _apiClient.envelopes.updateEnvelopeAllocation(dto);
       await _cacheAllocation(updated);
       _endLocalWrite();
     } on EnvelopeApiException catch (e) {
       _endLocalWrite();
-      throw EnvelopeException('Failed to update allocation', error: e);
+      throw EnvelopeException(
+        'Failed to update allocation',
+        error: e,
+      );
     }
   }
 
@@ -655,32 +673,121 @@ class EnvelopeRepository {
     _endLocalWrite();
   }
 
-  /// Sums all-time expenses charged against [envelopeId], including
-  /// split-mode contributions. Used to derive "spent" without a stored
-  /// aggregate.
-  Future<int> sumSpentForEnvelope(String envelopeId) {
-    return _localDatabase.transactionsDao.sumExpensesByEnvelopeId(envelopeId);
+  /// Immediately decrements `spentAmount` in local SQLite for the allocation
+  /// matching [envelopeId] + the budget period that contains [date] in
+  /// [budgetId]. No API call is made — this is an optimistic update to give
+  /// instant UI feedback after a transaction is deleted.
+  Future<void> decrementLocalSpentAmount({
+    required String envelopeId,
+    required String budgetId,
+    required DateTime date,
+    required int amount,
+  }) async {
+    try {
+      // Find the budget period that contains this date (local DB only).
+      final periods = await _localDatabase.budgetsDao.getPeriodsByBudgetId(
+        budgetId,
+      );
+      storage.BudgetPeriod? period;
+      for (final p in periods) {
+        if (!p.startDate.isAfter(date) && !p.endDate.isBefore(date)) {
+          period = p;
+          break;
+        }
+      }
+      if (period == null) return;
+
+      // Find the local allocation for this envelope in that period.
+      final allocs = await _localDatabase.envelopesDao.getAllocationsByPeriodId(
+        period.id,
+      );
+      storage.EnvelopeAllocation? alloc;
+      for (final a in allocs) {
+        if (a.envelopeId == envelopeId) {
+          alloc = a;
+          break;
+        }
+      }
+      if (alloc == null) return;
+
+      // Floor at zero and write back to local DB — instant UI update.
+      final newSpent = max(0, alloc.spentAmount - amount);
+      await _localDatabase.envelopesDao.updateAllocation(
+        storage.EnvelopeAllocationsCompanion(
+          id: Value(alloc.id),
+          envelopeId: Value(alloc.envelopeId),
+          budgetPeriodId: Value(alloc.budgetPeriodId),
+          allocatedAmount: Value(alloc.allocatedAmount),
+          spentAmount: Value(newSpent),
+          rolloverAmount: Value(alloc.rolloverAmount),
+          createdAt: Value(alloc.createdAt),
+        ),
+      );
+    } on Exception {
+      // Best-effort — the async refreshAllocations call will correct any
+      // discrepancy on the next round-trip.
+    }
   }
 
-  /// Watches the per-envelope expense map for a budget. Folds split-mode
-  /// contributions in, so callers don't have to iterate transactions and
-  /// transaction_splits separately.
-  Stream<Map<String, int>> watchSpentByEnvelopeForBudget(String budgetId) {
-    return _localDatabase.transactionsDao
-        .watchExpensesByEnvelopeForBudget(budgetId);
+  /// Immediately increments `spentAmount` in local SQLite for the allocation
+  /// matching [envelopeId] + the budget period that contains [date] in
+  /// [budgetId]. No API call is made — this is an optimistic update to give
+  /// instant UI feedback after an expense transaction is created.
+  ///
+  /// [baseCurrencyAmount] must already be expressed in the budget's base
+  /// currency (i.e. `transaction.amount * transaction.exchangeRate`), so the
+  /// running spent total stays in a single currency.
+  Future<void> incrementLocalSpentAmount({
+    required String envelopeId,
+    required String budgetId,
+    required DateTime date,
+    required int baseCurrencyAmount,
+  }) async {
+    try {
+      final periods = await _localDatabase.budgetsDao.getPeriodsByBudgetId(
+        budgetId,
+      );
+      storage.BudgetPeriod? period;
+      for (final p in periods) {
+        if (!p.startDate.isAfter(date) && !p.endDate.isBefore(date)) {
+          period = p;
+          break;
+        }
+      }
+      if (period == null) return;
+
+      final allocs = await _localDatabase.envelopesDao.getAllocationsByPeriodId(
+        period.id,
+      );
+      storage.EnvelopeAllocation? alloc;
+      for (final a in allocs) {
+        if (a.envelopeId == envelopeId) {
+          alloc = a;
+          break;
+        }
+      }
+      if (alloc == null) return;
+
+      await _localDatabase.envelopesDao.updateAllocation(
+        storage.EnvelopeAllocationsCompanion(
+          id: Value(alloc.id),
+          envelopeId: Value(alloc.envelopeId),
+          budgetPeriodId: Value(alloc.budgetPeriodId),
+          allocatedAmount: Value(alloc.allocatedAmount),
+          spentAmount: Value(alloc.spentAmount + baseCurrencyAmount),
+          rolloverAmount: Value(alloc.rolloverAmount),
+          createdAt: Value(alloc.createdAt),
+        ),
+      );
+    } on Exception {
+      // Best-effort — refreshAllocations will correct any discrepancy.
+    }
   }
 
   /// Computes the available balance for a CC Payment envelope using
-  /// transaction history, bounded to the `[periodStart, periodEnd]` window.
+  /// transaction history instead of allocated_amount manipulation.
   ///
-  /// Formula: `allocated + charges_in_window - payments_in_window`. Allocation
-  /// is global; charges and payments are summed only over CC-account
-  /// transactions whose `date` falls in the window (inclusive on both ends).
-  ///
-  /// The window is required: without it the running totals over years of CC
-  /// history conflate cycle obligation with all-time net delta and the
-  /// resulting "available" is meaningless. Callers typically pass the
-  /// current calendar month.
+  /// Formula: allocated + CC charges in period - CC payments in period + rollover
   Future<int> calculateCCPaymentAvailable({
     required EnvelopeAllocation? allocation,
     required String ccAccountId,
@@ -688,31 +795,34 @@ class EnvelopeRepository {
     required DateTime periodEnd,
   }) async {
     final allocated = allocation?.allocatedAmount ?? 0;
+    final rollover = allocation?.rolloverAmount ?? 0;
+
     final txns = await _localDatabase.transactionsDao
         .getTransactionsByAccountId(ccAccountId);
 
-    final inWindow = txns.where(
+    final inPeriod = txns.where(
       (t) =>
           t.deletedAt == null &&
           !t.date.isBefore(periodStart) &&
           !t.date.isAfter(periodEnd),
     );
-    final charges = inWindow
+
+    final charges = inPeriod
         .where((t) => t.type == 'expense')
         .fold(0, (sum, t) => sum + t.amount);
-    final payments = inWindow
+
+    final payments = inPeriod
         .where((t) => t.type == 'transfer' && t.amount > 0)
         .fold(0, (sum, t) => sum + t.amount);
 
-    return allocated + charges - payments;
+    return allocated + charges - payments + rollover;
   }
 
-  /// Fetches all global allocations for [budgetId] from the API and syncs to
-  /// local storage.
-  Future<void> refreshAllocations(String budgetId) async {
+  /// Fetches allocations from the API and syncs to local storage.
+  Future<void> refreshAllocations(String budgetPeriodId) async {
     try {
-      final remote = await _apiClient.envelopes.getAllocationsByBudget(
-        budgetId,
+      final remote = await _apiClient.envelopes.getAllocationsByPeriod(
+        budgetPeriodId,
       );
       final companions = remote.map(_toAllocationCompanion).toList();
       await _localDatabase.envelopesDao.batchInsertAllocations(
@@ -725,6 +835,17 @@ class EnvelopeRepository {
         error: e,
       );
     }
+  }
+
+  /// Calculates the rollover amount for an envelope.
+  ///
+  /// Rollover = allocatedAmount - spentAmount + previous rolloverAmount.
+  /// A positive value means unspent funds carry forward.
+  /// A negative value means overspending carries forward as debt.
+  static int calculateRollover(EnvelopeAllocation allocation) {
+    return allocation.allocatedAmount -
+        allocation.spentAmount +
+        allocation.rolloverAmount;
   }
 
   // ---------------------------------------------------------------------------
@@ -847,18 +968,25 @@ class EnvelopeRepository {
   }
 
   /// Subscribes to real-time changes on the `envelope_allocations` table
-  /// for an entire budget. Filters in-callback by envelope→budget membership
-  /// since the table has no `budget_id` column of its own.
-  RealtimeChannel? subscribeToAllocationChanges(String budgetId) {
+  /// filtered by [budgetPeriodId].
+  ///
+  /// Note: `envelope_allocations` has no `budget_id` column, so must
+  /// filter by `budget_period_id`.
+  RealtimeChannel? subscribeToAllocationChanges(String budgetPeriodId) {
     final client = _supabaseClient;
     if (client == null) return null;
 
     final channel = client
-        .channel('envelope_allocations:$budgetId')
+        .channel('envelope_allocations:$budgetPeriodId')
         .onPostgresChanges(
           event: PostgresChangeEvent.all,
           schema: 'public',
           table: 'envelope_allocations',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'budget_period_id',
+            value: budgetPeriodId,
+          ),
           callback: (payload) async {
             try {
               final newRecord = payload.newRecord;
@@ -1002,11 +1130,16 @@ class EnvelopeRepository {
     );
   }
 
-  static EnvelopeAllocation _mapAllocationFromDto(EnvelopeAllocationDto dto) {
+  static EnvelopeAllocation _mapAllocationFromDto(
+    EnvelopeAllocationDto dto,
+  ) {
     return EnvelopeAllocation(
       id: dto.id,
       envelopeId: dto.envelopeId,
+      budgetPeriodId: dto.budgetPeriodId,
       allocatedAmount: dto.allocatedAmount,
+      spentAmount: dto.spentAmount,
+      rolloverAmount: dto.rolloverAmount,
       createdAt: dto.createdAt,
     );
   }
@@ -1017,8 +1150,25 @@ class EnvelopeRepository {
     return EnvelopeAllocation(
       id: row.id,
       envelopeId: row.envelopeId,
+      budgetPeriodId: row.budgetPeriodId,
       allocatedAmount: row.allocatedAmount,
+      spentAmount: row.spentAmount,
+      rolloverAmount: row.rolloverAmount,
       createdAt: row.createdAt,
+    );
+  }
+
+  static EnvelopeAllocationDto _mapAllocationToDto(
+    EnvelopeAllocation allocation,
+  ) {
+    return EnvelopeAllocationDto(
+      id: allocation.id,
+      envelopeId: allocation.envelopeId,
+      budgetPeriodId: allocation.budgetPeriodId,
+      allocatedAmount: allocation.allocatedAmount,
+      spentAmount: allocation.spentAmount,
+      rolloverAmount: allocation.rolloverAmount,
+      createdAt: allocation.createdAt,
     );
   }
 
@@ -1076,7 +1226,10 @@ class EnvelopeRepository {
     return storage.EnvelopeAllocationsCompanion.insert(
       id: dto.id,
       envelopeId: dto.envelopeId,
+      budgetPeriodId: dto.budgetPeriodId,
       allocatedAmount: Value(dto.allocatedAmount),
+      spentAmount: Value(dto.spentAmount),
+      rolloverAmount: Value(dto.rolloverAmount),
       createdAt: dto.createdAt,
     );
   }

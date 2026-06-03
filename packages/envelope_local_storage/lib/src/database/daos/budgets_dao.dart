@@ -4,7 +4,7 @@ import 'package:envelope_local_storage/src/database/tables/tables.dart';
 
 part 'budgets_dao.g.dart';
 
-@DriftAccessor(tables: [Budgets, BudgetMembers])
+@DriftAccessor(tables: [Budgets, BudgetMembers, BudgetPeriods])
 class BudgetsDao extends DatabaseAccessor<AppDatabase> with _$BudgetsDaoMixin {
   BudgetsDao(super.attachedDatabase);
 
@@ -75,4 +75,35 @@ class BudgetsDao extends DatabaseAccessor<AppDatabase> with _$BudgetsDaoMixin {
 
   Future<int> deleteBudgetMember(String id) =>
       (delete(budgetMembers)..where((t) => t.id.equals(id))).go();
+
+  // Budget Periods CRUD
+  Future<List<BudgetPeriod>> getPeriodsByBudgetId(String budgetId) =>
+      (select(budgetPeriods)..where((t) => t.budgetId.equals(budgetId))).get();
+
+  Stream<List<BudgetPeriod>> watchPeriodsByBudgetId(String budgetId) => (select(
+    budgetPeriods,
+  )..where((t) => t.budgetId.equals(budgetId))).watch();
+
+  Future<BudgetPeriod?> getBudgetPeriod(String id) =>
+      (select(budgetPeriods)..where((t) => t.id.equals(id))).getSingleOrNull();
+
+  Future<int> insertBudgetPeriod(
+    BudgetPeriodsCompanion period, {
+    InsertMode mode = InsertMode.insert,
+  }) => into(budgetPeriods).insert(period, mode: mode);
+
+  Future<void> batchInsertBudgetPeriods(
+    List<BudgetPeriodsCompanion> entries, {
+    InsertMode mode = InsertMode.insert,
+  }) async {
+    await batch((b) {
+      b.insertAll(budgetPeriods, entries, mode: mode);
+    });
+  }
+
+  Future<bool> updateBudgetPeriod(BudgetPeriodsCompanion period) =>
+      update(budgetPeriods).replace(period);
+
+  Future<int> deleteBudgetPeriod(String id) =>
+      (delete(budgetPeriods)..where((t) => t.id.equals(id))).go();
 }

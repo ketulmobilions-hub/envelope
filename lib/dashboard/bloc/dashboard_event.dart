@@ -17,6 +17,40 @@ final class DashboardRefreshRequested extends DashboardEvent {
   const DashboardRefreshRequested();
 }
 
+/// Navigate the dashboard to the previous (older) budget period.
+final class DashboardPreviousPeriodRequested extends DashboardEvent {
+  const DashboardPreviousPeriodRequested();
+}
+
+/// Navigate the dashboard to the next (newer) budget period.
+final class DashboardNextPeriodRequested extends DashboardEvent {
+  const DashboardNextPeriodRequested();
+}
+
+/// Internal event when the budget row stream emits. Used to refresh derived
+/// values (RTA) when `openingBalance` / `openingDate` changes — e.g. after
+/// [BudgetRepository.autoCreatePreviousPeriod] shifts the seed-cash anchor.
+final class _BudgetUpdated extends DashboardEvent {
+  const _BudgetUpdated(this.budget, this.generation);
+
+  final Budget budget;
+  final int generation;
+
+  @override
+  List<Object?> get props => [budget, generation];
+}
+
+/// Internal event when the budget periods stream emits.
+final class _PeriodsUpdated extends DashboardEvent {
+  const _PeriodsUpdated(this.periods, this.generation);
+
+  final List<BudgetPeriod> periods;
+  final int generation;
+
+  @override
+  List<Object?> get props => [periods, generation];
+}
+
 /// Internal event when the accounts stream emits.
 final class _AccountsUpdated extends DashboardEvent {
   const _AccountsUpdated(this.accounts, this.generation);
@@ -50,7 +84,7 @@ final class _CategoryGroupsUpdated extends DashboardEvent {
   List<Object?> get props => [categoryGroups, generation];
 }
 
-/// Internal event when the allocations stream emits.
+/// Internal event when the allocations stream emits for the selected period.
 final class _AllocationsUpdated extends DashboardEvent {
   const _AllocationsUpdated(this.allocations, this.generation);
 
@@ -70,28 +104,6 @@ final class _RecentTransactionsUpdated extends DashboardEvent {
 
   @override
   List<Object?> get props => [transactions, generation];
-}
-
-/// Internal event when the Ready-to-Assign stream emits.
-final class _ReadyToAssignUpdated extends DashboardEvent {
-  const _ReadyToAssignUpdated(this.readyToAssign, this.generation);
-
-  final int readyToAssign;
-  final int generation;
-
-  @override
-  List<Object?> get props => [readyToAssign, generation];
-}
-
-/// Internal event when the per-envelope spent map emits.
-final class _SpentByEnvelopeUpdated extends DashboardEvent {
-  const _SpentByEnvelopeUpdated(this.spentByEnvelope, this.generation);
-
-  final Map<String, int> spentByEnvelope;
-  final int generation;
-
-  @override
-  List<Object?> get props => [spentByEnvelope, generation];
 }
 
 /// Quick-allocate an amount to an envelope from the homepage.

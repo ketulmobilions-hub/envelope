@@ -81,11 +81,14 @@ class _AllocationRowState extends State<AllocationRow> {
     final l10n = context.l10n;
     final symbol = currencySymbol(context);
     final allocation = widget.allocation;
-    final budgetState = context.watch<BudgetBloc>().state;
-    final spent = budgetState.spentByEnvelope[widget.envelope.id] ?? 0;
+    final spent = allocation?.spentAmount ?? 0;
     final available =
         widget.availableOverride ??
-        ((allocation?.allocatedAmount ?? 0) - spent);
+        (allocation != null
+            ? EnvelopeRepository.calculateRollover(allocation)
+            : 0);
+
+    final budgetState = context.watch<BudgetBloc>().state;
     final linkedGoals =
         budgetState.goalsByEnvelope[widget.envelope.id] ?? const <Goal>[];
     // Prefer any unsaved local edit so the chip reflects what the user is

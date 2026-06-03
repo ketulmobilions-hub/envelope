@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:bloc/bloc.dart';
+import 'package:budget_repository/budget_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:report_repository/report_repository.dart';
 
@@ -19,15 +22,18 @@ typedef FileSharer = Future<void> Function(String filePath);
 class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
   ReportsBloc({
     required ReportRepository reportRepository,
+    required BudgetRepository budgetRepository,
     required String budgetId,
     ExportFileWriter? exportFileWriter,
     FileSharer? fileSharer,
   }) : _reportRepository = reportRepository,
+       _budgetRepository = budgetRepository,
        _budgetId = budgetId,
        _exportFileWriter = exportFileWriter,
        _fileSharer = fileSharer,
        super(const ReportsState()) {
     on<ReportsStarted>(_onStarted);
+    on<_PeriodsUpdated>(_onPeriodsUpdated);
     on<SpendingReportRequested>(_onSpendingReportRequested);
     on<TrendReportRequested>(_onTrendReportRequested);
     on<BudgetVsActualReportRequested>(
@@ -42,24 +48,70 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
   }
 
   final ReportRepository _reportRepository;
+  final BudgetRepository _budgetRepository;
   final String _budgetId;
   final ExportFileWriter? _exportFileWriter;
   final FileSharer? _fileSharer;
+
+  StreamSubscription<List<BudgetPeriod>>? _periodsSubscription;
 
   Future<void> _onStarted(
     ReportsStarted event,
     Emitter<ReportsState> emit,
   ) async {
-    // Default date range: current calendar month.
+    emit(state.copyWith(status: ReportsStatus.loading));
+
+    // Default date range: current month.
     final now = DateTime.now();
     final defaultStart = DateTime(now.year, now.month);
     final defaultEnd = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
 
     emit(
       state.copyWith(
-        status: ReportsStatus.loaded,
         startDate: defaultStart,
         endDate: defaultEnd,
+      ),
+    );
+
+    // Subscribe to budget periods stream for reactivity.
+    await _periodsSubscription?.cancel();
+    _periodsSubscription = _budgetRepository
+        .watchBudgetPeriods(_budgetId)
+        .listen(
+          (periods) => add(_PeriodsUpdated(periods)),
+          onError: (Object _) {
+            add(const _PeriodsUpdated([]));
+          },
+        );
+  }
+
+  void _onPeriodsUpdated(
+    _PeriodsUpdated event,
+    Emitter<ReportsState> emit,
+  ) {
+    final sortedPeriods = [...event.periods]
+      ..sort((a, b) => b.startDate.compareTo(a.startDate));
+
+    // Select the current period by default if none selected.
+    var periodId = state.selectedPeriodId;
+    if (periodId == null && sortedPeriods.isNotEmpty) {
+      final now = DateTime.now();
+      final currentPeriod = sortedPeriods
+          .where(
+            (p) =>
+                !p.isClosed &&
+                !p.startDate.isAfter(now) &&
+                !p.endDate.isBefore(now),
+          )
+          .firstOrNull;
+      periodId = currentPeriod?.id ?? sortedPeriods.first.id;
+    }
+
+    emit(
+      state.copyWith(
+        status: ReportsStatus.loaded,
+        budgetPeriods: sortedPeriods,
+        selectedPeriodId: periodId,
       ),
     );
   }
@@ -142,16 +194,13 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
       state.copyWith(
         status: ReportsStatus.loading,
         activeReport: ReportType.budgetVsActual,
-        startDate: event.startDate,
-        endDate: event.endDate,
+        selectedPeriodId: event.periodId,
       ),
     );
 
     try {
       final report = await _reportRepository.getBudgetVsActualReport(
-        budgetId: _budgetId,
-        startDate: event.startDate,
-        endDate: event.endDate,
+        budgetPeriodId: event.periodId,
       );
       emit(
         state.copyWith(
@@ -340,4 +389,9 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
     emit(state.copyWith(exportedFilePath: null));
   }
 
+  @override
+  Future<void> close() async {
+    await _periodsSubscription?.cancel();
+    return super.close();
+  }
 }

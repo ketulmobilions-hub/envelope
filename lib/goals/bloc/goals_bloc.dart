@@ -42,9 +42,9 @@ class GoalsBloc extends Bloc<GoalsEvent, GoalsState> {
   StreamSubscription<List<Goal>>? _goalsSubscription;
   StreamSubscription<List<Transaction>>? _transactionsSubscription;
   StreamSubscription<List<Account>>? _accountsSubscription;
-  final Map<String, StreamSubscription<EnvelopeAllocation?>>
+  final Map<String, StreamSubscription<List<EnvelopeAllocation>>>
   _envelopeSubscriptions = {};
-  final Map<String, EnvelopeAllocation?> _envelopeAllocations = {};
+  final Map<String, List<EnvelopeAllocation>> _envelopeAllocations = {};
   final Map<String, Account> _accountsById = {};
   List<Transaction> _allTransactions = const [];
 
@@ -106,9 +106,9 @@ class GoalsBloc extends Bloc<GoalsEvent, GoalsState> {
     for (final id in needed) {
       if (_envelopeSubscriptions.containsKey(id)) continue;
       _envelopeSubscriptions[id] = _envelopeRepository
-          .watchAllocationByEnvelopeId(id)
-          .listen((alloc) {
-            _envelopeAllocations[id] = alloc;
+          .watchAllocationsForEnvelope(id)
+          .listen((allocs) {
+            _envelopeAllocations[id] = allocs;
             add(const _GoalsRecomputeRequested());
           });
     }
@@ -150,12 +150,14 @@ class GoalsBloc extends Bloc<GoalsEvent, GoalsState> {
               (account.currentBalance * account.displayFxRate).round(),
         );
       } else if (goal.envelopeId != null) {
-        final allocation = _envelopeAllocations[goal.envelopeId];
-        final envTxs =
-            _allTransactions.where((t) => t.envelopeId == goal.envelopeId);
+        final envelopeAllocs =
+            _envelopeAllocations[goal.envelopeId] ?? const [];
+        final envTxs = goal.type == 'debt_payoff'
+            ? _allTransactions.where((t) => t.envelopeId == goal.envelopeId)
+            : const <Transaction>[];
         amounts[goal.id] = GoalProgressCalculator.compute(
           goal: goal,
-          envelopeAllocation: allocation,
+          envelopeAllocations: envelopeAllocs,
           envelopeTransactions: envTxs,
         );
       }
