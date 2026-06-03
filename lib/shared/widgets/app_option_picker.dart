@@ -51,61 +51,26 @@ class AppOptionPicker<T> extends StatelessWidget {
     final selected = value;
     final selectedLabel = selected != null ? itemLabel(selected) : null;
 
-    final Color leadingColor;
-    if (selected != null && itemIconColor != null) {
-      leadingColor = itemIconColor!(selected) ?? colorScheme.outline;
-    } else {
-      leadingColor = colorScheme.outline;
-    }
-
     return InkWell(
       onTap: () => _showPicker(context),
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colorScheme.outlineVariant),
+      child: InputDecorator(
+        isEmpty: selectedLabel == null,
+        decoration: InputDecoration(
+          labelText: labelText,
+          suffixIcon: Icon(
+            Icons.arrow_drop_down,
+            color: colorScheme.outline,
+          ),
         ),
-        child: Row(
-          children: [
-            Icon(icon, size: 22, color: leadingColor),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    labelText,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: colorScheme.outline,
-                      letterSpacing: 0.4,
-                    ),
-                  ),
-                  if (selectedLabel != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      selectedLabel,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: colorScheme.onSurface,
-                      ),
-                    ),
-                  ],
-                ],
+        child: selectedLabel == null
+            ? null
+            : Text(
+                selectedLabel,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: colorScheme.onSurface,
+                ),
               ),
-            ),
-            Icon(
-              Icons.chevron_right,
-              color: colorScheme.outline,
-              size: 20,
-            ),
-          ],
-        ),
       ),
     );
   }
