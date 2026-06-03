@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:account_repository/account_repository.dart';
 import 'package:envelope/accounts/widgets/account_helpers.dart';
-import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope/theme/app_colors.dart';
 import 'package:envelope/transactions/cubit/transfer_form_cubit.dart';
+import 'package:envelope/transactions/widgets/transaction_helpers.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -77,12 +77,26 @@ class _CCPayBottomSheetState extends State<_CCPayBottomSheet> {
   final _formKey = GlobalKey<FormState>();
   final _dropdownKey = GlobalKey<FormFieldState<String>>();
   final _amountController = TextEditingController();
+  late DateTime _selectedDate;
 
   @override
   void initState() {
     super.initState();
+    _selectedDate = context.read<AppClock>().now();
     if (widget.ccDebtCents > 0) {
       _amountController.text = (widget.ccDebtCents / 100).toStringAsFixed(2);
+    }
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (picked != null && mounted) {
+      setState(() => _selectedDate = picked);
     }
   }
 
@@ -116,7 +130,7 @@ class _CCPayBottomSheetState extends State<_CCPayBottomSheet> {
         fromAccountId: fromAccountId,
         toAccountId: widget.ccAccountId,
         amountCents: amountCents,
-        date: context.read<AppClock>().now(),
+        date: _selectedDate,
         // The CC account is off-budget; the payment is funded by its linked
         // CC Payment envelope, so the outgoing leg reduces that envelope's
         // available (and satisfies the on->off-budget funding requirement).
@@ -245,7 +259,14 @@ class _CCPayBottomSheetState extends State<_CCPayBottomSheet> {
                   return null;
                 },
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 12),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.calendar_today),
+                title: Text(formatTransactionDate(_selectedDate)),
+                onTap: _pickDate,
+              ),
+              const SizedBox(height: 12),
               BlocBuilder<TransferFormCubit, TransferFormState>(
                 builder: (ctx, state) {
                   if (state.status == TransferFormStatus.failure) {
