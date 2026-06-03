@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:drift/drift.dart';
 import 'package:envelope_local_storage/src/database/app_database.dart';
 import 'package:envelope_local_storage/src/database/tables/tables.dart';
@@ -120,41 +118,15 @@ class TransactionsDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// Streams a per-envelope expense total for [budgetId], including split
-  /// contributions. Returns a `Map<envelopeId, totalCents>` emitted once on
-  /// subscribe (current state) and then on any transactions /
-  /// transaction_splits change in the budget.
+  /// contributions. Returns a `Map<envelopeId, totalCents>` updated on any
+  /// transactions / transaction_splits change in the budget.
   Stream<Map<String, int>> watchExpensesByEnvelopeForBudget(String budgetId) {
-    late StreamController<Map<String, int>> controller;
-    StreamSubscription<Set<TableUpdate>>? sub;
-    var disposed = false;
-
-    Future<void> emitLatest() async {
-      if (disposed) return;
-      try {
-        final value = await _computeExpensesByEnvelope(budgetId);
-        if (!disposed && !controller.isClosed) controller.add(value);
-      } on Object catch (e, st) {
-        if (!disposed && !controller.isClosed) controller.addError(e, st);
-      }
-    }
-
-    controller = StreamController<Map<String, int>>(
-      onListen: () {
-        // Initial emission so a fresh subscriber sees current state without
-        // having to wait for the next transactions write.
-        unawaited(emitLatest());
-        sub = attachedDatabase
-            .tableUpdates(
-              TableUpdateQuery.onAllTables({transactions, transactionSplits}),
-            )
-            .listen((_) => unawaited(emitLatest()));
-      },
-      onCancel: () async {
-        disposed = true;
-        await sub?.cancel();
-      },
-    );
-    return controller.stream.distinct(_mapEquals);
+    return attachedDatabase
+        .tableUpdates(
+          TableUpdateQuery.onAllTables({transactions, transactionSplits}),
+        )
+        .asyncMap((_) => _computeExpensesByEnvelope(budgetId))
+        .distinct(_mapEquals);
   }
 
   Future<Map<String, int>> _computeExpensesByEnvelope(String budgetId) async {
