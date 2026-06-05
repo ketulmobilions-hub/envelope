@@ -280,12 +280,14 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     // Select the current (non-closed) period containing today.
     BudgetPeriod? selected;
     if (sortedPeriods.isNotEmpty) {
-      final now = _now();
+      final now = DateUtils.dateOnly(_now());
       // If the latest period ends before "now", create the missing periods
       // forward and bail; the watch stream will re-fire this handler with
-      // the new period list.
+      // the new period list. Compare date-only so a period ending today
+      // (endDate stored at 00:00) isn't treated as "before" a wall-clock
+      // `now` later in the same day.
       final latest = sortedPeriods.last;
-      if (latest.endDate.isBefore(now)) {
+      if (DateUtils.dateOnly(latest.endDate).isBefore(now)) {
         try {
           await _budgetRepository.ensureCurrentPeriod(_budgetId, asOf: now);
           return;
@@ -303,8 +305,8 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       selected ??= sortedPeriods.firstWhere(
         (p) =>
             !p.isClosed &&
-            !p.startDate.isAfter(now) &&
-            !p.endDate.isBefore(now),
+            !DateUtils.dateOnly(p.startDate).isAfter(now) &&
+            !DateUtils.dateOnly(p.endDate).isBefore(now),
         orElse: () =>
             sortedPeriods.where((p) => !p.isClosed).lastOrNull ??
             sortedPeriods.last,

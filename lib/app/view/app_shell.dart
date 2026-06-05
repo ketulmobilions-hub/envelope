@@ -424,12 +424,12 @@ Future<String?> _getCurrentPeriodId(
   try {
     final periods = await budgetRepository.watchBudgetPeriods(budgetId).first;
     if (periods.isEmpty) return null;
-    final effectiveNow = now ?? DateTime.now();
+    final effectiveNow = DateUtils.dateOnly(now ?? DateTime.now());
     final current = periods.firstWhere(
       (p) =>
           !p.isClosed &&
-          !p.startDate.isAfter(effectiveNow) &&
-          !p.endDate.isBefore(effectiveNow),
+          !DateUtils.dateOnly(p.startDate).isAfter(effectiveNow) &&
+          !DateUtils.dateOnly(p.endDate).isBefore(effectiveNow),
       orElse: () =>
           periods.where((p) => !p.isClosed).lastOrNull ?? periods.last,
     );
