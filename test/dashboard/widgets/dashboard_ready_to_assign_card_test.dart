@@ -43,6 +43,8 @@ void main() {
   Future<void> pumpCard(
     WidgetTester tester, {
     required int readyToAssign,
+    int totalSpent = 0,
+    int totalAllocated = 0,
     BudgetPeriod? period,
     bool hasPreviousPeriod = false,
     bool hasNextPeriod = false,
@@ -54,6 +56,8 @@ void main() {
         value: authBloc,
         child: DashboardReadyToAssignCard(
           readyToAssign: readyToAssign,
+          totalSpent: totalSpent,
+          totalAllocated: totalAllocated,
           period: period,
           hasPreviousPeriod: hasPreviousPeriod,
           hasNextPeriod: hasNextPeriod,
@@ -141,6 +145,34 @@ void main() {
       await tester.pump();
       expect(prevTaps, 1);
       expect(nextTaps, 1);
+    });
+
+    testWidgets('renders Spent / Allocated totals row', (tester) async {
+      await pumpCard(
+        tester,
+        readyToAssign: 0,
+        totalSpent: 12345,
+        totalAllocated: 67890,
+      );
+      expect(find.text('Spent / Allocated'), findsOneWidget);
+      expect(find.text(r'$123.45'), findsOneWidget);
+      expect(find.text(r' / $678.90'), findsOneWidget);
+    });
+
+    testWidgets('clamps huge totals via FittedBox without overflow', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(360, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await pumpCard(
+        tester,
+        readyToAssign: 99999999999,
+        totalSpent: 99999999999,
+        totalAllocated: 99999999999,
+      );
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(tester.takeException(), isNull);
+      expect(find.byType(FittedBox), findsNWidgets(2));
     });
   });
 }

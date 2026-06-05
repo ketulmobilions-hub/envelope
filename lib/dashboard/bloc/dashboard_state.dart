@@ -111,6 +111,14 @@ final class DashboardState extends Equatable {
     (sum, a) => sum + (a.currentBalance * a.displayFxRate).round(),
   );
 
+  /// Sum of allocated amounts across visible envelopes for the selected
+  /// period. Use as the "Allocated" total on the dashboard.
+  int get totalAllocated =>
+      envelopeSummaries.fold(0, (sum, s) => sum + s.allocated);
+
+  /// Sum of spent amounts across visible envelopes for the selected period.
+  int get totalSpent => envelopeSummaries.fold(0, (sum, s) => sum + s.spent);
+
   /// Envelope summaries paired with their allocations and group names.
   List<EnvelopeSummary> get envelopeSummaries {
     final groupMap = {
