@@ -419,7 +419,6 @@ class _QuickAddTransactionSheetState extends State<QuickAddTransactionSheet> {
       overspentEnvelopeName: data.envelopeName,
       deficitCents: data.deficitCents.abs(),
       readyToAssign: data.readyToAssign,
-      ccPaymentAllocation: data.ccPaymentAllocation,
     );
 
     if (!mounted) return;
