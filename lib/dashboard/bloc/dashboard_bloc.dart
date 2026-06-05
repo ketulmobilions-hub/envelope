@@ -367,15 +367,10 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
 
     final newPeriod = sorted[newIdx];
     _manualPeriodSelected = true;
-    // Clear stale allocations/RTA so the UI doesn't show the old period's
-    // figures against the new period's label while the refresh is in flight.
-    emit(
-      state.copyWith(
-        selectedPeriod: newPeriod,
-        allocations: const [],
-        readyToAssign: 0,
-      ),
-    );
+    // Keep prior allocations/RTA visible during the refresh so AnimatedCents
+    // tweens old→new instead of old→0→new. _onAllocationsUpdated swaps them
+    // atomically when the new period's data arrives.
+    emit(state.copyWith(selectedPeriod: newPeriod));
     await _subscribeToAllocations(newPeriod.id);
   }
 
