@@ -16,6 +16,8 @@ import 'package:flutter/material.dart';
 class DashboardReadyToAssignCard extends StatelessWidget {
   const DashboardReadyToAssignCard({
     required this.readyToAssign,
+    required this.totalSpent,
+    required this.totalAllocated,
     this.period,
     this.hasPreviousPeriod = false,
     this.hasNextPeriod = false,
@@ -26,6 +28,8 @@ class DashboardReadyToAssignCard extends StatelessWidget {
   });
 
   final int readyToAssign;
+  final int totalSpent;
+  final int totalAllocated;
 
   /// The currently-selected budget period. When non-null a period-navigation
   /// header is shown.
@@ -50,6 +54,10 @@ class DashboardReadyToAssignCard extends StatelessWidget {
     } else {
       color = colorScheme.error;
     }
+
+    final spentColor = totalSpent > totalAllocated
+        ? AppColors.expense
+        : AppColors.charcoal;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -98,25 +106,85 @@ class DashboardReadyToAssignCard extends StatelessWidget {
               onTap: onTap,
               borderRadius: BorderRadius.circular(12),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      l10n.dashboardReadyToAssign,
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: color,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    AnimatedCents(
-                      cents: readyToAssign,
-                      symbol: symbol,
-                      style: Theme.of(context).textTheme.displaySmall
-                          ?.copyWith(
-                            color: color,
-                            fontWeight: FontWeight.bold,
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            l10n.dashboardReadyToAssign,
+                            style: Theme.of(context).textTheme.labelLarge
+                                ?.copyWith(color: color),
                           ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerRight,
+                            child: AnimatedCents(
+                              cents: readyToAssign,
+                              symbol: symbol,
+                              style: Theme.of(context).textTheme.headlineSmall
+                                  ?.copyWith(
+                                    color: color,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Divider(
+                      height: 1,
+                      color: color.withValues(alpha: 0.25),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            '${l10n.budgetSpentLabel} / '
+                            '${l10n.budgetAllocatedLabel}',
+                            style: Theme.of(context).textTheme.labelMedium
+                                ?.copyWith(color: AppColors.secondaryText),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerRight,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                AnimatedCents(
+                                  cents: totalSpent,
+                                  symbol: symbol,
+                                  style: Theme.of(context).textTheme.labelLarge
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: spentColor,
+                                      ),
+                                ),
+                                AnimatedCents(
+                                  cents: totalAllocated,
+                                  symbol: symbol,
+                                  prefix: ' / ',
+                                  style: Theme.of(context).textTheme.labelLarge
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.charcoal,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
