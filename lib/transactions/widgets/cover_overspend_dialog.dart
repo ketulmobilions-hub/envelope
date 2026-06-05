@@ -39,7 +39,6 @@ Future<bool?> showCoverOverspendDialog(
   required String overspentEnvelopeName,
   required int deficitCents,
   int readyToAssign = 0,
-  EnvelopeAllocation? ccPaymentAllocation,
 }) {
   return showDialog<bool>(
     context: context,
@@ -52,7 +51,6 @@ Future<bool?> showCoverOverspendDialog(
       overspentEnvelopeName: overspentEnvelopeName,
       deficitCents: deficitCents,
       readyToAssign: readyToAssign,
-      ccPaymentAllocation: ccPaymentAllocation,
     ),
   );
 }
@@ -71,7 +69,6 @@ class _CoverOverspendDialog extends StatefulWidget {
     required this.overspentEnvelopeName,
     required this.deficitCents,
     required this.readyToAssign,
-    this.ccPaymentAllocation,
   });
 
   final BudgetRepository budgetRepository;
@@ -82,7 +79,6 @@ class _CoverOverspendDialog extends StatefulWidget {
   final String overspentEnvelopeName;
   final int deficitCents;
   final int readyToAssign;
-  final EnvelopeAllocation? ccPaymentAllocation;
 
   @override
   State<_CoverOverspendDialog> createState() => _CoverOverspendDialogState();
@@ -277,16 +273,6 @@ class _CoverOverspendDialogState extends State<_CoverOverspendDialog> {
         await widget.budgetRepository.transferBetweenEnvelopes(
           fromAllocationId: source.allocation.id,
           toAllocationId: widget.overspentAllocation.id,
-          amount: amount,
-        );
-      }
-
-      // If this was a CC-caused overspend, also fund the CC Payment envelope
-      // by the same amount so it reflects the full CC liability.
-      final ccAlloc = widget.ccPaymentAllocation;
-      if (ccAlloc != null && amount > 0) {
-        await widget.budgetRepository.increaseEnvelopeAllocation(
-          allocationId: ccAlloc.id,
           amount: amount,
         );
       }

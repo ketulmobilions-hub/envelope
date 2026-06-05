@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:account_repository/account_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
-import 'package:envelope/accounts/widgets/account_helpers.dart';
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/dashboard/bloc/bloc.dart';
@@ -337,31 +336,6 @@ class _CategoryGroupSection extends StatelessWidget {
   ) async {
     final dashState = context.read<DashboardBloc>().state;
 
-    // Find a CC account used for this envelope's transactions, then look up
-    // its linked CC Payment allocation so it can be funded alongside the cover.
-    final ccAccountId = dashState.transactions
-        .where((t) => t.envelopeId == summary.envelope.id)
-        .map((t) => t.accountId)
-        .where((id) {
-          final account = dashState.accounts
-              .where((a) => a.id == id)
-              .firstOrNull;
-          return account != null && isCreditCard(account.type);
-        })
-        .firstOrNull;
-
-    final ccPaymentEnvelope = ccAccountId != null
-        ? dashState.envelopes
-              .where((e) => e.linkedAccountId == ccAccountId)
-              .firstOrNull
-        : null;
-
-    final ccPaymentAllocation = ccPaymentEnvelope != null
-        ? dashState.allocations
-              .where((a) => a.envelopeId == ccPaymentEnvelope.id)
-              .firstOrNull
-        : null;
-
     final result = await showCoverOverspendDialog(
       context,
       budgetRepository: context.read<BudgetRepository>(),
@@ -372,7 +346,6 @@ class _CategoryGroupSection extends StatelessWidget {
       overspentEnvelopeName: summary.envelope.name,
       deficitCents: -summary.available,
       readyToAssign: dashState.readyToAssign,
-      ccPaymentAllocation: ccPaymentAllocation,
     );
 
     if (result == true && context.mounted) {

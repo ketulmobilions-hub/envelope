@@ -887,28 +887,6 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         // Fallback to 0 if unavailable.
       }
 
-      EnvelopeAllocation? ccPaymentAllocation;
-      if (accountId != null) {
-        final account = state.accounts
-            .where((a) => a.id == accountId)
-            .firstOrNull;
-        if (account != null && isCreditCard(account.type)) {
-          try {
-            final ccEnvelope = await _envelopeRepository
-                .getEnvelopeByLinkedAccountId(accountId, budgetId);
-            if (ccEnvelope != null) {
-              ccPaymentAllocation = await _envelopeRepository
-                  .getEnvelopeAllocationByEnvelopeAndPeriod(
-                    envelopeId: ccEnvelope.id,
-                    budgetPeriodId: effectivePeriodId,
-                  );
-            }
-          } on Exception {
-            // Best-effort; omit CC Payment funding if lookup fails.
-          }
-        }
-      }
-
       return OverspendData(
         envelopeName: envelopeName,
         deficitCents: available,
@@ -916,7 +894,6 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         allocations: allocations,
         envelopes: envelopes,
         readyToAssign: readyToAssign,
-        ccPaymentAllocation: ccPaymentAllocation,
       );
     } on Exception {
       return null;
