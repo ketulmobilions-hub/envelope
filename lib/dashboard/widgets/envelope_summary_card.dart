@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:account_repository/account_repository.dart';
 import 'package:budget_repository/budget_repository.dart';
+import 'package:envelope/accounts/utils/cc_payments_group.dart';
 import 'package:envelope/accounts/widgets/format_cents.dart';
 import 'package:envelope/auth/auth.dart';
 import 'package:envelope/dashboard/bloc/bloc.dart';
@@ -91,6 +92,23 @@ class EnvelopeSummaryCard extends StatelessWidget {
       );
     }
 
+    String nameOf(String groupId) =>
+        categoryGroups.where((g) => g.id == groupId).firstOrNull?.name ??
+        grouped[groupId]?.firstOrNull?.categoryGroupName ??
+        '';
+
+    // Debt group identified by presence of CC-linked envelopes — rename-safe.
+    // Falls back to legacy name match if a group has no envelopes yet.
+    bool isCcGroup(String groupId) {
+      final envs = grouped[groupId] ?? const [];
+      if (envs.any((s) => s.envelope.linkedAccountId != null)) return true;
+      return envs.isEmpty && nameOf(groupId) == ccPaymentsGroupName;
+    }
+
+    final tabbedGroupIds =
+        sortedGroupIds.where((id) => !isCcGroup(id)).toList();
+    final ccGroupId = sortedGroupIds.where(isCcGroup).firstOrNull;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
@@ -126,16 +144,20 @@ class EnvelopeSummaryCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // Category groups in sortOrder.
-          for (final groupId in sortedGroupIds)
+          if (tabbedGroupIds.isNotEmpty)
+            _TabbedCategoryGroups(
+              groupIds: tabbedGroupIds,
+              groupNameOf: nameOf,
+              summariesByGroupId: grouped,
+              categoryGroups: categoryGroups,
+              accounts: accounts,
+              ccCreditLimits: ccCreditLimits,
+              onViewAll: onViewAll,
+            ),
+          if (ccGroupId != null)
             _CategoryGroupSection(
-              groupName:
-                  categoryGroups
-                      .where((g) => g.id == groupId)
-                      .firstOrNull
-                      ?.name ??
-                  grouped[groupId]!.first.categoryGroupName,
-              summaries: grouped[groupId]!,
+              groupName: nameOf(ccGroupId),
+              summaries: grouped[ccGroupId]!,
               categoryGroups: categoryGroups,
               accounts: accounts,
               ccCreditLimits: ccCreditLimits,
@@ -143,6 +165,138 @@ class EnvelopeSummaryCard extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+class _TabbedCategoryGroups extends StatefulWidget {
+  const _TabbedCategoryGroups({
+    required this.groupIds,
+    required this.groupNameOf,
+    required this.summariesByGroupId,
+    required this.categoryGroups,
+    required this.accounts,
+    required this.ccCreditLimits,
+    required this.onViewAll,
+  });
+
+  final List<String> groupIds;
+  final String Function(String) groupNameOf;
+  final Map<String, List<EnvelopeSummary>> summariesByGroupId;
+  final List<CategoryGroup> categoryGroups;
+  final List<Account> accounts;
+  final Map<String, int?> ccCreditLimits;
+  final VoidCallback? onViewAll;
+
+  @override
+  State<_TabbedCategoryGroups> createState() => _TabbedCategoryGroupsState();
+}
+
+class _TabbedCategoryGroupsState extends State<_TabbedCategoryGroups>
+    with SingleTickerProviderStateMixin {
+  TabController? _controller;
+  String? _selectedGroupId;
+  int _lastIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _rebuildController(initialGroupId: widget.groupIds.firstOrNull);
+  }
+
+  @override
+  void didUpdateWidget(covariant _TabbedCategoryGroups oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Preserve selection by groupId across reorder / rename / length changes.
+    final currentSelectedStillPresent =
+        _selectedGroupId != null &&
+        widget.groupIds.contains(_selectedGroupId);
+    final targetGroupId = currentSelectedStillPresent
+        ? _selectedGroupId
+        : widget.groupIds.firstOrNull;
+
+    final lengthChanged = widget.groupIds.length != _controller?.length;
+    final indexNeedsRealign =
+        targetGroupId != null &&
+        (_controller == null ||
+            widget.groupIds.indexOf(targetGroupId) != _controller!.index);
+
+    if (lengthChanged || indexNeedsRealign) {
+      _rebuildController(initialGroupId: targetGroupId);
+    }
+  }
+
+  void _rebuildController({required String? initialGroupId}) {
+    _controller
+      ?..removeListener(_onTabChanged)
+      ..dispose();
+    if (widget.groupIds.isEmpty) {
+      _controller = null;
+      _selectedGroupId = null;
+      _lastIndex = 0;
+      return;
+    }
+    final initialIndex = (initialGroupId != null
+            ? widget.groupIds.indexOf(initialGroupId)
+            : 0)
+        .clamp(0, widget.groupIds.length - 1);
+    _controller =
+        TabController(
+            length: widget.groupIds.length,
+            vsync: this,
+            initialIndex: initialIndex,
+          )
+          ..addListener(_onTabChanged);
+    _selectedGroupId = widget.groupIds[initialIndex];
+    _lastIndex = initialIndex;
+  }
+
+  void _onTabChanged() {
+    final controller = _controller;
+    if (controller == null || controller.indexIsChanging) return;
+    if (controller.index == _lastIndex) return;
+    _lastIndex = controller.index;
+    setState(() {
+      _selectedGroupId = widget.groupIds[controller.index];
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller
+      ?..removeListener(_onTabChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = _controller;
+    if (controller == null || widget.groupIds.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final activeGroupId = widget.groupIds[controller.index];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TabBar(
+          controller: controller,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
+          tabs: [
+            for (final id in widget.groupIds) Tab(text: widget.groupNameOf(id)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        _CategoryGroupSection(
+          groupName: widget.groupNameOf(activeGroupId),
+          summaries: widget.summariesByGroupId[activeGroupId] ?? const [],
+          categoryGroups: widget.categoryGroups,
+          accounts: widget.accounts,
+          ccCreditLimits: widget.ccCreditLimits,
+          onViewAll: widget.onViewAll,
+        ),
+      ],
     );
   }
 }
