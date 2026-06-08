@@ -33,20 +33,11 @@ class TransferFormCubit extends Cubit<TransferFormState> {
   Future<void> _load() async {
     try {
       final accounts = await _accountRepository.watchAccounts(budgetId).first;
-      final envelopeRepo = _envelopeRepository;
-      // Exclude archived envelopes and CC-payment envelopes (linked to a credit
-      // card account) — neither is a valid manual funding source for a transfer.
-      final envelopes = envelopeRepo == null
-          ? const <Envelope>[]
-          : (await envelopeRepo.watchEnvelopes(budgetId).first)
-                .where((e) => !e.isArchived && e.linkedAccountId == null)
-                .toList();
       if (isClosed) return;
       emit(
         state.copyWith(
           status: TransferFormStatus.loaded,
           accounts: accounts,
-          envelopes: envelopes,
         ),
       );
     } on Exception {
@@ -79,24 +70,9 @@ class TransferFormCubit extends Cubit<TransferFormState> {
         .where((a) => a.id == toAccountId)
         .firstOrNull;
 
-    // A transfer OUT to an off-budget account leaves the budget, so it is
-    // categorized against an envelope (reduces that envelope's available).
-    // (The inverse — off->on raising Ready to Assign — is a separate change:
-    // it needs delete-time income reversal, so it is intentionally not handled
-    // here yet.)
     final fromOnBudget = fromAccount?.isOnBudget ?? true;
     final toOnBudget = toAccount?.isOnBudget ?? true;
     final isOutToOffBudget = fromOnBudget && !toOnBudget;
-
-    if (isOutToOffBudget && envelopeId == null) {
-      emit(
-        state.copyWith(
-          status: TransferFormStatus.failure,
-          errorMessage: 'Select an envelope to fund this transfer.',
-        ),
-      );
-      return;
-    }
 
     emit(state.copyWith(status: TransferFormStatus.submitting));
     try {
@@ -110,8 +86,8 @@ class TransferFormCubit extends Cubit<TransferFormState> {
       final toRate = toAccount?.displayFxRate ?? 1.0;
 
       // Create outgoing transaction (from account — negative amount).
-      // For an on->off-budget transfer the outgoing leg carries the funding
-      // envelope so the spent trigger reduces that envelope's available.
+      // Only on->off transfers may carry a funding envelope (CC pay relies on
+      // this so the spent trigger reduces the CC Payment envelope's available).
       await _transactionRepository.createTransaction(
         budgetId: budgetId,
         accountId: fromAccountId,
@@ -158,8 +134,10 @@ class TransferFormCubit extends Cubit<TransferFormState> {
         }
       }
 
-      // on->off: pull the server-recalculated envelope spent into local cache.
+      // on->off with a funding envelope: pull the server-recalculated envelope
+      // spent into local cache.
       if (isOutToOffBudget &&
+          envelopeId != null &&
           _envelopeRepository != null &&
           budgetPeriodId != null) {
         try {

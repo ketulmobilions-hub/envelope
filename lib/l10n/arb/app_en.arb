@@ -1256,10 +1256,6 @@
     "@transactionsTransferTitle": {
         "description": "Title for the transfer form page"
     },
-    "transactionsTransferFundingEnvelope": "Funded from envelope",
-    "@transactionsTransferFundingEnvelope": {
-        "description": "Label for the envelope picker shown when transferring to an off-budget account"
-    },
     "transactionsTransferFrom": "From Account",
     "@transactionsTransferFrom": {
         "description": "Label for from account in transfer"

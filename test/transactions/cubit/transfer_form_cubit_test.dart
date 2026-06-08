@@ -116,35 +116,6 @@ void main() {
   Map<String, dynamic> legFor(String accountId) =>
       txCalls.firstWhere((c) => c['accountId'] == accountId);
 
-  group('TransferFormCubit funding envelopes', () {
-    test('excludes archived and CC-payment (linked) envelopes', () async {
-      when(() => envelopeRepo.watchEnvelopes(any())).thenAnswer(
-        (_) => Stream.value([
-          envelope,
-          Envelope(
-            id: 'env-archived',
-            categoryGroupId: 'g',
-            budgetId: budgetId,
-            name: 'Old',
-            isArchived: true,
-            createdAt: now,
-          ),
-          Envelope(
-            id: 'env-cc',
-            categoryGroupId: 'g',
-            budgetId: budgetId,
-            name: 'CC Payment',
-            linkedAccountId: 'cc-acct',
-            createdAt: now,
-          ),
-        ]),
-      );
-      final cubit = await loaded();
-      expect(cubit.state.envelopes.map((e) => e.id), ['env-1']);
-      await cubit.close();
-    });
-  });
-
   group('TransferFormCubit categorization', () {
     test('on->off transfer tags the outgoing leg with the envelope', () async {
       final cubit = await loaded();
@@ -167,7 +138,7 @@ void main() {
       await cubit.close();
     });
 
-    test('on->off transfer without an envelope fails', () async {
+    test('on->off transfer without an envelope still succeeds', () async {
       final cubit = await loaded();
       await cubit.submit(
         fromAccountId: 'checking',
@@ -176,8 +147,11 @@ void main() {
         date: now,
       );
 
-      expect(cubit.state.status, TransferFormStatus.failure);
-      expect(txCalls, isEmpty);
+      expect(cubit.state.status, TransferFormStatus.success);
+      expect(legFor('checking')['envelopeId'], isNull);
+      expect(legFor('fd')['envelopeId'], isNull);
+      // No envelope was passed → no allocation refresh.
+      verifyNever(() => envelopeRepo.refreshAllocations(any()));
       await cubit.close();
     });
 
