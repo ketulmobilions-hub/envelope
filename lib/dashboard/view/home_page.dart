@@ -291,7 +291,7 @@ class _HomeView extends StatelessWidget {
 
                   // Ready to Assign
                   DashboardReadyToAssignCard(
-                    readyToAssign: state.readyToAssign,
+                    readyToAssign: state.adjustedReadyToAssign,
                     totalSpent: state.totalSpent,
                     totalAllocated: state.totalAllocated,
                     period: state.selectedPeriod,
