@@ -206,6 +206,13 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
     }
     await Future.wait(optimisticFutures);
 
+    // For transfers with an envelope (e.g. CC payment), the server trigger
+    // recalculates spent_amount after the delete but the local cache won't
+    // see it without an explicit pull — there is no optimistic path for
+    // transfers and the realtime push may arrive too late or be missed.
+    final needsAllocationRefresh =
+        txn.type == 'transfer' && txn.envelopeId != null;
+
     try {
       await _transactionRepository.deleteTransaction(event.id);
     } on TransactionException {
@@ -219,6 +226,29 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
         ),
       );
       emit(state.copyWith(status: TransactionsStatus.loaded, error: null));
+      return;
+    }
+
+    if (needsAllocationRefresh) {
+      unawaited(_refreshAllocationsForDate(txn.budgetId, txn.date));
+    }
+  }
+
+  Future<void> _refreshAllocationsForDate(
+    String budgetId,
+    DateTime date,
+  ) async {
+    try {
+      final periods =
+          await _budgetRepository.watchBudgetPeriods(budgetId).first;
+      final period = periods.where((p) {
+        return !p.startDate.isAfter(date) && !p.endDate.isBefore(date);
+      }).firstOrNull;
+      if (period != null) {
+        await _envelopeRepository.refreshAllocations(period.id);
+      }
+    } on Exception {
+      // Best-effort — realtime will reconcile on next sync.
     }
   }
 
