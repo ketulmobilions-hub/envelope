@@ -153,7 +153,7 @@ class _AllocateEnvelopeSheetState extends State<_AllocateEnvelopeSheet> {
     final l10n = context.l10n;
     final symbol = currencySymbol(context);
     final readyToAssign = context.select<DashboardBloc, int>(
-      (b) => b.state.readyToAssign,
+      (b) => b.state.adjustedReadyToAssign,
     );
     final finalCents = _finalCents();
     final previewText = finalCents != null

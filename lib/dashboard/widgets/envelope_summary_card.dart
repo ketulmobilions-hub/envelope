@@ -499,7 +499,7 @@ class _CategoryGroupSection extends StatelessWidget {
       overspentAllocation: summary.allocation!,
       overspentEnvelopeName: summary.envelope.name,
       deficitCents: -summary.available,
-      readyToAssign: dashState.readyToAssign,
+      readyToAssign: dashState.adjustedReadyToAssign,
     );
 
     if (result == true && context.mounted) {
