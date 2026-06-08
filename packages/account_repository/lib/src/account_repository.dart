@@ -123,6 +123,11 @@ class AccountRepository {
         companions,
         mode: InsertMode.insertOrReplace,
       );
+      // Remove local rows that no longer exist on the server so that accounts
+      // deleted outside the app (e.g. via Supabase dashboard) are evicted from
+      // the cache on the next refresh rather than lingering indefinitely.
+      final remoteIds = remoteAccounts.map((a) => a.id).toSet();
+      await _localDatabase.accountsDao.deleteAccountsNotIn(budgetId, remoteIds);
     } on EnvelopeApiException catch (e) {
       throw AccountException('Failed to refresh accounts', error: e);
     }

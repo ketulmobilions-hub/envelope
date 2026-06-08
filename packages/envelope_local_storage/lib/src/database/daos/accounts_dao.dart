@@ -46,6 +46,15 @@ class AccountsDao extends DatabaseAccessor<AppDatabase>
   Future<int> deleteAccount(String id) =>
       (delete(accounts)..where((t) => t.id.equals(id))).go();
 
+  Future<int> deleteAccountsNotIn(String budgetId, Set<String> keepIds) =>
+      (delete(accounts)
+            ..where(
+              (t) =>
+                  t.budgetId.equals(budgetId) &
+                  t.id.isNotIn(keepIds),
+            ))
+          .go();
+
   // Debt Accounts CRUD
   Future<DebtAccount?> getDebtAccount(String accountId) => (select(
     debtAccounts,
