@@ -112,12 +112,18 @@ final class DashboardState extends Equatable {
   );
 
   /// Sum of allocated amounts across visible envelopes for the selected
-  /// period. Use as the "Allocated" total on the dashboard.
-  int get totalAllocated =>
-      envelopeSummaries.fold(0, (sum, s) => sum + s.allocated);
+  /// period. Excludes CC Payment envelopes (linkedAccountId != null) to avoid
+  /// double-counting: the spend was already recorded in the original category
+  /// envelope when the CC was charged.
+  int get totalAllocated => envelopeSummaries
+      .where((s) => s.envelope.linkedAccountId == null)
+      .fold(0, (sum, s) => sum + s.allocated);
 
   /// Sum of spent amounts across visible envelopes for the selected period.
-  int get totalSpent => envelopeSummaries.fold(0, (sum, s) => sum + s.spent);
+  /// Excludes CC Payment envelopes for the same reason as [totalAllocated].
+  int get totalSpent => envelopeSummaries
+      .where((s) => s.envelope.linkedAccountId == null)
+      .fold(0, (sum, s) => sum + s.spent);
 
   /// Envelope summaries paired with their allocations and group names.
   List<EnvelopeSummary> get envelopeSummaries {
