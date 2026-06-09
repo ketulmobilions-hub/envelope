@@ -88,25 +88,36 @@ class _HomeView extends StatelessWidget {
       appBar: AppBar(
         title: Text(l10n.homeTitle),
         actions: [
-          IconButton(
-            onPressed: () => context.push(
-              '${AppRoutes.sharedBudget}?budgetId=$budgetId',
-            ),
-            icon: const Icon(Icons.group),
+          BlocBuilder<DashboardBloc, DashboardState>(
+            buildWhen: (prev, curr) => prev.memberCount != curr.memberCount,
+            builder: (context, state) {
+              final isShared = state.memberCount > 1;
+              return IconButton(
+                onPressed: () => context.push(
+                  '${AppRoutes.sharedBudget}?budgetId=$budgetId',
+                ),
+                icon: Icon(
+                  isShared
+                      ? Icons.group_outlined
+                      : Icons.group_add_outlined,
+                ),
+                tooltip: l10n.sharedBudgetTitle,
+              );
+            },
           ),
           const SyncStatusIndicator(),
           PopupMenuButton<String>(
             onSelected: (value) async {
-              if (value == 'delete_budget') {
-                unawaited(_confirmDeleteBudget(context));
-              } else if (value == 'settings') {
-                unawaited(context.push(AppRoutes.settings));
-              } else if (value == 'recurring') {
+              if (value == 'recurring') {
                 unawaited(
                   context.push(
                     '${AppRoutes.recurring}?budgetId=$budgetId',
                   ),
                 );
+              } else if (value == 'settings') {
+                unawaited(context.push(AppRoutes.settings));
+              } else if (value == 'delete_budget') {
+                unawaited(_confirmDeleteBudget(context));
               } else if (value == 'debug_simulate_date') {
                 final picked = await showDatePicker(
                   context: context,
@@ -138,7 +149,7 @@ class _HomeView extends StatelessWidget {
               PopupMenuItem(
                 value: 'recurring',
                 child: ListTile(
-                  leading: const Icon(Icons.repeat),
+                  leading: const Icon(Icons.repeat_outlined),
                   title: Text(l10n.recurringTitle),
                   dense: true,
                   contentPadding: EdgeInsets.zero,
@@ -153,6 +164,7 @@ class _HomeView extends StatelessWidget {
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
+              const PopupMenuDivider(),
               PopupMenuItem(
                 value: 'delete_budget',
                 child: ListTile(
@@ -283,20 +295,45 @@ class _HomeView extends StatelessWidget {
                     },
                   ),
 
+                  // Period selector — page-level context
+                  if (state.selectedPeriod != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.chevron_left),
+                            tooltip: l10n.dashboardPreviousPeriod,
+                            onPressed: state.hasPreviousPeriod
+                                ? () => context.read<DashboardBloc>().add(
+                                    const DashboardPreviousPeriodRequested(),
+                                  )
+                                : null,
+                          ),
+                          Text(
+                            _formatPeriod(state.selectedPeriod!),
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.chevron_right),
+                            tooltip: l10n.dashboardNextPeriod,
+                            onPressed: state.hasNextPeriod
+                                ? () => context.read<DashboardBloc>().add(
+                                    const DashboardNextPeriodRequested(),
+                                  )
+                                : null,
+                          ),
+                        ],
+                      ),
+                    ),
+
                   // Ready to Assign
                   DashboardReadyToAssignCard(
                     readyToAssign: state.adjustedReadyToAssign,
                     totalSpent: state.totalSpent,
                     totalAllocated: state.totalAllocated,
-                    period: state.selectedPeriod,
-                    hasPreviousPeriod: state.hasPreviousPeriod,
-                    hasNextPeriod: state.hasNextPeriod,
-                    onPreviousPeriod: () => context.read<DashboardBloc>().add(
-                      const DashboardPreviousPeriodRequested(),
-                    ),
-                    onNextPeriod: () => context.read<DashboardBloc>().add(
-                      const DashboardNextPeriodRequested(),
-                    ),
                     onTap: () => context.push(
                       '${AppRoutes.budget}?budgetId=$budgetId',
                     ),
@@ -338,6 +375,24 @@ class _HomeView extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  static String _formatPeriod(BudgetPeriod period) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    final start = period.startDate;
+    final end = period.endDate;
+    if (start.year == end.year && start.month == end.month) {
+      return '${months[start.month - 1]} ${start.year}';
+    }
+    if (start.year != end.year) {
+      final s = '${months[start.month - 1]} ${start.year}';
+      final e = '${months[end.month - 1]} ${end.year}';
+      return '$s – $e';
+    }
+    return '${months[start.month - 1]} – ${months[end.month - 1]} ${end.year}';
   }
 
   Future<void> _confirmDeleteBudget(BuildContext context) async {

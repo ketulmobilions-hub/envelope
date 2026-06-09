@@ -186,6 +186,18 @@ class DashboardReadyToAssignCard extends StatelessWidget {
                         ),
                       ],
                     ),
+                    if (totalAllocated > 0) ...[
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(3),
+                        child: LinearProgressIndicator(
+                          value: (totalSpent / totalAllocated).clamp(0.0, 1.0),
+                          minHeight: 5,
+                          backgroundColor: color.withValues(alpha: 0.15),
+                          valueColor: AlwaysStoppedAnimation<Color>(spentColor),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
