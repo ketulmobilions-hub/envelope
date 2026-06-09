@@ -1,18 +1,22 @@
+import 'package:intl/intl.dart';
+
 /// Maximum allowed dollar amount for balance input.
 const double maxDollarAmount = 999999999.99;
 
 /// Maximum allowed cents amount (maxDollarAmount * 100).
 const int maxCentsAmount = 99999999999;
 
+final _dollarsFormat = NumberFormat('#,##0');
+
 /// Formats an integer amount in cents to a currency string.
 ///
-/// Example: `1500` → `$15.00`, `-250` → `-$2.50`.
+/// Example: `1500` → `$15.00`, `-250` → `-$2.50`, `2807100` → `$28,071.00`.
 String formatCents(int cents, {String symbol = r'$'}) {
   final negative = cents < 0;
   final absCents = cents.abs();
   final dollars = absCents ~/ 100;
   final remainder = (absCents % 100).toString().padLeft(2, '0');
-  final formatted = '$symbol$dollars.$remainder';
+  final formatted = '$symbol${_dollarsFormat.format(dollars)}.$remainder';
   return negative ? '-$formatted' : formatted;
 }
 
