@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:account_repository/account_repository.dart';
+import 'package:envelope/accounts/widgets/account_helpers.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/transactions/bloc/bloc.dart';
 import 'package:flutter/material.dart';
@@ -185,7 +186,7 @@ class _AccountChip extends StatelessWidget {
                         onFilterChanged(filter.copyWith(accountId: null));
                       },
                     ),
-                    for (final account in accounts)
+                    for (final account in accounts.where((a) => a.isOnBudget || isCreditCard(a.type)))
                       ListTile(
                         title: Text(account.name),
                         selected: filter.accountId == account.id,

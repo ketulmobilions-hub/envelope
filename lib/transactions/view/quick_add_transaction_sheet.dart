@@ -12,6 +12,7 @@ import 'package:envelope/shared/widgets/app_option_picker.dart';
 import 'package:envelope/shared/widgets/currency_picker_sheet.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
 import 'package:envelope/transactions/cubit/cubit.dart';
+import 'package:envelope/accounts/widgets/account_helpers.dart';
 import 'package:envelope/transactions/widgets/widgets.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/foundation.dart';
@@ -257,13 +258,16 @@ class _QuickAddTransactionSheetState extends State<QuickAddTransactionSheet> {
     setState(() {
       // Recover from stale prefs: fall back to first account when the stored
       // id no longer exists.
-      if (state.accounts.isNotEmpty &&
+      final eligible = state.accounts
+          .where((a) => a.isOnBudget || isCreditCard(a.type))
+          .toList();
+      if (eligible.isNotEmpty &&
           (_accountId == null ||
-              !state.accounts.any((a) => a.id == _accountId))) {
-        final preferred = state.accounts
+              !eligible.any((a) => a.id == _accountId))) {
+        final preferred = eligible
             .where((a) => a.id == lastAccount)
             .firstOrNull;
-        _accountId = preferred?.id ?? state.accounts.first.id;
+        _accountId = preferred?.id ?? eligible.first.id;
       }
       if (state.envelopes.isNotEmpty &&
           (_envelopeId == null ||
@@ -390,52 +394,6 @@ class _QuickAddTransactionSheetState extends State<QuickAddTransactionSheet> {
   }
 
   Future<void> _handleOverspend(TransactionFormState state) async {
-    final data = state.overspendData;
-    if (data == null) {
-      await _maybePersistTemplate();
-      if (mounted) Navigator.of(context).pop(true);
-      return;
-    }
-
-    final wantsCover = await showOverspendWarningDialog(
-      context,
-      envelopeName: data.envelopeName,
-      deficitCents: data.deficitCents,
-    );
-
-    if (wantsCover != true || !mounted) {
-      await _maybePersistTemplate();
-      if (mounted) Navigator.of(context).pop(true);
-      return;
-    }
-
-    final coverResult = await showCoverOverspendDialog(
-      context,
-      budgetRepository: context.read<BudgetRepository>(),
-      envelopeRepository: context.read<EnvelopeRepository>(),
-      allocations: data.allocations,
-      envelopes: data.envelopes,
-      overspentAllocation: data.overspentAllocation,
-      overspentEnvelopeName: data.envelopeName,
-      deficitCents: data.deficitCents.abs(),
-      readyToAssign: data.readyToAssign,
-    );
-
-    if (!mounted) return;
-
-    final l10n = context.l10n;
-    if (coverResult == true) {
-      showAppSnackBar(
-        context,
-        SnackBar(content: Text(l10n.overspendCoverSuccess)),
-      );
-    } else if (coverResult == false) {
-      showAppSnackBar(
-        context,
-        SnackBar(content: Text(l10n.overspendCoverFailed)),
-      );
-    }
-
     await _maybePersistTemplate();
     if (mounted) Navigator.of(context).pop(true);
   }
@@ -484,7 +442,10 @@ class _QuickAddTransactionSheetState extends State<QuickAddTransactionSheet> {
       builder: (context, state) {
         final isLoading = state.status == TransactionFormStatus.loading;
         final isSubmitting = state.status == TransactionFormStatus.submitting;
-        final selectedAccount = state.accounts
+        final eligibleAccounts = state.accounts
+            .where((a) => a.isOnBudget || isCreditCard(a.type))
+            .toList();
+        final selectedAccount = eligibleAccounts
             .where((a) => a.id == _accountId)
             .firstOrNull;
         final selectedEnvelope = state.envelopes
@@ -582,7 +543,7 @@ class _QuickAddTransactionSheetState extends State<QuickAddTransactionSheet> {
                         ),
                         const SizedBox(height: 12),
                         AppOptionPicker<Account>(
-                          options: state.accounts,
+                          options: eligibleAccounts,
                           value: selectedAccount,
                           onChanged: (a) => setState(() {
                             _accountId = a.id;

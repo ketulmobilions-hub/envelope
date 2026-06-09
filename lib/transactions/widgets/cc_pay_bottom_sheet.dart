@@ -109,7 +109,7 @@ class _CCPayBottomSheetState extends State<_CCPayBottomSheet> {
   }
 
   List<Account> get _nonCCAccounts => widget.accounts
-      .where((a) => !a.isArchived && !isCreditCard(a.type))
+      .where((a) => !a.isArchived && !isCreditCard(a.type) && a.isOnBudget)
       .toList();
 
   void _prefillFullAmount() {
