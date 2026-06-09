@@ -60,7 +60,7 @@ class EnvelopeCard extends StatelessWidget {
     final textColor = AppColors.onPrimary.withValues(alpha: 0.9);
 
     Widget card = SizedBox(
-      height: 140,
+      height: 176,
       child: Stack(
         children: [
           Positioned.fill(
@@ -93,17 +93,17 @@ class EnvelopeCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            name.toUpperCase(),
+                            name,
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: textColor,
-                              letterSpacing: 0.8,
+                              letterSpacing: 0.3,
                             ),
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const Spacer(),
+                          const SizedBox(height: 6),
                           if (primaryLabel != null) ...[
                             Text(
                               primaryLabel!,
@@ -131,95 +131,116 @@ class EnvelopeCard extends StatelessWidget {
                                 color: textColor,
                               ),
                             ),
+                          const Spacer(),
                         ],
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Divider(
                   height: 1,
                   thickness: 0.8,
                   color: textColor.withValues(alpha: 0.3),
                 ),
-                const SizedBox(height: 4),
                 if (onPay != null)
                   GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onTap: onPay,
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.credit_card_outlined,
-                          size: 10,
-                          color: textColor,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 32),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.credit_card_outlined,
+                              size: 14,
+                              color: textColor,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              l10n.ccPayButton,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: textColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          l10n.ccPayButton,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: textColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   )
                 else if (isOverspent && onFixOverspend != null)
                   GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onTap: onFixOverspend,
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.build_outlined,
-                          size: 10,
-                          color: textColor,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 32),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.build_outlined,
+                              size: 14,
+                              color: textColor,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              l10n.envelopeFixOverspend,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: textColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          l10n.envelopeFixOverspend,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: textColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   )
                 else
                   GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onTap: onEditTap,
-                    child: Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            l10n.envelopeCardOfAllocated(
-                              formatCents(
-                                allocatedCents,
-                                symbol: symbol,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 32),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                l10n.envelopeCardOfAllocated(
+                                  formatCents(
+                                    allocatedCents,
+                                    symbol: symbol,
+                                  ),
+                                ),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: textColor,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: textColor,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                            if (onEditTap != null)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 4),
+                                child: Icon(
+                                  Icons.edit_outlined,
+                                  size: 14,
+                                  color: textColor,
+                                ),
+                              ),
+                          ],
                         ),
-                        if (onEditTap != null)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 4),
-                            child: Icon(
-                              Icons.edit_outlined,
-                              size: 10,
-                              color: textColor,
-                            ),
-                          ),
-                      ],
+                      ),
                     ),
                   ),
               ],
