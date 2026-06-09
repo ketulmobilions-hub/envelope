@@ -4,11 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 
 /// App-wide letter-spacing constants.
 abstract final class AppSpacing {
-  /// Title letter-spacing for headings.
-  static const double title = 6.0;
+  /// Letter-spacing for display/title text.
+  static const double title = 1.5;
 
-  /// Label letter-spacing for buttons and labels.
-  static const double label = 1.5;
+  /// Letter-spacing for labels and buttons.
+  static const double label = 0.5;
 }
 
 /// Builds the app [TextTheme] with Inter for all text styles.
