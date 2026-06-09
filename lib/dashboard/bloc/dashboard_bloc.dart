@@ -625,6 +625,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     _waitingForAllocations = true;
     _allocationsGeneration++;
     await _allocationsSubscription?.cancel();
+    if (isClosed) return;
 
     // Refresh from API before subscribing so the first watch emission has
     // fresh spentAmount values (avoids a stale flash when navigating back).
@@ -633,6 +634,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     } on EnvelopeException {
       // Keep cached data if refresh fails.
     }
+    if (isClosed) return;
 
     // Resubscribe allocation Realtime channel for the new period.
     _allocationRealtimeChannel?.unsubscribe();
@@ -643,8 +645,12 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     _allocationsSubscription = _envelopeRepository
         .watchAllocations(periodId)
         .listen(
-          (allocations) => add(_AllocationsUpdated(allocations, gen)),
-          onError: (Object _) => add(const _DashboardStreamError()),
+          (allocations) {
+            if (!isClosed) add(_AllocationsUpdated(allocations, gen));
+          },
+          onError: (Object _) {
+            if (!isClosed) add(const _DashboardStreamError());
+          },
         );
   }
 
