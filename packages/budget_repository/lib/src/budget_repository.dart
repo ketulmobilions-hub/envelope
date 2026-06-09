@@ -968,10 +968,17 @@ class BudgetRepository {
         end: period.endDate,
       );
 
+      final offBudgetAdj = await _netOffBudgetTransferAdjustment(
+        budgetId: period.budgetId,
+        start: period.startDate,
+        end: period.endDate,
+      );
+
       return period.totalIncome +
           openingContribution +
           period.carriedRta -
-          totalAllocated;
+          totalAllocated -
+          offBudgetAdj;
     } on BudgetException {
       rethrow;
     } on Exception catch (e) {
