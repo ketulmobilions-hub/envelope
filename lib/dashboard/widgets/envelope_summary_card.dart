@@ -25,7 +25,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 
 /// Displays envelopes grouped by category on the dashboard.
-class EnvelopeSummaryCard extends StatelessWidget {
+class EnvelopeSummaryCard extends StatefulWidget {
   const EnvelopeSummaryCard({
     required this.summaries,
     this.categoryGroups = const [],
@@ -42,9 +42,21 @@ class EnvelopeSummaryCard extends StatelessWidget {
   final VoidCallback? onViewAll;
 
   @override
+  State<EnvelopeSummaryCard> createState() => _EnvelopeSummaryCardState();
+}
+
+class _EnvelopeSummaryCardState extends State<EnvelopeSummaryCard> {
+  bool _isExpanded = true;
+
+  @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
+    final summaries = widget.summaries;
+    final categoryGroups = widget.categoryGroups;
+    final accounts = widget.accounts;
+    final ccCreditLimits = widget.ccCreditLimits;
+    final onViewAll = widget.onViewAll;
 
     if (summaries.isEmpty) {
       return Card(
@@ -114,14 +126,15 @@ class EnvelopeSummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title row with View All link.
+          // Title row with collapse toggle and View All link.
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                l10n.dashboardEnvelopes,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: theme.colorScheme.outline,
+              Expanded(
+                child: Text(
+                  l10n.dashboardEnvelopes,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.outline,
+                  ),
                 ),
               ),
               if (onViewAll != null)
@@ -141,28 +154,57 @@ class EnvelopeSummaryCard extends StatelessWidget {
                     ),
                   ),
                 ),
+              const SizedBox(width: 4),
+              InkWell(
+                onTap: () => setState(() => _isExpanded = !_isExpanded),
+                borderRadius: BorderRadius.circular(16),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: AnimatedRotation(
+                    turns: _isExpanded ? 0 : -0.5,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      Icons.expand_more,
+                      size: 20,
+                      color: theme.colorScheme.outline,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 12),
-          if (tabbedGroupIds.isNotEmpty)
-            _TabbedCategoryGroups(
-              groupIds: tabbedGroupIds,
-              groupNameOf: nameOf,
-              summariesByGroupId: grouped,
-              categoryGroups: categoryGroups,
-              accounts: accounts,
-              ccCreditLimits: ccCreditLimits,
-              onViewAll: onViewAll,
-            ),
-          if (ccGroupId != null)
-            _CategoryGroupSection(
-              groupName: nameOf(ccGroupId),
-              summaries: grouped[ccGroupId]!,
-              categoryGroups: categoryGroups,
-              accounts: accounts,
-              ccCreditLimits: ccCreditLimits,
-              onViewAll: onViewAll,
-            ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: _isExpanded
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 12),
+                      if (tabbedGroupIds.isNotEmpty)
+                        _TabbedCategoryGroups(
+                          groupIds: tabbedGroupIds,
+                          groupNameOf: nameOf,
+                          summariesByGroupId: grouped,
+                          categoryGroups: categoryGroups,
+                          accounts: accounts,
+                          ccCreditLimits: ccCreditLimits,
+                          onViewAll: onViewAll,
+                        ),
+                      if (ccGroupId != null)
+                        _CategoryGroupSection(
+                          groupName: nameOf(ccGroupId),
+                          summaries: grouped[ccGroupId]!,
+                          categoryGroups: categoryGroups,
+                          accounts: accounts,
+                          ccCreditLimits: ccCreditLimits,
+                          onViewAll: onViewAll,
+                        ),
+                    ],
+                  )
+                : const SizedBox.shrink(),
+          ),
         ],
       ),
     );
