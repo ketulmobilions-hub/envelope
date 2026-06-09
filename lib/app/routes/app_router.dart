@@ -181,7 +181,11 @@ GoRouter createRouter({
             redirect: _requireBudgetId,
             builder: (context, state) {
               final budgetId = state.uri.queryParameters['budgetId']!;
-              return BudgetPage(budgetId: budgetId);
+              final offBudgetAdjustment = (state.extra as int?) ?? 0;
+              return BudgetPage(
+                budgetId: budgetId,
+                offBudgetAdjustment: offBudgetAdjustment,
+              );
             },
           ),
           GoRoute(

@@ -632,7 +632,12 @@ class BudgetRepository {
           final unspent = a.allocatedAmount - a.spentAmount + a.rolloverAmount;
           if (unspent < 0) uncoveredOverspend += -unspent;
         }
-        carriedRta = signedPrevRta - uncoveredOverspend;
+        final prevOffBudgetAdj = await _netOffBudgetTransferAdjustment(
+          budgetId: budgetId,
+          start: previous.startDate,
+          end: previous.endDate,
+        );
+        carriedRta = signedPrevRta - uncoveredOverspend - prevOffBudgetAdj;
       }
 
       final newPeriod = await createBudgetPeriod(
@@ -892,7 +897,12 @@ class BudgetRepository {
         final unspent = a.allocatedAmount - a.spentAmount + a.rolloverAmount;
         if (unspent < 0) uncoveredOverspend += -unspent;
       }
-      final newCarried = signedPrevRta - uncoveredOverspend;
+      final prevOffBudgetAdj = await _netOffBudgetTransferAdjustment(
+        budgetId: budgetId,
+        start: previous.startDate,
+        end: previous.endDate,
+      );
+      final newCarried = signedPrevRta - uncoveredOverspend - prevOffBudgetAdj;
       recomputedCarriedRta[current.id] = newCarried;
 
       if (newCarried != current.carriedRta) {
@@ -980,6 +990,70 @@ class BudgetRepository {
   /// `[startDate, endDate]` pair (endDate is the last day of the period, not
   /// an exclusive next-period start), so `openingDate == startDate` and
   /// `openingDate == endDate` must both fall inside this period.
+  /// Net off-budget transfer adjustment for a period: outflows minus inflows.
+  ///
+  /// Mirrors the `totalOffBudgetTransfersOut - totalOffBudgetTransfersIn`
+  /// computation from `DashboardState` so the same adjustment is applied when
+  /// computing `carriedRta`, preventing it from leaking into the next period.
+  ///
+  /// Only untagged transfers (envelopeId == null) are counted — tagged ones
+  /// are already handled via envelope allocations.
+  Future<int> _netOffBudgetTransferAdjustment({
+    required String budgetId,
+    required DateTime start,
+    required DateTime end,
+  }) async {
+    final transactions = await _localDatabase.transactionsDao
+        .getTransactionsByBudgetId(budgetId);
+    final accounts = await _localDatabase.accountsDao
+        .getAccountsByBudgetId(budgetId);
+
+    final accountMap = {for (final a in accounts) a.id: a};
+
+    // Build transferPairId → accountIds map for transfers in this period.
+    final pairAccounts = <String, List<String>>{};
+    for (final t in transactions) {
+      if (t.type != 'transfer' || t.transferPairId == null) continue;
+      if (t.date.isBefore(start) || t.date.isAfter(end)) continue;
+      (pairAccounts[t.transferPairId!] ??= []).add(t.accountId);
+    }
+
+    bool isCc(String type) => type == 'credit_card' || type == 'creditCard';
+
+    var out = 0;
+    var inn = 0;
+    for (final t in transactions) {
+      if (t.type != 'transfer') continue;
+      if (t.transferPairId == null || t.envelopeId != null) continue;
+      if (t.date.isBefore(start) || t.date.isAfter(end)) continue;
+
+      final account = accountMap[t.accountId];
+      if (account == null) continue;
+
+      final legs = pairAccounts[t.transferPairId!] ?? [];
+      final otherId = legs.firstWhere(
+        (id) => id != t.accountId,
+        orElse: () => '',
+      );
+      if (otherId.isEmpty) continue;
+      final other = accountMap[otherId];
+      if (other == null) continue;
+
+      if (t.amount < 0 &&
+          account.isOnBudget &&
+          !other.isOnBudget &&
+          !isCc(other.type)) {
+        out += t.amount.abs();
+      } else if (t.amount > 0 &&
+          account.isOnBudget &&
+          !other.isOnBudget &&
+          !isCc(other.type)) {
+        inn += t.amount;
+      }
+    }
+    return out - inn;
+  }
+
   static int _openingContributionFor({
     required int openingBalance,
     required DateTime? openingDate,

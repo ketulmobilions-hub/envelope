@@ -299,6 +299,7 @@ class _HomeView extends StatelessWidget {
                     ),
                     onTap: () => context.push(
                       '${AppRoutes.budget}?budgetId=$budgetId',
+                      extra: state.adjustedReadyToAssign - state.readyToAssign,
                     ),
                   ),
 

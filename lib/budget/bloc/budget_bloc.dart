@@ -22,13 +22,14 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     required TransactionRepository transactionRepository,
     required String budgetId,
     DateTime Function()? now,
+    int offBudgetAdjustment = 0,
   }) : _budgetRepository = budgetRepository,
        _envelopeRepository = envelopeRepository,
        _goalRepository = goalRepository,
        _transactionRepository = transactionRepository,
        _budgetId = budgetId,
        _now = now ?? DateTime.now,
-       super(BudgetState()) {
+       super(BudgetState(offBudgetAdjustment: offBudgetAdjustment)) {
     on<BudgetStarted>(_onStarted);
     on<_BudgetUpdated>(_onBudgetUpdated);
     on<_PeriodsUpdated>(_onPeriodsUpdated);
