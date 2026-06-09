@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope/budget/bloc/bloc.dart';
 import 'package:envelope/budget/view/allocation_template_page.dart';
-import 'package:envelope/budget/widgets/transfer_dialog.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -64,21 +63,6 @@ Future<void> showBudgetActionsMenu(BuildContext context) {
                         Navigator.of(sheetContext).pop();
                         unawaited(
                           _showSaveAsTemplateDialog(context, bloc, state),
-                        );
-                      },
-                    ),
-                  if (state.allocations.length >= 2)
-                    ListTile(
-                      leading: const Icon(Icons.swap_horiz),
-                      title: Text(l10n.budgetTransferBetweenEnvelopes),
-                      onTap: () {
-                        Navigator.of(sheetContext).pop();
-                        unawaited(
-                          showTransferDialog(
-                            context,
-                            allocations: state.allocations,
-                            envelopes: state.envelopes,
-                          ),
                         );
                       },
                     ),

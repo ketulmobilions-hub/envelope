@@ -86,11 +86,30 @@ class _BudgetViewState extends State<BudgetView> {
                 );
               },
             ),
+            IconButton(
+              onPressed: () => unawaited(showBudgetActionsMenu(context)),
+              icon: const Icon(Icons.tune_outlined),
+              tooltip: l10n.budgetActionsTooltip,
+            ),
           ],
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => unawaited(showBudgetActionsMenu(context)),
-          child: const Icon(Icons.more_vert),
+        floatingActionButton: BlocBuilder<BudgetBloc, BudgetState>(
+          buildWhen: (prev, curr) =>
+              (prev.allocations.length >= 2) != (curr.allocations.length >= 2),
+          builder: (context, state) {
+            if (state.allocations.length < 2) return const SizedBox.shrink();
+            return FloatingActionButton(
+              onPressed: () => unawaited(
+                showTransferDialog(
+                  context,
+                  allocations: context.read<BudgetBloc>().state.allocations,
+                  envelopes: context.read<BudgetBloc>().state.envelopes,
+                ),
+              ),
+              tooltip: l10n.budgetTransferBetweenEnvelopes,
+              child: const Icon(Icons.swap_horiz),
+            );
+          },
         ),
         body: BlocBuilder<BudgetBloc, BudgetState>(
           builder: (context, state) {
