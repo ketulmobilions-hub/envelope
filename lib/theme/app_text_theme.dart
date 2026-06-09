@@ -11,35 +11,33 @@ abstract final class AppSpacing {
   static const double label = 1.5;
 }
 
-/// Builds the app [TextTheme] with Playfair Display for display/headline styles
-/// and default sans-serif for body/label styles.
+/// Builds the app [TextTheme] with Inter for all text styles.
 abstract final class AppTextTheme {
   static TextTheme get textTheme {
-    final serifStyle = GoogleFonts.playfairDisplay();
+    final sansStyle = GoogleFonts.inter();
 
     return TextTheme(
-      displayLarge: serifStyle.copyWith(color: AppColors.charcoal),
-      displayMedium: serifStyle.copyWith(color: AppColors.charcoal),
-      displaySmall: serifStyle.copyWith(color: AppColors.charcoal),
-      headlineLarge: serifStyle.copyWith(color: AppColors.charcoal),
-      headlineMedium: serifStyle.copyWith(color: AppColors.charcoal),
-      headlineSmall: serifStyle.copyWith(color: AppColors.charcoal),
-      titleLarge: serifStyle.copyWith(color: AppColors.charcoal),
-      // Body and label styles use the default sans-serif.
-      titleMedium: const TextStyle(color: AppColors.charcoal),
-      titleSmall: const TextStyle(color: AppColors.charcoal),
-      bodyLarge: const TextStyle(color: AppColors.charcoal),
-      bodyMedium: const TextStyle(color: AppColors.charcoal),
-      bodySmall: const TextStyle(color: AppColors.secondaryText),
-      labelLarge: TextStyle(
+      displayLarge: sansStyle.copyWith(color: AppColors.charcoal),
+      displayMedium: sansStyle.copyWith(color: AppColors.charcoal),
+      displaySmall: sansStyle.copyWith(color: AppColors.charcoal),
+      headlineLarge: sansStyle.copyWith(color: AppColors.charcoal),
+      headlineMedium: sansStyle.copyWith(color: AppColors.charcoal),
+      headlineSmall: sansStyle.copyWith(color: AppColors.charcoal),
+      titleLarge: sansStyle.copyWith(color: AppColors.charcoal),
+      titleMedium: sansStyle.copyWith(color: AppColors.charcoal),
+      titleSmall: sansStyle.copyWith(color: AppColors.charcoal),
+      bodyLarge: sansStyle.copyWith(color: AppColors.charcoal),
+      bodyMedium: sansStyle.copyWith(color: AppColors.charcoal),
+      bodySmall: sansStyle.copyWith(color: AppColors.secondaryText),
+      labelLarge: sansStyle.copyWith(
         color: AppColors.charcoal,
         letterSpacing: AppSpacing.label,
       ),
-      labelMedium: TextStyle(
+      labelMedium: sansStyle.copyWith(
         color: AppColors.secondaryText,
         letterSpacing: AppSpacing.label,
       ),
-      labelSmall: TextStyle(
+      labelSmall: sansStyle.copyWith(
         color: AppColors.secondaryText,
         letterSpacing: AppSpacing.label,
       ),

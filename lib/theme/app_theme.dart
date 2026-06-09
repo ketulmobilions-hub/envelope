@@ -284,32 +284,32 @@ abstract final class AppTheme {
   );
 
   static TextTheme get _darkTextTheme {
-    final serifStyle = GoogleFonts.playfairDisplay();
+    final sansStyle = GoogleFonts.inter();
     const textColor = Color(0xFFE8E0D4);
     const mutedColor = Color(0xFF8A8478);
 
     return TextTheme(
-      displayLarge: serifStyle.copyWith(color: textColor),
-      displayMedium: serifStyle.copyWith(color: textColor),
-      displaySmall: serifStyle.copyWith(color: textColor),
-      headlineLarge: serifStyle.copyWith(color: textColor),
-      headlineMedium: serifStyle.copyWith(color: textColor),
-      headlineSmall: serifStyle.copyWith(color: textColor),
-      titleLarge: serifStyle.copyWith(color: textColor),
-      titleMedium: const TextStyle(color: textColor),
-      titleSmall: const TextStyle(color: textColor),
-      bodyLarge: const TextStyle(color: textColor),
-      bodyMedium: const TextStyle(color: textColor),
-      bodySmall: const TextStyle(color: mutedColor),
-      labelLarge: TextStyle(
+      displayLarge: sansStyle.copyWith(color: textColor),
+      displayMedium: sansStyle.copyWith(color: textColor),
+      displaySmall: sansStyle.copyWith(color: textColor),
+      headlineLarge: sansStyle.copyWith(color: textColor),
+      headlineMedium: sansStyle.copyWith(color: textColor),
+      headlineSmall: sansStyle.copyWith(color: textColor),
+      titleLarge: sansStyle.copyWith(color: textColor),
+      titleMedium: sansStyle.copyWith(color: textColor),
+      titleSmall: sansStyle.copyWith(color: textColor),
+      bodyLarge: sansStyle.copyWith(color: textColor),
+      bodyMedium: sansStyle.copyWith(color: textColor),
+      bodySmall: sansStyle.copyWith(color: mutedColor),
+      labelLarge: sansStyle.copyWith(
         color: textColor,
         letterSpacing: AppSpacing.label,
       ),
-      labelMedium: TextStyle(
+      labelMedium: sansStyle.copyWith(
         color: mutedColor,
         letterSpacing: AppSpacing.label,
       ),
-      labelSmall: TextStyle(
+      labelSmall: sansStyle.copyWith(
         color: mutedColor,
         letterSpacing: AppSpacing.label,
       ),
