@@ -22,7 +22,6 @@ final class BudgetState extends Equatable {
     this.templates = const [],
     this.goals = const [],
     this.readyToAssign = 0,
-    this.offBudgetAdjustment = 0,
     this.localAllocations = const {},
     this.ccPaymentAvailable = const {},
     this.error,
@@ -39,10 +38,6 @@ final class BudgetState extends Equatable {
 
   /// Server-computed "Ready to Assign" for the selected period.
   final int readyToAssign;
-
-  /// Off-budget transfer adjustment passed in from the dashboard
-  /// (adjustedReadyToAssign - readyToAssign). Applied in [localReadyToAssign].
-  final int offBudgetAdjustment;
 
   /// Locally-edited allocation amounts (envelopeId → cents) not yet saved.
   final Map<String, int> localAllocations;
@@ -85,7 +80,7 @@ final class BudgetState extends Equatable {
   /// amount and the server-known amount. This provides instant UI feedback as
   /// the user types without any server round-trips.
   int get localReadyToAssign {
-    if (localAllocations.isEmpty) return readyToAssign + offBudgetAdjustment;
+    if (localAllocations.isEmpty) return readyToAssign;
     var delta = 0;
     for (final entry in localAllocations.entries) {
       final existing = allocations
@@ -94,7 +89,7 @@ final class BudgetState extends Equatable {
       final serverAmount = existing?.allocatedAmount ?? 0;
       delta += entry.value - serverAmount;
     }
-    return readyToAssign + offBudgetAdjustment - delta;
+    return readyToAssign - delta;
   }
 
   /// True when the user has allocated more than the available income.
@@ -135,7 +130,6 @@ final class BudgetState extends Equatable {
     List<AllocationTemplate>? templates,
     List<Goal>? goals,
     int? readyToAssign,
-    int? offBudgetAdjustment,
     Map<String, int>? localAllocations,
     Map<String, int>? ccPaymentAvailable,
     Object? error = _sentinel,
@@ -152,7 +146,6 @@ final class BudgetState extends Equatable {
       templates: templates ?? this.templates,
       goals: goals ?? this.goals,
       readyToAssign: readyToAssign ?? this.readyToAssign,
-      offBudgetAdjustment: offBudgetAdjustment ?? this.offBudgetAdjustment,
       localAllocations: localAllocations ?? this.localAllocations,
       ccPaymentAvailable: ccPaymentAvailable ?? this.ccPaymentAvailable,
       error: error == _sentinel ? this.error : error as BudgetError?,
@@ -172,7 +165,6 @@ final class BudgetState extends Equatable {
     templates,
     goals,
     readyToAssign,
-    offBudgetAdjustment,
     localAllocations,
     ccPaymentAvailable,
     error,

@@ -16,12 +16,10 @@ import 'package:transaction_repository/transaction_repository.dart';
 class BudgetPage extends StatelessWidget {
   const BudgetPage({
     required this.budgetId,
-    this.offBudgetAdjustment = 0,
     super.key,
   });
 
   final String budgetId;
-  final int offBudgetAdjustment;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +31,6 @@ class BudgetPage extends StatelessWidget {
         transactionRepository: context.read<TransactionRepository>(),
         budgetId: budgetId,
         now: context.read<AppClock>().now,
-        offBudgetAdjustment: offBudgetAdjustment,
       )..add(const BudgetStarted()),
       child: BudgetView(budgetId: budgetId),
     );

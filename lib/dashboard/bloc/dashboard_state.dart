@@ -111,97 +111,10 @@ final class DashboardState extends Equatable {
     (sum, a) => sum + (a.currentBalance * a.displayFxRate).round(),
   );
 
-  /// Total money that left the budget via untagged on→off-budget transfers in
-  /// the selected period. Untagged (envelopeId == null) means the transfer was
-  /// not funded through an envelope allocation — if it were, that allocation
-  /// already reduced RTA at budget time and we must not subtract again.
-  int get totalOffBudgetTransfersOut {
-    final period = selectedPeriod;
-    if (period == null) return 0;
-
-    final accountMap = {for (final a in accounts) a.id: a};
-
-    // Map transferPairId → list of accountIds for transfers in this period,
-    // so we can identify the destination account of each outgoing leg.
-    final pairAccounts = <String, List<String>>{};
-    for (final t in transactions) {
-      if (t.type != 'transfer' || t.transferPairId == null) { continue; }
-      if (t.date.isBefore(period.startDate) ||
-          t.date.isAfter(period.endDate)) { continue; }
-      (pairAccounts[t.transferPairId!] ??= []).add(t.accountId);
-    }
-
-    var total = 0;
-    for (final t in transactions) {
-      if (t.type != 'transfer' || t.amount >= 0) { continue; }
-      if (t.transferPairId == null || t.envelopeId != null) { continue; }
-      if (t.date.isBefore(period.startDate) ||
-          t.date.isAfter(period.endDate)) { continue; }
-
-      final fromAccount = accountMap[t.accountId];
-      if (fromAccount == null || !fromAccount.isOnBudget) continue;
-
-      final legs = pairAccounts[t.transferPairId!] ?? [];
-      final toAccountId = legs.firstWhere(
-        (id) => id != t.accountId,
-        orElse: () => '',
-      );
-      if (toAccountId.isEmpty) continue;
-
-      final toAccount = accountMap[toAccountId];
-      if (toAccount != null && !toAccount.isOnBudget) {
-        total += t.amount.abs();
-      }
-    }
-    return total;
-  }
-
-  /// Total money that entered the budget via untagged off→on-budget transfers
-  /// in the selected period. Mirror of [totalOffBudgetTransfersOut].
-  int get totalOffBudgetTransfersIn {
-    final period = selectedPeriod;
-    if (period == null) return 0;
-
-    final accountMap = {for (final a in accounts) a.id: a};
-
-    final pairAccounts = <String, List<String>>{};
-    for (final t in transactions) {
-      if (t.type != 'transfer' || t.transferPairId == null) { continue; }
-      if (t.date.isBefore(period.startDate) ||
-          t.date.isAfter(period.endDate)) { continue; }
-      (pairAccounts[t.transferPairId!] ??= []).add(t.accountId);
-    }
-
-    var total = 0;
-    for (final t in transactions) {
-      if (t.type != 'transfer' || t.amount <= 0) { continue; }
-      if (t.transferPairId == null || t.envelopeId != null) { continue; }
-      if (t.date.isBefore(period.startDate) ||
-          t.date.isAfter(period.endDate)) { continue; }
-
-      final toAccount = accountMap[t.accountId];
-      if (toAccount == null || !toAccount.isOnBudget) { continue; }
-
-      final legs = pairAccounts[t.transferPairId!] ?? [];
-      final fromAccountId = legs.firstWhere(
-        (id) => id != t.accountId,
-        orElse: () => '',
-      );
-      if (fromAccountId.isEmpty) { continue; }
-
-      final fromAccount = accountMap[fromAccountId];
-      if (fromAccount != null && !fromAccount.isOnBudget) {
-        total += t.amount;
-      }
-    }
-    return total;
-  }
-
-  /// RTA adjusted for untagged off-budget transfers. Subtracts on→off outflows
-  /// and adds off→on inflows. Use this everywhere RTA is displayed or used for
-  /// allocation guards, not [readyToAssign] alone.
-  int get adjustedReadyToAssign =>
-      readyToAssign - totalOffBudgetTransfersOut + totalOffBudgetTransfersIn;
+  /// Off-budget transfer adjustment is baked into [readyToAssign] via
+  /// [BudgetRepository.calculateReadyToAssign], so no display-time adjustment
+  /// is needed here.
+  int get adjustedReadyToAssign => readyToAssign;
 
   /// Sum of allocated amounts across visible envelopes for the selected
   /// period. Excludes CC Payment envelopes (linkedAccountId != null) to avoid
