@@ -135,6 +135,16 @@ final class _CcCreditLimitsLoaded extends DashboardEvent {
   List<Object?> get props => [limits];
 }
 
+/// Internal event when the budget members stream emits.
+final class _MembersUpdated extends DashboardEvent {
+  const _MembersUpdated(this.memberCount);
+
+  final int memberCount;
+
+  @override
+  List<Object?> get props => [memberCount];
+}
+
 /// Internal event when a remote collaborator change is received.
 final class _RemoteChangeReceived extends DashboardEvent {
   const _RemoteChangeReceived();

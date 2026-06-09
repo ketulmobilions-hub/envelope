@@ -43,6 +43,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     on<_EnvelopesUpdated>(_onEnvelopesUpdated);
     on<_CategoryGroupsUpdated>(_onCategoryGroupsUpdated);
     on<_RecentTransactionsUpdated>(_onRecentTransactionsUpdated);
+    on<_MembersUpdated>(_onMembersUpdated);
     on<_RemoteChangeReceived>(_onRemoteChangeReceived);
     on<_DashboardStreamError>(_onStreamError);
     on<DashboardRefreshRequested>(_onRefreshRequested);
@@ -70,6 +71,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   StreamSubscription<List<Transaction>>? _transactionsSubscription;
   StreamSubscription<void>? _remoteChangeSubscription;
   StreamController<void>? _remoteChangeMergeController;
+  StreamSubscription<void>? _membersSubscription;
 
   List<RealtimeChannel> _realtimeChannels = [];
   RealtimeChannel? _allocationRealtimeChannel;
@@ -133,6 +135,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       _groupsSubscription?.cancel() ?? Future<void>.value(),
       _allocationsSubscription?.cancel() ?? Future<void>.value(),
       _transactionsSubscription?.cancel() ?? Future<void>.value(),
+      _membersSubscription?.cancel() ?? Future<void>.value(),
     ]);
 
     // Subscribe to Supabase Realtime channels early so live changes that
@@ -231,6 +234,15 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         .listen(
           (transactions) => add(_RecentTransactionsUpdated(transactions, gen)),
           onError: (Object _) => add(const _DashboardStreamError()),
+        );
+
+    _membersSubscription = _sharingRepository
+        ?.watchMembers(_budgetId)
+        .listen(
+          (members) {
+            if (!isClosed) add(_MembersUpdated(members.length));
+          },
+          onError: (Object _) {/* Non-critical; keep existing memberCount. */},
         );
   }
 
@@ -495,6 +507,13 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     }
   }
 
+  void _onMembersUpdated(
+    _MembersUpdated event,
+    Emitter<DashboardState> emit,
+  ) {
+    emit(state.copyWith(memberCount: event.memberCount));
+  }
+
   void _onStreamError(
     _DashboardStreamError event,
     Emitter<DashboardState> emit,
@@ -662,6 +681,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     }
     unawaited(_allocationRealtimeChannel?.unsubscribe() ?? Future.value());
     unawaited(_remoteChangeSubscription?.cancel() ?? Future.value());
+    unawaited(_membersSubscription?.cancel() ?? Future.value());
   }
 
   Future<void> _onRemoteChangeReceived(
@@ -724,6 +744,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     await _groupsSubscription?.cancel();
     await _allocationsSubscription?.cancel();
     await _transactionsSubscription?.cancel();
+    await _membersSubscription?.cancel();
     return super.close();
   }
 }

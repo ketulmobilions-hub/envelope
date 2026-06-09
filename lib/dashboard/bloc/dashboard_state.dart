@@ -60,6 +60,7 @@ final class DashboardState extends Equatable {
     this.transactions = const [],
     this.ccCreditLimits = const {},
     this.hasRemoteUpdate = false,
+    this.memberCount = 1,
   });
 
   final DashboardStatus status;
@@ -101,6 +102,9 @@ final class DashboardState extends Equatable {
   final Map<String, int?> ccCreditLimits;
 
   final bool hasRemoteUpdate;
+
+  /// Number of budget members (including owner). When > 1 the budget is shared.
+  final int memberCount;
 
   /// Sum of non-archived account balances, converted to the budget's base
   /// currency via each account's `displayFxRate`. For accounts whose currency
@@ -198,6 +202,7 @@ final class DashboardState extends Equatable {
     List<Transaction>? transactions,
     Map<String, int?>? ccCreditLimits,
     bool? hasRemoteUpdate,
+    int? memberCount,
   }) {
     return DashboardState(
       status: status ?? this.status,
@@ -215,6 +220,7 @@ final class DashboardState extends Equatable {
       transactions: transactions ?? this.transactions,
       ccCreditLimits: ccCreditLimits ?? this.ccCreditLimits,
       hasRemoteUpdate: hasRemoteUpdate ?? this.hasRemoteUpdate,
+      memberCount: memberCount ?? this.memberCount,
     );
   }
 
@@ -235,5 +241,6 @@ final class DashboardState extends Equatable {
     transactions,
     ccCreditLimits,
     hasRemoteUpdate,
+    memberCount,
   ];
 }
