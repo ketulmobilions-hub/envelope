@@ -951,6 +951,10 @@
     "@budgetTransferBetweenEnvelopes": {
         "description": "Action menu item for transfer"
     },
+    "budgetActionsTooltip": "Budget actions",
+    "@budgetActionsTooltip": {
+        "description": "Tooltip for the budget actions icon button in the AppBar"
+    },
     "budgetApplyTemplate": "Apply Template",
     "@budgetApplyTemplate": {
         "description": "Action menu item and dialog title for applying a template"

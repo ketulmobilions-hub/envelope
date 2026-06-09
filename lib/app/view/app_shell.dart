@@ -260,6 +260,7 @@ class _AppShellState extends State<AppShell>
                   onDestinationSelected: (i) =>
                       _onDestinationSelected(context, i),
                   onAddTransaction: () => _openAddTransaction(context),
+                  onSettings: () => context.go(AppRoutes.settings),
                   l10n: l10n,
                   child: animatedChild,
                 );
@@ -279,11 +280,10 @@ class _AppShellState extends State<AppShell>
                     _openAddTransaction(context, initialType: 'income'),
                   ),
                   onTransfer: () => unawaited(_openTransfer(context)),
-                  onLongPress: () =>
-                      unawaited(_pickTemplateAndOpen(context)),
+                  onLongPress: () => unawaited(_pickTemplateAndOpen(context)),
                 ),
                 bottomNavigationBar: NavigationBar(
-                  labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
+                  labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
                   selectedIndex: selectedIndex,
                   onDestinationSelected: (index) =>
                       _onDestinationSelected(context, index),
@@ -334,6 +334,7 @@ class _WideLayout extends StatelessWidget {
     required this.selectedIndex,
     required this.onDestinationSelected,
     required this.onAddTransaction,
+    required this.onSettings,
     required this.l10n,
     required this.child,
   });
@@ -341,6 +342,7 @@ class _WideLayout extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
   final VoidCallback onAddTransaction;
+  final VoidCallback onSettings;
   final AppLocalizations l10n;
   final Widget child;
 
@@ -356,6 +358,11 @@ class _WideLayout extends StatelessWidget {
             leading: FloatingActionButton(
               onPressed: onAddTransaction,
               child: const Icon(Icons.add),
+            ),
+            trailing: IconButton(
+              onPressed: onSettings,
+              icon: const Icon(Icons.settings_outlined),
+              tooltip: l10n.settingsTitle,
             ),
             destinations: [
               NavigationRailDestination(
