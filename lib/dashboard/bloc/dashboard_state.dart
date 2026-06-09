@@ -156,9 +156,52 @@ final class DashboardState extends Equatable {
     return total;
   }
 
-  /// RTA adjusted for untagged on→off-budget transfers. Use this everywhere
-  /// RTA is displayed or used for allocation guards, not [readyToAssign] alone.
-  int get adjustedReadyToAssign => readyToAssign - totalOffBudgetTransfersOut;
+  /// Total money that entered the budget via untagged off→on-budget transfers
+  /// in the selected period. Mirror of [totalOffBudgetTransfersOut].
+  int get totalOffBudgetTransfersIn {
+    final period = selectedPeriod;
+    if (period == null) return 0;
+
+    final accountMap = {for (final a in accounts) a.id: a};
+
+    final pairAccounts = <String, List<String>>{};
+    for (final t in transactions) {
+      if (t.type != 'transfer' || t.transferPairId == null) { continue; }
+      if (t.date.isBefore(period.startDate) ||
+          t.date.isAfter(period.endDate)) { continue; }
+      (pairAccounts[t.transferPairId!] ??= []).add(t.accountId);
+    }
+
+    var total = 0;
+    for (final t in transactions) {
+      if (t.type != 'transfer' || t.amount <= 0) { continue; }
+      if (t.transferPairId == null || t.envelopeId != null) { continue; }
+      if (t.date.isBefore(period.startDate) ||
+          t.date.isAfter(period.endDate)) { continue; }
+
+      final toAccount = accountMap[t.accountId];
+      if (toAccount == null || !toAccount.isOnBudget) { continue; }
+
+      final legs = pairAccounts[t.transferPairId!] ?? [];
+      final fromAccountId = legs.firstWhere(
+        (id) => id != t.accountId,
+        orElse: () => '',
+      );
+      if (fromAccountId.isEmpty) { continue; }
+
+      final fromAccount = accountMap[fromAccountId];
+      if (fromAccount != null && !fromAccount.isOnBudget) {
+        total += t.amount;
+      }
+    }
+    return total;
+  }
+
+  /// RTA adjusted for untagged off-budget transfers. Subtracts on→off outflows
+  /// and adds off→on inflows. Use this everywhere RTA is displayed or used for
+  /// allocation guards, not [readyToAssign] alone.
+  int get adjustedReadyToAssign =>
+      readyToAssign - totalOffBudgetTransfersOut + totalOffBudgetTransfersIn;
 
   /// Sum of allocated amounts across visible envelopes for the selected
   /// period. Excludes CC Payment envelopes (linkedAccountId != null) to avoid
