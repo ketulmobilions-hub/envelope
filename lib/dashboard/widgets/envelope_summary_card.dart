@@ -235,7 +235,7 @@ class _TabbedCategoryGroups extends StatefulWidget {
 }
 
 class _TabbedCategoryGroupsState extends State<_TabbedCategoryGroups>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   TabController? _controller;
   String? _selectedGroupId;
   int _lastIndex = 0;

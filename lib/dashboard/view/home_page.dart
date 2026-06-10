@@ -86,7 +86,51 @@ class _HomeView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.homeTitle),
+        centerTitle: false,
+        title: BlocBuilder<DashboardBloc, DashboardState>(
+          buildWhen: (prev, curr) =>
+              prev.selectedPeriod != curr.selectedPeriod ||
+              prev.periods != curr.periods,
+          builder: (context, state) {
+            if (state.selectedPeriod == null) return Text(l10n.homeTitle);
+            return TextButton(
+              onPressed: () async {
+                final picked = await showPeriodPickerSheet(
+                  context,
+                  periods: state.sortedPeriods,
+                  selectedPeriod: state.selectedPeriod,
+                );
+                if (picked != null && context.mounted) {
+                  context.read<DashboardBloc>().add(
+                    DashboardPeriodSelected(picked),
+                  );
+                }
+              },
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                minimumSize: const Size(0, 44),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _formatPeriod(state.selectedPeriod!),
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(width: 2),
+                  Icon(
+                    Icons.arrow_drop_down,
+                    size: 20,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
         actions: [
           BlocBuilder<DashboardBloc, DashboardState>(
             buildWhen: (prev, curr) => prev.memberCount != curr.memberCount,
@@ -209,10 +253,25 @@ class _HomeView extends StatelessWidget {
             listenWhen: (prev, curr) =>
                 prev.error != curr.error && curr.error != null,
             listener: (context, state) {
-              final message = state.error == DashboardError.allocationFailed
-                  ? l10n.dashboardErrorAllocation
-                  : l10n.dashboardErrorLoad;
-              showAppSnackBar(context, SnackBar(content: Text(message)));
+              if (state.error == DashboardError.allocationFailed) {
+                showAppSnackBar(
+                  context,
+                  SnackBar(content: Text(l10n.dashboardErrorAllocation)),
+                );
+              } else {
+                showAppSnackBar(
+                  context,
+                  SnackBar(
+                    content: Text(l10n.dashboardErrorLoad),
+                    action: SnackBarAction(
+                      label: l10n.dashboardErrorRetry,
+                      onPressed: () => context
+                          .read<DashboardBloc>()
+                          .add(const DashboardRefreshRequested()),
+                    ),
+                  ),
+                );
+              }
             },
           ),
           BlocListener<DashboardBloc, DashboardState>(
@@ -244,7 +303,7 @@ class _HomeView extends StatelessWidget {
           builder: (context, state) {
             if (state.status == DashboardStatus.initial ||
                 state.status == DashboardStatus.loading) {
-              return const Center(child: CircularProgressIndicator());
+              return const DashboardSkeleton();
             }
 
             return RefreshIndicator(
@@ -294,40 +353,6 @@ class _HomeView extends StatelessWidget {
                       );
                     },
                   ),
-
-                  // Period selector — page-level context
-                  if (state.selectedPeriod != null)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.chevron_left),
-                            tooltip: l10n.dashboardPreviousPeriod,
-                            onPressed: state.hasPreviousPeriod
-                                ? () => context.read<DashboardBloc>().add(
-                                    const DashboardPreviousPeriodRequested(),
-                                  )
-                                : null,
-                          ),
-                          Text(
-                            _formatPeriod(state.selectedPeriod!),
-                            style: Theme.of(context).textTheme.titleSmall
-                                ?.copyWith(fontWeight: FontWeight.w600),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.chevron_right),
-                            tooltip: l10n.dashboardNextPeriod,
-                            onPressed: state.hasNextPeriod
-                                ? () => context.read<DashboardBloc>().add(
-                                    const DashboardNextPeriodRequested(),
-                                  )
-                                : null,
-                          ),
-                        ],
-                      ),
-                    ),
 
                   // Ready to Assign
                   DashboardReadyToAssignCard(

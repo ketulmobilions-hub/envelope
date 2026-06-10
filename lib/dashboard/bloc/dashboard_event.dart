@@ -27,6 +27,16 @@ final class DashboardNextPeriodRequested extends DashboardEvent {
   const DashboardNextPeriodRequested();
 }
 
+/// Directly select a specific budget period from the period picker.
+final class DashboardPeriodSelected extends DashboardEvent {
+  const DashboardPeriodSelected(this.period);
+
+  final BudgetPeriod period;
+
+  @override
+  List<Object?> get props => [period];
+}
+
 /// Internal event when the budget row stream emits. Used to refresh derived
 /// values (RTA) when `openingBalance` / `openingDate` changes — e.g. after
 /// [BudgetRepository.autoCreatePreviousPeriod] shifts the seed-cash anchor.

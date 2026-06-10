@@ -281,6 +281,10 @@
     "@onboardingErrorCompletionFailed": {
         "description": "Error when onboarding completion fails"
     },
+    "onboardingSkip": "Skip",
+    "@onboardingSkip": {
+        "description": "Skip optional onboarding step"
+    },
 
     "accountsTitle": "Accounts",
     "@accountsTitle": {
@@ -898,6 +902,18 @@
     "budgetSaveAllocations": "Save",
     "@budgetSaveAllocations": {
         "description": "AppBar action button to save locally-edited allocations"
+    },
+    "budgetUnsavedChangesTitle": "Unsaved changes",
+    "@budgetUnsavedChangesTitle": {
+        "description": "Dialog title when leaving budget page with unsaved allocations"
+    },
+    "budgetUnsavedChangesMessage": "You have unsaved allocation changes. Discard them?",
+    "@budgetUnsavedChangesMessage": {
+        "description": "Dialog body when leaving budget page with unsaved allocations"
+    },
+    "budgetDiscardChanges": "Discard",
+    "@budgetDiscardChanges": {
+        "description": "Confirm discard unsaved allocations"
     },
     "budgetNoPeriodsTitle": "No budget periods",
     "@budgetNoPeriodsTitle": {
@@ -1596,6 +1612,10 @@
     "@dashboardNextPeriod": {
         "description": "Tooltip for the next-period chevron on the Ready to Assign card"
     },
+    "dashboardSelectPeriod": "Select Period",
+    "@dashboardSelectPeriod": {
+        "description": "Title for the period picker bottom sheet on the dashboard"
+    },
     "dashboardRtaCarriedPositive": "Includes {amount} carried from last period",
     "@dashboardRtaCarriedPositive": {
         "description": "Subtitle on the Ready to Assign card when a positive balance was carried forward",
@@ -1654,9 +1674,13 @@
     "@dashboardOverspent": {
         "description": "Label when envelope is overspent"
     },
-    "dashboardErrorLoad": "Failed to load dashboard data",
+    "dashboardErrorLoad": "Couldn't load your budget. Check your connection and try again.",
     "@dashboardErrorLoad": {
         "description": "Error message when dashboard data fails to load"
+    },
+    "dashboardErrorRetry": "Retry",
+    "@dashboardErrorRetry": {
+        "description": "Retry action label on error snackbars"
     },
     "dashboardViewBudget": "Budget",
     "@dashboardViewBudget": {

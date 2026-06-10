@@ -49,6 +49,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     on<DashboardRefreshRequested>(_onRefreshRequested);
     on<DashboardPreviousPeriodRequested>(_onPreviousPeriod);
     on<DashboardNextPeriodRequested>(_onNextPeriod);
+    on<DashboardPeriodSelected>(_onPeriodSelected);
     on<QuickAllocationRequested>(_onQuickAllocationRequested);
     on<BudgetDeleteRequested>(_onBudgetDeleteRequested);
     on<_CcCreditLimitsLoaded>(_onCcCreditLimitsLoaded);
@@ -365,6 +366,16 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     DashboardNextPeriodRequested event,
     Emitter<DashboardState> emit,
   ) => _selectAdjacentPeriod(emit, 1);
+
+  Future<void> _onPeriodSelected(
+    DashboardPeriodSelected event,
+    Emitter<DashboardState> emit,
+  ) async {
+    if (event.period.id == state.selectedPeriod?.id) return;
+    _manualPeriodSelected = true;
+    emit(state.copyWith(selectedPeriod: event.period));
+    await _subscribeToAllocations(event.period.id);
+  }
 
   /// Moves the selection [delta] periods (oldest-first order) and rebinds the
   /// allocation stream / Ready-to-Assign to the new period. No-op at the ends.
