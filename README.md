@@ -22,16 +22,58 @@ To run the desired flavor either use the launch configuration in VSCode/Android 
 
 ```sh
 # Development
-$ flutter run --flavor development --target lib/main_development.dart
+$ fvm flutter run --flavor development --target lib/main_development.dart
 
 # Staging
-$ flutter run --flavor staging --target lib/main_staging.dart
+$ fvm flutter run --flavor staging --target lib/main_staging.dart
 
 # Production
-$ flutter run --flavor production --target lib/main_production.dart
+$ fvm flutter run --flavor production --target lib/main_production.dart
 ```
 
-_\*Envelope works on iOS, Android, Web, and Windows._
+_\*Envelope works on iOS, Android, and Web._
+
+---
+
+## Building Releases 📦
+
+### Android — APK (debug / sideload)
+
+```sh
+fvm flutter build apk --flavor development --target lib/main_development.dart
+fvm flutter build apk --flavor staging --target lib/main_staging.dart
+fvm flutter build apk --flavor production --target lib/main_production.dart
+```
+
+Output: `build/app/outputs/flutter-apk/app-<flavor>-release.apk`
+
+### Android — App Bundle (Play Store)
+
+```sh
+fvm flutter build appbundle --flavor development --target lib/main_development.dart
+fvm flutter build appbundle --flavor staging --target lib/main_staging.dart
+fvm flutter build appbundle --flavor production --target lib/main_production.dart
+```
+
+Output: `build/app/outputs/bundle/<flavor>Release/app-<flavor>-release.aab`
+
+### iOS (requires Xcode + provisioning profiles)
+
+```sh
+fvm flutter build ios --flavor development --target lib/main_development.dart
+fvm flutter build ios --flavor staging --target lib/main_staging.dart
+fvm flutter build ios --flavor production --target lib/main_production.dart
+```
+
+### iOS IPA (TestFlight / App Store)
+
+```sh
+fvm flutter build ipa --flavor production --target lib/main_production.dart
+```
+
+Output: `build/ios/ipa/envelope.ipa`
+
+> iOS builds require a connected Apple Developer account and provisioning profiles configured in Xcode for each scheme (`development`, `staging`, `production`). Add `--debug` to any command to build a debug variant.
 
 ---
 
@@ -177,10 +219,10 @@ To use the latest translations changes, you will need to generate them:
 1. Generate localizations for the current project:
 
 ```sh
-flutter gen-l10n --arb-dir="lib/l10n/arb"
+fvm flutter gen-l10n
 ```
 
-Alternatively, run `flutter run` and code generation will take place automatically.
+Alternatively, run `fvm flutter run` and code generation will take place automatically.
 
 [coverage_badge]: coverage_badge.svg
 [flutter_localizations_link]: https://api.flutter.dev/flutter/flutter_localizations/flutter_localizations-library.html
