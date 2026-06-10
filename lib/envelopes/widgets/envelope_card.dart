@@ -122,14 +122,28 @@ class EnvelopeCard extends StatelessWidget {
                                 ),
                               ),
                           ] else
-                            AnimatedCents(
-                              cents: availableCents,
-                              symbol: symbol,
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: textColor,
-                              ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (isOverspent)
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 4),
+                                    child: Icon(
+                                      Icons.warning_rounded,
+                                      size: 16,
+                                      color: textColor,
+                                    ),
+                                  ),
+                                AnimatedCents(
+                                  cents: availableCents,
+                                  symbol: symbol,
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: textColor,
+                                  ),
+                                ),
+                              ],
                             ),
                           const Spacer(),
                         ],
@@ -285,7 +299,12 @@ class EnvelopeCard extends StatelessWidget {
     }
 
     return Semantics(
-      label: onEditTap != null ? 'Edit envelope allocation' : null,
+      label: onEditTap != null
+          ? 'Envelope: $name. '
+            'Available: ${formatCents(availableCents, symbol: symbol)}. '
+            'Tap to edit.'
+          : 'Envelope: $name. '
+            'Available: ${formatCents(availableCents, symbol: symbol)}.',
       child: card,
     );
   }
