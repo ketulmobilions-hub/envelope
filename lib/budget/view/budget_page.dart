@@ -64,25 +64,83 @@ class _BudgetViewState extends State<BudgetView> {
         };
         showAppSnackBar(context, SnackBar(content: Text(message)));
       },
-      child: Scaffold(
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) async {
+          if (didPop) return;
+          final hasDirty = context
+              .read<BudgetBloc>()
+              .state
+              .localAllocations
+              .isNotEmpty;
+          if (!hasDirty) {
+            Navigator.of(context).pop();
+            return;
+          }
+          final confirmed = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: Text(l10n.budgetUnsavedChangesTitle),
+              content: Text(l10n.budgetUnsavedChangesMessage),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: Text(l10n.settingsCancel),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  child: Text(l10n.budgetDiscardChanges),
+                ),
+              ],
+            ),
+          );
+          if (confirmed == true && context.mounted) {
+            Navigator.of(context).pop();
+          }
+        },
+        child: Scaffold(
         appBar: AppBar(
-          title: Text(l10n.budgetTitle),
+          title: BlocBuilder<BudgetBloc, BudgetState>(
+            buildWhen: (prev, curr) =>
+                prev.localAllocations.isEmpty != curr.localAllocations.isEmpty,
+            builder: (context, state) {
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(l10n.budgetTitle),
+                  if (state.localAllocations.isNotEmpty) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            },
+          ),
           actions: [
             BlocBuilder<BudgetBloc, BudgetState>(
               buildWhen: (prev, curr) {
-                final wasEmpty = prev.localAllocations.isEmpty;
-                final isEmpty = curr.localAllocations.isEmpty;
-                return wasEmpty != isEmpty;
+                return prev.localAllocations.isEmpty !=
+                    curr.localAllocations.isEmpty;
               },
               builder: (context, state) {
                 if (state.localAllocations.isEmpty) {
                   return const SizedBox.shrink();
                 }
-                return TextButton(
-                  onPressed: () => context.read<BudgetBloc>().add(
-                    const AllocationsSaveRequested(),
+                return Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: FilledButton(
+                    onPressed: () => context.read<BudgetBloc>().add(
+                      const AllocationsSaveRequested(),
+                    ),
+                    child: Text(l10n.budgetSaveAllocations),
                   ),
-                  child: Text(l10n.budgetSaveAllocations),
                 );
               },
             ),
@@ -142,6 +200,7 @@ class _BudgetViewState extends State<BudgetView> {
             );
           },
         ),
+      ),
       ),
     );
   }
