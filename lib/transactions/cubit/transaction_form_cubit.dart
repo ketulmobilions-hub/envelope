@@ -74,6 +74,19 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
       () => _transactionRepository.getTransactionTemplates(budgetId),
       const <TransactionTemplate>[],
     );
+    final recentPayeesFuture = safe(() async {
+      final txns = await _transactionRepository
+          .watchTransactions(budgetId: budgetId)
+          .first;
+      final freq = <String, int>{};
+      for (final t in txns) {
+        final p = t.payee;
+        if (p != null && p.isNotEmpty) freq[p] = (freq[p] ?? 0) + 1;
+      }
+      final sorted = freq.keys.toList()
+        ..sort((a, b) => freq[b]!.compareTo(freq[a]!));
+      return sorted.take(30).toList();
+    }, const <String>[]);
     final selectedTagIdsFuture = isEditing
         ? safe(
             () => _transactionRepository.getTagIdsForTransaction(
@@ -94,6 +107,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
     final categoryGroups = await categoryGroupsFuture;
     final tags = await tagsFuture;
     final templates = await templatesFuture;
+    final recentPayees = await recentPayeesFuture;
     final selectedTagIds = await selectedTagIdsFuture;
     final splits = await splitsFuture;
     final initialSplits = splits
@@ -114,6 +128,7 @@ class TransactionFormCubit extends Cubit<TransactionFormState> {
         categoryGroups: categoryGroups,
         tags: tags,
         templates: templates,
+        recentPayees: recentPayees,
         selectedTagIds: selectedTagIds,
         initialSplits: initialSplits,
       ),

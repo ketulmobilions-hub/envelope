@@ -754,16 +754,55 @@ class _QuickAddTransactionSheetState extends State<QuickAddTransactionSheet> {
                                           setState(() => _date = d),
                                     ),
                                     const SizedBox(height: 12),
-                                    TextField(
-                                      controller: _payeeController,
-                                      decoration: InputDecoration(
-                                        labelText: l10n.transactionsPayeeLabel,
-                                        prefixIcon: const Icon(
-                                          Icons.person_outline,
-                                        ),
-                                      ),
-                                      textCapitalization:
-                                          TextCapitalization.words,
+                                    BlocBuilder<TransactionFormCubit,
+                                        TransactionFormState>(
+                                      buildWhen: (prev, curr) =>
+                                          prev.recentPayees !=
+                                          curr.recentPayees,
+                                      builder: (context, state) {
+                                        return Autocomplete<String>(
+                                          initialValue: TextEditingValue(
+                                            text: _payeeController.text,
+                                          ),
+                                          optionsBuilder: (value) {
+                                            if (value.text.isEmpty) {
+                                              return const [];
+                                            }
+                                            final q =
+                                                value.text.toLowerCase();
+                                            return state.recentPayees.where(
+                                              (p) => p
+                                                  .toLowerCase()
+                                                  .contains(q),
+                                            );
+                                          },
+                                          onSelected: (p) =>
+                                              _payeeController.text = p,
+                                          fieldViewBuilder: (
+                                            context,
+                                            controller,
+                                            focusNode,
+                                            onSubmitted,
+                                          ) {
+                                            return TextField(
+                                              controller: controller,
+                                              focusNode: focusNode,
+                                              decoration: InputDecoration(
+                                                labelText:
+                                                    l10n.transactionsPayeeLabel,
+                                                prefixIcon: const Icon(
+                                                  Icons.person_outline,
+                                                ),
+                                              ),
+                                              textCapitalization:
+                                                  TextCapitalization.words,
+                                              onChanged: (v) =>
+                                                  _payeeController.text = v,
+                                              onEditingComplete: onSubmitted,
+                                            );
+                                          },
+                                        );
+                                      },
                                     ),
                                     const SizedBox(height: 6),
                                     TextField(
