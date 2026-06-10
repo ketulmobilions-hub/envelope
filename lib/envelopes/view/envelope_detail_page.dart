@@ -35,7 +35,7 @@ class EnvelopeDetailPage extends StatelessWidget {
         final envelopeColor =
             AppColors.fromHex(state.envelope.color) ?? AppColors.primary;
         return Scaffold(
-          backgroundColor: envelopeColor,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           floatingActionButton: state.envelope.linkedAccountId != null
               ? FloatingActionButton.extended(
                   onPressed: () => _payCC(context, state),
@@ -459,6 +459,8 @@ class _EnvelopeContentState extends State<_EnvelopeContent>
   late final CurvedAnimation _slideCurve;
   late final Animation<Offset> _slide;
 
+  bool _showHistory = false;
+
   @override
   void initState() {
     super.initState();
@@ -515,12 +517,12 @@ class _EnvelopeContentState extends State<_EnvelopeContent>
     final l10n = context.l10n;
     final theme = Theme.of(context);
     final mutedStyle = theme.textTheme.bodyMedium?.copyWith(
-      color: AppColors.onPrimary.withValues(alpha: 0.85),
+      color: theme.colorScheme.onSurfaceVariant,
     );
     final sectionTitle = theme.textTheme.titleSmall?.copyWith(
       fontWeight: FontWeight.w700,
-      letterSpacing: 0.8,
-      color: AppColors.onPrimary,
+      letterSpacing: 0.5,
+      color: theme.colorScheme.onSurface,
     );
 
     return SliverToBoxAdapter(
@@ -529,88 +531,94 @@ class _EnvelopeContentState extends State<_EnvelopeContent>
         child: FadeTransition(
           opacity: _opacityCurve,
           child: Container(
-            color: widget.envelopeColor,
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                // Per-period transactions.
-                BlocBuilder<EnvelopeDetailCubit, EnvelopeDetailState>(
-                  buildWhen: (prev, curr) =>
-                      prev.transactions != curr.transactions ||
-                      prev.allocations != curr.allocations ||
-                      prev.periods != curr.periods ||
-                      prev.currentPeriodId != curr.currentPeriodId,
-                  builder: (context, state) {
-                    final groups = state.groups;
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
-                          child: Text(
-                            l10n.envelopesDetailTransactions.toUpperCase(),
-                            style: sectionTitle,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
+            ),
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+            child: BlocBuilder<EnvelopeDetailCubit, EnvelopeDetailState>(
+              buildWhen: (prev, curr) =>
+                  prev.transactions != curr.transactions ||
+                  prev.allocations != curr.allocations ||
+                  prev.periods != curr.periods ||
+                  prev.currentPeriodId != curr.currentPeriodId,
+              builder: (context, state) {
+                final groups = state.groups;
+                final currentGroup = groups
+                    .where((g) => g.period?.id == state.currentPeriodId)
+                    .toList();
+                final historyGroups = groups
+                    .where((g) => g.period?.id != state.currentPeriodId)
+                    .toList();
+                final visibleGroups =
+                    _showHistory ? groups : currentGroup;
+                final hasHistory = historyGroups.isNotEmpty;
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(4, 0, 4, 12),
+                      child: Text(
+                        l10n.envelopesDetailTransactions,
+                        style: sectionTitle,
+                      ),
+                    ),
+                    if (visibleGroups.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 32),
+                        child: Center(
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.receipt_long_outlined,
+                                size: 48,
+                                color: theme.colorScheme.outline,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                l10n.envelopesDetailTransactionsPlaceholder,
+                                style: mutedStyle,
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
                           ),
                         ),
-                        if (groups.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Center(
-                              child: Column(
-                                children: [
-                                  const Icon(
-                                    Icons.receipt_long_outlined,
-                                    size: 48,
-                                    color: AppColors.primaryDark,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    l10n.envelopesDetailTransactionsPlaceholder
-                                        .toUpperCase(),
-                                    style: mutedStyle,
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )
-                        else
-                          for (final group in groups)
-                            _PeriodSection(
-                              group: group,
-                              isCurrent:
-                                  group.period?.id == state.currentPeriodId,
-                              envelopeColor: widget.envelopeColor,
-                              hideFigures: state.isCreditCardEnvelope,
-                            ),
-                      ],
-                    );
-                  },
-                ),
-                Divider(
-                  color: AppColors.onPrimary.withValues(alpha: 0.2),
-                ),
-                // Goal progress.
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      const Icon(
-                        Icons.flag_outlined,
-                        size: 48,
-                        color: AppColors.primaryDark,
-                      ),
+                      )
+                    else
+                      for (final group in visibleGroups)
+                        _PeriodSection(
+                          group: group,
+                          isCurrent:
+                              group.period?.id == state.currentPeriodId,
+                          envelopeColor: widget.envelopeColor,
+                          hideFigures: state.isCreditCardEnvelope,
+                        ),
+                    if (hasHistory) ...[
                       const SizedBox(height: 8),
-                      Text(
-                        l10n.envelopesDetailGoalProgressPlaceholder
-                            .toUpperCase(),
-                        style: mutedStyle,
-                        textAlign: TextAlign.center,
+                      Center(
+                        child: TextButton.icon(
+                          onPressed: () =>
+                              setState(() => _showHistory = !_showHistory),
+                          icon: Icon(
+                            _showHistory
+                                ? Icons.expand_less
+                                : Icons.history,
+                            size: 18,
+                          ),
+                          label: Text(
+                            _showHistory
+                                ? l10n.envelopesDetailHideHistory
+                                : l10n.envelopesDetailShowHistory,
+                          ),
+                        ),
                       ),
                     ],
-                  ),
-                ),
-              ],
+                  ],
+                );
+              },
             ),
           ),
         ),
@@ -625,20 +633,27 @@ class _HeaderDetail extends StatelessWidget {
   const _HeaderDetail({
     required this.label,
     required this.amount,
+    this.labelColor,
+    this.amountColor,
   });
 
   final String label;
   final int amount;
+  final Color? labelColor;
+  final Color? amountColor;
 
   @override
   Widget build(BuildContext context) {
     final symbol = currencySymbol(context);
+    final resolvedLabel =
+        labelColor ?? AppColors.onPrimary.withValues(alpha: 0.8);
+    final resolvedAmount = amountColor ?? AppColors.onPrimary;
     return Column(
       children: [
         Text(
           label.toUpperCase(),
           style: TextStyle(
-            color: AppColors.onPrimary.withValues(alpha: 0.8),
+            color: resolvedLabel,
             fontSize: 11,
             letterSpacing: 0.8,
           ),
@@ -646,8 +661,8 @@ class _HeaderDetail extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           formatCents(amount, symbol: symbol),
-          style: const TextStyle(
-            color: AppColors.onPrimary,
+          style: TextStyle(
+            color: resolvedAmount,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -682,7 +697,7 @@ class _PeriodSection extends StatelessWidget {
     final period = group.period;
     final transactions = group.transactions;
     final mutedStyle = theme.textTheme.bodyMedium?.copyWith(
-      color: AppColors.onPrimary.withValues(alpha: 0.85),
+      color: theme.colorScheme.onSurfaceVariant,
     );
     final periodLabel = period == null
         ? l10n.envelopesDetailPeriodUncategorized
@@ -692,7 +707,7 @@ class _PeriodSection extends StatelessWidget {
           );
 
     return Padding(
-      padding: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.only(top: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -702,9 +717,8 @@ class _PeriodSection extends StatelessWidget {
                 child: Text(
                   periodLabel,
                   style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.6,
-                    color: AppColors.onPrimary,
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -715,41 +729,48 @@ class _PeriodSection extends StatelessWidget {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.onPrimary.withValues(alpha: 0.18),
+                    color: theme.colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    l10n.envelopesDetailPeriodCurrent.toUpperCase(),
+                    l10n.envelopesDetailPeriodCurrent,
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: AppColors.onPrimary,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
+                      color: theme.colorScheme.onPrimaryContainer,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
             ],
           ),
-          if (period != null && !hideFigures) ...[
-            const SizedBox(height: 8),
+          // Show allocated/spent/available only for historical periods — current
+          // period figures are already prominent in the hero header.
+          if (period != null && !hideFigures && !isCurrent) ...[
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _HeaderDetail(
                   label: l10n.envelopesDetailAllocated,
                   amount: group.allocated,
+                  labelColor: theme.colorScheme.onSurfaceVariant,
+                  amountColor: theme.colorScheme.onSurface,
                 ),
                 _HeaderDetail(
                   label: l10n.envelopesDetailSpent,
                   amount: group.spent,
+                  labelColor: theme.colorScheme.onSurfaceVariant,
+                  amountColor: theme.colorScheme.onSurface,
                 ),
                 _HeaderDetail(
                   label: l10n.envelopesDetailAvailable,
                   amount: group.available,
+                  labelColor: theme.colorScheme.onSurfaceVariant,
+                  amountColor: theme.colorScheme.onSurface,
                 ),
               ],
             ),
           ],
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           if (transactions.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
@@ -774,8 +795,8 @@ class _PeriodSection extends StatelessWidget {
                       now: context.read<AppClock>().now(),
                     ),
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: AppColors.onPrimary.withValues(alpha: 0.6),
-                      letterSpacing: 0.8,
+                      color: theme.colorScheme.outline,
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ),
@@ -801,8 +822,10 @@ class _TransactionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typeColor = AppColors.onPrimary.withValues(alpha: 0.9);
-    final iconColor = AppColors.onPrimary.withValues(alpha: 0.7);
+    final theme = Theme.of(context);
+    final amountColor = transaction.type == 'income'
+        ? AppColors.income
+        : theme.colorScheme.onSurface;
     final prefix = transaction.type == 'income' ? '+' : '';
     final l10n = context.l10n;
     final symbol = currencySymbol(context);
@@ -810,10 +833,10 @@ class _TransactionRow extends StatelessWidget {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 4),
       leading: CircleAvatar(
-        backgroundColor: AppColors.onPrimary.withValues(alpha: 0.15),
+        backgroundColor: theme.colorScheme.primaryContainer,
         child: Icon(
           iconForTransactionType(transaction.type),
-          color: iconColor,
+          color: theme.colorScheme.onPrimaryContainer,
           size: 20,
         ),
       ),
@@ -823,7 +846,6 @@ class _TransactionRow extends StatelessWidget {
             : localizedTransactionType(transaction.type, l10n),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(color: AppColors.onPrimary),
       ),
       subtitle: transaction.notes?.isNotEmpty == true
           ? Text(
@@ -831,14 +853,14 @@ class _TransactionRow extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: AppColors.onPrimary.withValues(alpha: 0.7),
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             )
           : null,
       trailing: Text(
         '$prefix${formatCents(transaction.amount, symbol: symbol)}',
         style: TextStyle(
-          color: typeColor,
+          color: amountColor,
           fontWeight: FontWeight.w600,
         ),
       ),

@@ -748,6 +748,10 @@
     "@envelopesDetailPeriodEmpty": {
         "description": "Shown inside a period section that has an allocation but no transactions"
     },
+    "envelopesDetailShowHistory": "Show history",
+    "@envelopesDetailShowHistory": { "description": "Button to expand past period transactions on envelope detail" },
+    "envelopesDetailHideHistory": "Hide history",
+    "@envelopesDetailHideHistory": { "description": "Button to collapse past period transactions on envelope detail" },
     "envelopesDetailPeriodRange": "{start} – {end}",
     "@envelopesDetailPeriodRange": {
         "description": "Date-range label for a budget period section header",
