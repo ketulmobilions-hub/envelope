@@ -249,7 +249,11 @@ class TimelineTransactionTile extends StatelessWidget {
   }
 
   String _formattedAmount(String symbol) {
-    final prefix = transaction.type == 'income' ? '+' : '';
+    final prefix = switch (transaction.type) {
+      'income' => '+',
+      'expense' => '−',
+      _ => '',
+    };
     return '$prefix${formatCents(transaction.amount, symbol: symbol)}';
   }
 }
