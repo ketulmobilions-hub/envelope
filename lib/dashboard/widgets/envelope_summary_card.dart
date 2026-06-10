@@ -46,7 +46,8 @@ class EnvelopeSummaryCard extends StatefulWidget {
 }
 
 class _EnvelopeSummaryCardState extends State<EnvelopeSummaryCard> {
-  bool _isExpanded = true;
+  // Static so the collapsed/expanded state survives tab navigation.
+  static bool _isExpanded = true;
 
   @override
   Widget build(BuildContext context) {
@@ -413,8 +414,6 @@ class _CategoryGroupSection extends StatelessWidget {
                     Icons.edit_outlined,
                     size: 18,
                   ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
                   color: AppColors.secondaryText,
                   onPressed: onViewAll,
                 ),

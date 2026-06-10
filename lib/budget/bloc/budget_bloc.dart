@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:bloc/bloc.dart';
 import 'package:budget_repository/budget_repository.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:equatable/equatable.dart';
 import 'package:goal_repository/goal_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 
 part 'budget_event.dart';
@@ -21,12 +23,14 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     required GoalRepository goalRepository,
     required TransactionRepository transactionRepository,
     required String budgetId,
+    SharedPreferences? prefs,
     DateTime Function()? now,
   }) : _budgetRepository = budgetRepository,
        _envelopeRepository = envelopeRepository,
        _goalRepository = goalRepository,
        _transactionRepository = transactionRepository,
        _budgetId = budgetId,
+       _prefs = prefs,
        _now = now ?? DateTime.now,
        super(BudgetState()) {
     on<BudgetStarted>(_onStarted);
@@ -50,6 +54,8 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     on<AllocationTemplateUpdated>(_onTemplateUpdated);
     on<AllocationTemplateDeleted>(_onTemplateDeleted);
     on<BudgetDuplicateFromPreviousPeriodRequested>(_onDuplicateFromPrevious);
+    on<AllocationDraftRestoreRequested>(_onDraftRestoreRequested);
+    on<AllocationDraftDiscardRequested>(_onDraftDiscardRequested);
   }
 
   final BudgetRepository _budgetRepository;
@@ -57,6 +63,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
   final GoalRepository _goalRepository;
   final TransactionRepository _transactionRepository;
   final String _budgetId;
+  final SharedPreferences? _prefs;
   final DateTime Function() _now;
 
   StreamSubscription<Budget>? _budgetSubscription;
@@ -84,6 +91,11 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
   // True while waiting for the first allocations emission for the current
   // period. Prevents status flipping to loaded before allocations arrive.
   bool _waitingForAllocations = false;
+
+  // Set to the period ID when a period change occurs. Cleared after the
+  // first allocation update for that period, at which point we check for a
+  // persisted draft to offer to the user.
+  String? _pendingDraftCheckPeriodId;
 
   /// Last observed seed-cash anchor `(openingBalance, openingDate)`. Stored to
   /// suppress redundant RTA refreshes when an unrelated budget field changes —
@@ -292,6 +304,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     // Signal that we're waiting for allocations before marking loaded.
     if (selected != null && selected.id != previousSelectedId) {
       _waitingForAllocations = true;
+      _pendingDraftCheckPeriodId = selected.id;
     }
 
     emit(
@@ -299,6 +312,9 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
         status: _isLoaded ? BudgetStatus.loaded : state.status,
         periods: event.periods,
         selectedPeriod: selected,
+        // Reset any stale draft banner when navigating to a different period.
+        hasDraftToRestore:
+            selected?.id != previousSelectedId ? false : null,
       ),
     );
 
@@ -331,12 +347,23 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
       envelopes: state.envelopes,
     );
 
+    // Check for a persisted draft the first time allocations load for a period.
+    final periodId = state.selectedPeriod?.id;
+    var hasDraft = state.hasDraftToRestore;
+    if (_pendingDraftCheckPeriodId != null &&
+        _pendingDraftCheckPeriodId == periodId) {
+      _pendingDraftCheckPeriodId = null;
+      final key = _draftKey(periodId!);
+      hasDraft = _prefs?.containsKey(key) ?? false;
+    }
+
     emit(
       state.copyWith(
         status: _isLoaded ? BudgetStatus.loaded : state.status,
         allocations: event.allocations,
         readyToAssign: readyToAssign,
         ccPaymentAvailable: ccAvailable,
+        hasDraftToRestore: hasDraft,
       ),
     );
   }
@@ -514,6 +541,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     final updated = Map<String, int>.from(state.localAllocations)
       ..[event.envelopeId] = event.amount;
     emit(state.copyWith(localAllocations: updated));
+    _writeDraft(updated);
   }
 
   Future<void> _onAllocationsSaveRequested(
@@ -550,6 +578,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
         }
         remaining.remove(envelopeId);
       }
+      _clearDraft();
       emit(state.copyWith(localAllocations: const {}));
     } on EnvelopeException {
       // Preserve only the entries that were not yet written so the user can
@@ -695,9 +724,55 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     }
   }
 
+  void _onDraftRestoreRequested(
+    AllocationDraftRestoreRequested event,
+    Emitter<BudgetState> emit,
+  ) {
+    final periodId = state.selectedPeriod?.id;
+    if (periodId == null || _prefs == null) return;
+    final raw = _prefs.getString(_draftKey(periodId));
+    if (raw == null) return;
+    try {
+      final map = (jsonDecode(raw) as Map<String, dynamic>)
+          .map((k, v) => MapEntry(k, v as int));
+      emit(
+        state.copyWith(
+          localAllocations: map,
+          hasDraftToRestore: false,
+        ),
+      );
+    } on Object {
+      // Corrupt draft — discard silently.
+      _clearDraft();
+      emit(state.copyWith(hasDraftToRestore: false));
+    }
+  }
+
+  void _onDraftDiscardRequested(
+    AllocationDraftDiscardRequested event,
+    Emitter<BudgetState> emit,
+  ) {
+    _clearDraft();
+    emit(state.copyWith(hasDraftToRestore: false));
+  }
+
   // ---------------------------------------------------------------------------
   // Private helpers
   // ---------------------------------------------------------------------------
+
+  String _draftKey(String periodId) => 'budget_draft_${_budgetId}_$periodId';
+
+  void _writeDraft(Map<String, int> allocations) {
+    final periodId = state.selectedPeriod?.id;
+    if (periodId == null || _prefs == null) return;
+    unawaited(_prefs.setString(_draftKey(periodId), jsonEncode(allocations)));
+  }
+
+  void _clearDraft() {
+    final periodId = state.selectedPeriod?.id;
+    if (periodId == null || _prefs == null) return;
+    unawaited(_prefs.remove(_draftKey(periodId)));
+  }
 
   Future<void> _subscribeToAllocations(String periodId) async {
     _waitingForAllocations = true;

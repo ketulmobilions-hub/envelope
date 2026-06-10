@@ -32,8 +32,8 @@ class HorizontalDatePicker extends StatefulWidget {
 class _HorizontalDatePickerState extends State<HorizontalDatePicker> {
   late final ScrollController _scrollController;
 
-  // Width of each date item: 36px circle + 2*4px horizontal padding = 44px.
-  static const double _itemWidth = 44;
+  // Width of each date item: 36px circle + 2*8px horizontal padding = 52px.
+  static const double _itemWidth = 52;
 
   @override
   void initState() {
@@ -88,7 +88,7 @@ class _HorizontalDatePickerState extends State<HorizontalDatePicker> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Text(
             DateFormat.yMMMEd().format(selectedOnly),
             style: TextStyle(
@@ -114,7 +114,7 @@ class _HorizontalDatePickerState extends State<HorizontalDatePicker> {
                 child: ListView.builder(
                   controller: _scrollController,
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   itemCount: dayCount,
                   itemBuilder: (context, index) {
                     final date = startDate.add(Duration(days: index));
@@ -122,7 +122,7 @@ class _HorizontalDatePickerState extends State<HorizontalDatePicker> {
                     final isSelected = dateOnly == selectedOnly;
 
                     return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
                       child: GestureDetector(
                         onTap: () => widget.onDateSelected(dateOnly),
                         child: Column(

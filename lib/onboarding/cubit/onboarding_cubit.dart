@@ -16,6 +16,10 @@ part 'onboarding_state.dart';
 /// if set, the user has a budget and is onboarded.
 const String activeBudgetIdKey = 'active_budget_id';
 
+/// Set to `true` after onboarding completes. Cleared by home page after the
+/// first-launch banner is shown once.
+const String onboardingFirstLaunchHintKey = 'onboarding_first_launch_hint';
+
 /// Cubit that manages the onboarding wizard state.
 class OnboardingCubit extends Cubit<OnboardingState> {
   OnboardingCubit({
@@ -322,6 +326,7 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       }
 
       await _prefs.setString(activeBudgetIdKey, budgetId);
+      await _prefs.setBool(onboardingFirstLaunchHintKey, true);
       emit(state.copyWith(status: OnboardingStatus.success));
     } on Exception {
       emit(

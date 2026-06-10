@@ -14,6 +14,7 @@ class TimelineTransactionTile extends StatelessWidget {
   const TimelineTransactionTile({
     required this.transaction,
     required this.baseCurrency,
+    this.isFirst = false,
     this.isLast = false,
     this.transferLabel,
     this.envelopeName,
@@ -27,6 +28,7 @@ class TimelineTransactionTile extends StatelessWidget {
 
   final Transaction transaction;
   final String baseCurrency;
+  final bool isFirst;
   final bool isLast;
   final String? transferLabel;
   final String? envelopeName;
@@ -101,8 +103,8 @@ class TimelineTransactionTile extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Container(
-                        width: 2,
-                        color: AppColors.divider,
+                        width: isFirst ? 0 : 2,
+                        color: isFirst ? Colors.transparent : AppColors.divider,
                       ),
                     ),
                     Container(

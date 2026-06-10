@@ -75,10 +75,56 @@ class HomePage extends StatelessWidget {
   }
 }
 
-class _HomeView extends StatelessWidget {
+class _HomeView extends StatefulWidget {
   const _HomeView({required this.budgetId});
 
   final String budgetId;
+
+  @override
+  State<_HomeView> createState() => _HomeViewState();
+}
+
+class _HomeViewState extends State<_HomeView> {
+  String get budgetId => widget.budgetId;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _showFirstLaunchBanner(),
+    );
+  }
+
+  void _showFirstLaunchBanner() {
+    if (!mounted) return;
+    final prefs = context.read<SharedPreferences>();
+    final show = prefs.getBool(onboardingFirstLaunchHintKey) ?? false;
+    if (!show) return;
+    unawaited(prefs.remove(onboardingFirstLaunchHintKey));
+    final l10n = context.l10n;
+    ScaffoldMessenger.of(context).showMaterialBanner(
+      MaterialBanner(
+        content: Text(l10n.onboardingFirstLaunchBanner),
+        actions: [
+          TextButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
+            },
+            child: Text(l10n.settingsCancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
+              unawaited(
+                context.push('${AppRoutes.envelopes}?budgetId=$budgetId'),
+              );
+            },
+            child: Text(l10n.onboardingFirstLaunchBannerAction),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,50 +133,7 @@ class _HomeView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         centerTitle: false,
-        title: BlocBuilder<DashboardBloc, DashboardState>(
-          buildWhen: (prev, curr) =>
-              prev.selectedPeriod != curr.selectedPeriod ||
-              prev.periods != curr.periods,
-          builder: (context, state) {
-            if (state.selectedPeriod == null) return Text(l10n.homeTitle);
-            return TextButton(
-              onPressed: () async {
-                final picked = await showPeriodPickerSheet(
-                  context,
-                  periods: state.sortedPeriods,
-                  selectedPeriod: state.selectedPeriod,
-                );
-                if (picked != null && context.mounted) {
-                  context.read<DashboardBloc>().add(
-                    DashboardPeriodSelected(picked),
-                  );
-                }
-              },
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                minimumSize: const Size(0, 44),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _formatPeriod(state.selectedPeriod!),
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(width: 2),
-                  Icon(
-                    Icons.arrow_drop_down,
-                    size: 20,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
+        title: Text(l10n.homeTitle),
         actions: [
           BlocBuilder<DashboardBloc, DashboardState>(
             buildWhen: (prev, curr) => prev.memberCount != curr.memberCount,
@@ -150,6 +153,11 @@ class _HomeView extends StatelessWidget {
             },
           ),
           const SyncStatusIndicator(),
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: l10n.settingsTitle,
+            onPressed: () => unawaited(context.push(AppRoutes.settings)),
+          ),
           PopupMenuButton<String>(
             onSelected: (value) async {
               if (value == 'recurring') {
@@ -158,8 +166,6 @@ class _HomeView extends StatelessWidget {
                     '${AppRoutes.recurring}?budgetId=$budgetId',
                   ),
                 );
-              } else if (value == 'settings') {
-                unawaited(context.push(AppRoutes.settings));
               } else if (value == 'delete_budget') {
                 unawaited(_confirmDeleteBudget(context));
               } else if (value == 'debug_simulate_date') {
@@ -195,15 +201,6 @@ class _HomeView extends StatelessWidget {
                 child: ListTile(
                   leading: const Icon(Icons.repeat_outlined),
                   title: Text(l10n.recurringTitle),
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-              PopupMenuItem(
-                value: 'settings',
-                child: ListTile(
-                  leading: const Icon(Icons.settings_outlined),
-                  title: Text(l10n.settingsTitle),
                   dense: true,
                   contentPadding: EdgeInsets.zero,
                 ),
@@ -256,7 +253,15 @@ class _HomeView extends StatelessWidget {
               if (state.error == DashboardError.allocationFailed) {
                 showAppSnackBar(
                   context,
-                  SnackBar(content: Text(l10n.dashboardErrorAllocation)),
+                  SnackBar(
+                    content: Text(l10n.dashboardErrorAllocation),
+                    action: SnackBarAction(
+                      label: l10n.dashboardErrorRetry,
+                      onPressed: () => context
+                          .read<DashboardBloc>()
+                          .add(const DashboardRefreshRequested()),
+                    ),
+                  ),
                 );
               } else {
                 showAppSnackBar(
@@ -354,11 +359,32 @@ class _HomeView extends StatelessWidget {
                     },
                   ),
 
-                  // Ready to Assign
+                  // Ready to Assign + Period selector
                   DashboardReadyToAssignCard(
                     readyToAssign: state.adjustedReadyToAssign,
                     totalSpent: state.totalSpent,
                     totalAllocated: state.totalAllocated,
+                    period: state.selectedPeriod,
+                    hasPreviousPeriod: state.hasPreviousPeriod,
+                    hasNextPeriod: state.hasNextPeriod,
+                    onPreviousPeriod: () => context
+                        .read<DashboardBloc>()
+                        .add(const DashboardPreviousPeriodRequested()),
+                    onNextPeriod: () => context
+                        .read<DashboardBloc>()
+                        .add(const DashboardNextPeriodRequested()),
+                    onPeriodTap: () async {
+                      final picked = await showPeriodPickerSheet(
+                        context,
+                        periods: state.sortedPeriods,
+                        selectedPeriod: state.selectedPeriod,
+                      );
+                      if (picked != null && context.mounted) {
+                        context.read<DashboardBloc>().add(
+                          DashboardPeriodSelected(picked),
+                        );
+                      }
+                    },
                     onTap: () => context.push(
                       '${AppRoutes.budget}?budgetId=$budgetId',
                     ),
@@ -402,23 +428,6 @@ class _HomeView extends StatelessWidget {
     );
   }
 
-  static String _formatPeriod(BudgetPeriod period) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    final start = period.startDate;
-    final end = period.endDate;
-    if (start.year == end.year && start.month == end.month) {
-      return '${months[start.month - 1]} ${start.year}';
-    }
-    if (start.year != end.year) {
-      final s = '${months[start.month - 1]} ${start.year}';
-      final e = '${months[end.month - 1]} ${end.year}';
-      return '$s – $e';
-    }
-    return '${months[start.month - 1]} – ${months[end.month - 1]} ${end.year}';
-  }
 
   Future<void> _confirmDeleteBudget(BuildContext context) async {
     final l10n = context.l10n;

@@ -29,8 +29,8 @@ abstract final class AppColors {
   /// Warm divider color.
   static const Color divider = Color(0xFFE0D8CC);
 
-  /// Secondary text / muted labels.
-  static const Color secondaryText = Color(0xFF8A8478);
+  /// Secondary text / muted labels. #736E64 gives ~4.52:1 vs cream background (WCAG AA).
+  static const Color secondaryText = Color(0xFF736E64);
 
   /// Warning amber.
   static const Color warning = Color(0xFFD4A24E);

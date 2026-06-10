@@ -20,6 +20,9 @@ class CategoryGroupTile extends StatelessWidget {
     super.key,
   });
 
+  // Keyed by group ID — survives navigation within a session.
+  static final Map<String, bool> _expandedState = {};
+
   final CategoryGroup categoryGroup;
   final List<Envelope> envelopes;
   final VoidCallback onEditGroup;
@@ -41,7 +44,10 @@ class CategoryGroupTile extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
-        initiallyExpanded: initiallyExpanded,
+        initiallyExpanded:
+            _expandedState[categoryGroup.id] ?? initiallyExpanded,
+        onExpansionChanged: (expanded) =>
+            _expandedState[categoryGroup.id] = expanded,
         title: Text(
           categoryGroup.name,
           style: theme.textTheme.titleSmall?.copyWith(

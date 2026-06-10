@@ -14,6 +14,7 @@ import 'package:envelope/envelopes/widgets/widgets.dart';
 import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 
@@ -109,8 +110,20 @@ class _EnvelopesViewState extends State<EnvelopesView> {
                   return const SizedBox.shrink();
                 }
                 return TextButton(
-                  onPressed: () =>
-                      setState(() => _isReordering = !_isReordering),
+                  onPressed: () {
+                    final entering = !_isReordering;
+                    setState(() => _isReordering = entering);
+                    if (entering) {
+                      unawaited(HapticFeedback.mediumImpact());
+                      showAppSnackBar(
+                        context,
+                        SnackBar(
+                          content: Text(l10n.envelopesReorderHint),
+                          duration: const Duration(seconds: 3),
+                        ),
+                      );
+                    }
+                  },
                   child: Text(
                     _isReordering
                         ? l10n.envelopesDoneReordering
@@ -132,7 +145,13 @@ class _EnvelopesViewState extends State<EnvelopesView> {
               return _EmptyState(onAdd: () => _openAddCategoryGroup(context));
             }
 
-            return RefreshIndicator(
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              color: _isReordering
+                  ? Theme.of(context).colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.4)
+                  : Colors.transparent,
+              child: RefreshIndicator(
               onRefresh: () async {
                 final bloc = context.read<EnvelopesBloc>()
                   ..add(const EnvelopesRefreshRequested());
@@ -159,6 +178,7 @@ class _EnvelopesViewState extends State<EnvelopesView> {
                 onArchiveEnvelope: (e) => _confirmArchiveEnvelope(context, e),
                 onDeleteEnvelope: (e) => _confirmDeleteEnvelope(context, e),
               ),
+            ),
             );
           },
         ),

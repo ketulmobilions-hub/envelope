@@ -10,6 +10,7 @@ import 'package:envelope_repository/envelope_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:goal_repository/goal_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 
 /// Page that provides [BudgetBloc] and displays the budget allocation screen.
@@ -30,6 +31,7 @@ class BudgetPage extends StatelessWidget {
         goalRepository: context.read<GoalRepository>(),
         transactionRepository: context.read<TransactionRepository>(),
         budgetId: budgetId,
+        prefs: context.read<SharedPreferences>(),
         now: context.read<AppClock>().now,
       )..add(const BudgetStarted()),
       child: BudgetView(budgetId: budgetId),
@@ -51,19 +53,59 @@ class _BudgetViewState extends State<BudgetView> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
 
-    return BlocListener<BudgetBloc, BudgetState>(
-      listenWhen: (prev, curr) =>
-          curr.status == BudgetStatus.error && curr.error != null,
-      listener: (context, state) {
-        final message = switch (state.error!) {
-          BudgetError.loadFailed => l10n.budgetErrorLoadFailed,
-          BudgetError.allocationFailed => l10n.budgetErrorAllocationFailed,
-          BudgetError.transferFailed => l10n.budgetErrorTransferFailed,
-          BudgetError.templateFailed => l10n.budgetErrorTemplateFailed,
-          BudgetError.periodFailed => l10n.budgetErrorPeriodFailed,
-        };
-        showAppSnackBar(context, SnackBar(content: Text(message)));
-      },
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<BudgetBloc, BudgetState>(
+          listenWhen: (prev, curr) =>
+              curr.status == BudgetStatus.error && curr.error != null,
+          listener: (context, state) {
+            final message = switch (state.error!) {
+              BudgetError.loadFailed => l10n.budgetErrorLoadFailed,
+              BudgetError.allocationFailed => l10n.budgetErrorAllocationFailed,
+              BudgetError.transferFailed => l10n.budgetErrorTransferFailed,
+              BudgetError.templateFailed => l10n.budgetErrorTemplateFailed,
+              BudgetError.periodFailed => l10n.budgetErrorPeriodFailed,
+            };
+            showAppSnackBar(context, SnackBar(content: Text(message)));
+          },
+        ),
+        BlocListener<BudgetBloc, BudgetState>(
+          listenWhen: (prev, curr) =>
+              prev.hasDraftToRestore != curr.hasDraftToRestore,
+          listener: (context, state) {
+            final messenger = ScaffoldMessenger.of(context);
+            if (state.hasDraftToRestore) {
+              messenger.showMaterialBanner(
+                MaterialBanner(
+                  content: Text(l10n.budgetDraftBannerMessage),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        messenger.hideCurrentMaterialBanner();
+                        context.read<BudgetBloc>().add(
+                          const AllocationDraftDiscardRequested(),
+                        );
+                      },
+                      child: Text(l10n.budgetDraftDiscard),
+                    ),
+                    FilledButton(
+                      onPressed: () {
+                        messenger.hideCurrentMaterialBanner();
+                        context.read<BudgetBloc>().add(
+                          const AllocationDraftRestoreRequested(),
+                        );
+                      },
+                      child: Text(l10n.budgetDraftResume),
+                    ),
+                  ],
+                ),
+              );
+            } else {
+              messenger.hideCurrentMaterialBanner();
+            }
+          },
+        ),
+      ],
       child: PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, _) async {
@@ -156,7 +198,7 @@ class _BudgetViewState extends State<BudgetView> {
               (prev.allocations.length >= 2) != (curr.allocations.length >= 2),
           builder: (context, state) {
             if (state.allocations.length < 2) return const SizedBox.shrink();
-            return FloatingActionButton(
+            return FloatingActionButton.extended(
               onPressed: () => unawaited(
                 showTransferDialog(
                   context,
@@ -165,7 +207,8 @@ class _BudgetViewState extends State<BudgetView> {
                 ),
               ),
               tooltip: l10n.budgetTransferBetweenEnvelopes,
-              child: const Icon(Icons.swap_horiz),
+              icon: const Icon(Icons.swap_horiz),
+              label: Text(l10n.budgetTransferConfirm),
             );
           },
         ),

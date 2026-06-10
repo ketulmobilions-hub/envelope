@@ -133,6 +133,15 @@ class EnvelopeCard extends StatelessWidget {
                                       size: 16,
                                       color: textColor,
                                     ),
+                                  )
+                                else if (availableCents > 0)
+                                  Text(
+                                    '+',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: textColor,
+                                    ),
                                   ),
                                 AnimatedCents(
                                   cents: availableCents,

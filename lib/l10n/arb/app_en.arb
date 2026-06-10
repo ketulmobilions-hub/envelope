@@ -285,6 +285,22 @@
     "@onboardingSkip": {
         "description": "Skip optional onboarding step"
     },
+    "onboardingSkipForNow": "Skip for now",
+    "@onboardingSkipForNow": {
+        "description": "Muted secondary skip link below CTA on optional onboarding steps"
+    },
+    "onboardingSkipHint": "You can add this later in Settings.",
+    "@onboardingSkipHint": {
+        "description": "Snackbar shown after user skips an optional onboarding step"
+    },
+    "onboardingFirstLaunchBanner": "Add your first envelope to start budgeting",
+    "@onboardingFirstLaunchBanner": {
+        "description": "One-time banner on first home page load after completing onboarding"
+    },
+    "onboardingFirstLaunchBannerAction": "Add envelope",
+    "@onboardingFirstLaunchBannerAction": {
+        "description": "Action button on the first-launch banner"
+    },
 
     "accountsTitle": "Accounts",
     "@accountsTitle": {
@@ -629,6 +645,10 @@
     "@envelopesDoneReordering": {
         "description": "Button to exit reorder mode"
     },
+    "envelopesReorderHint": "Drag to reorder. Tap Done when finished.",
+    "@envelopesReorderHint": {
+        "description": "Snackbar shown when entering envelope reorder mode"
+    },
     "envelopesArchiveGroupConfirmTitle": "Archive Category Group?",
     "@envelopesArchiveGroupConfirmTitle": {
         "description": "Title for archive group confirmation dialog"
@@ -915,6 +935,18 @@
     "@budgetDiscardChanges": {
         "description": "Confirm discard unsaved allocations"
     },
+    "budgetDraftBannerMessage": "You have unsaved allocation changes from a previous session.",
+    "@budgetDraftBannerMessage": {
+        "description": "MaterialBanner shown when a draft of unsaved allocations is detected"
+    },
+    "budgetDraftResume": "Resume",
+    "@budgetDraftResume": {
+        "description": "Banner action to restore the draft allocations"
+    },
+    "budgetDraftDiscard": "Discard",
+    "@budgetDraftDiscard": {
+        "description": "Banner action to discard the draft allocations"
+    },
     "budgetNoPeriodsTitle": "No budget periods",
     "@budgetNoPeriodsTitle": {
         "description": "Title when no budget periods exist"
@@ -1101,6 +1133,10 @@
     "@transactionsTitle": {
         "description": "Title for the transactions list page"
     },
+    "transactionsNavLabel": "Activity",
+    "@transactionsNavLabel": {
+        "description": "Short label for the Transactions bottom nav item (fits narrow phones)"
+    },
     "transactionsAddTransaction": "Add Transaction",
     "@transactionsAddTransaction": {
         "description": "Button to add a new transaction"
@@ -1111,11 +1147,20 @@
     },
     "transactionsEmptyTitle": "No transactions yet",
     "@transactionsEmptyTitle": {
-        "description": "Title when no transactions exist"
+        "description": "Title when no transactions exist at all"
     },
     "transactionsEmptySubtitle": "Add your first transaction to start tracking your spending.",
     "@transactionsEmptySubtitle": {
-        "description": "Subtitle when no transactions exist"
+        "description": "Subtitle when no transactions exist at all"
+    },
+    "transactionsEmptyInPeriod": "No transactions in {period}",
+    "@transactionsEmptyInPeriod": {
+        "description": "Empty state title when viewing a period that has no transactions",
+        "placeholders": {
+            "period": {
+                "type": "String"
+            }
+        }
     },
     "transactionsTypeIncome": "Income",
     "@transactionsTypeIncome": {
@@ -1360,6 +1405,14 @@
     "transactionsDuplicate": "Duplicate",
     "@transactionsDuplicate": {
         "description": "Tooltip/label for duplicating a transaction"
+    },
+    "transactionsDateToday": "Today",
+    "@transactionsDateToday": {
+        "description": "Date chip label when the selected transaction date is today"
+    },
+    "transactionsDateYesterday": "Yesterday",
+    "@transactionsDateYesterday": {
+        "description": "Date chip label when the selected transaction date is yesterday"
     },
 
     "recurringTitle": "Recurring & Bills",
@@ -1649,6 +1702,15 @@
     "dashboardViewAll": "View All",
     "@dashboardViewAll": {
         "description": "Link text to view all items in a section"
+    },
+    "dashboardViewAllCount": "View All ({count})",
+    "@dashboardViewAllCount": {
+        "description": "Link text to view all items when total count is known",
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
     },
     "dashboardQuickAdd": "Add Transaction",
     "@dashboardQuickAdd": {
@@ -2056,7 +2118,7 @@
             }
         }
     },
-    "allocateSheetModeAdd": "Add",
+    "allocateSheetModeAdd": "Add to",
     "@allocateSheetModeAdd": {
         "description": "Segmented button label: add delta to existing allocation"
     },
@@ -2701,5 +2763,7 @@
     "ccDueLabel": "Due: {amount}",
     "@ccDueLabel": { "description": "Primary label on CC envelope cards showing the balance due", "placeholders": { "amount": { "type": "String" } } },
     "ccLimitLabel": "{available} of {limit}",
-    "@ccLimitLabel": { "description": "Small limit label on CC envelope cards", "placeholders": { "available": { "type": "String" }, "limit": { "type": "String" } } }
+    "@ccLimitLabel": { "description": "Small limit label on CC envelope cards", "placeholders": { "available": { "type": "String" }, "limit": { "type": "String" } } },
+    "syncOfflineBanner": "Working offline — changes will sync when reconnected.",
+    "@syncOfflineBanner": { "description": "Persistent banner shown when the device is offline" }
 }

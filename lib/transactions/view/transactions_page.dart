@@ -84,6 +84,7 @@ class TransactionsView extends StatelessWidget {
                   child: state.filteredTransactions.isEmpty
                       ? _EmptyState(
                           onAdd: () => _openAddTransaction(context),
+                          periodLabel: _periodLabel(state.filter),
                         )
                       : RefreshIndicator(
                           onRefresh: () async {
@@ -142,45 +143,88 @@ class TransactionsView extends StatelessWidget {
 }
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.onAdd});
+  const _EmptyState({required this.onAdd, this.periodLabel});
 
   final VoidCallback onAdd;
+
+  /// When non-null, the empty state shows a period-specific message.
+  final String? periodLabel;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final title = periodLabel != null
+        ? l10n.transactionsEmptyInPeriod(periodLabel!)
+        : l10n.transactionsEmptyTitle;
+    final subtitle =
+        periodLabel == null ? l10n.transactionsEmptySubtitle : null;
+
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.receipt_long_outlined,
-            size: 64,
-            color: Theme.of(context).colorScheme.outline,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            l10n.transactionsEmptyTitle,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            l10n.transactionsEmptySubtitle,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.receipt_long_outlined,
+              size: 64,
               color: Theme.of(context).colorScheme.outline,
             ),
-          ),
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            onPressed: onAdd,
-            icon: const Icon(Icons.add),
-            label: Text(l10n.transactionsAddTransaction),
-          ),
-        ],
+            const SizedBox(height: 16),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            if (subtitle != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                subtitle,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+              ),
+            ],
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: onAdd,
+              icon: const Icon(Icons.add),
+              label: Text(l10n.transactionsAddTransaction),
+            ),
+          ],
+        ),
       ),
     );
   }
+}
+
+/// Returns a human-readable period label when the filter has an active date
+/// range (e.g. "September 2025" or "Sep–Nov 2025"), or null when no range
+/// is set and the generic empty-state message should be used instead.
+String? _periodLabel(TransactionsFilter filter) {
+  final start = filter.startDate;
+  final end = filter.endDate;
+  if (start == null) return null;
+
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+  const monthsShort = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  if (end == null || (start.year == end.year && start.month == end.month)) {
+    return '${months[start.month - 1]} ${start.year}';
+  }
+  if (start.year == end.year) {
+    return '${monthsShort[start.month - 1]}–'
+        '${monthsShort[end.month - 1]} ${end.year}';
+  }
+  return '${monthsShort[start.month - 1]} ${start.year}–'
+      '${monthsShort[end.month - 1]} ${end.year}';
 }
 
 class _TransactionsList extends StatelessWidget {

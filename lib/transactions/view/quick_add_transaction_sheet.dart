@@ -19,6 +19,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transaction_repository/transaction_repository.dart';
 
@@ -510,36 +511,62 @@ class _QuickAddTransactionSheetState extends State<QuickAddTransactionSheet> {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        TextField(
-                          controller: _amountController,
-                          focusNode: _amountFocus,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.displaySmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
+                        // Symbol is a separate widget so it stays left of the
+                        // amount in both LTR and RTL locales (Row layout, not
+                        // bidi text ordering).
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text(
+                              symbol,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .displaySmall
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            IntrinsicWidth(
+                              child: TextField(
+                                controller: _amountController,
+                                focusNode: _amountFocus,
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .displaySmall
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                  decimal: true,
+                                ),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(
+                                    RegExp(r'^\d*\.?\d{0,2}'),
+                                  ),
+                                ],
+                                decoration: InputDecoration(
+                                  hintText: '0.00',
+                                  hintStyle: Theme.of(context)
+                                      .textTheme
+                                      .displaySmall
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.outline,
+                                      ),
+                                  border: InputBorder.none,
+                                  errorText: _amountError,
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                                onChanged: (_) {
+                                  if (_amountError != null) {
+                                    setState(() => _amountError = null);
+                                  }
+                                },
                               ),
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                              RegExp(r'^\d*\.?\d{0,2}'),
                             ),
                           ],
-                          decoration: InputDecoration(
-                            hintText: '${symbol}0.00',
-                            hintStyle: Theme.of(context).textTheme.displaySmall
-                                ?.copyWith(
-                                  color: Theme.of(context).colorScheme.outline,
-                                ),
-                            border: InputBorder.none,
-                            errorText: _amountError,
-                          ),
-                          onChanged: (_) {
-                            if (_amountError != null) {
-                              setState(() => _amountError = null);
-                            }
-                          },
                         ),
                         const SizedBox(height: 12),
                         AppOptionPicker<Account>(
@@ -722,6 +749,49 @@ class _QuickAddTransactionSheetState extends State<QuickAddTransactionSheet> {
                             ],
                           ),
                         ],
+                        const SizedBox(height: 12),
+                        BlocBuilder<TransactionFormCubit,
+                            TransactionFormState>(
+                          buildWhen: (prev, curr) =>
+                              prev.recentPayees != curr.recentPayees,
+                          builder: (context, state) {
+                            return Autocomplete<String>(
+                              initialValue: TextEditingValue(
+                                text: _payeeController.text,
+                              ),
+                              optionsBuilder: (value) {
+                                if (value.text.isEmpty) return const [];
+                                final q = value.text.toLowerCase();
+                                return state.recentPayees.where(
+                                  (p) => p.toLowerCase().contains(q),
+                                );
+                              },
+                              onSelected: (p) => _payeeController.text = p,
+                              fieldViewBuilder: (
+                                context,
+                                controller,
+                                focusNode,
+                                onSubmitted,
+                              ) {
+                                return TextField(
+                                  controller: controller,
+                                  focusNode: focusNode,
+                                  decoration: InputDecoration(
+                                    labelText: l10n.transactionsPayeeLabel,
+                                    prefixIcon: const Icon(
+                                      Icons.person_outline,
+                                    ),
+                                  ),
+                                  textCapitalization:
+                                      TextCapitalization.words,
+                                  onChanged: (v) =>
+                                      _payeeController.text = v,
+                                  onEditingComplete: onSubmitted,
+                                );
+                              },
+                            );
+                          },
+                        ),
                         const SizedBox(height: 8),
                         Align(
                           alignment: Alignment.centerLeft,
@@ -754,57 +824,6 @@ class _QuickAddTransactionSheetState extends State<QuickAddTransactionSheet> {
                                           setState(() => _date = d),
                                     ),
                                     const SizedBox(height: 12),
-                                    BlocBuilder<TransactionFormCubit,
-                                        TransactionFormState>(
-                                      buildWhen: (prev, curr) =>
-                                          prev.recentPayees !=
-                                          curr.recentPayees,
-                                      builder: (context, state) {
-                                        return Autocomplete<String>(
-                                          initialValue: TextEditingValue(
-                                            text: _payeeController.text,
-                                          ),
-                                          optionsBuilder: (value) {
-                                            if (value.text.isEmpty) {
-                                              return const [];
-                                            }
-                                            final q =
-                                                value.text.toLowerCase();
-                                            return state.recentPayees.where(
-                                              (p) => p
-                                                  .toLowerCase()
-                                                  .contains(q),
-                                            );
-                                          },
-                                          onSelected: (p) =>
-                                              _payeeController.text = p,
-                                          fieldViewBuilder: (
-                                            context,
-                                            controller,
-                                            focusNode,
-                                            onSubmitted,
-                                          ) {
-                                            return TextField(
-                                              controller: controller,
-                                              focusNode: focusNode,
-                                              decoration: InputDecoration(
-                                                labelText:
-                                                    l10n.transactionsPayeeLabel,
-                                                prefixIcon: const Icon(
-                                                  Icons.person_outline,
-                                                ),
-                                              ),
-                                              textCapitalization:
-                                                  TextCapitalization.words,
-                                              onChanged: (v) =>
-                                                  _payeeController.text = v,
-                                              onEditingComplete: onSubmitted,
-                                            );
-                                          },
-                                        );
-                                      },
-                                    ),
-                                    const SizedBox(height: 6),
                                     TextField(
                                       controller: _notesController,
                                       decoration: InputDecoration(
@@ -879,9 +898,15 @@ class _QuickAddTransactionSheetState extends State<QuickAddTransactionSheet> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: FloatingActionButton(
+                Row(
+                  children: [
+                    ActionChip(
+                      avatar: const Icon(Icons.calendar_today, size: 16),
+                      label: Text(_dateChipLabel(context)),
+                      onPressed: () => _pickTransactionDate(context),
+                    ),
+                    const Spacer(),
+                    FloatingActionButton(
                     // No hero animation: a page FAB may sit behind this
                     // modal sheet and share the default tag.
                     heroTag: null,
@@ -898,6 +923,7 @@ class _QuickAddTransactionSheetState extends State<QuickAddTransactionSheet> {
                           )
                         : const Icon(Icons.check),
                   ),
+                  ],
                 ),
               ],
             ),
@@ -905,6 +931,29 @@ class _QuickAddTransactionSheetState extends State<QuickAddTransactionSheet> {
         );
       },
     );
+  }
+
+  String _dateChipLabel(BuildContext context) {
+    final now = context.read<AppClock>().now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selected = DateTime(_date.year, _date.month, _date.day);
+    final diff = selected.difference(today).inDays;
+    if (diff == 0) return context.l10n.transactionsDateToday;
+    if (diff == -1) return context.l10n.transactionsDateYesterday;
+    return DateFormat('MMM d').format(_date);
+  }
+
+  Future<void> _pickTransactionDate(BuildContext context) async {
+    final now = context.read<AppClock>().now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _date,
+      firstDate: DateTime(now.year - 10),
+      lastDate: DateTime(now.year + 1),
+    );
+    if (picked != null && mounted) {
+      setState(() => _date = picked);
+    }
   }
 }
 

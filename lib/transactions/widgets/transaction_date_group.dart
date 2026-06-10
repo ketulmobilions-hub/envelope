@@ -51,6 +51,7 @@ class TransactionDateGroup extends StatelessWidget {
           TimelineTransactionTile(
             transaction: transactions[i],
             baseCurrency: baseCurrency,
+            isFirst: i == 0,
             isLast: i == transactions.length - 1,
             transferLabel: _transferLabel(transactions[i]),
             envelopeName: _envelopeName(transactions[i]),

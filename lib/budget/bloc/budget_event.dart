@@ -211,3 +211,13 @@ final class AllocationTemplateDeleted extends BudgetEvent {
 final class BudgetDuplicateFromPreviousPeriodRequested extends BudgetEvent {
   const BudgetDuplicateFromPreviousPeriodRequested();
 }
+
+/// Restore the pending draft allocation amounts from persistent storage.
+final class AllocationDraftRestoreRequested extends BudgetEvent {
+  const AllocationDraftRestoreRequested();
+}
+
+/// Discard the pending draft without restoring it.
+final class AllocationDraftDiscardRequested extends BudgetEvent {
+  const AllocationDraftDiscardRequested();
+}

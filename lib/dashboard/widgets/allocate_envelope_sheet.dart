@@ -227,9 +227,19 @@ class _AllocateEnvelopeSheetState extends State<_AllocateEnvelopeSheet> {
                 const TextInputType.numberWithOptions(decimal: true),
             textInputAction: TextInputAction.done,
             inputFormatters: [
-              FilteringTextInputFormatter.allow(
-                RegExp(r'^\d*\.?\d{0,2}$'),
-              ),
+              // Strip anything that isn't a digit or decimal point first.
+              FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
+              // Then enforce at most one dot and at most 2 decimal places.
+              TextInputFormatter.withFunction((oldValue, newValue) {
+                final text = newValue.text;
+                if (text.isEmpty) return newValue;
+                if (text.indexOf('.') != text.lastIndexOf('.')) return oldValue;
+                final dotIndex = text.indexOf('.');
+                if (dotIndex != -1 && text.length - dotIndex - 1 > 2) {
+                  return oldValue;
+                }
+                return newValue;
+              }),
             ],
             decoration: InputDecoration(
               prefixText: symbol,
@@ -240,9 +250,23 @@ class _AllocateEnvelopeSheetState extends State<_AllocateEnvelopeSheet> {
           ),
           if (previewText != null) ...[
             const SizedBox(height: 12),
-            Text(
-              previewText,
-              style: Theme.of(context).textTheme.bodyMedium,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Theme.of(context)
+                    .colorScheme
+                    .primaryContainer
+                    .withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                previewText,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
             ),
           ],
           if (overAllocated) ...[

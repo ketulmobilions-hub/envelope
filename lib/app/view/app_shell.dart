@@ -8,15 +8,16 @@ import 'package:envelope/l10n/l10n.dart';
 import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
 import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope/shared/widgets/debug_clock_banner.dart';
+import 'package:envelope/sync/sync.dart';
 import 'package:envelope/transactions/view/quick_add_transaction_sheet.dart';
 import 'package:envelope/transactions/view/transfer_form_sheet.dart';
 import 'package:flutter/foundation.dart';
-import 'package:transaction_repository/transaction_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:transaction_repository/transaction_repository.dart';
 
 /// Breakpoint for switching between bottom nav and side rail.
 const double _wideBreakpoint = 900;
@@ -200,7 +201,22 @@ class _AppShellState extends State<AppShell>
           )
         : clipped;
 
-    return Shortcuts(
+    return BlocListener<SyncBloc, SyncBlocState>(
+      listenWhen: (prev, curr) => prev.isOnline != curr.isOnline,
+      listener: (context, state) {
+        final messenger = ScaffoldMessenger.of(context);
+        if (!state.isOnline) {
+          messenger.showMaterialBanner(
+            MaterialBanner(
+              content: Text(l10n.syncOfflineBanner),
+              actions: const [SizedBox.shrink()],
+            ),
+          );
+        } else {
+          messenger.hideCurrentMaterialBanner();
+        }
+      },
+      child: Shortcuts(
       shortcuts: <ShortcutActivator, Intent>{
         LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyN):
             const _AddTransactionIntent(),
@@ -294,7 +310,8 @@ class _AppShellState extends State<AppShell>
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   static List<NavigationDestination> _buildDestinations(AppLocalizations l10n) {
@@ -307,7 +324,7 @@ class _AppShellState extends State<AppShell>
       NavigationDestination(
         icon: const Icon(Icons.receipt_long_outlined),
         selectedIcon: const Icon(Icons.receipt_long),
-        label: l10n.transactionsTitle,
+        label: l10n.transactionsNavLabel,
       ),
       NavigationDestination(
         icon: const Icon(Icons.account_balance_outlined),
@@ -315,8 +332,8 @@ class _AppShellState extends State<AppShell>
         label: l10n.accountsTitle,
       ),
       NavigationDestination(
-        icon: const Icon(Icons.flag_outlined),
-        selectedIcon: const Icon(Icons.flag),
+        icon: const Icon(Icons.savings_outlined),
+        selectedIcon: const Icon(Icons.savings),
         label: l10n.goalsTitle,
       ),
       NavigationDestination(
@@ -381,8 +398,8 @@ class _WideLayout extends StatelessWidget {
                 label: Text(l10n.accountsTitle),
               ),
               NavigationRailDestination(
-                icon: const Icon(Icons.flag_outlined),
-                selectedIcon: const Icon(Icons.flag),
+                icon: const Icon(Icons.savings_outlined),
+                selectedIcon: const Icon(Icons.savings),
                 label: Text(l10n.goalsTitle),
               ),
               NavigationRailDestination(

@@ -70,7 +70,8 @@ class OnboardingView extends StatelessWidget {
         final isWelcome = state.currentStep == OnboardingStep.welcome;
         final isLastStep = stepIndex == totalSteps - 1;
         final isSubmitting = state.status == OnboardingStatus.submitting;
-        final isSkippable = state.currentStep == OnboardingStep.accounts;
+        // All steps after welcome are optional.
+        final isSkippable = !isWelcome;
 
         return Scaffold(
           appBar: isWelcome
@@ -82,47 +83,71 @@ class OnboardingView extends StatelessWidget {
                     onPressed: () =>
                         context.read<OnboardingCubit>().previousStep(),
                   ),
-                  actions: [
-                    if (isSkippable && !isLastStep)
-                      TextButton(
-                        onPressed: () =>
-                            context.read<OnboardingCubit>().skipStep(),
-                        child: Text(l10n.onboardingSkip),
-                      ),
-                  ],
                 ),
           bottomNavigationBar: isWelcome
               ? null
               : SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: isSubmitting
-                            ? null
-                            : () {
-                                final cubit = context.read<OnboardingCubit>();
-                                if (isLastStep) {
-                                  unawaited(cubit.completeOnboarding());
-                                } else {
-                                  cubit.nextStep();
-                                }
-                              },
-                        child: isSubmitting
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Text(
-                                isLastStep
-                                    ? l10n.onboardingComplete
-                                    : l10n.onboardingContinue,
-                              ),
-                      ),
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton(
+                            onPressed: isSubmitting
+                                ? null
+                                : () {
+                                    final cubit =
+                                        context.read<OnboardingCubit>();
+                                    if (isLastStep) {
+                                      unawaited(cubit.completeOnboarding());
+                                    } else {
+                                      cubit.nextStep();
+                                    }
+                                  },
+                            child: isSubmitting
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(
+                                    isLastStep
+                                        ? l10n.onboardingComplete
+                                        : l10n.onboardingContinue,
+                                  ),
+                          ),
+                        ),
+                        if (isSkippable) ...[
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: isSubmitting
+                                ? null
+                                : () {
+                                    context
+                                        .read<OnboardingCubit>()
+                                        .skipStep();
+                                    showAppSnackBar(
+                                      context,
+                                      SnackBar(
+                                        content: Text(
+                                          l10n.onboardingSkipHint,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                            style: TextButton.styleFrom(
+                              foregroundColor: Theme.of(
+                                context,
+                              ).colorScheme.outline,
+                            ),
+                            child: Text(l10n.onboardingSkipForNow),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ),

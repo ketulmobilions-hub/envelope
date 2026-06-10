@@ -22,10 +22,9 @@ class DashboardAccountsCard extends StatelessWidget {
     final l10n = context.l10n;
     final theme = Theme.of(context);
     final symbol = currencySymbol(context);
-    final activeAccounts = accounts
-        .where((a) => !a.isArchived)
-        .take(3)
-        .toList();
+    final allActive = accounts.where((a) => !a.isArchived).toList();
+    final activeAccounts = allActive.take(3).toList();
+    final hiddenCount = allActive.length - activeAccounts.length;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -48,7 +47,9 @@ class DashboardAccountsCard extends StatelessWidget {
                   ),
                   if (onTap != null)
                     Text(
-                      l10n.dashboardViewAll,
+                      hiddenCount > 0
+                          ? l10n.dashboardViewAllCount(allActive.length)
+                          : l10n.dashboardViewAll,
                       style: theme.textTheme.labelMedium?.copyWith(
                         color: theme.colorScheme.primary,
                       ),

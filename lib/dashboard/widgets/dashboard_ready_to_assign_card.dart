@@ -23,6 +23,7 @@ class DashboardReadyToAssignCard extends StatelessWidget {
     this.hasNextPeriod = false,
     this.onPreviousPeriod,
     this.onNextPeriod,
+    this.onPeriodTap,
     this.onTap,
     super.key,
   });
@@ -38,6 +39,9 @@ class DashboardReadyToAssignCard extends StatelessWidget {
   final bool hasNextPeriod;
   final VoidCallback? onPreviousPeriod;
   final VoidCallback? onNextPeriod;
+
+  /// Called when the user taps the period name chip to open a picker.
+  final VoidCallback? onPeriodTap;
   final VoidCallback? onTap;
 
   @override
@@ -70,37 +74,54 @@ class DashboardReadyToAssignCard extends StatelessWidget {
         child: Column(
           children: [
             if (period != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.chevron_left),
-                      tooltip: l10n.dashboardPreviousPeriod,
-                      visualDensity: VisualDensity.compact,
-                      onPressed: hasPreviousPeriod ? onPreviousPeriod : null,
-                    ),
-                    Flexible(
-                      child: Text(
-                        _formatPeriod(period!),
-                        textAlign: TextAlign.center,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleSmall
-                            ?.copyWith(
-                              color: color,
-                              fontWeight: FontWeight.w600,
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.chevron_left),
+                    tooltip: l10n.dashboardPreviousPeriod,
+                    onPressed: hasPreviousPeriod ? onPreviousPeriod : null,
+                  ),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: onPeriodTap,
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size(0, 44),
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              _formatPeriod(period!),
+                              textAlign: TextAlign.center,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(
+                                    color: color,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                             ),
+                          ),
+                          if (onPeriodTap != null) ...[
+                            const SizedBox(width: 2),
+                            Icon(
+                              Icons.arrow_drop_down,
+                              size: 18,
+                              color: color,
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.chevron_right),
-                      tooltip: l10n.dashboardNextPeriod,
-                      visualDensity: VisualDensity.compact,
-                      onPressed: hasNextPeriod ? onNextPeriod : null,
-                    ),
-                  ],
-                ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.chevron_right),
+                    tooltip: l10n.dashboardNextPeriod,
+                    onPressed: hasNextPeriod ? onNextPeriod : null,
+                  ),
+                ],
               ),
             InkWell(
               onTap: onTap,
@@ -189,10 +210,10 @@ class DashboardReadyToAssignCard extends StatelessWidget {
                     if (totalAllocated > 0) ...[
                       const SizedBox(height: 8),
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(3),
+                        borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
                           value: (totalSpent / totalAllocated).clamp(0.0, 1.0),
-                          minHeight: 5,
+                          minHeight: 8,
                           backgroundColor: color.withValues(alpha: 0.15),
                           valueColor: AlwaysStoppedAnimation<Color>(spentColor),
                         ),
