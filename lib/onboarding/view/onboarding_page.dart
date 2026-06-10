@@ -70,6 +70,7 @@ class OnboardingView extends StatelessWidget {
         final isWelcome = state.currentStep == OnboardingStep.welcome;
         final isLastStep = stepIndex == totalSteps - 1;
         final isSubmitting = state.status == OnboardingStatus.submitting;
+        final isSkippable = state.currentStep == OnboardingStep.accounts;
 
         return Scaffold(
           appBar: isWelcome
@@ -81,6 +82,14 @@ class OnboardingView extends StatelessWidget {
                     onPressed: () =>
                         context.read<OnboardingCubit>().previousStep(),
                   ),
+                  actions: [
+                    if (isSkippable && !isLastStep)
+                      TextButton(
+                        onPressed: () =>
+                            context.read<OnboardingCubit>().skipStep(),
+                        child: Text(l10n.onboardingSkip),
+                      ),
+                  ],
                 ),
           bottomNavigationBar: isWelcome
               ? null
@@ -136,7 +145,6 @@ class OnboardingView extends StatelessWidget {
   String _localizeError(AppLocalizations l10n, OnboardingError error) {
     return switch (error) {
       OnboardingError.accountRequired => l10n.onboardingErrorAccountRequired,
-      OnboardingError.envelopeRequired => l10n.onboardingErrorEnvelopeRequired,
       OnboardingError.completionFailed => l10n.onboardingErrorCompletionFailed,
     };
   }
@@ -146,7 +154,6 @@ class OnboardingView extends StatelessWidget {
       OnboardingStep.welcome => const WelcomeStep(),
       OnboardingStep.currency => const CurrencyStep(),
       OnboardingStep.accounts => const AccountsStep(),
-      OnboardingStep.envelopes => const EnvelopesStep(),
     };
   }
 }

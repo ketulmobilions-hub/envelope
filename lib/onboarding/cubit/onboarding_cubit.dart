@@ -73,6 +73,21 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     }
   }
 
+  /// Advances to the next step without validation (for optional steps).
+  void skipStep() {
+    const steps = OnboardingStep.values;
+    final currentIndex = state.currentStep.index;
+    if (currentIndex < steps.length - 1) {
+      emit(
+        state.copyWith(
+          currentStep: steps[currentIndex + 1],
+          status: OnboardingStatus.initial,
+          clearError: true,
+        ),
+      );
+    }
+  }
+
   /// Goes back to the previous step.
   void previousStep() {
     const steps = OnboardingStep.values;
@@ -162,9 +177,6 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     return switch (state.currentStep) {
       OnboardingStep.accounts when state.accounts.isEmpty =>
         OnboardingError.accountRequired,
-      OnboardingStep.envelopes
-          when state.categoryGroups.every((g) => g.envelopes.isEmpty) =>
-        OnboardingError.envelopeRequired,
       _ => null,
     };
   }

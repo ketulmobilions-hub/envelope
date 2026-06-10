@@ -5,7 +5,6 @@ enum OnboardingStep {
   welcome,
   currency,
   accounts,
-  envelopes,
 }
 
 /// Status of the onboarding submission.
@@ -14,7 +13,6 @@ enum OnboardingStatus { initial, submitting, success, failure }
 /// Error codes emitted by the cubit for localization in the UI.
 enum OnboardingError {
   accountRequired,
-  envelopeRequired,
   completionFailed,
 }
 
