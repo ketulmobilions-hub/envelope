@@ -11,9 +11,10 @@ import 'package:envelope/onboarding/cubit/onboarding_cubit.dart';
 import 'package:envelope/settings/cubit/cubit.dart';
 import 'package:envelope/shared/feature_flags.dart';
 import 'package:envelope/shared/services/app_clock.dart';
+import 'package:envelope/shared/utils/currency_utils.dart';
+import 'package:envelope/shared/widgets/confirm_delete_dialog.dart';
 import 'package:envelope/shared/widgets/currency_picker_sheet.dart';
 import 'package:envelope/shared/widgets/undo_snackbar.dart';
-import 'package:envelope/shared/utils/currency_utils.dart';
 import 'package:envelope_api_client/envelope_api_client.dart';
 import 'package:envelope_local_storage/envelope_local_storage.dart' show AppDatabase;
 import 'package:flutter/foundation.dart';
@@ -138,6 +139,19 @@ class _SettingsView extends StatelessWidget {
                     const Divider(),
                     _SectionHeader(title: l10n.settingsBudget),
                     const OpeningBalanceTile(),
+                    ListTile(
+                      leading: Icon(
+                        Icons.delete_forever,
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                      title: Text(
+                        l10n.budgetDeleteBudget,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                      onTap: () => _confirmDeleteBudget(context),
+                    ),
                     const Divider(),
                     _SectionHeader(title: l10n.settingsData),
                     ListTile(
@@ -217,6 +231,33 @@ class _SettingsView extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDeleteBudget(BuildContext context) async {
+    final l10n = context.l10n;
+    final confirmed = await showConfirmDeleteDialog(
+      context,
+      title: l10n.budgetDeleteBudget,
+      message: l10n.budgetDeleteConfirmMessage,
+      cancelLabel: l10n.settingsCancel,
+      confirmLabel: l10n.budgetDeleteBudget,
+    );
+    if (confirmed != true || !context.mounted) return;
+    final prefs = context.read<SharedPreferences>();
+    final budgetId = prefs.getString(activeBudgetIdKey) ?? '';
+    try {
+      await context.read<BudgetRepository>().deleteBudget(budgetId);
+      if (!context.mounted) return;
+      await prefs.remove(activeBudgetIdKey);
+      if (context.mounted) context.go(AppRoutes.onboarding);
+    } on Exception catch (_) {
+      if (context.mounted) {
+        showAppSnackBar(
+          context,
+          SnackBar(content: Text(l10n.budgetDeleteFailed)),
+        );
+      }
+    }
   }
 
   void _showEditNameDialog(BuildContext context, User user) {

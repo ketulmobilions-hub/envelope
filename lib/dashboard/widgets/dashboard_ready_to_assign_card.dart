@@ -74,54 +74,43 @@ class DashboardReadyToAssignCard extends StatelessWidget {
         child: Column(
           children: [
             if (period != null)
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.chevron_left),
-                    tooltip: l10n.dashboardPreviousPeriod,
-                    onPressed: hasPreviousPeriod ? onPreviousPeriod : null,
-                  ),
-                  Expanded(
-                    child: TextButton(
-                      onPressed: onPeriodTap,
-                      style: TextButton.styleFrom(
-                        minimumSize: const Size(0, 44),
-                        padding: EdgeInsets.zero,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              _formatPeriod(period!),
-                              textAlign: TextAlign.center,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.titleSmall
-                                  ?.copyWith(
-                                    color: color,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                            ),
-                          ),
-                          if (onPeriodTap != null) ...[
-                            const SizedBox(width: 2),
-                            Icon(
-                              Icons.arrow_drop_down,
-                              size: 18,
-                              color: color,
-                            ),
-                          ],
-                        ],
-                      ),
+              TextButton(
+                onPressed: onPeriodTap,
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 44),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(12),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.chevron_right),
-                    tooltip: l10n.dashboardNextPeriod,
-                    onPressed: hasNextPeriod ? onNextPeriod : null,
-                  ),
-                ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        _formatPeriod(period!),
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleSmall
+                            ?.copyWith(
+                              color: color,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ),
+                    if (onPeriodTap != null) ...[
+                      const SizedBox(width: 2),
+                      Icon(
+                        Icons.arrow_drop_down,
+                        size: 18,
+                        color: color,
+                      ),
+                    ],
+                  ],
+                ),
               ),
             InkWell(
               onTap: onTap,

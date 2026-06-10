@@ -2705,6 +2705,8 @@
     "@budgetDeleteBudget": { "description": "Delete budget menu option" },
     "budgetDeleteConfirmMessage": "This will permanently delete this budget and all its accounts, envelopes, and transactions. This action cannot be undone.",
     "@budgetDeleteConfirmMessage": { "description": "Budget deletion warning" },
+    "budgetDeleteFailed": "Failed to delete budget. Please try again.",
+    "@budgetDeleteFailed": { "description": "Error shown when budget deletion fails" },
     "envelopesEnvelopeArchived": "Envelope archived",
     "@envelopesEnvelopeArchived": { "description": "Snackbar message after archiving" },
     "envelopesUnarchived": "Envelope unarchived",
