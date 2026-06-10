@@ -11,10 +11,8 @@ abstract final class AppTheme {
     useMaterial3: true,
     colorScheme: const ColorScheme.light(
       primary: AppColors.primary,
-      onPrimary: AppColors.onPrimary,
       secondary: AppColors.charcoal,
       onSecondary: AppColors.onPrimary,
-      surface: AppColors.surface,
       onSurface: AppColors.charcoal,
       error: AppColors.expense,
       outline: AppColors.secondaryText,
@@ -43,7 +41,7 @@ abstract final class AppTheme {
       style: FilledButton.styleFrom(
         backgroundColor: AppColors.charcoal,
         foregroundColor: AppColors.onPrimary,
-        textStyle: TextStyle(
+        textStyle: const TextStyle(
           letterSpacing: AppSpacing.label,
           fontWeight: FontWeight.w600,
         ),
@@ -56,36 +54,36 @@ abstract final class AppTheme {
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: AppColors.charcoal,
-        textStyle: TextStyle(
+        textStyle: const TextStyle(
           letterSpacing: AppSpacing.label,
           fontWeight: FontWeight.w600,
         ),
       ),
     ),
-    chipTheme: ChipThemeData(
-      shape: const StadiumBorder(),
+    chipTheme: const ChipThemeData(
+      shape: StadiumBorder(),
       selectedColor: AppColors.charcoal,
       backgroundColor: AppColors.surface,
-      side: const BorderSide(color: AppColors.divider),
-      labelStyle: const TextStyle(color: AppColors.charcoal),
-      secondaryLabelStyle: const TextStyle(color: AppColors.onPrimary),
+      side: BorderSide(color: AppColors.divider),
+      labelStyle: TextStyle(color: AppColors.charcoal),
+      secondaryLabelStyle: TextStyle(color: AppColors.onPrimary),
     ),
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       backgroundColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: true,
-      systemOverlayStyle: SystemUiOverlayStyle(
+      systemOverlayStyle: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark,
         statusBarBrightness: Brightness.light,
       ),
-      titleTextStyle: TextStyle(
+      titleTextStyle: GoogleFonts.inter(
         color: AppColors.charcoal,
         fontSize: 18,
         fontWeight: FontWeight.w600,
       ),
-      iconTheme: IconThemeData(color: AppColors.charcoal),
+      iconTheme: const IconThemeData(color: AppColors.charcoal),
     ),
     dividerTheme: const DividerThemeData(
       color: AppColors.divider,
@@ -158,7 +156,10 @@ abstract final class AppTheme {
       outline: Color(0xFF8A8478),
     ),
     scaffoldBackgroundColor: const Color(0xFF1E1E1E),
-    textTheme: _darkTextTheme,
+    textTheme: AppTextTheme.build(
+      text: const Color(0xFFE8E0D4),
+      muted: const Color(0xFF8A8478),
+    ),
     inputDecorationTheme: const InputDecorationTheme(
       border: UnderlineInputBorder(),
       filled: false,
@@ -183,7 +184,7 @@ abstract final class AppTheme {
       style: FilledButton.styleFrom(
         backgroundColor: const Color(0xFFE8E0D4),
         foregroundColor: const Color(0xFF1E1E1E),
-        textStyle: TextStyle(
+        textStyle: const TextStyle(
           letterSpacing: AppSpacing.label,
           fontWeight: FontWeight.w600,
         ),
@@ -196,7 +197,7 @@ abstract final class AppTheme {
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: const Color(0xFFE8E0D4),
-        textStyle: TextStyle(
+        textStyle: const TextStyle(
           letterSpacing: AppSpacing.label,
           fontWeight: FontWeight.w600,
         ),
@@ -210,22 +211,22 @@ abstract final class AppTheme {
       labelStyle: TextStyle(color: Color(0xFFE8E0D4)),
       secondaryLabelStyle: TextStyle(color: Color(0xFF1E1E1E)),
     ),
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       backgroundColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: true,
-      systemOverlayStyle: SystemUiOverlayStyle(
+      systemOverlayStyle: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
         statusBarBrightness: Brightness.dark,
       ),
-      titleTextStyle: TextStyle(
-        color: Color(0xFFE8E0D4),
+      titleTextStyle: GoogleFonts.inter(
+        color: const Color(0xFFE8E0D4),
         fontSize: 18,
         fontWeight: FontWeight.w600,
       ),
-      iconTheme: IconThemeData(color: Color(0xFFE8E0D4)),
+      iconTheme: const IconThemeData(color: Color(0xFFE8E0D4)),
     ),
     dividerTheme: const DividerThemeData(
       color: Color(0xFF3A3A3A),
@@ -283,36 +284,4 @@ abstract final class AppTheme {
     ),
   );
 
-  static TextTheme get _darkTextTheme {
-    final sansStyle = GoogleFonts.inter();
-    const textColor = Color(0xFFE8E0D4);
-    const mutedColor = Color(0xFF8A8478);
-
-    return TextTheme(
-      displayLarge: sansStyle.copyWith(color: textColor),
-      displayMedium: sansStyle.copyWith(color: textColor),
-      displaySmall: sansStyle.copyWith(color: textColor),
-      headlineLarge: sansStyle.copyWith(color: textColor),
-      headlineMedium: sansStyle.copyWith(color: textColor),
-      headlineSmall: sansStyle.copyWith(color: textColor),
-      titleLarge: sansStyle.copyWith(color: textColor),
-      titleMedium: sansStyle.copyWith(color: textColor),
-      titleSmall: sansStyle.copyWith(color: textColor),
-      bodyLarge: sansStyle.copyWith(color: textColor),
-      bodyMedium: sansStyle.copyWith(color: textColor),
-      bodySmall: sansStyle.copyWith(color: mutedColor),
-      labelLarge: sansStyle.copyWith(
-        color: textColor,
-        letterSpacing: AppSpacing.label,
-      ),
-      labelMedium: sansStyle.copyWith(
-        color: mutedColor,
-        letterSpacing: AppSpacing.label,
-      ),
-      labelSmall: sansStyle.copyWith(
-        color: mutedColor,
-        letterSpacing: AppSpacing.label,
-      ),
-    );
-  }
 }
