@@ -8,7 +8,7 @@ import 'package:flutter/foundation.dart'
 ///
 /// Example:
 /// ```dart
-/// import 'firebase_options.dart';
+/// import 'firebase_options_development.dart';
 /// // ...
 /// await Firebase.initializeApp(
 ///   options: DefaultFirebaseOptions.currentPlatform,
@@ -17,7 +17,10 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      return web;
+      throw UnsupportedError(
+        'DefaultFirebaseOptions have not been configured for web - '
+        'you can reconfigure this by running the FlutterFire CLI again.',
+      );
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -46,29 +49,19 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBahMTfGYG2-z-y7ePyb40GE0nBi20GU9M',
-    appId: '1:767046810526:web:2803b28b45b27c787b748f',
-    messagingSenderId: '767046810526',
-    projectId: 'white-board-3',
-    authDomain: 'white-board-3.firebaseapp.com',
-    storageBucket: 'white-board-3.firebasestorage.app',
-  );
-
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyB16GwJg6lKafy_rONOLezg4KTeEGSHFNo',
-    appId: '1:767046810526:android:804ccc37f74d7c6e7b748f',
-    messagingSenderId: '767046810526',
-    projectId: 'white-board-3',
-    storageBucket: 'white-board-3.firebasestorage.app',
+    apiKey: 'AIzaSyDNSNP9_0t8ogdWmiKeZTNBqjxlEH9Dm-c',
+    appId: '1:883784107706:android:422529d4431e1d54572483',
+    messagingSenderId: '883784107706',
+    projectId: 'envelope-dev-bd291',
+    storageBucket: 'envelope-dev-bd291.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAUcMHc7ThJf6XrCDjnSpNL_t7n9GkJ288',
-    appId: '1:767046810526:ios:15a5063fe6b4ad5d7b748f',
-    messagingSenderId: '767046810526',
-    projectId: 'white-board-3',
-    storageBucket: 'white-board-3.firebasestorage.app',
-    iosBundleId: 'com.envelope.ml',
+    apiKey: 'AIzaSyD5VSiwtJnwiprollmIN4qHzx9q_16t2yo',
+    appId: '1:883784107706:ios:5bef3a26a82244a5572483',
+    messagingSenderId: '883784107706',
+    projectId: 'envelope-dev-bd291',
+    storageBucket: 'envelope-dev-bd291.firebasestorage.app',
+    iosBundleId: 'com.envelope.ml.dev',
   );
 }

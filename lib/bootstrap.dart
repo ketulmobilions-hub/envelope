@@ -10,8 +10,8 @@ import 'package:envelope/shared/services/app_clock.dart';
 import 'package:envelope_api_client/envelope_api_client.dart';
 import 'package:envelope_local_storage/envelope_local_storage.dart';
 import 'package:envelope_repository/envelope_repository.dart';
-import 'package:envelope/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:goal_repository/goal_repository.dart';
 import 'package:notification_repository/notification_repository.dart';
@@ -43,9 +43,16 @@ class AppBlocObserver extends BlocObserver {
 Future<void> bootstrap({
   required String supabaseUrl,
   required String supabaseAnonKey,
+  required FirebaseOptions firebaseOptions,
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  try {
+    await Firebase.initializeApp(
+      options: firebaseOptions,
+    );
+  } on FirebaseException catch (e) {
+    if (e.code != 'duplicate-app') rethrow;
+  }
 
   FlutterError.onError = (details) {
     log(details.exceptionAsString(), stackTrace: details.stack);
