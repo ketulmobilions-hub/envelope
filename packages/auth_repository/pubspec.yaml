@@ -11,7 +11,7 @@ dependencies:
   envelope_api_client:
     path: ../envelope_api_client
   freezed_annotation: ^3.0.0
-  google_sign_in: ^6.2.2
+  google_sign_in: ^7.2.0
   json_annotation: ^4.9.0
   sign_in_with_apple: ^6.1.4
   supabase_flutter: ^2.9.0
