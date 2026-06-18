@@ -64,7 +64,7 @@ dev_dependencies:
   drift: ^2.26.0
   flutter_test:
     sdk: flutter
-  mocktail: ^1.0.4
+  mocktail: ^1.0.5
   very_good_analysis: ^10.2.0
 
 flutter:
