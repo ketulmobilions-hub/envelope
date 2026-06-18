@@ -7,7 +7,7 @@ environment:
   sdk: ^3.11.0
 
 dependencies:
-  csv: ^6.0.0
+  csv: ^8.0.0
   envelope_api_client:
     path: ../envelope_api_client
   envelope_local_storage:
