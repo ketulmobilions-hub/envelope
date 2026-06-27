@@ -49,7 +49,7 @@ dependencies:
     path: packages/sharing_repository
   subscription_repository:
     path: packages/subscription_repository
-  supabase_flutter: ^2.9.0
+  supabase_flutter: ^2.12.2
   sync_repository:
     path: packages/sync_repository
   transaction_repository:
